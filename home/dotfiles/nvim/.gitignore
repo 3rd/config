@@ -1,0 +1,8 @@
+.packer
+.undo
+.sessions
+.root
+.view
+sandbox
+**/*/dist
+**/*/node_modules

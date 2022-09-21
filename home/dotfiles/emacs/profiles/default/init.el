@@ -1,0 +1,465 @@
+;;; init.el -*- lexical-binding: t; no-byte-compile: t; -*-
+
+(unless (daemonp)
+  (defvar config/-initial-file-name-handler-alist file-name-handler-alist)
+  (setq file-name-handler-alist nil)
+  (defun config/reset-file-handler-alist-h ()
+    (dolist (handler file-name-handler-alist)
+      (add-to-list 'config/-initial-file-name-handler-alist handler))
+    (setq file-name-handler-alist config/-initial-file-name-handler-alist))
+  (add-hook 'emacs-startup-hook #'config/reset-file-handler-alist-h)
+  (add-hook 'after-init-hook #'(lambda ()
+                                (setq gc-cons-threshold 16777216
+                                      gc-cons-percentage 0.1)))
+  )
+
+(setq user-emacs-directory (file-truename (file-name-directory load-file-name)))
+
+(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(when (file-exists-p custom-file) (load custom-file))
+
+(setq straight-vc-git-default-clone-depth 1)
+(setq straight-recipes-gnu-elpa-use-mirror t)
+(setq straight-check-for-modifications nil)
+(setq straight-use-package-by-default t)
+(setq use-package-always-defer t)
+(straight-use-package 'use-package)
+
+(add-hook
+ 'emacs-startup-hook
+ (lambda ()
+   (message
+    "*** Startup completed in %s with %d garbage collections."
+    (format "%.2f seconds" (float-time
+                            (time-subtract after-init-time before-init-time)))
+    gcs-done)))
+
+(use-package emacs
+  :init
+  ;; sanity
+  (setq make-backup-files nil)
+  (setq auto-save-default nil)
+  (setq backup-inhibited t)
+  (setq create-lockfiles nil)
+  (setq custom-safe-themes t)
+  (setq vc-follow-symlinks t)
+  (setq enable-local-variables :all)
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  (setq read-process-output-max (* 1024 1024)) ;; 1mb
+
+  ;; utf-8
+  (set-charset-priority 'unicode)
+  (setq locale-coding-system 'utf-8
+        coding-system-for-read 'utf-8
+        coding-system-for-write 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  (set-selection-coding-system 'utf-8)
+  (prefer-coding-system 'utf-8)
+  (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
+
+  ;; comp
+  (setq byte-compile-warnings '(not free-vars unresolved noruntime lexical make-local))
+  (setq native-comp-async-report-warnings-errors nil)
+  (setq load-prefer-newer t)
+
+  ;; ui
+  (setq inhibit-startup-screen t)
+  (setq initial-scratch-message nil)
+  (setq frame-resize-pixelwise t)
+
+  ;; scrolling
+  (setq scroll-conservatively 101)
+  (setq scroll-step 1)
+  (setq scroll-preserve-screen-position t)
+  (setq scroll-error-top-bottom t)
+  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+  (setq mouse-wheel-progressive-speed nil)
+  (setq mouse-wheel-follow-mouse 't)
+
+  ;; coding style
+  (setq tab-always-indent nil)
+  (setq-default default-tab-width 2)
+  (setq-default tab-width 2)
+  (setq-default indent-tabs-mode nil)
+  (setq-default evil-shift-width tab-width)
+  (setq-default evil-indent-convert-tabs nil)
+  (setq-default evil-shift-round nil)
+
+  ;; keyboard
+  (setq tab-always-indent 'complete)
+
+  ;; misc
+  (setq warning-minimum-level :error)
+  (setq enable-recursive-minibuffers t)
+  (setq visible-bell nil)
+  (setq use-dialog-box nil)
+  (setq large-file-warning-threshold nil)
+  (setq vc-follow-symlinks t)
+  (setq ad-redefinition-action 'accept)
+  (setq global-auto-revert-non-file-buffers t)
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  (setq save-interprogram-paste-before-kill t)
+  (setq confirm-nonexistent-file-or-buffer nil)
+  (setq revert-without-query '(".*"))
+  (setq vc-follow-symlinks t)
+  (setq-default bidi-display-reordering nil)
+  (setq async-shell-command-buffer 'new-buffer)
+  (setq shell-command-switch "-ic")
+  (setq x-underline-at-descent-line t)
+  (global-unset-key [(control z)])
+  (global-unset-key [(control x)(control z)])
+  (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+  (remove-hook 'find-file-hooks 'vc-find-file-hook)
+
+  (global-auto-revert-mode 1)
+  (normal-erase-is-backspace-mode 1)
+  (show-paren-mode t)
+  )
+
+(use-package general
+  :demand
+  :config
+  (general-evil-setup t)
+
+  (general-create-definer lib/mapleader
+    :prefix "SPC"
+    :states '(normal emacs)
+    :keymaps 'override
+    )
+
+  (lib/mapleader
+    "q" 'evil-quit
+    "ee" (lambda() (interactive)(find-file "~/.emacs.d/profiles/default/config.org"))
+    )
+
+  ;; general emacs rebindings
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+  (global-set-key (kbd "C-SPC") nil)
+
+  (bind-key "C-+" 'text-scale-increase)
+  (bind-key "C--" 'text-scale-decrease)
+  (bind-key "C-0" 'text-scale-adjust)
+
+  ;; remap help to <ctrl-?> and <ctrl-alt-?>
+  (global-set-key (kbd "C-?") 'help-command)
+  (global-set-key (kbd "C-M-?") 'help-command)
+
+  ;; remap universal argument
+  (general-def
+    :keymaps 'universal-argument-map
+    "M-u" 'universal-argument-more)
+  (general-def
+    :keymaps 'override
+    :states '(normal motion emacs insert visual)
+    "M-u" 'universal-argument)
+
+  )
+
+(use-package evil
+  :demand
+  :init
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-i-jump nil)
+  (setq evil-want-Y-yank-to-eol t)
+	(setq evil-search-module 'evil-search)
+  (setq evil-split-window-below t)
+  (setq evil-vsplit-window-right t)
+  (setq evil-auto-indent nil)
+  :config
+  (evil-mode 1)
+
+  (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (evil-set-initial-state 'dashboard-mode 'normal)
+
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+
+  (define-key evil-normal-state-map (kbd "DEL") nil)
+  (define-key evil-normal-state-map (kbd "<C-return>") nil)
+  (define-key evil-normal-state-map (kbd "\C-p") nil)
+  (define-key evil-normal-state-map (kbd "\C-w") nil)
+
+  (define-key evil-insert-state-map (kbd "TAB") 'tab-to-tab-stop)
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  (define-key evil-insert-state-map (kbd "\C-w") nil)
+
+	(define-key evil-motion-state-map "_" 'evil-end-of-line)
+	(define-key evil-motion-state-map "0" 'evil-beginning-of-line)
+  (define-key evil-motion-state-map (kbd "RET") nil)
+  (define-key evil-motion-state-map (kbd "\C-f") nil)
+  (define-key evil-motion-state-map (kbd "-") nil)
+  (define-key evil-motion-state-map (kbd ";") nil)
+  (define-key evil-motion-state-map (kbd "\C-w") nil)
+
+  (defun config/evil-dont-move-cursor (orig-fn &rest args)
+    (save-excursion (apply orig-fn args)))
+  (advice-add 'evil-indent :around #'config/evil-dont-move-cursor)
+  )
+
+(use-package doom-themes
+  :demand
+  :init
+  (setq doom-themes-padded-modeline 3)
+  (setq doom-themes-enable-italic t)
+  (setq doom-themes-enable-bold t)
+
+  (doom-themes-neotree-config)
+  (doom-themes-org-config)
+
+  (load-theme 'doom-Iosvkem t)
+)
+
+(defun lib/log (string)
+  "Print out STRING and calculate length of init."
+  (message string)
+  (if (not (string= "end" (substring string -3)))
+      (setq my/init-audit-message-begin (current-time))
+    (message
+     "%s seconds"
+     (time-to-seconds
+      (time-subtract
+       (current-time)
+       my/init-audit-message-begin))))
+  nil)
+
+(use-package org
+  :demand
+  :hook ((org-mode . prettify-symbols-mode)
+         (org-mode . visual-line-mode)
+         (org-mode . variable-pitch-mode)
+         (org-mode . org-indent-mode)
+         )
+  :init
+  (setq org-element-use-cache nil) ;; https://www.mail-archive.com/emacs-orgmode@gnu.org/msg140360.html
+  (setq org-startup-indented t)
+  (setq org-startup-folded t)
+  (setq org-catch-invisible-edits 'show-and-error)
+  (setq org-imenu-depth 999)
+
+  (setq org-return-follows-link t)
+  (setq org-ellipsis " ⤵")
+  (setq org-hide-emphasis-markers t)
+  (setq org-fontify-done-headline t)
+  (setq org-fontify-quote-and-verse-blocks t)
+  (setq org-pretty-entities t)
+  (setq org-capture-bookmark nil)
+  (setq org-outline-path-complete-in-steps nil)
+  (setq org-refile-use-outline-path t)
+  (setq org-list-description-max-indent 5)
+  (setq org-adapt-indentation nil)
+
+  (setq-default org-enforce-todo-dependencies t)
+  (setq-default org-export-with-todo-keywords nil)
+
+  ;; blocks
+  (setq org-hide-block-startup nil)
+  (setq org-src-fontify-natively t)
+  (setq org-src-preserve-indentation nil)
+  (setq org-src-window-setup 'current-window)
+  (setq org-src-tab-acts-natively t)
+  (setq org-edit-src-content-indentation 2)
+
+  ;; cycle
+  (setq org-cycle-separator-lines -1)
+  ;; org-cycle-emulate-tab nil
+
+  ;; agenda
+  (setq calendar-week-start-day 1)
+  )
+
+;; evil-org setup
+(use-package evil-org
+  :after org
+  :demand
+  :hook (org-mode . evil-org-mode)
+  :config
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys))
+
+;; sane indent and outdent
+(defun my/evil-org-indent ()
+  (interactive)
+  (evil-org->
+   (org-element-property :begin (org-element-at-point))
+   (org-element-property :end (org-element-at-point)) 1)
+  )
+(defun my/evil-org-outdent ()
+  (interactive)
+  (evil-org->
+   (org-element-property :begin (org-element-at-point))
+   (org-element-property :end (org-element-at-point)) -1)
+  )
+
+;; evil-org hook
+(defun my/evil-org-hook ()
+  (nmap "d" 'evil-delete)
+  (evil-define-key '(normal) 'evil-org-mode
+    (kbd ">") 'my/evil-org-indent
+    (kbd "<") 'my/evil-org-outdent
+    ))
+(add-hook 'evil-org-mode-hook #'my/evil-org-hook)
+
+(use-package org-superstar
+  :after org
+  :demand
+  :hook (org-mode . org-superstar-mode)
+  :custom
+  (org-superstar-remove-leading-stars t)
+  (org-superstar-prettify-item-bullets nil)
+  (org-superstar-headline-bullets-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+(set-face-attribute 'org-document-title nil :weight 'bold :height 1.6)
+(dolist (face '((org-level-1 . 1.24)
+                (org-level-2 . 1.12)
+                (org-level-3 . 1.06)
+                (org-level-4 . 1.0)
+                (org-level-5 . 1.0)
+                (org-level-6 . 1.0)
+                (org-level-7 . 1.0)
+                (org-level-8 . 1.0)))
+  (set-face-attribute (car face) nil :weight 'bold :height (cdr face)))
+
+;; remove the background on column views
+(set-face-attribute 'org-column nil :background nil)
+(set-face-attribute 'org-column-title nil :background nil)
+
+(set-fontset-font "fontset-default" nil (font-spec :name "Symbola"))
+
+;; list markers
+(font-lock-add-keywords 'org-mode
+                        '(("^ *\\([-]\\) "
+                           (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+(font-lock-add-keywords 'org-mode
+                        '(("^ *\\([+]\\) "
+                           (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "◦"))))))
+
+(setq org-edit-src-content-indentation 0)
+(setq org-confirm-babel-evaluate nil)
+
+(add-hook 'org-mode-hook (lambda ()
+                           (push '("[ ]" .  "") prettify-symbols-alist)
+                           (push '("[X]" . "" ) prettify-symbols-alist)
+                           (push '("[-]" . "⬚" ) prettify-symbols-alist)
+                           (prettify-symbols-mode)))
+
+(setq org-todo-keywords '((sequence
+                           "TODO"
+                           "NEXT"
+                           "WIP"
+                           "BLOCKED"
+                           "DONE"
+                           )))
+(setq org-todo-keyword-faces
+      `(
+        ("TODO" :foreground ,(doom-color 'yellow) :weight bold)
+        ("NEXT" :foreground ,(doom-color 'cyan) :weight bold)
+        ("WIP" :foreground ,(doom-color 'green) :weight bold)
+        ("BLOCKED" :foreground ,(doom-color 'red) :weight bold)
+        ("DONE" :foreground ,(doom-color 'grey)  :weight bold)
+        ))
+
+(setq org-hierarchical-todo-statistics nil)
+
+(defun my/org-checkbox-todo ()
+  "Switch header TODO state to DONE when all checkboxes are ticked, to TODO otherwise"
+  (let ((todo-state (org-get-todo-state)) beg end)
+    (unless (not todo-state)
+      (save-excursion
+        (org-back-to-heading t)
+        (setq beg (point))
+        (end-of-line)
+        (setq end (point))
+        (goto-char beg)
+        (if (re-search-forward "\\[\\([0-9]*%\\)\\]\\|\\[\\([0-9]*\\)/\\([0-9]*\\)\\]"
+                               end t)
+            (if (match-end 1)
+                (if (equal (match-string 1) "100%")
+                    (unless (string-equal todo-state "DONE")
+                      (org-todo 'done))
+                  (unless (string-equal todo-state "TODO")
+                    (org-todo 'todo)))
+              (if (and (> (match-end 2) (match-beginning 2))
+                       (equal (match-string 2) (match-string 3)))
+                  (unless (string-equal todo-state "DONE")
+                    (org-todo 'done))
+                (unless (string-equal todo-state "TODO")
+                  (org-todo 'todo)))))))))
+(add-hook 'org-checkbox-statistics-hook 'my/org-checkbox-todo)
+
+(defun org-summary-todo (n-done n-not-done)
+  "Switch entry to DONE when all subentries are done, to TODO otherwise."
+  (let (org-log-done org-log-states)   ; turn off logging
+    (org-todo (if (= n-not-done 0) "DONE" "TODO"))))
+
+(add-hook 'org-after-todo-statistics-hook 'org-summary-todo)
+
+(setq org-capture-templates
+    '(
+      ("t" "TODO" entry (file "~/brain/wiki/inbox.org") "* TODO %i%?\n")
+      ("c" "Consume" entry (file+headline "~/brain/wiki/consume.org" "2021") "* %i%?\n#+SOURCE:\n")
+      ))
+
+(setq org-refile-targets (quote ((nil :maxlevel . 9)
+                                 (org-agenda-files :maxlevel . 9))))
+
+(custom-theme-set-faces
+ 'user
+ '(org-block ((t (:inherit fixed-pitch))))
+ '(org-code ((t (:inherit (shadow fixed-pitch)))))
+ '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+ '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+ '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+ '(org-property-value ((t (:inherit fixed-pitch))) t)
+ '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+ '(org-table ((t (:inherit fixed-pitch))))
+ '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+ '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
+
+(use-package org-appear
+  :demand
+  :hook (org-mode . org-appear-mode))
+
+(dolist (mode '(org-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+
+(set-face-attribute 'default nil :font "Fira Sans" :height 112 :weight 'normal)
+(set-face-attribute 'fixed-pitch nil :font "BMono" :height 94 :weight 'normal)
+(set-face-attribute 'variable-pitch nil :font "Fira Sans" :height 112 :weight 'normal)
+
+(use-package company-posframe
+  :config
+  (company-posframe-mode 1))
+
+(setq inhibit-compacting-font-caches t)
+
+(setq-default prettify-symbols-alist '(("#+BEGIN_SRC" . "*")
+                                       ("#+END_SRC" . "―")
+                                       ("#+begin_src" . "*")
+                                       ("#+end_src" . "―")
+                                       (">=" . "≥")
+                                       ("=>" . "⇨")))
+(setq prettify-symbols-unprettify-at-point 'right-edge)
+
+(dolist (mode '(text-mode-hook prog-mode-hook conf-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 1))))
+
+(setq-default show-trailing-whitespace t)
+
+;; exclusions
+(dolist (hook '(
+                special-mode-hook
+                term-mode-hook
+                comint-mode-hook
+                compilation-mode-hook
+                minibuffer-setup-hook))
+  (add-hook hook (lambda () (setq show-trailing-whitespace nil))))
+
+(require 'hl-line)
+(add-hook 'prog-mode-hook #'hl-line-mode)
+(add-hook 'text-mode-hook #'hl-line-mode)

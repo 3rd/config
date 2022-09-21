@@ -1,0 +1,36 @@
+% docker
+
+# Remove docker image
+docker image rm <image_id>
+
+# Delete docker image
+docker rmi <image_id>
+
+# Clean none/dangling docker images
+docker rmi $(docker images --filter "dangling=true" -q --no-trunc) -f
+
+# Build and tag docker image from ./Dockerfile
+docker build -t <image>:<version> .
+
+# Stop docker container
+docker stop <container_id>
+
+# Kill docker container
+docker kill <container_id>
+
+# Delete all running and stopped docker containers
+docker rm -f $(docker ps -aq)
+
+# Open a shell inside a docker container
+docker exec -it <container_id> bash
+
+# Print and watch docker container logs
+docker logs <container_id> -f
+
+$ image_id: docker images --- --headers 1 --column 3
+$ container_id: docker ps --- --headers 1 --column 1
+
+% docker-compose
+
+# Print and watch docker-compose service logs
+docker-compose logs -f --tail 100 <service_name>

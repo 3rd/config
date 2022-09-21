@@ -1,0 +1,42 @@
+[linters]
+disable-all = true
+enable = [
+    'bodyclose',
+    'cyclop',
+    'deadcode',
+    'depguard',
+    'dogsled',
+    'dupl',
+    'durationcheck',
+    'errcheck',
+    'errorlint',
+    'exportloopref',
+    'gci',
+    'goconst',
+    'gocyclo',
+    'godot',
+    'goprintffuncname',
+    'gosec',
+    'misspell',
+    'noctx',
+    'rowserrcheck',
+    'sqlclosecheck',
+    'structcheck',
+    'unconvert',
+    'unused',
+    'varcheck',
+    'wastedassign',
+    'whitespace',
+    'gofumpt',
+]
+
+[linters-settings.cyclop]
+max-complexity = 10
+
+[issues]
+fix = false
+
+[output]
+print-linter-name = true
+
+

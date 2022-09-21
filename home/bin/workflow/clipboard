@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -- "${@:-$(</dev/stdin)}"
+
+if readlink /proc/$$/fd/0 | grep -q "^pipe:"; then
+  if [ "$XDG_SESSION_TYPE" == "wayland" ]; then
+    wl-copy "$@"
+  else
+    # xclip -i -r -selection clipboard
+    xclip -sel clip <<<"$@"
+  fi
+else
+  contents=$(xclip -o -selection clipboard)
+  echo "$contents"
+fi

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+TEXT=$(zenity --entry --text "Inbox entry:")
+DEST=~/brain/wiki/_inbox/tasks
+
+# https://stackoverflow.com/questions/3183444/check-for-valid-link-url
+regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
+
+if [ "$TEXT" != "" ]; then
+  DATE=$(date +%Y-%m-%d)
+  ENTRY="$DATE: $TEXT"
+
+  if [[ $TEXT =~ $regex ]]; then
+    DEST=~/brain/wiki/_inbox/links
+  fi
+
+  echo "$ENTRY" >>"$DEST"
+fi

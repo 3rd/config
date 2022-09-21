@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+IFS=$'\n\t'
+
+CACHE_FILE=~/.nixs.cache
+
+function update_all() {
+  echo "Updating package list..."
+  nix-env -qaP --description | sort -u >"$CACHE_FILE"
+}
+
+if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+  if [[ -f "$CACHE_FILE" ]]; then
+    if [[ -n $(find "$CACHE_FILE" -mtime +2 -print) ]]; then
+      update_all
+    fi
+  else
+    update_all
+  fi
+
+  PACKAGE=$(fzf <"$CACHE_FILE" | cut -d" " -f1)
+  if [ "$PACKAGE" != "" ]; then
+    echo "Installing: $PACKAGE"
+    nix-env -iA "$PACKAGE"
+  fi
+fi

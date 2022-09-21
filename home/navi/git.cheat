@@ -1,0 +1,19 @@
+% git
+
+# Create backdated commit for staged files
+git commit --date="<number_of_days_ago> days ago" -m "<commit_description>"
+
+# Forcefully push to remote <branch>
+git push <remote_name> <branch_name> -f
+
+# Add git submodule
+git submodule add <repository> <path>
+
+# Remove <count> local commits (destroy changes)
+git reset --hard HEAD~<number_of_commits>
+
+# Remote <count> local commits (keep changes)
+git reset --soft HEAD~<number_of_commits>
+
+# Find branches containing a given commit
+git branch -a --contains "<commit>"

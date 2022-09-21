@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+  # local
+  if [ -f "build.sh" ]; then
+    ./build.sh
+    exit 0
+  fi
+
+  # make
+  if [ -f "Makefile" ]; then
+    if grep -q "build:" "Makefile"; then
+      make build
+    else
+      make
+    fi
+    exit 0
+  fi
+
+  # go
+  if [ -f "go.mod" ]; then
+    go build
+    exit 0
+  fi
+
+  # cargo
+  if [ -f "Cargo.toml" ]; then
+    cargo build --release
+    exit 0
+  fi
+
+  # js
+  if [ -f "package.json" ]; then
+    if [ -f "yarn.lock" ]; then
+      yarn build
+    else
+      npm run build
+    fi
+    exit 0
+  fi
+fi

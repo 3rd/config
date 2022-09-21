@@ -1,0 +1,127 @@
+[selene]
+base = "lua52"
+name = "vim"
+
+[vim]
+any = true
+
+[log]
+any = true
+
+[throw]
+any = true
+
+[lib]
+any = true
+
+[is]
+any = true
+
+[table.filter]
+any = true
+
+[table.find]
+any = true
+
+[table.find_index]
+any = true
+
+[table.includes]
+any = true
+
+[table.index_of]
+any = true
+
+[table.map]
+any = true
+
+[table.merge]
+any = true
+
+[table.push]
+any = true
+
+[table.reverse]
+any = true
+
+[string.starts_with]
+any = true
+
+[string.ends_with]
+any = true
+
+[string.includes]
+any = true
+
+[string.escape]
+any = true
+
+[string.trim]
+any = true
+
+[string.to_lowercase]
+any = true
+
+[string.to_uppercase]
+any = true
+
+[string.join]
+any = true
+
+[string.lines]
+any = true
+
+[string.split]
+any = true
+
+[string.replace]
+any = true
+
+[[describe.args]]
+type = "string"
+[[describe.args]]
+type = "function"
+
+[[it.args]]
+type = "string"
+[[it.args]]
+type = "function"
+
+[[before_each.args]]
+type = "function"
+[[after_each.args]]
+type = "function"
+
+[assert.is_not]
+any = true
+
+[assert.matches]
+any = true
+
+[assert.has_error]
+any = true
+
+[[assert.equals.args]]
+type = "any"
+[[assert.equals.args]]
+type = "any"
+[[assert.equals.args]]
+type = "any"
+required = false
+
+[[assert.same.args]]
+type = "any"
+[[assert.same.args]]
+type = "any"
+
+[[assert.truthy.args]]
+type = "any"
+
+[[assert.falsy.args]]
+type = "any"
+
+[[assert.spy.args]]
+type = "any"
+
+[[assert.stub.args]]
+type = "any"

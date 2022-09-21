@@ -1,0 +1,10 @@
+.alt-git
+.alt-gitignore
+.st*
+*private*
+*syncthing*
+home/fonts
+home/ssh
+home/wallpaper*
+home/workspaces
+machines

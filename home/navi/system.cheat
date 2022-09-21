@@ -1,0 +1,25 @@
+% system
+
+# systemd-analyze time
+systemd-analyze time
+
+# systemd-analyze time (user)
+systemd-analyze time --user
+
+# systemd-analyze blame
+systemd-analyze blame
+
+# systemd-analyze blame (user)
+systemd-analyze blame --user
+
+# systemd-analyze critical-chain
+systemd-analyze critical-chain
+
+# systemd-analyze critical-chain (user)
+systemd-analyze critical-chain --user
+
+# systemd-analyze dump
+systemd-analyze dump
+
+# systemd-analyze dump (user)
+systemd-analyze dump --user

@@ -1,0 +1,33 @@
+ignoreGeneratedHeader = false
+severity = "warning"
+confidence = 0.8
+errorCode = 0
+warningCode = 0
+
+enableAllRules = true
+
+[rule.blank-imports]
+disabled = true
+[rule.file-header]
+disabled = true
+[rule.max-public-structs]
+disabled = true
+[rule.line-length-limit]
+disabled = true
+[rule.function-length]
+disabled = true
+[rule.exported]
+disabled = true
+[rule.banned-characters]
+disabled = true
+
+[rule.argument-limit]
+arguments = [5]
+[rule.function-result-limit]
+arguments = [3]
+[rule.cognitive-complexity]
+arguments = [70]
+[rule.cyclomatic]
+arguments = [30]
+[rule.add-constant]
+arguments = [{maxLitCount = "3",allowStrs ="\"\"",allowInts="0,1,2",allowFloats="0.0,0.,1.0,1.,2.0,2."}]

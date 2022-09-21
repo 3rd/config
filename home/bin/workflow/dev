@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+  # local
+  if [ -f "dev.sh" ]; then
+    ./dev.sh
+    exit 0
+  fi
+
+  # make
+  if [ -f "Makefile" ]; then
+    if grep -q "dev:" "Makefile"; then
+      make dev
+    elif grep -q "watch:" "Makefile"; then
+      make watch
+    fi
+  fi
+
+  # go
+  if [ -f "go.mod" ]; then
+    echo "$*"
+    watchexec -e go -r -- go test
+    exit 0
+  fi
+
+  # cargo
+  if [ -f "Cargo.toml" ]; then
+    echo "$*"
+    cargo watch -x "run -- $*"
+    exit 0
+  fi
+
+  # js
+  if [ -f "package.json" ]; then
+    if [ -f "yarn.lock" ]; then
+      yarn dev
+    else
+      npm run dev
+    fi
+    exit 0
+  fi
+fi

@@ -1,0 +1,8 @@
+% ssh
+
+# Mount remote directory
+mkdir -p <host_directory>
+sshfs -o reconnect <host>:<remote_directory> <host_directory>
+
+# Unmount remote directory
+fusermount -u <host_directory>

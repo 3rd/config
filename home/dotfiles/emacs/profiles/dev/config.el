@@ -1,0 +1,28 @@
+(use-package evil
+  :straight t
+  :init
+  ;; (setq evil-undo-system 'undo-fu)
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-i-jump t)
+  (setq evil-want-C-u-delete t)
+  (setq evil-want-C-w-delete t)
+  (setq evil-want-Y-yank-to-eol t)
+  (setq evil-respect-visual-line-mode t)
+  (setq evil-undo-system 'undo-tree)
+  (setq evil-search-module 'evil-search)
+  (setq evil-split-window-below t)
+  (setq evil-vsplit-window-right t)
+  :config
+  (evil-mode 1)
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (evil-set-initial-state 'dashboard-mode 'normal))
+
+(use-package doom-themes
+  :ensure t
+  :config
+  (customize-set-variable 'doom-molokai-brighter-comments t)
+  (switch-theme 'doom-molokai))
