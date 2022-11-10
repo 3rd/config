@@ -47,13 +47,13 @@ snippet arg_default "argument with default value"
 
 snippet arg_switch "getopts switch"
 	while getopts "hv" arg; do
-		case "$arg" in
+		case "\$arg" in
 			h) # help
 				show_help
 				exit 0
 				;;
 			v) # version
-				printf "%s\\n" "$version"
+				printf "%s\\n" "\$version"
 				exit 0
 				;;
 			*)
@@ -133,7 +133,7 @@ snippet for_file_rg "for file in rg match"
 snippet confirm "prompt user to confirm action"
 	read -p "$1" -n 1 -r
 	echo
-	if [[ $REPLY =~ ^[Yy]$ ]]
+	if [[ \$REPLY =~ ^[Yy]$ ]]
 	then
 			$0
 	fi
