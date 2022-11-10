@@ -2,4 +2,5 @@
 set -uf -o pipefail
 IFS=$'\n\t'
 
+# go install github.com/andreimarcu/linx-client@latest
 linx-client "$@"

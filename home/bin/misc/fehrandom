@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -uf -o pipefail
+IFS=$'\n\t'
+
+cd ~/brain/config/home/wallpapers || exit
+RANDOM_WALLPAPER=$(find . -type f | shuf -n 1)
+
+feh --bg-fill --no-fehbg "$RANDOM_WALLPAPER"
