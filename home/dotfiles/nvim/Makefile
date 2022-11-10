@@ -44,32 +44,36 @@ dev: ## development mode
 	@ln -fns "$(SOURCE)" "$(SANDBOX_NVIM)"
 	@watchexec -e ".lua,.vim" -i "**/.packer/**" -i "**/sandbox/**" -r -c "env DEV=true XDG_CONFIG_HOME=$(SANDBOX_HOME) nvim -c \"call feedkeys(\\\"$(DEV_FEEDKEYS)\\\")\" $(DEV_EXTRA_ARGS)"
 
-profile: profile-viml profile-startup ## profile everything
-
-profile-viml: ## profile viml (func *, file *)
-	@nvim -c 'profile start .tmp.profile.data' -c 'profile func *' -c 'profile file *'
-	@cat .tmp.profile.data
+profile: profile-startup profile-viml ## profile everything
 
 profile-startup: ## profile startup (--startuptime)
-	@-rm .tmp.profile.startup.data
-	@nvim --startuptime .tmp.profile.startup.data +q
-	@cat .tmp.profile.startup.data | sort -k 2
+	@-rm profile-startup.log
+	@nvim --startuptime profile-startup.log +q
+	@cat profile-startup.log | sort -k 2
+	
+profile-viml: ## profile viml (func *, file *)
+	@-rm profile-viml.log
+	@nvim -c 'profile start profile-viml.log' -c 'profile func *' -c 'profile file *'
+	@cat profile-viml.log
+
+profile-lua: ## profile lua (https://github.com/charlesmallah/lua-profiler)
+	@echo TODO
 
 benchmark: benchmark-baseline benchmark-startup ## benchmark everything (baseline, startup)
 
 benchmark-baseline: ## run baseline benchmark (-u NONE)
-	$(call print_mod_start,${MAGENTA}Benchmark:${RESET} nvim -u NONE +q)
-	@hyperfine --warmup 2 --runs 40 -s basic "nvim -u NONE +q init.lua" > .tmp.benchmark.baseline.data
-	@rg Time < .tmp.benchmark.baseline.data | awk '{print $$5}'| xargs -0 printf '│ • ${CYAN}Mean${RESET}: ${YELLOW}%s${RESET}'
-	@rg Time < .tmp.benchmark.baseline.data | awk '{print $$11}' | xargs -0 printf '│ • ${CYAN}User${RESET}: ${YELLOW}%s${RESET}'
-	@rg Time < .tmp.benchmark.baseline.data | awk '{print $$14}'| xargs -0 printf '│ • ${CYAN}System${RESET}: ${YELLOW}%s${RESET}'
+	$(call print_mod_start,${MAGENTA}Benchmark:${RESET} baseline)
+	@hyperfine --warmup 10 --runs 40 "nvim -u NONE -c 'q' init.lua" > profile-bench-baseline.log
+	@rg Time < profile-bench-baseline.log | awk '{print $$5}'| xargs -0 printf '│ • ${CYAN}Mean${RESET}: ${YELLOW}%s${RESET}'
+	@rg Time < profile-bench-baseline.log | awk '{print $$11}' | xargs -0 printf '│ • ${CYAN}User${RESET}: ${YELLOW}%s${RESET}'
+	@rg Time < profile-bench-baseline.log | awk '{print $$14}'| xargs -0 printf '│ • ${CYAN}System${RESET}: ${YELLOW}%s${RESET}'
 	$(call print_mod_end)
 
 benchmark-startup: ## run startup benchmark
-	$(call print_mod_start,${MAGENTA}Benchmark:${RESET} nvim +q)
-	@hyperfine --warmup 2 --runs 40 -s basic "nvim +q init.lua" > .tmp.benchmark.startup.data
-	@rg Time < .tmp.benchmark.startup.data | awk '{print $$5}'| xargs -0 printf '│ • ${CYAN}Mean${RESET}: ${YELLOW}%s${RESET}'
-	@rg Time < .tmp.benchmark.startup.data | awk '{print $$11}' | xargs -0 printf '│ • ${CYAN}User${RESET}: ${YELLOW}%s${RESET}'
-	@rg Time < .tmp.benchmark.startup.data | awk '{print $$14}'| xargs -0 printf '│ • ${CYAN}System${RESET}: ${YELLOW}%s${RESET}'
+	$(call print_mod_start,${MAGENTA}Benchmark:${RESET} startup)
+	@hyperfine --warmup 10 --runs 40 "nvim -c 'q' init.lua" > profile-bench-startup.log
+	@rg Time < profile-bench-startup.log | awk '{print $$5}'| xargs -0 printf '│ • ${CYAN}Mean${RESET}: ${YELLOW}%s${RESET}'
+	@rg Time < profile-bench-startup.log | awk '{print $$11}' | xargs -0 printf '│ • ${CYAN}User${RESET}: ${YELLOW}%s${RESET}'
+	@rg Time < profile-bench-startup.log | awk '{print $$14}'| xargs -0 printf '│ • ${CYAN}System${RESET}: ${YELLOW}%s${RESET}'
 	$(call print_mod_end)
 
