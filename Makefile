@@ -62,6 +62,7 @@ link: ## link configuration files
 	$(call link,home/ssh,~/.ssh)
 	$(call linkdot,nvim,~/.config/nvim)
 	$(call linkdot,emacs,~/.emacs.d)
+	$(call linkdot,wezterm,~/.config/wezterm)
 	$(call print_mod_end)
 
 clean: ## clean

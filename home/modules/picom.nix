@@ -28,6 +28,8 @@
       "_GTK_FRAME_EXTENTS@:c"
     ];
     extraOptions = ''
+      experimental-backends = true;
+
       mark-wmwin-focused = true;
       mark-ovredir-focused = true;
       detect-rounded-corners = true;
@@ -43,17 +45,24 @@
       fade-delta = 1;
       fade-exclude = [];
 
+      blur-method =  "dual_kawase";
+      blur-size = 12;
+      blur-strength = 5;
+      blur-kern = "3x3box";
       blur: {
         method = "dual_kawase";
-        strength = 6;
+        strength = 10;
+        #  deviation = 1.0;
+        #  kernel = "11x11gaussian";
         background = false;
         background-frame = false;
         background-fixed = false;
-        kern = "3x3box";
+        #kern = "3x3box";
       }
       blur-background-exclude = [
         "_GTK_FRAME_EXTENTS@:c",
         "class_g = 'Polybar'",
+        "class_g = 'peek'",
       ];
 
       corner-radius = 10.0;

@@ -57,7 +57,7 @@
         body = ''
           begin
             set -l IFS
-            set output (/home/rabbit/brain/core/git-work/work $argv);
+            set output (/home/rabbit/brain/projects/tools/git-work/work $argv);
           end
           switch $output
             case "*-> *"
@@ -76,10 +76,11 @@
       j = "journalctl";
       # shell utils
       ".." = "cd ..";
-      cp = "cp -v";
+      # cp = "cp -v";
       mv = "mv -v";
       mkdir = "mkdir -pv";
       vd = "vidir";
+      top = "zenith";
       # bookmarks
       "@b" = "cd ~/brain";
       "@c" = "cd ~/brain/config";

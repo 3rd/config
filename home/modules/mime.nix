@@ -2,8 +2,7 @@
 let
   chrome = "google-chrome.desktop";
   zathura = "org.pwmt.zathura.desktop";
-in
-{
+in {
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
@@ -55,4 +54,5 @@ in
       "image/x-gzeps" = "org.pwmt.zathura.desktop";
     };
   };
+  xdg.configFile."mimeapps.list".force = true;
 }

@@ -7,6 +7,13 @@
   news.display = "silent";
 
   imports = [
+    ./data-processing
+    ./development
+    ./misc
+    ./toolkit
+    ./workflow
+
+    ./atuin.nix
     ./bat.nix
     ./custom-vault
     ./custom-wiki.nix
@@ -33,6 +40,7 @@
     ./syncthing.nix
     ./tmux
     ./vscode.nix
+    ./wezterm.nix
     ./zathura.nix
     ./zoxide.nix
   ];
@@ -43,4 +51,7 @@
     MANPAGER = "nvim +Man!";
     MANWIDTH = "80";
   };
+
+  # https://github.com/NixOS/nixpkgs/issues/196651
+  manual.manpages.enable = false;
 }

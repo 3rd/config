@@ -8,15 +8,13 @@ let
     git-undo =
       pkgs.writeShellScriptBin "git-undo" (builtins.readFile ./git-undo.sh);
   };
-in
-{
+in {
   imports = [ ./private.nix ];
 
   home.packages = with pkgs; [
     scripts.git-branch
     scripts.git-id
     scripts.git-undo
-    bcompare
     blackbox
     commit-formatter
     difftastic
@@ -72,6 +70,7 @@ in
         cmd = ''
           ${pkgs.meld}/bin/meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"'';
       };
+      # blame = { ignoreRevsFile = ".git-blame-ignore-revs"; };
       pull = { rebase = false; };
       push = { default = "simple"; };
     };

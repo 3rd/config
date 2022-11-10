@@ -13,8 +13,7 @@ let
     five = "extra";
     last = "sys";
   };
-in
-{
+in {
   imports = [ ./colors.nix ];
 
   home.packages = with pkgs; [ flashfocus feh ];
@@ -176,8 +175,8 @@ in
           {
             always = true;
             command =
-              "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/home/wallpaper";
-            # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill --no-fehbg --randomize ~/brain/config/home/wallpapers";
+              "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill --no-fehbg --randomize ~/brain/config/home/wallpapers";
+            # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/home/wallpaper";
             # ''--no-startup-id ${pkgs.hsetroot}/bin/hsetroot -solid "${config.colors.gray-darker}"'';
           }
           {
@@ -198,10 +197,13 @@ in
         default_orientation horizontal
         focus_follows_mouse no
         focus_on_window_activation none
-        default_border pixel 2
         hide_edge_borders both
         gaps inner 4
         gaps outer 0
+
+        default_border pixel 2
+        default_floating_border pixel 2
+        for_window [class="^.*"] border pixel 2
 
         bindcode ${modifier}+110 exec ${pkgs.pcmanfm}/bin/pcmanfm
         bindcode ${modifier}+118 exec ${pkgs.google-chrome}/bin/google-chrome-stable --disable-backgrounding-occluded-windows

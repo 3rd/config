@@ -131,13 +131,13 @@
         type = "internal/battery";
         adapter = "ADP0";
         battery = "BAT0";
-        full-at = 95;
+        full-at = 100;
         animation-charging-0 = "";
         animation-charging-1 = "";
         animation-charging-2 = "";
         animation-charging-3 = "";
         animation-charging-4 = "";
-        animation-charging-framerate = 1000;
+        animation-charging-framerate = 320;
         format-charging = "<animation-charging> <label-charging>";
         format-charging-foreground = gray-medium;
         format-discharging = "<ramp-capacity> <label-discharging>";

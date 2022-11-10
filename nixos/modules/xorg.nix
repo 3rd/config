@@ -7,7 +7,11 @@
   services.xserver = {
     enable = true;
     displayManager = {
-      lightdm.enable = true;
+      # lightdm.enable = true;
+      sddm = {
+        enable = true;
+        # settings.Wayland.SessionDir = "${pkgs.plasma5Packages.plasma-workspace}/share/wayland-sessions";
+      };
       defaultSession = "home-manager";
       session = [{
         name = "home-manager";
@@ -20,6 +24,9 @@
       sessionCommands = ''
         systemctl --user import-environment QT_PLUGIN_PATH
       '';
+    };
+    desktopManager = {
+      # plasma5.enable = true;
     };
     layout = "us";
     libinput = {

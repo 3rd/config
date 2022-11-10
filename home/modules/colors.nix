@@ -1,20 +1,20 @@
 {
   imports = [ ./options/colors.nix ];
   colors = {
-    background = "#191b1f";
-    foreground = "#e3e5e8";
+    background = "#191923";
+    foreground = "#BDC7EE";
     cursor = "#f2b90d";
     selection-background = "#303233";
     selection-foreground = "#cacecd";
 
-    gray-lightest = "#d5d7dd";
-    gray-lighter = "#b9bdc6";
-    gray-light = "#9da3af";
-    gray-medium = "#737b8c";
-    gray-darkish = "#505662";
-    gray-dark = "#373c43";
-    gray-darker = "#2e3238";
-    gray-darkest = "#202327";
+    gray-lightest = "#BDC7EE";
+    gray-lighter = "#B8C0E0";
+    gray-light = "#9296b9";
+    gray-medium = "#7378a5";
+    gray-darkish = "#464A6C";
+    gray-dark = "#444869";
+    gray-darker = "#343751";
+    gray-darkest = "#21222c";
     blue-lightest = "#9cdcfc";
     blue-lighter = "#6acbfb";
     blue-light = "#38b9fa";
@@ -72,7 +72,7 @@
     yellow-darker = "#916f08";
     yellow-darkest = "#614a05";
 
-    color0 = "#282c34";
+    color0 = "#191923";
     color8 = "#393e48";
     color1 = "#c2290a";
     color9 = "#f2330d";
@@ -86,7 +86,7 @@
     color13 = "#eb9efa";
     color6 = "#0ac2c2";
     color14 = "#0df2f2";
-    color7 = "#d5d7dd";
+    color7 = "#BDC7EE";
     color15 = "#e3e5e8";
   };
 }

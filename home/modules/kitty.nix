@@ -9,7 +9,6 @@
     enable = true;
     settings = with config.colors; {
       background_opacity = "0.9";
-      background_tint = "0.0";
       clear_all_shortcuts = "yes";
       clipboard_control = "write-clipboard write-primary no-append";
       close_on_child_death = "yes";
@@ -21,7 +20,7 @@
       input_delay = "0";
       kitty_mod = "ctrl+shift";
       mouse_hide_wait = "-1";
-      placement_strategy = "center";
+      placement_strategy = "top-left";
       repaint_delay = "0";
       scrollback_lines = "100000";
       sync_to_monitor = "no";
@@ -33,15 +32,14 @@
       window_alert_on_bell = "no";
       window_border_width = "0";
       window_margin_width = "0";
-      window_padding_width = "10 0 0 0";
+      window_padding_width = "0 0 0 0";
 
       # font_family = "Bmono";
       # bold_font = "BMono Bold";
       # italic_font = "BMono Italic";
       # bold_italic_font = "BMono Bold Italic";
 
-      # font_family = lib.mkDefault "Comic Code Ligatures";
-      font_family = lib.mkDefault "Input Mono";
+      # font_family = lib.mkDefault "Input Mono";
       # font_family = "Victor Mono"; # thin
       # font_family = "Hasklig"; # super pretty
       # font_family = lib.mkDefault "Atkinson Hyperlegible";
@@ -49,7 +47,13 @@
       # font_size = lib.mkDefault "9.3";
       # font_size = lib.mkDefault "10.6";
       # font_size = lib.mkDefault "9.9";
+
+      # font_family = lib.mkDefault "Comic Code Ligatures";
+      # font_size = lib.mkDefault "10.5";
+
+      font_family = lib.mkDefault "MonoLisa";
       font_size = lib.mkDefault "10.5";
+      # font_size = lib.mkDefault "11.2";
 
       # adjust_line_height = "105%";
 

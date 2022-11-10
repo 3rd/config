@@ -1,8 +1,6 @@
 { config, pkgs, options, ... }:
 
 {
-  # nixpkgs.config.pulseudio = true;
-
   sound.enable = true;
   hardware.pulseaudio = {
     enable = true;

@@ -10,10 +10,11 @@
     ../modules/services/docker.nix
     ../modules/services/syncthing.nix
     ../modules/services/tailscale.private.nix
+    ../modules/security.private.nix
   ];
 
   nix = {
-    package = pkgs.nixFlakes;
+    package = pkgs.nixVersions.stable;
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
@@ -42,8 +43,7 @@
     allowUnfree = true;
     packageOverrides = super:
       let self = super.pkgs;
-      in
-      {
+      in {
         stable = import <nixos-stable> { inherit (config.nixpkgs) config; };
       };
   };
@@ -62,20 +62,20 @@
     BROWSER = "google-chrome-stable";
   };
   environment.systemPackages = with pkgs; [
-    (python3.withPackages (ps: with ps; [ neovim pynvim ]))
+    (python3.withPackages (ps: with ps; [ neovim pynvim ueberzug ]))
     age
     appimage-run
-    aws
     bintools-unwrapped
     bottom
     brightnessctl
     bun
     cachix
+    bc
+    calibre
     cargo-edit
     cargo-watch
     clang-tools
     coreutils
-    cppcheck
     cpufrequtils
     curl
     curlie
@@ -95,11 +95,13 @@
     gh
     git
     git-lfs
+    onefetch
     gitlint
     glances
     glow
     glxinfo
     gnumake
+    unrar-wrapper
     gnutls
     go-jira
     gotools
@@ -107,7 +109,6 @@
     gron
     hadolint
     htop
-    httpie
     hy
     hyperfine
     i7z
@@ -117,9 +118,10 @@
     jdk11
     jq
     libnotify
-    libreoffice
+    stable.libreoffice
     lm_sensors
     lsof
+    rust-petname
     luajit
     luajitPackages.luacheck
     luajitPackages.moonscript
@@ -132,6 +134,8 @@
     ngrok
     niv
     nixfmt
+    proximity-sort
+    flyctl
     nixos-option
     nodePackages.pnpm
     nodejs
@@ -149,6 +153,7 @@
     pup
     ranger
     restic
+    pciutils
     ripgrep
     ripgrep-all
     rlwrap
@@ -158,8 +163,6 @@
     rustfmt
     rustup
     s-tui
-    scc
-    sd
     selene
     shellcheck
     shellharden
@@ -178,7 +181,6 @@
     sumneko-lua-language-server
     terminal-typeracer
     tmux
-    tokei
     tree
     tree-sitter
     unzip
@@ -188,9 +190,9 @@
     vim
     vulkan-tools
     w3m
-    watchexec
     wget
     which
+    sox
     whois
     wmctrl
     x2x
@@ -204,6 +206,8 @@
     zoxide
     zx
     # gui
+    cool-retro-term
+    wezterm
     alacritty
     android-file-transfer
     bottles
@@ -213,19 +217,24 @@
     flameshot
     gnome.file-roller
     gnome.gnome-disk-utility
-    gnome3.file-roller
-    gnome3.gnome-font-viewer
-    gnome3.zenity
+    gnome.file-roller
+    neovide
+    gnome.gnome-font-viewer
+    gnome.zenity
+    gnome.eog
     google-chrome
     gparted
     hsetroot
     insomnia
     keepassxc
+    openai
     kooha
     ksystemlog
     lutris
     masterpdfeditor4
     microsoft-edge-dev
+    stress-ng
+    sl
     mpv
     nitrogen
     obs-studio
@@ -281,7 +290,17 @@
   services.gnome.gnome-keyring.enable = true;
   services.timesyncd.enable = lib.mkDefault true;
   services.udev.packages = [ pkgs.android-udev-rules ];
-  xdg.portal.enable = lib.mkDefault true;
+  services.udisks2.enable = true;
+
+  xdg = {
+    portal = {
+      enable = true;
+      extraPortals = with pkgs; [
+        xdg-desktop-portal-wlr
+        xdg-desktop-portal-gtk
+      ];
+    };
+  };
 
   # ssh & gpg
   services.openssh = {
@@ -292,15 +311,28 @@
   programs.ssh.setXAuthLocation = true;
   programs.gamemode.enable = true;
 
+  powerManagement = {
+    enable = true;
+    powertop.enable = true;
+  };
+
   environment.etc."issue.d/ip.issue".text = ''
     \4
   '';
-  networking.dhcpcd.runHook = "${pkgs.utillinux}/bin/agetty --reload";
 
   virtualisation.libvirtd = {
     enable = true;
     qemu.package = pkgs.qemu_kvm;
   };
+
+  # https://discourse.nixos.org/t/boot-faster-by-disabling-udev-settle-and-nm-wait-online/6339
+  systemd.services.NetworkManager-wait-online.enable = false;
+  systemd.services.systemd-udev-settle.enable = false;
+
+  # https://github.com/NixOS/nixpkgs/issues/180175
+  systemd.services.systemd-udevd.restartIfChanged = false;
+  systemd.network.wait-online.anyInterface = true;
+  systemd.network.wait-online.ignoredInterfaces = [ ];
 
   systemd.enableEmergencyMode = false;
 }
