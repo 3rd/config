@@ -6,3 +6,4 @@
 sandbox
 **/*/dist
 **/*/node_modules
+*.log
