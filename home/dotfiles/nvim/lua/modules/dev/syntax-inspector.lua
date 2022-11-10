@@ -10,7 +10,11 @@ end
 return require("lib").module.create({
   name = "dev/syntax-inspector",
   mappings = {
-    { "n", "<F10>", ":lua require('modules/dev/syntax-inspector').export.inspect_at_cursor()<cr>" },
+    {
+      "n",
+      "<F10>",
+      ":lua require('modules/dev/syntax-inspector').export.inspect_at_cursor()<cr>",
+    },
   },
   export = {
     inspect_at_cursor = inspect_at_cursor,

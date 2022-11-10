@@ -3,7 +3,14 @@ return require("lib").module.create({
   plugins = {
     {
       "andymass/vim-matchup",
-      ft = { "html", "typescriptreact", "javascriptreact", "vue", "svelte", "astro" },
+      ft = {
+        "html",
+        "typescriptreact",
+        "javascriptreact",
+        "vue",
+        "svelte",
+        "astro",
+      },
     },
   },
 })

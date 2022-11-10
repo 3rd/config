@@ -47,7 +47,7 @@ module.current.set_filetype = function(value)
 end
 
 module.current.get_extension = function()
-  return vim.fn.expand("%e")
+  return vim.fn.expand("%:e")
 end
 
 module.current.get_directory = function()

@@ -1,3 +1,4 @@
+---@diagnostic disable: different-requires
 local _module = require("lib/module")
 local buffer = require("lib/buffer")
 local dev = require("lib/dev")
@@ -5,7 +6,6 @@ local env = require("lib/env")
 local is = require("lib/is")
 local log = require("lib/log")
 local map = require("lib/map")
-local options = require("lib/options")
 local packer = require("lib/packer")
 local path = require("lib/path")
 local string = require("lib/string")
@@ -23,7 +23,6 @@ local module = {
   log = log,
   map = map,
   module = _module,
-  options = options,
   packer = packer,
   path = path,
   string = string,

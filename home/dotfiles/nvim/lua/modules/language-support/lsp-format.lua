@@ -10,7 +10,8 @@ local setup = function()
 end
 
 local on_attach = function(client)
-  local exclude = require("modules/language-support/lsp-format").export.config.exclude
+  local exclude =
+    require("modules/language-support/lsp-format").export.config.exclude
   if not vim.tbl_contains(exclude, client.name) then
     require("lsp-format").on_attach(client)
   end

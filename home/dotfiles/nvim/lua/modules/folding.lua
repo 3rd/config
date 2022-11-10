@@ -1,10 +1,15 @@
 local setup_ufo = function()
   local lib = require("lib")
 
+  local config = {
+    -- folded_info_prefix = " ",
+    -- folded_info_prefix = "... ",
+    folded_info_prefix = "… ",
+    show_folded_line_count = false,
+  }
+
   local slang_conceal = function(chunks)
-    if not lib.is.table(chunks) then
-      return chunks
-    end
+    if not lib.is.table(chunks) then return chunks end
     for index, chunk in ipairs(chunks) do
       local text, _hid = unpack(chunk)
       local trimmed_text = lib.string.trim(text)
@@ -16,9 +21,10 @@ local setup_ufo = function()
           concealed_text = vim.fn.substitute(text, [[\v^\s*\zs\*+\ze]], "◉", "")
           concealed_text = vim.fn.substitute(concealed_text, [[\v^\s*\zs\>\ze]], "⮞", "")
         end
-        concealed_text = vim.fn.substitute(concealed_text, [[\v^\s*\zs\[\s\]\ze]], "▢", "")
-        concealed_text = vim.fn.substitute(concealed_text, [[\v^\s*\zs\[-\]\ze]], "🞆", "")
-        concealed_text = vim.fn.substitute(concealed_text, [[\v^\s*\zs\[x\]\ze]], "✔", "")
+        concealed_text = vim.fn.substitute(concealed_text, [[\v^\s*\zs\[\s\]\ze]], "", "") -- default task
+        concealed_text = vim.fn.substitute(concealed_text, [[\v^\s*\zs\[-\]\ze]], "🞆", "") -- active task
+        concealed_text = vim.fn.substitute(concealed_text, [[\v^\s*\zs\[x\]\ze]], "", "") -- done task
+        concealed_text = vim.fn.substitute(concealed_text, [[\v^\s*\zs\[_\]\ze]], "✘", "") -- blocked task
         if concealed_text ~= text then
           text = concealed_text
           chunks[index][1] = text
@@ -68,21 +74,29 @@ local setup_ufo = function()
         end
       end
 
-      local info_without_padding = " " .. tasks_info .. string.format(" %d lines", folded_lines_count)
+      local info_without_padding = " "
+        .. tasks_info
+        .. string.format(" %d lines", folded_lines_count)
       local padding_length = max_length - #info_without_padding - text_length
       local padding = ""
       if padding_length > 0 then
-        padding = string.rep(".", padding_length)
+        -- padding = string.rep(".", padding_length)
+        padding = string.rep(" ", padding_length)
       end
 
-      -- " " .. task completion status .. padding .. " " .. line count
-      table.insert(virtualTextChunks, { " ", "NonText" })
+      -- table.insert(virtualTextChunks, { " ", "NonText" })
+      table.insert(virtualTextChunks, { config.folded_info_prefix, "NonText" })
       if tasks_todo_count > 0 then
         table.insert(virtualTextChunks, { tasks_info, "WarningMsg" })
       else
         table.insert(virtualTextChunks, { tasks_info, "NonText" })
       end
-      table.insert(virtualTextChunks, { padding .. string.format(" %d lines", folded_lines_count), "NonText" })
+
+      local padding_suffix = ""
+      if config.show_folded_line_count then
+        padding_suffix = string.format(" %d lines", folded_lines_count)
+      end
+      table.insert(virtualTextChunks, { padding .. padding_suffix, "NonText" })
 
       return virtualTextChunks
     else
@@ -135,6 +149,33 @@ local setup_ufo = function()
   end)
 end
 
+local setup_fold_cycle = function()
+  require("fold-cycle").setup({
+    open_if_max_closed = true,
+    close_if_max_opened = true,
+    softwrap_movement_fix = true,
+  })
+
+  -- <tab> - expand
+  vim.keymap.set(
+    "n",
+    "<tab>",
+    function() return require("fold-cycle").open() end,
+    { silent = true, desc = "Fold-cycle: open folds" }
+  )
+
+  -- <s-tab> - collapse
+  -- vim.keymap.set("n", "<s-tab>", function() return require("fold-cycle").close() end, { silent = true, desc = "Fold-cycle: close folds" })
+  vim.api.nvim_set_keymap("n", "<s-tab>", "zc", { silent = true, noremap = true })
+
+  vim.keymap.set(
+    "n",
+    "zC",
+    function() return require("fold-cycle").close_all() end,
+    { remap = true, silent = true, desc = "Fold-cycle: close all folds" }
+  )
+end
+
 return require("lib").module.create({
   enabled = true,
   name = "folding",
@@ -144,6 +185,10 @@ return require("lib").module.create({
       requires = { "kevinhwang91/promise-async" },
       after = { "nvim-treesitter" },
       config = setup_ufo,
+    },
+    {
+      "jghauser/fold-cycle.nvim",
+      config = setup_fold_cycle,
     },
   },
 })

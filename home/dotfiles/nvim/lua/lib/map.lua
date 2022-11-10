@@ -1,4 +1,3 @@
--- local random = require("lib/random")
 local _table = require("lib/table")
 
 local default_options = { noremap = true, silent = true }

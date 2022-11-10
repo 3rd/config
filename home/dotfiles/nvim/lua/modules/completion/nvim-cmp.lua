@@ -36,10 +36,13 @@ local setup = function()
       max_item_count = 20,
       autocomplete = { require("cmp.types").cmp.TriggerEvent.TextChanged },
     },
+    performance = {
+      debounce = 60,
+      throttle = 100,
+      fetching_timeout = 200,
+    },
     snippet = {
-      expand = function(args)
-        luasnip.lsp_expand(args.body)
-      end,
+      expand = function(args) luasnip.lsp_expand(args.body) end,
     },
     enabled = function()
       -- disable completion in comments
@@ -51,13 +54,13 @@ local setup = function()
       ["<CR>"] = cmp.mapping.confirm({ select = false }),
       ["<Tab>"] = function(fallback)
         if cmp.visible() then
-          cmp.select_next_item()
+          cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
         elseif luasnip.expand_or_jumpable() then
           luasnip.expand_or_jump()
         else
-          local copilot_keys = vim.fn["copilot#Accept"]()
-          if copilot_keys ~= "" then
-            vim.api.nvim_feedkeys(copilot_keys, "i", true)
+          local ok, suggestion = pcall(require, "copilot.suggestion")
+          if ok and suggestion.is_visible() then
+            suggestion.accept()
           else
             fallback()
           end
@@ -77,14 +80,17 @@ local setup = function()
       ["<C-u>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
     },
     sources = cmp.config.sources({
-      { name = "luasnip", group_index = 2, priority_weight = 90 },
-      { name = "nvim_lsp", group_index = 2, priority_weight = 80 },
-      { name = "path", priority_weight = 70, group_index = 2 },
+      { name = "luasnip", keyword_length = 2 },
+      { name = "nvim_lsp" },
+      { name = "path", keyword_length = 2 },
       -- { name = "buffer", priority_weight = 60 },
     }),
     window = {
       completion = {
         border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
+        -- border = { "🭽", "▔", "🭾", "▕", "🭿", "▁", "🭼", "▏" },
+        -- border = "rounded",
+        winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder",
         scrollbar = "║",
         autocomplete = {
           require("cmp.types").cmp.TriggerEvent.InsertEnter,
@@ -98,7 +104,7 @@ local setup = function()
       },
     },
     style = { winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder" },
-    experimental = { native_menu = false, ghost_text = true },
+    experimental = { ghost_text = false },
     sorting = {
       comparators = {
         cmp.config.compare.recently_used,
@@ -122,26 +128,23 @@ local setup = function()
   end
 end
 
-local patch_capabilities = function(capabilities)
-  return require("cmp_nvim_lsp").update_capabilities(capabilities)
-end
+local patch_capabilities =
+  function(capabilities) return require("cmp_nvim_lsp").update_capabilities(capabilities) end
 
 return require("lib").module.create({
   name = "completion/nvim-cmp",
   plugins = {
     {
       "hrsh7th/nvim-cmp",
+      event = "InsertEnter",
       requires = {
-        "hrsh7th/cmp-buffer",
-        "hrsh7th/cmp-cmdline",
-        "hrsh7th/cmp-nvim-lsp",
-        "hrsh7th/cmp-path",
-        "onsails/lspkind-nvim",
-        "saadparwaiz1/cmp_luasnip",
-        "L3MON4D3/LuaSnip",
+        { "onsails/lspkind-nvim" },
       },
       config = setup,
     },
+    { "hrsh7th/cmp-nvim-lsp", after = "nvim-cmp" },
+    { "hrsh7th/cmp-path", after = "nvim-cmp" },
+    { "saadparwaiz1/cmp_luasnip", after = "nvim-cmp" },
   },
   hooks = {
     capabilities = patch_capabilities,

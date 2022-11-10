@@ -5,8 +5,11 @@ local handle_close = function()
   for _, buffer_id in pairs(buffers) do
     local buffer_is_valid = vim.api.nvim_buf_is_valid(buffer_id)
     local buffer_is_listed = vim.fn.getbufvar(buffer_id, "&buflisted") == 1
-    local buffer_is_terminal = vim.fn.getbufvar(buffer_id, "&buftype") == "terminal"
-    local buffer_is_file = buffer_is_valid and buffer_is_listed and not buffer_is_terminal
+    local buffer_is_terminal = vim.fn.getbufvar(buffer_id, "&buftype")
+      == "terminal"
+    local buffer_is_file = buffer_is_valid
+      and buffer_is_listed
+      and not buffer_is_terminal
     if buffer_is_file then
       file_buffers_count = file_buffers_count + 1
       file_buffers[file_buffers_count] = buffer_id
@@ -37,7 +40,11 @@ end
 return require("lib").module.create({
   name = "workflow/buffer-close",
   mappings = {
-    { "n", "<C-w>", ":lua require('modules/workflow/buffer-close').export.handle_close()<CR>" },
+    {
+      "n",
+      "<C-w>",
+      ":lua require('modules/workflow/buffer-close').export.handle_close()<CR>",
+    },
   },
   export = {
     handle_close = handle_close,

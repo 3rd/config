@@ -1,5 +1,3 @@
-local lib = require("lib")
-
 local config = {
   -- base
   clipboard = "unnamed,unnamedplus",
@@ -13,7 +11,7 @@ local config = {
   shortmess = "filnxtToOFcs",
   termguicolors = true,
   timeout = false,
-  title = true,
+  title = false,
   ttimeout = false,
   visualbell = true,
   wrap = false,
@@ -35,6 +33,7 @@ local config = {
   -- windows
   splitbelow = true,
   splitright = true,
+  splitkeep = "screen",
   -- text editing
   autoindent = true,
   backspace = [[indent,eol,start]],
@@ -42,7 +41,7 @@ local config = {
   joinspaces = false,
   -- completion
   complete = ".",
-  completeopt = [[menuone,noselect]],
+  completeopt = [[menu,menuone,noselect]],
   -- search
   gdefault = true,
   ignorecase = true,
@@ -63,10 +62,11 @@ local config = {
   shiftwidth = 2,
   tabstop = 2,
   -- visual
+  showtabline = 1,
   cmdheight = 1,
   concealcursor = "nc",
   conceallevel = 2,
-  cursorline = true,
+  cursorline = false,
   fillchars = {
     eob = " ",
     horiz = "━",
@@ -96,10 +96,14 @@ local config = {
   synmaxcol = 200,
   -- diff
   diffopt = [[hiddenoff,iwhiteall,algorithm:patience]],
+  -- gui
+  guifont = "Input Mono:h11.5",
 }
 
 return {
   setup = function()
-    lib.options.set_bulk(config)
+    for k, v in pairs(config) do
+      vim.opt[k] = v
+    end
   end,
 }

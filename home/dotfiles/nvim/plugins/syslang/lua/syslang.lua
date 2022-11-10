@@ -7,11 +7,15 @@ local setup_options = function()
   vim.opt.foldlevelstart = 999
   vim.opt.textwidth = 0
   vim.opt.wrap = true
-  vim.opt.signcolumn = "yes:1"
+  vim.opt.signcolumn = "yes:2"
   vim.opt.number = false
   vim.opt.breakindent = true
   vim.opt.breakindentopt = "list:2" -- TODO move to list:-1 with formatlistpat
   vim.opt.formatlistpat = "^\\s*[\\[-]"
+  vim.wo.winbar = " "
+  vim.opt.formatoptions = "cqt"
+  vim.opt.cinwords = "*,-"
+  vim.opt.smartindent = true
 end
 
 local handle_toggle_task = function()
@@ -56,6 +60,9 @@ local setup = function()
   vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true })
   vim.keymap.set("n", "zR", handle_expand_all, { buffer = true })
   vim.keymap.set("n", "zM", handle_collapse_all, { buffer = true })
+
+  vim.keymap.set("n", ">", ">><Cmd>lua require('autolist').tab()<CR>", { buffer = true })
+  vim.keymap.set("n", "<", "<<<Cmd>lua require('autolist').detab()<CR>", { buffer = true })
 end
 
 return {

@@ -16,6 +16,7 @@ local config = {
     { "n", "cL", "S" },
     { "n", "Q", "@q" },
     { "v", "/", [[<esc>/\%V\v]] },
+    { "i", "<esc>", "a<bs><esc>" }, -- preserve autoindent's whitespace when exiting insert mode with <esc>
     -- emacsy
     { "i", "<C-a>", "<home>" },
     { "i", "<C-e>", "<end>" },
@@ -41,18 +42,28 @@ local config = {
     { "v", "<A-j>", ":m'>+<cr>`<my`>mzgv`yo`z" },
     { "v", "<A-k>", ":m'<-2<cr>`>my`<mzgv`yo`z" },
     -- navigate wrapped text
-    { "n", "k", "v:count == 0 ? 'gk' : 'k'", { noremap = true, expr = true, silent = true } },
-    { "n", "j", "v:count == 0 ? 'gj' : 'j'", { noremap = true, expr = true, silent = true } },
+    {
+      "n",
+      "k",
+      "v:count == 0 ? 'gk' : 'k'",
+      { noremap = true, expr = true, silent = true },
+    },
+    {
+      "n",
+      "j",
+      "v:count == 0 ? 'gj' : 'j'",
+      { noremap = true, expr = true, silent = true },
+    },
     -- buffer
     { "n", "<C-s>", "<ESC>:w<CR>" },
     { "i", "<C-s>", "<ESC>:w<CR>" },
     -- navigation
-    { "n", ";", ":Buffers<cr>" },
     { "n", "<BS>", "<c-^>" },
-    { "n", "<C-p>", ":Files<cr>" },
-    { "n", "<C-f>", ":RgNoMatchFilenames<cr>" },
-    { "n", "<leader>l", ":Lines<cr>" },
-    { "n", "-", ":lua require('modules/workflow/file-manager').export.toggle_or_focus_file_tree()<cr>" },
+    {
+      "n",
+      "-",
+      ":lua require('modules/workflow/file-management').export.toggle_or_focus_file_tree()<cr>",
+    },
     -- comments
     { "n", "<c-_>", "gcc", { noremap = false } },
     { "v", "<c-_>", "gc", { noremap = false } },
@@ -60,8 +71,27 @@ local config = {
     { "v", "<c-/>", "gc", { noremap = false } },
     -- fix https://github.com/neovim/neovim/issues/14090#issuecomment-1113090354
     { "n", "<C-I>", "<C-I>" },
-    { "n", "<Tab>", "za" },
-    { "n", "<S-Tab>", "zc" },
+    -- tab navigation <m-index>
+    { "n", "<M-1>", ":tabfirst<cr>" },
+    { "n", "<M-2>", ":tabn 2<cr>" },
+    { "n", "<M-3>", ":tabn 3<cr>" },
+    { "n", "<M-4>", ":tabn 4<cr>" },
+    { "n", "<M-5>", ":tabn 5<cr>" },
+    { "n", "<M-6>", ":tabn 6<cr>" },
+    -- create tab <c-a>c
+    { "n", "<C-a>c", ":tabnew<cr>" },
+    -- close tab <c-a>x
+    { "n", "<C-a>x", ":tabclose<cr>" },
+    -- new pane <c-a>s <c-a>v
+    { "n", "<C-a>s", ":new<cr>" },
+    { "n", "<C-a>v", ":vnew<cr>" },
+    -- close pane <c-a>x
+    { "n", "<C-a>x", ":bwipeout!<cr>" },
+    -- neovide
+    { "c", "<C-v>", "<C-r>+" },
+    { "c", "<C-S-v>", "<C-r>+" },
+    -- { "i", "<C-v>", "<C-r>+" },
+    -- { "i", "<C-r>", "<C-v>" },
   },
 }
 
@@ -75,9 +105,7 @@ local setup = function()
 
   local modules = lib.module.get_enabled_modules()
   for _, module in ipairs(modules) do
-    if module.mappings then
-      lib.map.bulk(module.mappings)
-    end
+    if module.mappings then lib.map.bulk(module.mappings) end
   end
 end
 

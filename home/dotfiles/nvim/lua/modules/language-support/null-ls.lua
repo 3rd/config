@@ -6,20 +6,24 @@ local setup = function(on_attach)
   local paths = {
     stylua_config = vim.fn.expand("~/.config/nvim/linters/stylua.toml"),
     revive_config = vim.fn.expand("~/.config/nvim/linters/revive.toml"),
-    eslint_d_binary = vim.fn.expand("~/.npm/global/bin/eslint_d"),
+    -- eslint_d_binary = vim.fn.expand("~/.npm/global/bin/eslint_d"),
     eslint_config = vim.fn.expand("~/.config/nvim/linters/eslint/dist/main.js"),
     eslint_node_modules = vim.fn.expand("~/.config/nvim/linters/eslint/node_modules"),
     prettier_config = vim.fn.expand("~/.config/nvim/linters/prettier.json"),
   }
 
   local sources = {
-    null_ls.builtins.formatting.stylua.with({ extra_args = { "--config-path", paths.stylua_config } }),
+    null_ls.builtins.formatting.stylua.with({
+      extra_args = { "--config-path", paths.stylua_config },
+    }),
     null_ls.builtins.diagnostics.statix,
     null_ls.builtins.diagnostics.deadnix,
     null_ls.builtins.code_actions.statix,
     null_ls.builtins.formatting.nixfmt.with({ extra_args = { "--width", "80" } }),
     null_ls.builtins.diagnostics.shellcheck,
-    null_ls.builtins.formatting.shfmt.with({ args = { "-i", "2", "-ci", "-bn", "-filename", "$FILENAME" } }),
+    null_ls.builtins.formatting.shfmt.with({
+      args = { "-i", "2", "-ci", "-bn", "-filename", "$FILENAME" },
+    }),
     null_ls.builtins.formatting.shellharden,
     null_ls.builtins.formatting.fish_indent,
     null_ls.builtins.diagnostics.revive.with({
@@ -28,40 +32,67 @@ local setup = function(on_attach)
     null_ls.builtins.formatting.gofmt,
     null_ls.builtins.formatting.goimports,
     null_ls.builtins.formatting.rustfmt,
-    null_ls.builtins.diagnostics.eslint_d.with({
-      command = paths.eslint_d_binary,
-      args = {
-        "--no-eslintrc",
-        "--cache",
-        "--resolve-plugins-relative-to",
-        paths.eslint_node_modules,
-        "--config",
-        paths.eslint_config,
-        "--stdin",
-        "--format",
-        "json",
-        "--stdin-filename",
-        "$FILENAME",
-      },
-    }),
-    null_ls.builtins.code_actions.eslint_d,
-    null_ls.builtins.formatting.eslint_d.with({
-      command = paths.eslint_d_binary,
-      args = {
-        "--no-eslintrc",
-        "--cache",
-        "--resolve-plugins-relative-to",
-        paths.eslint_node_modules,
-        "--config",
-        paths.eslint_config,
-        "--stdin",
-        "--stdin",
-        "--fix",
-        "--fix-to-stdout",
-        "--stdin-filename",
-        "$FILENAME",
-      },
-    }),
+    -- null_ls.builtins.diagnostics.eslint_d.with({
+    --   command = paths.eslint_d_binary,
+    --   args = {
+    --     "--no-eslintrc",
+    --     "--cache",
+    --     "--resolve-plugins-relative-to",
+    --     paths.eslint_node_modules,
+    --     "--config",
+    --     paths.eslint_config,
+    --     "--stdin",
+    --     "--format",
+    --     "json",
+    --     "--stdin-filename",
+    --     "$FILENAME",
+    --   },
+    --   cwd = function(params)
+    --     -- https://github.com/jose-elias-alvarez/null-ls.nvim/pull/833
+    --     return require("null-ls.utils").root_pattern(
+    --       -- https://eslint.org/docs/user-guide/configuring/configuration-files#configuration-file-formats
+    --       ".root",
+    --       ".eslintrc",
+    --       ".eslintrc.js",
+    --       ".eslintrc.cjs",
+    --       ".eslintrc.yaml",
+    --       ".eslintrc.yml",
+    --       ".eslintrc.json",
+    --       "package.json"
+    --     )(params.bufname)
+    --   end,
+    -- }),
+    -- null_ls.builtins.formatting.eslint_d.with({
+    --   command = paths.eslint_d_binary,
+    --   args = {
+    --     "--no-eslintrc",
+    --     "--cache",
+    --     "--resolve-plugins-relative-to",
+    --     paths.eslint_node_modules,
+    --     "--config",
+    --     paths.eslint_config,
+    --     "--stdin",
+    --     "--stdin",
+    --     "--fix",
+    --     "--fix-to-stdout",
+    --     "--stdin-filename",
+    --     "$FILENAME",
+    --   },
+    --   cwd = function(params)
+    --     -- https://github.com/jose-elias-alvarez/null-ls.nvim/pull/833
+    --     return require("null-ls.utils").root_pattern(
+    --       -- https://eslint.org/docs/user-guide/configuring/configuration-files#configuration-file-formats
+    --       ".eslintrc",
+    --       ".eslintrc.js",
+    --       ".eslintrc.cjs",
+    --       ".eslintrc.yaml",
+    --       ".eslintrc.yml",
+    --       ".eslintrc.json",
+    --       "package.json"
+    --     )(params.bufname)
+    --   end,
+    -- }),
+    -- null_ls.builtins.code_actions.eslint_d,
     null_ls.builtins.formatting.prettierd.with({
       env = {
         PRETTIERD_DEFAULT_CONFIG = paths.prettier_config,
@@ -86,7 +117,16 @@ local setup = function(on_attach)
       },
     }),
     null_ls.builtins.formatting.rustywind.with({
-      filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue", "svelte", "html", "astro" },
+      filetypes = {
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+        "vue",
+        "svelte",
+        "html",
+        "astro",
+      },
     }),
     null_ls.builtins.diagnostics.cppcheck,
     null_ls.builtins.formatting.clang_format,
@@ -102,14 +142,15 @@ local setup = function(on_attach)
     null_ls.builtins.diagnostics.ansiblelint,
     null_ls.builtins.formatting.terraform_fmt,
     null_ls.builtins.code_actions.proselint.with({ filetypes = { "markdown" } }),
-    null_ls.builtins.diagnostics.vale.with({ filetypes = { "markdown", "asciidoc" } }),
+    -- null_ls.builtins.diagnostics.vale.with({ filetypes = { "markdown", "asciidoc" } }),
   }
 
   local config = {
     debug = false,
     sources = sources,
     on_attach = on_attach,
-    root_dir = util.root_pattern(".root", "package.json", ".git") or lib.buffer.current.get_directory(),
+    root_dir = util.root_pattern(".root", "package.json", ".git")
+      or lib.buffer.current.get_directory(),
   }
 
   null_ls.setup(config)

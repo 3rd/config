@@ -14,11 +14,31 @@ return require("lib").module.create({
     config = setup,
   },
   mappings = {
-    { "v", "<leader>ef", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function')<CR>]] },
-    { "v", "<leader>ev", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Variable')<CR>]] },
-    { "n", "<leader>ei", [[ <Cmd>lua require('refactoring').refactor('Inline Variable')<CR>]] },
-    { "v", "<leader>ei", [[ <Esc><Cmd>lua require('refactoring').refactor('Inline Variable')<CR>]] },
-    { "n", "<leader>eb", [[ <Cmd>lua require('refactoring').refactor('Extract Block')<CR>]] },
+    {
+      "v",
+      "<leader>ef",
+      [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function')<CR>]],
+    },
+    {
+      "v",
+      "<leader>ev",
+      [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Variable')<CR>]],
+    },
+    {
+      "n",
+      "<leader>ei",
+      [[ <Cmd>lua require('refactoring').refactor('Inline Variable')<CR>]],
+    },
+    {
+      "v",
+      "<leader>ei",
+      [[ <Esc><Cmd>lua require('refactoring').refactor('Inline Variable')<CR>]],
+    },
+    {
+      "n",
+      "<leader>eb",
+      [[ <Cmd>lua require('refactoring').refactor('Extract Block')<CR>]],
+    },
     { "n", "<leader>ee", ":lua require('refactoring').select_refactor()<CR>" },
     { "v", "<leader>ee", ":lua require('refactoring').select_refactor()<CR>" },
     -- { "v", "<leader>eff", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function To File')<CR>]] },

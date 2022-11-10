@@ -24,13 +24,6 @@ local setup_comment_nvim = function()
   })
 end
 
-local setup_comment_frame = function()
-  require("nvim-comment-frame").setup({
-    keymap = "<leader>cc",
-    multiline_keymap = "<leader>C",
-  })
-end
-
 return require("lib").module.create({
   name = "language-support/comments",
   plugins = {
@@ -38,10 +31,6 @@ return require("lib").module.create({
       "numToStr/Comment.nvim",
       requires = { "JoosepAlviste/nvim-ts-context-commentstring" },
       config = setup_comment_nvim,
-    },
-    {
-      "s1n7ax/nvim-comment-frame",
-      config = setup_comment_frame,
     },
   },
 })

@@ -14,6 +14,7 @@ local Module = {
     lsp_on_attach = nil,
   },
   mappings = nil,
+  actions = nil,
   export = {},
 }
 
@@ -26,20 +27,17 @@ function Module:new(props)
     setup = props.setup or Module.setup,
     hooks = props.hooks or Module.hooks,
     mappings = props.mappings or Module.mappings,
+    actions = props.actions or Module.actions,
     export = props.export or Module.export,
   }
   setmetatable(instance, self)
   self.__index = self
-  if is.bool(props.enabled) then
-    instance.enabled = props.enabled
-  end
+  if is.bool(props.enabled) then instance.enabled = props.enabled end
   return instance
 end
 
 function Module:log(message)
-  if self.debug then
-    print(string.format("[%s] %s", self.name, message))
-  end
+  if self.debug then print(string.format("[%s] %s", self.name, message)) end
 end
 
 function Module:load()
@@ -68,9 +66,7 @@ local get_modules = function()
     path = string.gsub(path, string.format("%s/", string.gsub(lua_dir, "%-", "%%-")), "")
     path = string.gsub(path, ".lua$", "")
     local module = require(path)
-    if module.__is_module then
-      table.insert(result, module)
-    end
+    if module.__is_module then table.insert(result, module) end
   end
   return result
 end
@@ -79,9 +75,7 @@ local get_enabled_modules = function()
   local modules = get_modules()
   local result = {}
   for _, module in ipairs(modules) do
-    if module.enabled then
-      table.insert(result, module)
-    end
+    if module.enabled then table.insert(result, module) end
   end
   return result
 end
@@ -89,9 +83,7 @@ end
 return {
   get_modules = get_modules,
   get_enabled_modules = get_enabled_modules,
-  create = function(props)
-    return Module:new(props)
-  end,
+  create = function(props) return Module:new(props) end,
   load_modules = function()
     local modules = get_modules()
     for _, module in ipairs(modules) do

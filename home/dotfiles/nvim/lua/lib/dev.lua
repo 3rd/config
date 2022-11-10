@@ -29,11 +29,10 @@ local module = {
     handler = error,
     output_file = "/tmp/nvim-log.txt",
   }),
+  inspect = function(value)
+    print(vim.inspect(value))
+    return value
+  end,
 }
-
-module.inspect = function(value)
-  print(vim.inspect(value))
-  return value
-end
 
 return module

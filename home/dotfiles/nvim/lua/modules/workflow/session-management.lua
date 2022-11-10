@@ -5,7 +5,8 @@ local setup_vim_workspace = function()
   vim.g.workspace_session_directory = vim.fn.stdpath("config") .. "/.sessions/"
   vim.g.workspace_session_disable_on_args = 0
   vim.g.workspace_session_name = "session.vim"
-  vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal"
+  vim.o.sessionoptions =
+    "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal"
 end
 
 local setup_lastplace = function()

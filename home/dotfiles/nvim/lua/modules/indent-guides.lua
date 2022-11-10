@@ -7,7 +7,15 @@ local setup = function()
     show_end_of_line = true,
     show_trailing_blankline_indent = false,
     show_first_indent_level = false,
-    filetype_exclude = { "", "help", "packer", "lspinfo", "lsp-installer", "null-ls-info", "NvimTree" },
+    filetype_exclude = {
+      "",
+      "help",
+      "packer",
+      "lspinfo",
+      "lsp-installer",
+      "null-ls-info",
+      "NvimTree",
+    },
   })
 end
 

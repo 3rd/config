@@ -3,9 +3,9 @@ local setup = function()
 
   local theme = {
     normal = {
-      a = { bg = "#444444", fg = "#999999" },
-      b = { bg = "#777777", fg = "#bbbbbb" },
-      c = { bg = "#888888", fg = "#dddddd" },
+      a = { bg = "#343751", fg = "#A5ADCB" },
+      b = { bg = "#464A6C", fg = "#B8C0E0" },
+      c = { bg = "#7479a5", fg = "#B8C0E0" },
     },
   }
 

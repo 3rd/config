@@ -15,9 +15,10 @@ local handlers = {
 local register = function()
   vim.opt.foldmethod = "expr"
   vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-  vim.cmd("silent! loadview")
+  -- vim.cmd("silent! loadview")
 
-  local group = vim.api.nvim_create_augroup("SyslangFoldPersitence", { clear = true })
+  local group =
+    vim.api.nvim_create_augroup("SyslangFoldPersitence", { clear = true })
   local bufnr = vim.api.nvim_get_current_buf()
   vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
     group = group,

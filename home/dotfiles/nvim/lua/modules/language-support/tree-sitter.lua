@@ -57,9 +57,6 @@ local setup = function()
         scope_incremental = "<nop>",
       },
     },
-    autotag = {
-      enable = false,
-    },
     matchup = {
       enable = true,
     },
@@ -77,7 +74,6 @@ return require("lib").module.create({
       "nvim-treesitter/nvim-treesitter",
       requires = {
         "nvim-treesitter/playground",
-        "windwp/nvim-ts-autotag",
         "m-demare/hlargs.nvim",
       },
       config = setup,

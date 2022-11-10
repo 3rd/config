@@ -8,36 +8,36 @@ local setup = function()
   local colors = require("catppuccin.palettes").get_palette()
 
   catppuccin.setup({
-    transparent_background = true,
+    transparent_background = false,
     term_colors = false,
     color_overrides = {
       all = {
-        base = "#1f1f22",
-        mantle = "#242424",
-        crust = "#474747",
-        overlay0 = "#7d7d7d",
-        overlay1 = "#919191",
-        overlay2 = "#a6a6a6",
-        subtext0 = "#b5b5b5",
-        subtext1 = "#b3b3b3",
-        surface0 = "#383838", -- cursorline
-        surface1 = "#4f4f4f", -- foldedbg
-        surface2 = "#8f8f8f",
-        text = "#D4D3DE",
-        blue = "#63baff", -- status, foldedfg
-        flamingo = "#ca71d9",
-        green = "#ABD279",
-        lavender = "#fba03c",
-        maroon = "#be755a",
-        mauve = "#be99ff",
-        peach = "#ff8c07",
-        pink = "#e91e63",
-        red = "#ec8179",
+        base = "#191923", -- background
+        text = "#BDC7EE", -- foreground
+        mantle = "#21222c", -- sidebar
+        crust = "#464A6C", -- VertSplit
+        subtext1 = "#B8C0E0",
+        subtext0 = "#A5ADCB",
+        overlay0 = "#7479a5", -- PmenuThumb:bg, NonText, WildMenu
+        overlay1 = "#9296b9", -- Conceal
+        overlay2 = "#9296b9", -- Pmenu:fg
+        surface0 = "#343751", -- CursorLine:bg, Pmenu:bg
+        surface1 = "#444869", -- SignColumn:fg, Substitute:bg, LineNr:fg, PmenuSel:bg, PmenuSbar:bg, Visual:bg, Whitespace:bg
+        surface2 = "#7378a5", -- Comment
+        blue = "#66ADFF", -- FloatBorder, Function, Type
+        flamingo = "#DC5FFB", -- @symbol, code block
+        green = "#ABD279", -- String, DiffAdd
+        lavender = "#fba03c", -- CursorLineNr
+        maroon = "#EE99A0",
+        mauve = "#B980FF", -- conditionals, loops, keywords,
+        peach = "#FB945F", -- MatchParen, Constant, Number
+        pink = "#e91e63", -- Keyword, PreProc, Include
+        red = "#ec8179", -- Conditional, DiffDel
         rosewater = "#ffdddd",
-        sapphire = "#80c6ff",
-        sky = "#ababab",
-        teal = "#17cfbc",
-        yellow = "#ffc505",
+        sapphire = "#7DC4E4", -- struct
+        sky = "#9297B9", -- IncSearch, Operator
+        teal = "#17cfbc", -- Character, field
+        yellow = "#ffc505", -- Structure
       },
     },
     styles = {
@@ -55,7 +55,10 @@ local setup = function()
       operators = {},
     },
     integrations = {
-      treesitter = true,
+      cmp = true,
+      gitsigns = true,
+      indent_blankline = { enabled = true, colored_indent_levels = false },
+      markdown = true,
       native_lsp = {
         enabled = true,
         virtual_text = {
@@ -71,45 +74,13 @@ local setup = function()
           information = { "underline" },
         },
       },
-      coc_nvim = false,
-      lsp_trouble = false,
-      cmp = true,
-      lsp_saga = false,
-      gitgutter = false,
-      gitsigns = true,
-      telescope = true,
-      nvimtree = {
-        enabled = true,
-        show_root = false,
-        transparent_panel = false,
-      },
-      neotree = {
-        enabled = false,
-        show_root = false,
-        transparent_panel = false,
-      },
-      which_key = false,
-      indent_blankline = {
-        enabled = true,
-        colored_indent_levels = false,
-      },
-      dashboard = false,
-      neogit = false,
-      vim_sneak = false,
-      fern = false,
-      barbar = false,
-      bufferline = false,
-      markdown = true,
-      lightspeed = false,
-      ts_rainbow = false,
-      hop = false,
       notify = true,
-      telekasten = false,
-      symbols_outline = false,
+      nvimtree = { enabled = true, show_root = false, transparent_panel = false },
+      treesitter = true,
     },
     custom_highlights = {
-      VertSplit = { fg = "#474747" },
-      -- NormalFloat = { bg = "NONE" },
+      -- VertSplit = { fg = "#525A7A" },
+      -- NormalFloat = { bg = "#343751" },
       ["@slang.document.title"] = { fg = "#fba03c", style = { "bold" } },
       ["@slang.document.meta"] = { fg = "#fba03c" },
       ["@slang.document.meta.field"] = { fg = "#d2ced4" },
@@ -118,7 +89,7 @@ local setup = function()
       ["@slang.bold"] = { style = { "bold" } },
       ["@slang.italic"] = { style = { "italic" } },
       ["@slang.underline"] = { style = { "underline" } },
-      ["@slang.comment"] = { fg = "#7d7d7d" },
+      ["@slang.comment"] = { fg = "#7378a5" },
       ["@slang.string"] = { fg = "#4efa8e" },
       ["@slang.number"] = { fg = "#71c9f6" },
       ["@slang.ticket"] = { fg = "#fa89f6" },
@@ -142,31 +113,39 @@ local setup = function()
       ["@slang.heading_6.marker"] = { fg = "#04D3D0" },
       ["@slang.section"] = { fg = "#7bdbc2" },
       ["@slang.pipe"] = { fg = "#abc9c2" },
-      ["@slang.task_normal"] = { fg = "#d2ced4" },
+      ["@slang.task_normal"] = { fg = "#BDC7EE" },
       ["@slang.task_active"] = { fg = "#57CC99" },
-      ["@slang.task_done"] = { fg = "#6a6a6a" },
-      ["@slang.task_session"] = { fg = "#707070" },
+      ["@slang.task_done"] = { fg = "#7378a5" },
+      ["@slang.task_blocked"] = { fg = "#fa4040" },
+      ["@slang.task_session"] = { fg = "#7378a5" },
       ["@slang.task_schedule"] = { fg = "#FF8000" },
       ["@slang.tag.hash"] = { fg = "#5BC0EB" },
       ["@slang.tag.positive"] = { fg = "#9BC53D" },
       ["@slang.tag.negative"] = { fg = "#FA4224" },
       ["@slang.tag.context"] = { fg = "#FDDC5C" },
       ["@slang.tag.danger"] = { bg = "#C3423F", fg = "#ffffff" },
+      ["@slang.tag.identifier"] = { fg = "#e38fff" },
       ["@slang.link_plain"] = { fg = "#5BC0CD", style = { "italic" } },
       ["@slang.link"] = { fg = "#5BC0CD", style = { "italic" } },
       -- ["@slang.code_block"] = { bg = "#202020" },
-      ["@slang.code_block_start"] = { fg = "#707070", style = { "italic" } },
-      ["@slang.code_block_language"] = { fg = "#808080", style = { "italic" } },
-      ["@slang.code_block_content"] = { fg = "#d2ced4" },
-      ["@slang.code_block_end"] = { fg = "#707070", style = { "italic" } },
+      ["@slang.inline_code"] = { fg = "#ff824a" },
+      ["@slang.code_block_start"] = { fg = "#7378a5", style = { "italic" } },
+      ["@slang.code_block_language"] = { fg = "#6F75A9", style = { "italic" } },
+      ["@slang.code_block_content"] = { fg = "#BDC7EE" },
+      ["@slang.code_block_end"] = { fg = "#7378a5", style = { "italic" } },
     },
   })
 
   -- latte, frappe, macchiato, mocha
   vim.g.catppuccin_flavour = "macchiato"
-
   vim.cmd([[colorscheme catppuccin]])
+
   vim.cmd([[hi clear Folded]])
+  vim.cmd([[hi clear NonText]])
+  -- vim.cmd([[hi TabLine guibg=NONE guifg=#191b1f]])
+  -- vim.cmd([[hi TabLineFill guibg=NONE guifg=#191b1f]])
+  -- vim.cmd([[hi TabLineSel guibg=NONE guifg=#191b1f]])
+  -- vim.cmd([[hi Title guibg=NONE guifg=#191b1f]])
 end
 
 return require("lib").module.create({
