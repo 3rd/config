@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
 IFS=$'\n\t'
 
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
@@ -8,14 +7,76 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
     exit 0
   fi
 
-  slop=$(slop -f "%x %y %w %h %g %i") || exit 1
-  IFS=$' ' read -r X Y W H _ < <(echo "$slop")
+  OUTPUT="${1%.mp4}.mp4"
 
-  ffmpeg -loglevel "16" \
-    -f "x11grab" \
-    -framerate "60" \
-    -s "${W}x$H" -i ":0.0+$X,$Y" \
-    -c:v "h264" \
-    -preset "fast" \
-    "$1"
+  # trap '' INT
+  # ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" -pix_fmt yuv420p -preset ultrafast "$OUTPUT.mkv"
+  # trap - INT
+  # ffmpeg -i "$OUTPUT.mkv" -c copy "$OUTPUT"
+  # rm "$OUTPUT.mkv"
+
+  while true; do
+    read -r -p "Record audio? [y/N] " audio
+    case $audio in
+      [Yy]*)
+        source=$(pactl list sources short | grep bluez | awk '{print $1}')
+        audio=(-f pulse -ac 2 -i "$source")
+        audio_conv=(-c:a aac)
+        break
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
+  if [ ${#audio[@]} -gt 0 ]; then
+    while true; do
+      read -r -p "Record microphone? [y/N] " mic
+      case $mic in
+        [Yy]*)
+          audio=(-f pulse -ac 2 -i default)
+          audio_conv=(-c:a aac)
+          break
+          ;;
+        *)
+          break
+          ;;
+      esac
+    done
+  fi
+
+  echo "${#audio[@]}"
+
+  slop=$(slop -f "%x %y %w %h %g %i") || exit 1
+  IFS=$' ' read -r X Y W H _ < <(echo """$slop")
+  W=$((W + W % 2))
+  H=$((H + H % 2))
+
+  trap '' INT
+  echo "Recording..."
+  if [ ${#audio[@]} -gt 0 ]; then
+    ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s """${W}x$H" -i ":0.0+""$X,$Y" -pix_fmt yuv420p -preset ultrafast """$OUTPUT".mkv
+  else
+    ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s """${W}x$H" -i ":0.0+""$X,$Y" -pix_fmt yuv420p -preset ultrafast """$OUTPUT".mkv """${audio[@]}"
+  fi
+  trap - INT
+  if [ ${#audio_conv[@]} -gt 0 ]; then
+    ffmpeg -i """$OUTPUT".mkv -c copy -movflags +faststart """$OUTPUT"
+  else
+    ffmpeg -i """$OUTPUT".mkv -c copy "${audio_conv[@]}" -movflags +faststart """$OUTPUT"
+  fi
+  rm """$OUTPUT".mkv
+  while true; do
+    read -r -p "Preview? [y/N] " preview
+    case $preview in
+      [Yy]*)
+        mpv """$OUTPUT"
+        break
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
 fi
