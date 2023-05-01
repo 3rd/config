@@ -2,4 +2,4 @@
 set -uf -o pipefail
 IFS=$'\n\t'
 
-play -n synth brownnoise synth pinknoise mix synth sine amod 0.3 10
+play -n -n --combine merge synth brownnoise band -n 528 963 vol -15dB treble -40 reverb 20
