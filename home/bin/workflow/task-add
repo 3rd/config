@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-TEXT=$(zenity --entry --text "Inbox entry:")
+TEXT=$(yad --entry --text "Inbox entry:")
 DEST=~/brain/wiki/_inbox/tasks
 
 # https://stackoverflow.com/questions/3183444/check-for-valid-link-url
