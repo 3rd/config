@@ -34,4 +34,5 @@ _G.lib = {
   path = require("lib/path"),
   random = require("lib/random"),
   shell = require("lib/shell"),
+  ts = require("lib/treesitter"),
 }
