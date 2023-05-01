@@ -5,7 +5,7 @@ local inspect = function()
     local n2 = vim.fn.synIDattr(i2, "name")
     print(n1, "->", n2)
   end
-  vim.api.nvim_exec2("Inspect")
+  vim.api.nvim_exec2("Inspect", {})
 end
 
 return lib.module.create({
