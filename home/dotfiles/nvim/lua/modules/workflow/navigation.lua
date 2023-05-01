@@ -1,45 +1,7 @@
-vim.g["$FZF_DEFAULT_OPTS"] = [[--layout=reverse --info=inline --color gutter:-1]]
-vim.g.fzf_action = {
-  ["ctrl-s"] = "split",
-  ["ctrl-v"] = "vsplit",
-}
-vim.g.fzf_layout = { down = "~45%" }
-vim.g.fzf_options =
-  [[--tiebreak=index -m --color 16 --color gutter:-1 --preview "bat --color always --style=numbers,changes {}"]]
-
-local setup_fzf = function()
-  vim.cmd([[
-    let $FZF_DEFAULT_COMMAND = 'rg --files --follow --smart-case --hidden -g "!{.git,.cache,.st*,package-lock.json,yarn.lock,node_modules,local_modules}"'
-    let $FZF_DEFAULT_OPTS = '--bind ctrl-a:select-all,ctrl-d:deselect-all --color gutter:-1'
-  ]])
-
-  vim.cmd([[
-    command! -nargs=* -bang RgNoMatchFilenames call fzf#vim#grep(
-      \ "rg --column --line-number --no-heading --color=always --smart-case -- ".shellescape(<q-args>), 1,
-      \ fzf#vim#with_preview({'options': '--delimiter : --nth 4..'}), <bang>0)
-  ]])
-end
-
-local setup_nvim_fzf = function()
-  require("fzf").default_options = {
-    window_on_create = function() vim.cmd("set winhl=Normal:Normal") end,
-  }
-end
-
-local setup_trouble = function()
-  local trouble = require("trouble")
-  trouble.setup({
-    action_keys = {
-      open_split = { "<c-s>" },
-      open_vsplit = { "<c-v>" },
-    },
-  })
-end
-
 local setup_fzf_lua = function()
   local fzf = require("fzf-lua")
 
-  local default_opts = {
+  local config = {
     fzf_opts = { ["--layout"] = "default" },
     winopts = {
       split = "botright new",
@@ -63,63 +25,51 @@ local setup_fzf_lua = function()
         config = nil,
       },
     },
-    files = {
-      git_icons = false,
-    },
-    grep = {
-      git_icons = false,
-    },
-    tags = {
-      git_icons = false,
-    },
-    btags = {
-      git_icons = false,
-    },
+    files = { git_icons = false },
+    grep = { git_icons = false },
+    tags = { git_icons = false },
+    btags = { git_icons = false },
   }
+  fzf.setup(config)
 
-  fzf.setup(default_opts)
-
-  vim.keymap.set("n", "<c-p>", function()
-    local opts = vim.deepcopy(default_opts)
+  lib.map.map("n", "<c-p>", function()
+    local opts = vim.deepcopy(config)
     opts.cmd = "rg --files --hidden --glob=!.git/ --smart-case"
     if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
       opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(vim.fn.expand("%"))
     end
     opts.prompt = "> "
-    opts.fzf_opts = {
-      ["--info"] = "inline",
-      ["--tiebreak"] = "index",
-    }
+    opts.fzf_opts = { ["--info"] = "inline", ["--tiebreak"] = "index" }
     fzf.files(opts)
-  end)
-  vim.keymap.set("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>")
-  vim.keymap.set("n", "<c-f>", "<cmd>lua require('fzf-lua').grep_project()<CR>")
-  vim.keymap.set("n", "<leader>l", "<cmd>lua require('fzf-lua').blines()<CR>")
-  vim.keymap.set("n", "<leader>L", "<cmd>lua require('fzf-lua').lines()<CR>")
-  vim.keymap.set("n", "<leader><leader>", "<cmd>lua require('fzf-lua').resume()<CR>")
+  end, "Find file in project")
+  lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
+  lib.map.map("n", "<c-f>", "<cmd>lua require('fzf-lua').grep_project()<CR>", "Find text in project")
+  lib.map.map("n", "<leader>l", "<cmd>lua require('fzf-lua').blines()<CR>", "Find line in buffer")
+  lib.map.map("n", "<leader>L", "<cmd>lua require('fzf-lua').lines()<CR>", "Find line in project")
+  lib.map.map("n", "<leader><leader>", "<cmd>lua require('fzf-lua').resume()<CR>", "Resume last fzf-lua command")
 end
 
-return require("lib").module.create({
+-- local setup_spider = function()
+--   require("spider").setup({
+--     skipInsignificantPunctuation = false,
+--   })
+-- end
+
+return lib.module.create({
   name = "workflow/navigation",
   plugins = {
     {
-      "junegunn/fzf.vim",
-      requires = { "junegunn/fzf" },
-      config = setup_fzf,
-    },
-    { "vijaymarupudi/nvim-fzf", after = { "fzf.vim" }, config = setup_nvim_fzf },
-    {
       "ibhagwan/fzf-lua",
-      requires = { "kyazdani42/nvim-web-devicons" },
+      dependencies = { "nvim-tree/nvim-web-devicons" },
       config = setup_fzf_lua,
     },
-    {
-      "folke/trouble.nvim",
-      requires = { "kyazdani42/nvim-web-devicons" },
-      config = setup_trouble,
-    },
+    { "vijaymarupudi/nvim-fzf" },
+    -- { "chrisgrieser/nvim-spider", config = setup_spider },
   },
-  mappings = {
-    { "n", "<leader>t", ":TroubleToggle<cr>" },
-  },
+  -- mappings = {
+  --   { { "n", "o", "x" }, "w", "<cmd>lua require('spider').motion('w')<CR>", { desc = "Spider-w" } },
+  --   { { "n", "o", "x" }, "e", "<cmd>lua require('spider').motion('e')<CR>", { desc = "Spider-e" } },
+  --   { { "n", "o", "x" }, "b", "<cmd>lua require('spider').motion('b')<CR>", { desc = "Spider-b" } },
+  --   { { "n", "o", "x" }, "ge", "<cmd>lua require('spider').motion('ge')<CR>", { desc = "Spider-ge" } },
+  -- },
 })

@@ -1,78 +1,90 @@
 local is = require("lib/is")
-local packer = require("lib/packer")
 
+---@class lsp_hooks
+---@field capabilities nil|fun(capabilities: table): table|nil
+---@field on_attach nil|fun(on_attach: function)
+---@field on_attach_call nil|fun(client: table, bufnr: number)
+
+---@class Module
+---@field name string
+---@field enabled boolean|nil
+---@field debug boolean|nil
+---@field plugins LazyPluginSpec[]|nil
+---@field setup function|nil
+---@field hooks {lsp?: lsp_hooks}|nil
+---@field mappings ({ [1]: "n"|"i"|"v"|"x"|"!"|"", [2]: string, [3]: string|function, [4]: string|table })[]|nil
+---@field actions ({ [1]: string, [2]: string, [3]: string|function})[]|nil
+---@field exports table<string, any>|nil
 local Module = {
   __is_module = true,
-  enabled = true,
-  debug = false,
   name = "",
-  plugins = {},
-  extends = {},
+  enabled = true,
+  debug = true,
+  plugins = nil,
   setup = nil,
-  hooks = {
-    capabilities = nil,
-    lsp_on_attach = nil,
-  },
+  hooks = nil,
   mappings = nil,
   actions = nil,
-  export = {},
+  exports = {},
 }
 
+---@param props Module
+---@return Module
 function Module:new(props)
   local instance = {
-    debug = props.debug,
+    enabled = Module.enabled,
+    debug = props.debug or false,
     name = props.name,
     plugins = props.plugins or {},
-    extends = props.extends or {},
     setup = props.setup or Module.setup,
     hooks = props.hooks or Module.hooks,
     mappings = props.mappings or Module.mappings,
     actions = props.actions or Module.actions,
-    export = props.export or Module.export,
+    exports = props.exports or Module.exports,
   }
+  if is.bool(props.enabled) then instance.enabled = props.enabled end
   setmetatable(instance, self)
   self.__index = self
-  if is.bool(props.enabled) then instance.enabled = props.enabled end
   return instance
 end
 
-function Module:log(message)
-  if self.debug then print(string.format("[%s] %s", self.name, message)) end
+function Module:log(...)
+  if self.debug then log(string.format("[%s]", self.name, ...)) end
 end
 
-function Module:load()
-  if not self.enabled then
-    self:log(string.format("Skipping module %s because it is disabled.", self.name))
-    return
-  end
-  self:log(string.format("Loading module: %s", self.name))
-  if self.plugins then
-    for _, plugin in ipairs(self.plugins) do
-      packer.register_plugin(plugin)
-    end
-  end
-  if self.setup then
-    self:log(string.format("Running module setup: %s", self.name))
-    self:setup()
-  end
-end
-
-local get_modules = function()
+---@param opts? { exclude: string[] }
+---@return Module[]
+local get_modules = function(opts)
+  opts = opts or {}
   local lua_dir = string.format("%s/lua", vim.fn.stdpath("config"))
   local modules_dir = string.format("%s/modules", lua_dir)
-  local paths = vim.split(vim.fn.glob(string.format("%s/**/*.lua", modules_dir)), "\n")
+  local paths = vim.split(vim.fn.glob(string.format("%s/**/*.lua", modules_dir)), "\n", {})
+
+  if is.table(opts.exclude) then
+    for _, exclude in ipairs(opts.exclude) do
+      paths = vim.tbl_filter(function(path)
+        return not string.find(path, exclude)
+      end, paths)
+    end
+  end
+
   local result = {}
   for _, path in ipairs(paths) do
     path = string.gsub(path, string.format("%s/", string.gsub(lua_dir, "%-", "%%-")), "")
     path = string.gsub(path, ".lua$", "")
-    local module = require(path)
-    if module.__is_module then table.insert(result, module) end
+    if is.no.empty(path) then
+      local ok, module = pcall(require, path)
+      ---@cast module Module
+      if ok and module.__is_module then table.insert(result, module) end
+    end
   end
   return result
 end
 
-local get_enabled_modules = function()
-  local modules = get_modules()
+---@param opts? { exclude?: string[] }
+---@return Module[]
+local get_enabled_modules = function(opts)
+  local modules = get_modules(opts)
   local result = {}
   for _, module in ipairs(modules) do
     if module.enabled then table.insert(result, module) end
@@ -80,14 +92,28 @@ local get_enabled_modules = function()
   return result
 end
 
+---@return Module[]
+local get_module_plugins = function()
+  local modules = get_modules()
+  local plugins = {}
+  for _, module in ipairs(modules) do
+    if module.enabled then
+      for _, plugin in ipairs(module.plugins) do
+        table.insert(plugins, plugin)
+      end
+    end
+  end
+  return plugins
+end
+
+---@param props Module
+local create_module = function(props)
+  return Module:new(props)
+end
+
 return {
+  create = create_module,
   get_modules = get_modules,
   get_enabled_modules = get_enabled_modules,
-  create = function(props) return Module:new(props) end,
-  load_modules = function()
-    local modules = get_modules()
-    for _, module in ipairs(modules) do
-      module:load()
-    end
-  end,
+  get_module_plugins = get_module_plugins,
 }

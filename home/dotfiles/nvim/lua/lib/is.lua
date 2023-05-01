@@ -1,56 +1,68 @@
-local is = {}
-
-is.bool = function(value)
+local is_bool = function(value)
   return value == true or value == false
 end
 
-is.number = function(value)
+local is_number = function(value)
   return type(value) == "number"
 end
 
-is.string = function(value)
+local is_string = function(value)
   return type(value) == "string"
 end
 
-is.null = function(value)
+local is_null = function(value)
   return value == nil
 end
 
-is.func = function(value)
+local is_function = function(value)
   return type(value) == "function"
 end
 
-is.thread = function(value)
+local is_thread = function(value)
   return type(value) == "thread"
 end
 
-is.table = function(value)
+local is_table = function(value)
   return type(value) == "table"
 end
 
-is.primitive = function(value)
-  return is.bool(value) or is.number(value) or is.string(value) or is.null(value)
+local is_primitive = function(value)
+  return is_bool(value) or is_number(value) or is_string(value) or is_null(value)
 end
 
-is.empty = function(value)
-  if is.string(value) then
+local is_empty = function(value)
+  if is_string(value) then
     return value == ""
-  elseif is.table(value) then
+  elseif is_table(value) then
     return next(value) == nil
   else
-    error("Unexpected type in is.empty  " .. type(value))
+    error("Unexpected type in is_empty  " .. type(value))
   end
 end
 
-local create_negator = function(fn)
+local negate = function(fn)
   return function(value)
     return not fn(value)
   end
 end
 
-is["no"] = {}
+local is = {
+  bool = is_bool,
+  number = is_number,
+  string = is_string,
+  null = is_null,
+  func = is_function,
+  thread = is_thread,
+  table = is_table,
+  primitive = is_primitive,
+  empty = is_empty,
+}
+
+local no = vim.deepcopy(is)
 for k, v in pairs(is) do
-  is["no"][k] = create_negator(v)
+  no[k] = negate(v)
 end
+
+is["no"] = no
 
 return is

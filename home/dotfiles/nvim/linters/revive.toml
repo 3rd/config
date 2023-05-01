@@ -27,7 +27,8 @@ arguments = [5]
 arguments = [3]
 [rule.cognitive-complexity]
 arguments = [70]
-[rule.cyclomatic]
-arguments = [30]
 [rule.add-constant]
 arguments = [{maxLitCount = "3",allowStrs ="\"\"",allowInts="0,1,2",allowFloats="0.0,0.,1.0,1.,2.0,2."}]
+
+[rule.cyclomatic]
+disabled = true

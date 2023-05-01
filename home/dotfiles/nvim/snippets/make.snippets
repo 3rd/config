@@ -42,7 +42,7 @@ snippet boil "boilerplate"
 	endef
 
 	help: ## help
-	> @grep -E '^[a-zA-Z_0-9%-]+:.*?## .*\$\$' \$(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\${BLUE}%-20s\${RESET} %s\n", \$\$1, \$\$2}'
+	> @grep --no-filename -E '^[a-zA-Z_0-9%-]+:.*?## .*\$\$' \$(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\${BLUE}%-20s\${RESET} %s\n", \$\$1, \$\$2}'
 	.PHONY: help
 
 	build: ## build

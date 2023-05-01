@@ -1,33 +1,37 @@
----@diagnostic disable: different-requires
-local _module = require("lib/module")
-local buffer = require("lib/buffer")
-local dev = require("lib/dev")
-local env = require("lib/env")
-local is = require("lib/is")
+require("lib/string")
+require("lib/table")
+
 local log = require("lib/log")
-local map = require("lib/map")
-local packer = require("lib/packer")
-local path = require("lib/path")
-local string = require("lib/string")
-local table = require("lib/table")
-local shell = require("lib/shell")
 
-_G.log = dev.log
-_G.throw = dev.throw
-_G.inspect = dev.inspect
+_G.log = log.create_logger({
+  prefix = "[log]",
+  formatter = log.default_log_formatter,
+  handler = print,
+  output_file = "/tmp/nvim-log.txt",
+})
 
-local module = {
-  buffer = buffer,
-  env = env,
-  is = is,
+_G.throw = log.create_logger({
+  prefix = "[error]",
+  formatter = log.default_log_formatter,
+  handler = error,
+  output_file = "/tmp/nvim-log.txt",
+})
+
+_G.inspect = function(value)
+  print(vim.inspect(value))
+  return value
+end
+
+_G.lib = {
+  buffer = require("lib/buffer"),
+  env = require("lib/env"),
+  fs = require("lib/fs"),
+  is = require("lib/is"),
+  lazy = require("lib/lazy"),
   log = log,
-  map = map,
-  module = _module,
-  packer = packer,
-  path = path,
-  string = string,
-  table = table,
-  shell = shell,
+  map = require("lib/map"),
+  module = require("lib/module"),
+  path = require("lib/path"),
+  random = require("lib/random"),
+  shell = require("lib/shell"),
 }
-
-return module

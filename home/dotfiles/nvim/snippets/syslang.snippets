@@ -1,3 +1,18 @@
+# TODO: migrate to Lua
+# https://github.com/L3MON4D3/LuaSnip/blob/master/lua/luasnip/util/_builtin_vars.lua
+
+snippet dd "date"
+	${CURRENT_YEAR}.${CURRENT_MONTH}.${CURRENT_DATE}
+
+snippet ddd "date (pretty)"
+	${CURRENT_YEAR} ${CURRENT_MONTH_NAME_SHORT} ${CURRENT_DATE}
+
+snippet dt "datetime"
+	${CURRENT_YEAR}.${CURRENT_MONTH}.${CURRENT_DATE} ${CURRENT_HOUR}:${CURRENT_MINUTE}
+
+snippet tt "time"
+	${CURRENT_HOUR}:${CURRENT_MINUTE}
+
 snippet hr "horizontal line"
 	---------------------------------------------------------------------
 

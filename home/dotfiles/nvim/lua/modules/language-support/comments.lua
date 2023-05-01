@@ -1,36 +1,22 @@
-local setup_comment_nvim = function()
+local setup = function()
   require("Comment").setup({
     mappings = {
       basic = true,
       extra = true,
       extended = false,
     },
-    pre_hook = function(ctx)
-      if vim.bo.filetype == "typescriptreact" then
-        local U = require("Comment.utils")
-        local type = ctx.ctype == U.ctype.linewise and "__default" or "__multiline"
-        local location = nil
-        if ctx.ctype == U.ctype.blockwise then
-          location = require("ts_context_commentstring.utils").get_cursor_location()
-        elseif ctx.cmotion == U.cmotion.v or ctx.cmotion == U.cmotion.V then
-          location = require("ts_context_commentstring.utils").get_visual_start_location()
-        end
-        return require("ts_context_commentstring.internal").calculate_commentstring({
-          key = type,
-          location = location,
-        })
-      end
-    end,
+    pre_hook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook(),
   })
 end
 
-return require("lib").module.create({
+return lib.module.create({
   name = "language-support/comments",
   plugins = {
     {
       "numToStr/Comment.nvim",
-      requires = { "JoosepAlviste/nvim-ts-context-commentstring" },
-      config = setup_comment_nvim,
+      event = "VeryLazy",
+      dependencies = { "JoosepAlviste/nvim-ts-context-commentstring" },
+      config = setup,
     },
   },
 })

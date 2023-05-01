@@ -1,85 +1,69 @@
-local module = {}
-
-module.push = function(self, other)
-  table.insert(self, other)
+function table.push(t, other)
+  table.insert(t, other)
 end
 
-module.includes = function(self, needle)
-  for _, current_value in ipairs(self) do
-    if current_value == needle then
-      return true
-    end
+function table.includes(t, needle)
+  for _, current_value in ipairs(t) do
+    if current_value == needle then return true end
   end
   return false
 end
 
-module.index_of = function(self, needle)
-  if type(self) ~= "table" then
-    error("table expected, got " .. type(self), 2)
-  end
-  for index, value in pairs(self) do
-    if needle == value then
-      return index
-    end
+function table.index_of(t, needle)
+  if type(t) ~= "table" then error("table expected, got " .. type(t), 2) end
+  for index, value in pairs(t) do
+    if needle == value then return index end
   end
   return nil
 end
 
-module.find = function(self, fn)
-  if type(self) ~= "table" then
-    error("table expected, got " .. type(self), 2)
-  end
-  for _, value in pairs(self) do
-    if fn(value) then
-      return value
-    end
+function table.find(t, fn)
+  if type(t) ~= "table" then error("table expected, got " .. type(t), 2) end
+  for _, value in pairs(t) do
+    if fn(value) then return value end
   end
   return nil
 end
 
-module.find_index = function(self, fn)
-  if type(self) ~= "table" then
-    error("table expected, got " .. type(self), 2)
-  end
-  for index, value in pairs(self) do
-    if fn(value) then
-      return index
-    end
+function table.find_index(t, fn)
+  if type(t) ~= "table" then error("table expected, got " .. type(t), 2) end
+  for index, value in pairs(t) do
+    if fn(value) then return index end
   end
   return nil
 end
 
-module.map = function(self, fn)
+function table.map(t, fn)
   local result = {}
-  for key, value in pairs(self) do
+  for key, value in pairs(t) do
     result[key] = fn(value)
   end
   return result
 end
 
-module.filter = function(self, fn)
-  return vim.tbl_filter(fn, self)
+function table.filter(t, fn)
+  return vim.tbl_filter(fn, t)
 end
 
-module.reverse = function(self)
+function table.reverse(t)
   local result = {}
-  local len = #self
-  for k, v in ipairs(self) do
+  local len = #t
+  for k, v in ipairs(t) do
     result[len + 1 - k] = v
   end
   return result
 end
 
-module.merge = function(...)
+function table.merge(...)
   return vim.tbl_extend("force", ...)
 end
 
-module.merge_deep = function(...)
+function table.merge_deep(...)
   return vim.tbl_deep_extend("force", ...)
 end
 
 -- https://stackoverflow.com/questions/1410862/concatenation-of-tables-in-lua
-module.concat = function(...)
+function table.join(...)
   local result = {}
   for n = 1, select("#", ...) do
     local arg = select(n, ...)
@@ -94,8 +78,17 @@ module.concat = function(...)
   return result
 end
 
-module.clone = function(target)
+---@diagnostic disable-next-line: duplicate-set-field -- thanks gitsigns/gen_help.lua /s
+function table.slice(t, first, last)
+  local result = {}
+  for i = first or 1, last or #t do
+    result[#result + 1] = t[i]
+  end
+  return result
+end
+
+function table.clone(target)
   return vim.fn.deepcopy(target)
 end
 
-return module
+return table

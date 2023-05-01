@@ -1,55 +1,69 @@
--- escape ( ) . + - * ? [ ] ^ $
-local module = {
-  includes = function(self, needle)
-    return string.match(self, needle)
-  end,
-  starts_with = function(self, needle)
-    return vim.startswith(self, needle)
-    -- return self:sub(1, #needle) == needle
-  end,
-  ends_with = function(self, needle)
-    return vim.endswith(self, needle)
-    -- return self:sub(- #needle) == needle
-  end,
-  escape = function(self)
-    return self:gsub("%W", "")
-  end,
-  trim = function(self)
-    return (string.gsub(self, "^%s*(.-)%s*$", "%1"))
-  end,
-  to_lowercase = function(self)
-    return vim.fn.tolower(self)
-  end,
-  to_uppercase = function(self)
-    return vim.fn.toupper(self)
-  end,
-  split = function(self, separator)
-    return vim.fn.split(self, separator or "\\zs")
-  end,
-  lines = function(self)
-    return vim.fn.split(self, "\n" or "\\zs")
-  end,
-  join = function(table, separator)
-    return vim.fn.join(table, separator or "")
-  end,
-  replace = function(self, from, to)
-    return self:gsub(from, to)
-  end,
-}
-
-module.register = function()
-  -- http://lua-users.org/wiki/StringIndexing
-  getmetatable("").__index = function(str, i)
-    if type(i) == "number" then
-      return string.sub(str, i + 1, i + 1)
-    else
-      return string[i]
-    end
-  end
-
-  getmetatable("").__call = function(str, i, j)
-    return string.sub(str, i + 1, j + 1)
-  end
+function string.includes(s, needle)
+  return string.match(s, needle) ~= nil
 end
 
-return module
+function string.starts_with(s, needle)
+  return vim.startswith(s, needle)
+end
+
+function string.ends_with(s, needle)
+  return vim.endswith(s, needle)
+end
+
+function string.filter_alnum(s)
+  return s:gsub("%W", "")
+end
+
+function string.trim(s)
+  -- return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
+  return vim.trim(s)
+end
+
+function string.to_lowercase(s)
+  return vim.fn.tolower(s)
+end
+
+function string.to_uppercase(s)
+  return vim.fn.toupper(s)
+end
+
+---@param s string
+---@param separator string
+---@param opts? { plain?: boolean, trimempty?: boolean}
+---@return string[]
+function string.split(s, separator, opts)
+  return vim.split(s, separator or "\\zs", opts or { plain = true })
+end
+
+function string.join(s, separator)
+  return vim.fn.join(s, separator or "")
+end
+
+---@param s string
+---@param from string
+---@param to string
+---@return string
+function string.replace(s, from, to)
+  return s:gsub(from, to)[1]
+end
+
+function string.lines(s)
+  return vim.split(s, "\n")
+end
+
+-- http://lua-users.org/wiki/StringIndexing
+getmetatable("").__index = function(s, i)
+  if type(i) == "number" then
+    return string.sub(s, i + 1, i + 1)
+  else
+    return string[i]
+  end
+end
+getmetatable("").__call = function(s, i, j)
+  local len = #s
+  local start = i < 0 and len + i + 1 or i + 1
+  local finish = j < 0 and len + j + 1 or j + 1
+  return string.sub(s, start, finish)
+end
+
+return string

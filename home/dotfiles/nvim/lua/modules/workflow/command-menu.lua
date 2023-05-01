@@ -1,48 +1,69 @@
-local lib = require("lib")
-
 local cmd = vim.cmd
-local exec = function(command) vim.api.nvim_exec(command, true) end
+local exec = function(command)
+  vim.api.nvim_exec2(command, { output = true })
+end
 
 local actions = {
   -- dev
-  plugin_update = function() exec([[PackerSync]]) end,
-  debug_scripts = function() cmd([[scriptnames]]) end,
-  debug_binds = function() cmd([[verbose map]]) end,
+  lazy = function()
+    exec([[Lazy]])
+  end,
+  lazy_sync = function()
+    exec([[Lazy sync]])
+  end,
+  lazy_profile = function()
+    exec([[Lazy profile]])
+  end,
+  debug_scripts = function()
+    cmd([[scriptnames]])
+  end,
+  debug_binds = function()
+    cmd([[verbose map]])
+  end,
   -- snippets
   snippets_edit = function()
     local snippets_dir = lib.path.resolve(lib.env.dirs.config .. "/snippets")
     local filetype = lib.buffer.current.get_filetype()
-    local snippet_file =
-      lib.path.resolve(snippets_dir .. "/" .. filetype .. ".snippets")
+    local snippet_file = lib.path.resolve(snippets_dir .. "/" .. filetype .. ".snippets")
     cmd("edit " .. snippet_file)
   end,
   -- fs
-  file_new = function() exec([[ call feedkeys(":e %:h\<tab>", "tn") ]]) end,
-  file_rename = function() exec([[ call feedkeys(":Move %\<tab>", "tn") ]]) end,
-  file_delete = function() exec([[Delete!]]) end,
+  file_new = function()
+    exec([[ call feedkeys(":e %:h\<tab>", "tn") ]])
+  end,
+  file_rename = function()
+    exec([[ call feedkeys(":Move %\<tab>", "tn") ]])
+  end,
+  file_delete = function()
+    exec([[Delete!]])
+  end,
   -- sort
-  lines_sort = function() exec([[%sort]]) end,
-  lines_sort_desc = function() exec([[%sort!]]) end,
-  visual_sort = function() cmd([[exe '''<,''>sort']]) end,
-  visual_sort_desc = function() cmd([[exe '''<,''>sort!']]) end,
+  lines_sort = function()
+    exec([[%sort]])
+  end,
+  lines_sort_desc = function()
+    exec([[%sort!]])
+  end,
+  visual_sort = function()
+    cmd([[exe '''<,''>sort']])
+  end,
+  visual_sort_desc = function()
+    cmd([[exe '''<,''>sort!']])
+  end,
   -- silicon
   silicon_normal = function()
     local options = "--output /tmp/silicon.png --tab-width 2 --pad-horiz 50 --pad-vert 60 --no-window-controls -l "
       .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_text()
     lib.shell.exec("silicon " .. options, text)
-    lib.shell.exec(
-      "copyq write image/png - < /tmp/silicon.png && copyq select 0"
-    )
+    lib.shell.exec("copyq write image/png - < /tmp/silicon.png && copyq select 0")
   end,
   silicon_visual = function()
     local options = "--output /tmp/silicon.png --tab-width 2 --pad-horiz 50 --pad-vert 60 --no-window-controls -l "
       .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_selected_text()
     lib.shell.exec("silicon " .. options, text)
-    lib.shell.exec(
-      "copyq write image/png - < /tmp/silicon.png && copyq select 0"
-    )
+    lib.shell.exec("copyq write image/png - < /tmp/silicon.png && copyq select 0")
   end,
   silicon_highlight = function()
     local context = 6
@@ -50,7 +71,7 @@ local actions = {
       .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_selected_text()
     local context_text = lib.buffer.current.get_selected_text(context)
-    local line_count = #vim.split(text, "\n")
+    local line_count = #string.split(text, "\n")
     if line_count == 0 then line_count = 1 end
     local lines = {}
     local i = 1
@@ -58,12 +79,10 @@ local actions = {
       table.insert(lines, i + context)
       i = i + 1
     end
-    lines = vim.fn.shellescape(vim.fn.join(lines, ";"))
-    options = options .. " --highlight-lines " .. lines
+    local line_numbers = vim.fn.shellescape(vim.fn.join(lines, ";"))
+    options = options .. " --highlight-lines " .. line_numbers
     lib.shell.exec("silicon " .. options, context_text)
-    lib.shell.exec(
-      "copyq write image/png - < /tmp/silicon.png && copyq select 0"
-    )
+    lib.shell.exec("copyq write image/png - < /tmp/silicon.png && copyq select 0")
   end,
   -- linx
   gist = function()
@@ -79,8 +98,7 @@ local actions = {
     local filename = petname .. "." .. extension
 
     lib.shell.write_file(tmp, text)
-    local output =
-      lib.shell.exec("gist -f " .. filename .. " " .. vim.fn.shellescape(tmp))
+    local output = lib.shell.exec("gist -f " .. filename .. " " .. vim.fn.shellescape(tmp))
     local link = vim.fn.matchstr(output, "https://gist.ro/\\S*")
     if link ~= "" then
       require("notify")("Gist created: " .. link)
@@ -88,7 +106,9 @@ local actions = {
       require("notify")("Failed to create gist:\n" .. output, "error")
     end
   end,
-  ts_playground = function() cmd(":TSPlaygroundToggle") end,
+  ts_playground = function()
+    cmd(":TSPlaygroundToggle")
+  end,
   -- toggle show whitespace
   toggle_whitespace = function()
     local default_listchars = require("config").options.set.listchars or {}
@@ -111,8 +131,12 @@ local actions = {
       vim.opt.list = true
     end
   end,
-  focus_toggle_autoresize = function() vim.cmd("FocusToggle") end,
-  refactor = function() require("refactoring").select_refactor() end,
+  focus_toggle_autoresize = function()
+    vim.cmd("FocusToggle")
+  end,
+  refactor = function()
+    require("refactoring").select_refactor()
+  end,
   -- -- hex
   -- toggle_hex = function()
   --   cmd(":Hexmode")
@@ -133,13 +157,15 @@ local actions = {
   -- treesitter
 }
 
-local exported_commands = {
+---@type table<"normal"|"visual",table<string, function|string>>
+local commands = {
   normal = {
-    ["Vim: Reload"] = actions.vim_reload,
-    ["Vim: Update plugins"] = actions.plugin_update,
     ["Vim: Debug scripts"] = actions.debug_scripts,
     ["Vim: Debug binds"] = actions.debug_binds,
-    ["Snippets: Edit snippets"] = actions.snippets_edit,
+    ["Lazy"] = actions.lazy,
+    ["Lazy: Sync"] = actions.lazy_sync,
+    ["Lazy: Profile"] = actions.lazy_profile,
+    ["Snippets: Edit snippets for the current filetype"] = actions.snippets_edit,
     ["File: New"] = actions.file_new,
     ["File: Rename"] = actions.file_rename,
     ["File: Delete"] = actions.file_delete,
@@ -166,10 +192,10 @@ local exported_commands = {
   },
 }
 
-local setup = function()
-  local lib = require("lib")
-  local commands = require("modules/workflow/command-menu").export.commands
+local open_normal_menu = nil
+local open_visual_menu = nil
 
+local setup = function()
   -- load module actions
   local modules = lib.module.get_enabled_modules()
   for _, module in ipairs(modules) do
@@ -230,19 +256,27 @@ local setup = function()
     end
   end
 
-  local normal_menu = create_menu(commands.normal)
-  lib.map.fnmap("n", "<M-p>", normal_menu)
-  lib.map.fnmap("n", "<c-s-p>", normal_menu)
-
-  local visual_menu = create_menu(commands.visual)
-  lib.map.fnmap("v", "<M-p>", visual_menu)
-  lib.map.fnmap("v", "<c-s-p>", visual_menu)
+  open_normal_menu = create_menu(commands.normal)
+  open_visual_menu = create_menu(commands.visual)
 end
 
-return require("lib").module.create({
+return lib.module.create({
   name = "workflow/command-menu",
   setup = setup,
-  export = {
-    commands = exported_commands,
+  mappings = {
+    {
+      "n",
+      "<c-s-p>",
+      function()
+        open_normal_menu()
+      end,
+    },
+    {
+      "v",
+      "<c-s-p>",
+      function()
+        open_visual_menu()
+      end,
+    },
   },
 })

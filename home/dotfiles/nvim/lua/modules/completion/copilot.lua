@@ -1,65 +1,67 @@
 local setup = function()
-  vim.defer_fn(function()
-    local env = require("lib.env")
-    require("copilot").setup({
-      plugin_manager_path = env.dirs.packer_pack,
-      panel = {
-        enabled = true,
-        auto_refresh = false,
-        keymap = {
-          jump_prev = "[[",
-          jump_next = "]]",
-          accept = "<CR>",
-          refresh = "gr",
-          open = "<M-CR>",
-        },
+  -- https://github.com/fauxpilot/fauxpilot/discussions/72
+  -- https://github.com/nzlov/cmp-fauxpilot
+  -- vim.g.copilot_proxy = "http://localhost:5000"
+
+  require("copilot").setup({
+    panel = {
+      enabled = true,
+      auto_refresh = false,
+      keymap = {
+        jump_prev = "[[",
+        jump_next = "]]",
+        accept = "<CR>",
+        refresh = "gr",
+        open = "<M-CR>",
       },
-      suggestion = {
-        enabled = true,
-        auto_trigger = true,
-        debounce = 75,
-        keymap = {
-          -- accept = "<tab>",
-          next = "<c-right>",
-          prev = "<c-left>",
-          dismiss = "<C-]>",
-        },
+    },
+    suggestion = {
+      enabled = true,
+      auto_trigger = true,
+      debounce = 300,
+      keymap = {
+        accept = "<c-l>",
+        next = "<c-right>",
+        prev = "<c-left>",
+        dismiss = "<c-]>",
       },
-      filetypes = {
-        ["*"] = false,
-        lua = true,
-        nix = true,
-        go = true,
-        rust = true,
-        sh = true,
-        typescript = true,
-        typescriptreact = true,
-        javascript = true,
-        javascriptreact = true,
-        html = true,
-        vue = true,
-        css = true,
-        scss = true,
-        astro = true,
-        mdx = true,
-      },
-      server_opts_overrides = {
-        settings = {
-          advanced = {
-            listCount = 10, -- #completions for panel
-            inlineSuggestCount = 4, -- #completions for getCompletions
+    },
+    filetypes = {
+      -- "*" = false,
+      sh = function()
+        if string.match(vim.fs.basename(vim.api.nvim_buf_get_name(0)), "^%.env.*") then return false end
+        return true
+      end,
+      syslang = false,
+    },
+    -- https://github.com/zbirenbaum/copilot.lua/blob/master/SettingsOpts.md
+    server_opts_overrides = {
+      trace = "verbose",
+      settings = {
+        advanced = {
+          listCount = 10, -- panel
+          inlineSuggestCount = 3, -- getCompletions
+          length = 1000,
+          top_p = 1,
+          temperature = 0,
+          debug = {
+            githubCTSIntegrationEnabled = false,
           },
         },
       },
-    })
-  end, 1000)
+    },
+  })
 end
 
-return require("lib").module.create({
+return lib.module.create({
   enabled = false,
   name = "completion/copilot",
   plugins = {
     -- { "github/copilot.vim" },
-    { "zbirenbaum/copilot.lua", config = setup },
+    {
+      "zbirenbaum/copilot.lua",
+      event = { "InsertEnter" },
+      config = setup,
+    },
   },
 })

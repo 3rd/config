@@ -37,12 +37,25 @@ help: ## help
 clean: ## clean-up profiling artifacts
 	@-rm .tmp.* 2>&1 >/dev/null
 
-dev: ## development mode
+dev: ## watch
+	@watchexec -e ".lua,.vim" -i "**/sandbox/**" -r -c clear "nvim -c \"call feedkeys(\\\"$(DEV_FEEDKEYS)\\\")\" $(DEV_EXTRA_ARGS)"
+
+run: ## run
+	@bash -c "nvim $(DEV_EXTRA_ARGS)"
+
+dev-sandbox: ## watch in sandbox
 	$(eval SANDBOX_HOME=$(SOURCE)/sandbox)
 	$(eval SANDBOX_NVIM=$(SANDBOX_HOME)/nvim)
 	@mkdir -p "$(SANDBOX_HOME)"
 	@ln -fns "$(SOURCE)" "$(SANDBOX_NVIM)"
-	@watchexec -e ".lua,.vim" -i "**/.packer/**" -i "**/sandbox/**" -r -c "env DEV=true XDG_CONFIG_HOME=$(SANDBOX_HOME) nvim -c \"call feedkeys(\\\"$(DEV_FEEDKEYS)\\\")\" $(DEV_EXTRA_ARGS)"
+	@watchexec -e ".lua,.vim" -i "**/sandbox/**" -r -c clear "env DEV=true XDG_CONFIG_HOME=$(SANDBOX_HOME) nvim -c \"call feedkeys(\\\"$(DEV_FEEDKEYS)\\\")\" $(DEV_EXTRA_ARGS)"
+	
+run-sandbox: ## run in sandbox
+	$(eval SANDBOX_HOME=$(SOURCE)/sandbox)
+	$(eval SANDBOX_NVIM=$(SANDBOX_HOME)/nvim)
+	@mkdir -p "$(SANDBOX_HOME)"
+	@ln -fns "$(SOURCE)" "$(SANDBOX_NVIM)"
+	@bash -c "env DEV=true XDG_CONFIG_HOME=$(SANDBOX_HOME) nvim $(DEV_EXTRA_ARGS)"
 
 profile: profile-startup profile-viml ## profile everything
 

@@ -1,0 +1,68 @@
+# https://golangci-lint.run/usage/configuration/#config-file
+# https://freshman.tech/linting-golang/
+linters:
+  disable-all: true
+  enable:
+    # base
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    # extra
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - cyclop
+    - decorder
+    - depguard
+    - dogsled
+    - dupl
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forcetypeassert
+    - gochecknoglobals
+    - goconst
+    - gocritic
+    - goerr113
+    - goimports
+    - gosec
+    - grouper
+    - ireturn
+    - maintidx
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - paralleltest
+    - prealloc
+    - predeclared
+    - reassign
+    - revive
+    - tparallel
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+    # - wrapcheck
+    # - wsl
+linters-settings:
+  cyclop:
+    max-complexity: 20
+    skip-tests: true
+issues:
+  fix: false
+output:
+  print-linter-name: true
+  uniq-by-line: false

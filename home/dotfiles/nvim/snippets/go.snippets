@@ -1,5 +1,6 @@
 snippet qq "qq"
-	q.Q($0)
+	q.Q(${1:})
+	${2}
 
 snippet httphandler "http handler"
 	func $1(${2:w} http.ResponseWriter, ${3:r} *http.Request){
