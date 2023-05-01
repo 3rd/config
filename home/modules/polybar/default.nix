@@ -21,7 +21,8 @@
   services.polybar = {
     enable = true;
     package = pkgs.polybar.override {
-      i3GapsSupport = true;
+      # i3GapsSupport = true;
+      i3Support = true;
       mpdSupport = true;
       pulseSupport = true;
     };
@@ -40,7 +41,7 @@
         modules-left = "i3";
         modules-center = "task";
         modules-right =
-          "vpn battery < sep sep pulseaudio bluetooth cpu sep mem sep fs sep clock";
+          "vpn battery < sep sep pulseaudio bluetooth cpu cpu_temp sep mem sep fs sep clock";
         height = 24;
         fixed-center = true;
         tray-background = gray-darkest;
@@ -163,6 +164,14 @@
         format-padding = 1;
         interval = 1;
         label = "%percentage:2%%";
+      };
+      "module/cpu_temp" = {
+        type = "internal/temperature";
+        interval = 1;
+        hwmon-path = "/sys/devices/platform/it87.2656/hwmon/hwmon2/temp1_input";
+        label = "%temperature-c%";
+        format-background = gray-darkest;
+        format-foreground = foreground;
       };
       "module/mem" = {
         type = "internal/memory";

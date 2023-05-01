@@ -1,7 +1,9 @@
 {
   imports = [ ./options/colors.nix ];
   colors = {
-    background = "#191923";
+    # background = "#191923";
+    background = "#1e1f29";
+    # background = "#21222c";
     foreground = "#BDC7EE";
     cursor = "#f2b90d";
     selection-background = "#303233";
@@ -72,14 +74,14 @@
     yellow-darker = "#916f08";
     yellow-darkest = "#614a05";
 
-    color0 = "#191923";
-    color8 = "#393e48";
+    color0 = "#393e48";
+    color8 = "#4f5564";
     color1 = "#c2290a";
     color9 = "#f2330d";
     color2 = "#66b814";
     color10 = "#80e619";
-    color3 = "#f2b90d";
-    color11 = "#f5c73d";
+    color3 = "#daa60b";
+    color11 = "#f6ce55";
     color4 = "#06a8f9";
     color12 = "#38b9fa";
     color5 = "#e06ef7";

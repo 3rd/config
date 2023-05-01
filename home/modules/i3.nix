@@ -16,14 +16,24 @@ let
 in {
   imports = [ ./colors.nix ];
 
-  home.packages = with pkgs; [ flashfocus feh ];
+  home.packages = with pkgs;
+    [
+      # flashfocus
+      feh
+    ];
+
+  home.pointerCursor = {
+    name = "Adwaita";
+    package = pkgs.gnome.adwaita-icon-theme;
+    size = lib.mkDefault 32;
+  };
 
   xsession = {
     enable = true;
     scriptPath = ".hm-xsession";
     windowManager.i3 = {
       enable = true;
-      package = pkgs.i3-gaps;
+      # package = pkgs.i3-gaps; # https://github.com/NixOS/nixpkgs/commit/7d4e95ba7527fa7bd5b1f8a1707b7e3ee2bbe82d
       config = {
         bars = [ ];
         colors = with config.colors; {
@@ -130,11 +140,11 @@ in {
           inherit modifier;
           border = 2;
           criteria = [
-            { title = "Pavucontrol"; }
-            { title = "copyq"; }
             { class = "Pcmanfm"; }
+            { instance = "copyq"; }
+            { instance = "pavucontrol"; }
+            { instance = "yad"; }
             { title = "Skype [1]"; }
-            { class = "kooha"; }
           ];
         };
         startup = [
@@ -179,15 +189,15 @@ in {
             # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/home/wallpaper";
             # ''--no-startup-id ${pkgs.hsetroot}/bin/hsetroot -solid "${config.colors.gray-darker}"'';
           }
-          {
-            always = true;
-            command =
-              "--no-startup-id ${pkgs.hsetroot}/bin/hsetroot -cursor_name left_ptr-solid";
-          }
-          {
-            always = true;
-            command = "--no-startup-id ${pkgs.flashfocus}/bin/flashfocus";
-          }
+          # {
+          #   always = true;
+          #   command =
+          #     "--no-startup-id ${pkgs.hsetroot}/bin/hsetroot -cursor_name left_ptr-solid";
+          # }
+          # {
+          #   always = true;
+          #   command = "--no-startup-id ${pkgs.flashfocus}/bin/flashfocus";
+          # }
         ];
       };
       extraConfig = ''
@@ -206,7 +216,7 @@ in {
         for_window [class="^.*"] border pixel 2
 
         bindcode ${modifier}+110 exec ${pkgs.pcmanfm}/bin/pcmanfm
-        bindcode ${modifier}+118 exec ${pkgs.google-chrome}/bin/google-chrome-stable --disable-backgrounding-occluded-windows
+        bindcode ${modifier}+118 exec ulimit -n 99999 && ${pkgs.google-chrome}/bin/google-chrome-stable --disable-backgrounding-occluded-windows
 
         # workspaces
         workspace "1: ◨ ${workspaces.one}" output ${mon1}
@@ -244,11 +254,6 @@ in {
         bindsym ${modifier}+t exec ~/.config/bin/workflow/task-add
         bindsym ${modifier}+c exec ~/brain/config/bin/core/wiki-consume
       '';
-    };
-    pointerCursor = {
-      name = "Adwaita";
-      package = pkgs.gnome.adwaita-icon-theme;
-      size = lib.mkDefault 32;
     };
     preferStatusNotifierItems = true;
     numlock.enable = true;

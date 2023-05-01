@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -uf -o pipefail
+IFS=$'\n\t'
+
+DEVICE=$(find /dev/input/by-id/ -name "*event-mouse" | sort | tail -1)
+OFFSET=5
+
+[ "$DEVICE" = "" ] && echo "Cannot find mouse event device" && exit 1
+echo "Using ${DEVICE}"
+
+while true; do
+  sleep 10
+  evemu-event "$DEVICE" --type EV_REL --code REL_X --value "$OFFSET" --sync
+  evemu-event "$DEVICE" --type EV_REL --code REL_X --value "-$OFFSET" --sync
+  echo -n "#"
+done

@@ -7,8 +7,7 @@ let
     newsboat-cli-browser = pkgs.writeShellScriptBin "newsboat-cli-browser"
       (builtins.readFile ./cli-browser.sh);
   };
-in
-{
+in {
   imports = [ ../colors.nix ];
 
   home.packages = with pkgs; [
@@ -30,7 +29,7 @@ in
       # news
       { url = "---news---"; }
       { url = "https://hnrss.org/frontpage"; }
-      { url = "https://hnrss.org/top"; }
+      { url = "https://hnrss.org/best"; }
       { url = "https://hnrss.org/newest?points=20"; }
       { url = "https://lobste.rs/rss"; }
       { url = "https://restofworld.org/feed/latest"; }
@@ -151,8 +150,9 @@ in
       { url = "https://sethmlarson.dev/feed"; }
       { url = "https://thoughtspile.github.io/atom.xml"; }
       { url = "https://matt-rickard.com/rss/"; }
+      { url = "https://www.huy.rocks/rss.xml"; }
       {
-        url = "https://www.huy.rocks/rss.xml";
+        url = "https://www.hacklewayne.com/rss/index.xml";
       }
 
       # blogs: security
@@ -300,7 +300,7 @@ in
       color listnormal color8 default
       color listnormal_unread color3 default bold
       color listfocus color7 color0 bold
-      color listfocus_unread color11 color0 bold
+      color listfocus_unread color7 color0 bold
       color info color7 color0
       color article white default
 

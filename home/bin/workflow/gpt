@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -uf -o pipefail
+IFS=$'\n\t'
+
+BOT='\033[33m'
+NC='\033[0m'
+
+messages=()
+
+trim() {
+  local var="$*"
+  var="${var#"${var%%[![:space:]]*}"}"
+  var="${var%"${var##*[![:space:]]}"}"
+  printf '%s' "$var"
+}
+
+function complete {
+  local message="$1"
+  local data
+  messages+=("{\"role\": \"system\", \"content\": $(echo "$message" | jq -R -s '.')}")
+  processed_messages=$(printf '%s,' "${messages[@]}")
+  processed_messages="[${processed_messages::-1}]"
+  # --arg model "gpt-3.5-turbo" \
+  data=$(jq -n \
+    --arg model "gpt-4" \
+    --argjson messages "$processed_messages" \
+    '{ model: $model, messages: $messages }' \
+    | sed 's/\]\[/,/g')
+
+  response=$(curl -s https://api.openai.com/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -d "$data")
+
+  message=$(echo "$response" | jq '.choices[].message.content')
+  printable_message=$(echo "$response" | jq -r '.choices[].message.content')
+  printable_message=$(trim "$printable_message")
+  echo -e "${BOT}Bot:${NC} $printable_message"
+
+  messages+=("{\"role\": \"assistant\", \"content\": $message}")
+}
+
+while true; do
+  read -r -p $'\e[35mYou:\e[0m ' message
+  complete "$message"
+done

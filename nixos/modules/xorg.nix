@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 # https://gist.github.com/kborling/76805ade81ac5bfdd712df294208c878
 {
@@ -7,11 +7,7 @@
   services.xserver = {
     enable = true;
     displayManager = {
-      # lightdm.enable = true;
-      sddm = {
-        enable = true;
-        # settings.Wayland.SessionDir = "${pkgs.plasma5Packages.plasma-workspace}/share/wayland-sessions";
-      };
+      lightdm.enable = true;
       defaultSession = "home-manager";
       session = [{
         name = "home-manager";
@@ -23,6 +19,9 @@
       }];
       sessionCommands = ''
         systemctl --user import-environment QT_PLUGIN_PATH
+        ${
+          lib.getBin pkgs.dbus
+        }/bin/dbus-update-activation-environment --systemd --all
       '';
     };
     desktopManager = {

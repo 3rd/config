@@ -82,13 +82,16 @@ in {
     ga = "git add";
     gc = "git commit";
     gs = "git status -sb";
-    gl = "git log --graph --abbrev-commit --decorate --date=relative";
+    gl =
+      "git log --graph --pretty=format:'%Cred%h%Creset %s - %C(bold blue)%an%Creset %Cgreen(%cr)' --abbrev-commit";
+    gll = "git log --graph --abbrev-commit --decorate";
     gd = "git diff";
     gac = "git add . && git commit";
     clone = "git clone";
     fetch = "git fetch";
     pull = "git pull";
     push = "git push";
+    rebase = "git rebase";
     # scripts
     gid = "git-id";
     gbr = "git-branch";

@@ -10,10 +10,10 @@
     xcp # https://github.com/tarka/xcp
   ];
 
-  home.sessionVariables = { GRAVEYARD = "$HOME/.local/share/graveyard"; };
-
-  programs.fish.shellAliases = {
-    cp = "xcp";
-    rm = "rip";
+  home.sessionVariables = {
+    # rm-improved
+    GRAVEYARD = "$HOME/.local/share/graveyard";
   };
+
+  programs.fish.shellAliases = { cp = "xcp"; };
 }

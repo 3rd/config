@@ -7,6 +7,7 @@
     ../modules/hardware/bluetooth.nix
     ../modules/packages/emacs.nix
     ../modules/packages/neovim.nix
+    ../modules/packages/alien.nix
     ../modules/services/docker.nix
     ../modules/services/syncthing.nix
     ../modules/services/tailscale.private.nix
@@ -70,6 +71,7 @@
     brightnessctl
     bun
     cachix
+    anki
     bc
     calibre
     cargo-edit
@@ -95,7 +97,6 @@
     gh
     git
     git-lfs
-    onefetch
     gitlint
     glances
     glow
@@ -115,7 +116,10 @@
     inetutils
     inxi
     iotop
-    jdk11
+    jdk17
+    jless
+    dbeaver
+    cppcheck
     jq
     libnotify
     stable.libreoffice
@@ -125,6 +129,7 @@
     luajit
     luajitPackages.luacheck
     luajitPackages.moonscript
+    syncthing
     man-pages
     moreutils
     mosh
@@ -138,6 +143,7 @@
     flyctl
     nixos-option
     nodePackages.pnpm
+    patchelf
     nodejs
     openssl
     openvpn
@@ -149,11 +155,14 @@
     playerctl
     powertop
     proselint
+    sysstat
     psmisc
     pup
     ranger
     restic
     pciutils
+    stable.awscli2
+    efibootmgr
     ripgrep
     ripgrep-all
     rlwrap
@@ -168,13 +177,24 @@
     shellharden
     shfmt
     silicon
+    fio
+    hdparm
+    dmidecode
+    usbutils
+    nvtop-amd
+    lshw
     slop
+    cmake
+    bottles
+    ghostscript
+    thunderbird
     socat
     speedtest-cli
     sshfs
     sshuttle
     stable.openfortivpn
-    stable.tmuxp
+    tmuxp
+    tor-browser-bundle-bin
     statix
     stress
     stylua
@@ -202,37 +222,43 @@
     youtube-dl
     zellij
     zenith
+    yad
     zip
     zoxide
     zx
     # gui
+    cutter
     cool-retro-term
-    wezterm
+    # wezterm
     alacritty
     android-file-transfer
-    bottles
+    # bottles
     chromium
     discord
     firefox
     flameshot
     gnome.file-roller
     gnome.gnome-disk-utility
-    gnome.file-roller
     neovide
     gnome.gnome-font-viewer
-    gnome.zenity
     gnome.eog
     google-chrome
     gparted
     hsetroot
-    insomnia
+    stable.insomnia
     keepassxc
     openai
-    kooha
     ksystemlog
     lutris
     masterpdfeditor4
-    microsoft-edge-dev
+    quickemu
+    spicy
+    pkg-config
+    yarn2nix
+    evemu
+    deno
+    # microsoft-edge-dev
+    spotify
     stress-ng
     sl
     mpv
@@ -242,9 +268,9 @@
     pcmanfm
     peek
     polybarFull
-    postman
+    stable.postman
     qbittorrent
-    qimgv
+    stable.qimgv
     scrcpy
     skypeforlinux
     slack
@@ -263,7 +289,10 @@
     xorg.xev
     xorg.xkill
     xorg.xmodmap
-    zettlr
+    timg
+    wezterm
+    # sec
+    feroxbuster
   ];
 
   programs.firejail.enable = true;
@@ -287,10 +316,14 @@
   services.flatpak.enable = true;
   services.fstrim.enable = true;
   services.fwupd.enable = true;
-  services.gnome.gnome-keyring.enable = true;
   services.timesyncd.enable = lib.mkDefault true;
   services.udev.packages = [ pkgs.android-udev-rules ];
   services.udisks2.enable = true;
+
+  services.gnome.gnome-keyring.enable = true;
+  security.pam.services.lightdm.enableGnomeKeyring = true;
+  security.pam.services.sddm.enableGnomeKeyring = true;
+  programs.seahorse.enable = true;
 
   xdg = {
     portal = {
@@ -305,16 +338,11 @@
   # ssh & gpg
   services.openssh = {
     enable = true;
-    forwardX11 = true;
-    gatewayPorts = "yes";
+    # forwardX11 = true;
+    # gatewayPorts = "yes";
   };
   programs.ssh.setXAuthLocation = true;
   programs.gamemode.enable = true;
-
-  powerManagement = {
-    enable = true;
-    powertop.enable = true;
-  };
 
   environment.etc."issue.d/ip.issue".text = ''
     \4
@@ -325,14 +353,62 @@
     qemu.package = pkgs.qemu_kvm;
   };
 
-  # https://discourse.nixos.org/t/boot-faster-by-disabling-udev-settle-and-nm-wait-online/6339
-  systemd.services.NetworkManager-wait-online.enable = false;
-  systemd.services.systemd-udev-settle.enable = false;
-
   # https://github.com/NixOS/nixpkgs/issues/180175
   systemd.services.systemd-udevd.restartIfChanged = false;
   systemd.network.wait-online.anyInterface = true;
   systemd.network.wait-online.ignoredInterfaces = [ ];
-
   systemd.enableEmergencyMode = false;
+
+  # Stream Deck
+  services.udev.extraRules = ''
+    SUBSYSTEMS=="usb", ATTRS{idVendor}=="0fd9", GROUP="users", TAG+="uaccess"
+    SUBSYSTEM=="input", GROUP="input", MODE="0666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0060", MODE:="666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0063", MODE:="666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="006c", MODE:="666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="006d", MODE:="666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0080", MODE:="666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0084", MODE:="666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0086", MODE:="666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0090", MODE:="666"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0060", MODE:="666"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0063", MODE:="666"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="006c", MODE:="666"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="006d", MODE:="666"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0080", MODE:="666"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0084", MODE:="666"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0086", MODE:="666"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0090", MODE:="666"
+  '';
+
+  # systemd.extraConfig = ''
+  #   # file descriptor limit
+  #   DefaultLimitNOFILE=65535
+  # '';
+
+  # Google Chrome ulimit upping
+  # https://bugs.chromium.org/p/chromium/issues/detail?id=362603#c28
+  # security.pam.loginLimits = [{
+  #   domain = "*";
+  #   item = "nofile";
+  #   type = "-";
+  #   value = "65535";
+  # }];
+
+  # https://github.com/NixOS/nixpkgs/issues/159964
+  # systemd.services."user@1000".serviceConfig.LimitNOFILE = "65535";
+  # security.pam.loginLimits = [
+  #   {
+  #     domain = "*";
+  #     item = "nofile";
+  #     type = "-";
+  #     value = "65535";
+  #   }
+  #   {
+  #     domain = "*";
+  #     item = "memlock";
+  #     type = "-";
+  #     value = "65535";
+  #   }
+  # ];
 }

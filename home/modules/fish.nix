@@ -18,6 +18,8 @@
       set path (echo "$PATH" | sed "s/\\:[^\\:]*python3[^\\:]*\\:/:/g")
       set -x PATH "$path"
 
+      ulimit -n 99999
+
       # zoxide init fish | source
       # navi widget fish | source
     '';
@@ -80,7 +82,6 @@
       mv = "mv -v";
       mkdir = "mkdir -pv";
       vd = "vidir";
-      top = "zenith";
       # bookmarks
       "@b" = "cd ~/brain";
       "@c" = "cd ~/brain/config";
@@ -91,7 +92,8 @@
       "@core" = "cd ~/brain/core";
       # custom
       p = "v ~/brain/wiki/plan";
-      ti = "v ~/brain/inbox";
+      ti = "v ~/brain/wiki/_inbox/tasks";
+      tl = "v ~/brain/wiki/_inbox/links";
       w = "work";
       bookmarks = "v ~/brain/wiki/bookmarks";
     };

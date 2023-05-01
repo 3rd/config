@@ -12,11 +12,20 @@ if [[ $ACTION = "right" ]]; then
   fi
 fi
 
-if [ "$(bluetoothctl show | grep "Powered: yes" | wc -c)" -eq 0 ]; then
-  echo "%{F#66ffffff}"
+connected_adapters=$(bluetoothctl list | awk '{print $2}' | while read -r mac; do
+  echo -e "select $mac\ndevices" | bluetoothctl | awk '/Device/ {print $2}' | while read -r device; do
+    echo -e "select $mac\ninfo $device" | bluetoothctl | grep -q "Connected: yes" && echo "$mac"
+  done
+done)
+
+if [ "$(bluetoothctl show | grep "Powered: yes" | tr -d '[:space:]' | wc -c)" -eq 0 ]; then
+  echo "%{F#66ffffff}"
 else
-  if [ "$(echo info | bluetoothctl | grep 'Device' | wc -c)" -eq 0 ]; then
+  # no device connected
+  if [ "$(echo "$connected_adapters" | tr -d '[:space:]' | wc -c)" -eq 0 ]; then
     echo ""
+  else
+    # at least one device connected
+    echo "%{F#2193ff}"
   fi
-  echo "%{F#2193ff}"
 fi

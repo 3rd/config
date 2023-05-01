@@ -8,7 +8,7 @@
   programs.kitty = {
     enable = true;
     settings = with config.colors; {
-      background_opacity = "0.9";
+      background_opacity = "0.95";
       clear_all_shortcuts = "yes";
       clipboard_control = "write-clipboard write-primary no-append";
       close_on_child_death = "yes";
@@ -33,6 +33,11 @@
       window_border_width = "0";
       window_margin_width = "0";
       window_padding_width = "0 0 0 0";
+      # use_system_wcwidth = "yes";
+
+      # https://github.com/kovidgoyal/kitty/pull/5969
+      text_gamma_adjustment = "1.7";
+      text_contrast = "30";
 
       # font_family = "Bmono";
       # bold_font = "BMono Bold";
@@ -52,7 +57,11 @@
       # font_size = lib.mkDefault "10.5";
 
       font_family = lib.mkDefault "MonoLisa";
-      font_size = lib.mkDefault "10.5";
+      # font_size = lib.mkDefault "9.5";
+      font_size = lib.mkDefault "9.9";
+      # font_size = lib.mkDefault "10.1";
+      # font_size = lib.mkDefault "10.4";
+      # font_size = lib.mkDefault "10.5";
       # font_size = lib.mkDefault "11.2";
 
       # adjust_line_height = "105%";
@@ -61,6 +70,7 @@
       selection_background = selection-background;
       selection_foreground = selection-foreground;
       inherit background;
+      # background = "#000000";
       inherit foreground;
       inherit cursor;
       inherit color0;
@@ -94,13 +104,30 @@
       "ctrl+5" = "goto_tab 5";
       "ctrl+6" = "goto_tab 6";
       "ctrl+7" = "goto_tab 7";
-      "ctrl+shift+equal" = "change_font_size all +0.1";
+      # change font size
+      "ctrl+shift+0" = "change_font_size all 8.8";
       "ctrl+shift+minus" = "change_font_size all -0.1";
+      "ctrl+shift+equal" = "change_font_size all +0.1";
       "ctrl+shift+backspace" = "change_font_size all 0";
-      "ctrl+shift+j" = "send_text all \\x1b[74;5u";
-      "ctrl+shift+p" = "send_text all \\x1b[80;5u";
+      # change opacity
+      "ctrl+shift+[" = "set_background_opacity -0.01";
+      "ctrl+shift+]" = "set_background_opacity +0.01";
+      "ctrl+shift+\\" = "set_background_opacity 0.95";
+      # CSI u
+      # "ctrl+i" = "send_text all \\x1b[105;5u";
+      "ctrl+shift+h" = "send_text all \\x1b[72;6u";
+      "ctrl+shift+j" = "send_text all \\x1b[74;6u";
+      "ctrl+shift+k" = "send_text all \\x1b[75;6u";
+      "ctrl+shift+l" = "send_text all \\x1b[76;6u";
+      "ctrl+shift+p" = "send_text all \\x1b[80;6u";
+      "ctrl+," = "send_text all \\x1b[44;5u";
+      "ctrl+." = "send_text all \\x1b[46;5u";
+      "ctrl+;" = "send_text all \\x1b[59;5u";
+      "shift+enter" = "send_text all \\x1b[13;2u";
     };
     extraConfig = ''
+      term xterm-256color
+
       mouse_map ctrl+shift+left release grabbed,ungrabbed mouse_click_url
       mouse_map left click ungrabbed mouse_click_url_or_select
 
@@ -109,6 +136,13 @@
 
       # <c-i>
       map ctrl+i send_text all \x1b[105;5u
+
+      modify_font underline_position 9
+      modify_font underline_thickness 150%
+      modify_font strikethrough_position 2px
+
+      # dynamic opacity
+      dynamic_background_opacity yes
     '';
   };
 }

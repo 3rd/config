@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -uf -o pipefail
+IFS=$'\n\t'
+
+sudo modprobe -r usbhid
+sudo modprobe usbhid
+xset -dpms
+xmodmap ~/brain/config/home/dotfiles/xmodmap
+xset r rate 200 50
+xset s off
+xset m 0 0

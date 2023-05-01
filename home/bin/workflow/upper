@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -uf -o pipefail
+IFS=$'\n\t'
+
+cat | tr '[:lower:]' '[:upper:]'

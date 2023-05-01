@@ -45,9 +45,12 @@ setup: ## setup machine
 	@./setup/setup-machine.sh "$(HOSTNAME)"
 
 nix: ## apply nixos configuration
+	@sudo nix-channel --update
 	@sudo nixos-rebuild switch --upgrade
+	@sudo /run/current-system/bin/switch-to-configuration boot
 
 home: ## apply home-manager configuration
+	@nix-channel --update
 	@home-manager switch
 home-build: ## build home-manager configuration to ./result
 	@home-manager build
@@ -69,7 +72,6 @@ clean: ## clean
 	@nix-store --gc --print-roots
 	@sudo nix-collect-garbage --delete-older-than 30d
 	@sudo nix-store --optimise
-	@sudo nixos-rebuild switch
 
 swap: ## swap
 	@./setup/swap.sh
