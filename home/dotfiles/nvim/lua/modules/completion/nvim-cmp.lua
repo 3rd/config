@@ -258,7 +258,7 @@ return lib.module.create({
   hooks = {
     lsp = {
       capabilities = function(capabilities)
-        return vim.tbl_extend("keep", capabilities or {}, require("cmp_nvim_lsp").default_capabilities())
+        return vim.tbl_deep_extend("force", capabilities or {}, require("cmp_nvim_lsp").default_capabilities())
       end,
     },
   },
