@@ -21,20 +21,56 @@ local setup_options = function()
   vim.opt_local.smartindent = true
 end
 
+-- local handle_toggle_task = function()
+--   local view = vim.fn.winsaveview()
+--   local line = vim.fn.getline(".")
+--   if vim.fn.match(line, "\\v\\[\\s\\]") >= 0 then -- [ ] -> [-]
+--     vim.api.nvim_exec2("s/\\v\\[\\zs\\s\\ze\\]/-/g", { output = true })
+--   elseif vim.fn.match(line, "\\v\\[-\\]") >= 0 then -- [-] -> [x]
+--     vim.api.nvim_exec2("s/\\v\\[\\zs-\\ze\\]/x/g", { output = true })
+--   elseif vim.fn.match(line, "\\v\\[(✔|x|X)\\]") >= 0 then -- [x] -> [ ]
+--     vim.api.nvim_exec2("s/\\v\\[\\zs(✔|x|X)\\ze\\]/ /g", { output = true })
+--   else
+--     vim.api.nvim_exec2("s/\\v\\zs\\S\\ze/[ ] \\0/g", { output = true }) -- .* -> [ ] \0
+--   end
+--   vim.cmd("nohl")
+--   vim.fn.winrestview(view)
+-- end
+
 local handle_toggle_task = function()
-  local view = vim.fn.winsaveview()
-  local line = vim.fn.getline(".")
-  if vim.fn.match(line, "\\v\\[\\s\\]") >= 0 then -- [ ] -> [-]
-    vim.api.nvim_exec2("s/\\v\\[\\zs\\s\\ze\\]/-/g", { output = true })
-  elseif vim.fn.match(line, "\\v\\[-\\]") >= 0 then -- [-] -> [x]
-    vim.api.nvim_exec2("s/\\v\\[\\zs-\\ze\\]/x/g", { output = true })
-  elseif vim.fn.match(line, "\\v\\[(✔|x|X)\\]") >= 0 then -- [x] -> [ ]
-    vim.api.nvim_exec2("s/\\v\\[\\zs(✔|x|X)\\ze\\]/ /g", { output = true })
-  else
-    vim.api.nvim_exec2("s/\\v\\zs\\S\\ze/[ ] \\0/g", { output = true }) -- .* -> [ ] \0
+  local ts_utils = require("nvim-treesitter.ts_utils")
+
+  -- local parser = vim.treesitter.get_parser()
+  -- local root = parser:parse()[1]:root()
+  -- local query = vim.treesitter.query.parse(parser:lang(), "(task_marker_default)")
+  -- local position = vim.api.nvim_win_get_cursor(0)
+  -- local node = root:named_descendant_for_range(position[1] - 1, 0, position[1] - 1, position[2])
+  -- log(position[1], 0, position[1], position[2], node:type())
+
+  local winnr = vim.fn.win_getid()
+  local node = ts_utils.get_node_at_cursor(winnr, true)
+
+  local task_types = {
+    { task = "task_default", marker = "task_marker_default", next = "[-]" },
+    { task = "task_active", marker = "task_marker_active", next = "[x]" },
+    { task = "task_done", marker = "task_marker_done", next = "[ ]" },
+    { task = "task_cancelled", marker = "task_marker_cancelled", next = "[ ]" },
+  }
+
+  while node ~= nil do
+    for _, task_node_type in ipairs(task_types) do
+      if node:type() == task_node_type.task then
+        local marker_node = node:child(0)
+        if marker_node:type() == task_node_type.marker then -- overkill
+          local range = ts_utils.node_to_lsp_range(marker_node)
+          local edit = { range = range, newText = task_node_type.next }
+          vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
+          return
+        end
+      end
+    end
+    node = node:parent()
   end
-  vim.cmd("nohl")
-  vim.fn.winrestview(view)
 end
 
 local handle_expand_all = function()
