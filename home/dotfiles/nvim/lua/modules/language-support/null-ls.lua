@@ -30,7 +30,9 @@ local setup = function(on_attach)
     null_ls.builtins.formatting.prettierd.with({
       env = { PRETTIERD_DEFAULT_CONFIG = paths.prettier_config },
     }),
-    null_ls.builtins.formatting.rustywind,
+    null_ls.builtins.formatting.rustywind.with({
+      filetypes = { "astro", "javascript", "javascriptreact", "typescript", "typescriptreact", "vue", "svelte", "html" },
+    }),
     null_ls.builtins.diagnostics.cppcheck,
     null_ls.builtins.formatting.clang_format,
     null_ls.builtins.formatting.fixjson,
@@ -45,7 +47,7 @@ local setup = function(on_attach)
   }
 
   local config = {
-    debug = true,
+    debug = false,
     border = "rounded",
     log_level = "warn",
     on_attach = on_attach,

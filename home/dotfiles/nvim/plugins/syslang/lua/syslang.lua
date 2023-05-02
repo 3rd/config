@@ -2,7 +2,7 @@ local syntax = require("syslang/syntax")
 local folding = require("syslang/folding")
 
 local setup_options = function()
-  vim.opt_local.foldlevelstart = 999
+  vim.opt_local.foldlevel = 999
 
   vim.opt_local.wrap = true
   vim.opt_local.signcolumn = "yes:2"
@@ -39,16 +39,21 @@ end
 
 local handle_toggle_task = function()
   local ts_utils = require("nvim-treesitter.ts_utils")
-
-  -- local parser = vim.treesitter.get_parser()
-  -- local root = parser:parse()[1]:root()
+  local parser = vim.treesitter.get_parser()
+  local root = parser:parse()[1]:root()
   -- local query = vim.treesitter.query.parse(parser:lang(), "(task_marker_default)")
   -- local position = vim.api.nvim_win_get_cursor(0)
   -- local node = root:named_descendant_for_range(position[1] - 1, 0, position[1] - 1, position[2])
   -- log(position[1], 0, position[1], position[2], node:type())
 
-  local winnr = vim.fn.win_getid()
-  local node = ts_utils.get_node_at_cursor(winnr, true)
+  -- local winnr = vim.fn.win_getid()
+  -- local node = ts_utils.get_node_at_cursor(winnr, true)
+
+  local position = vim.api.nvim_win_get_cursor(0)
+  local line_length = #vim.fn.getline(position[1])
+  local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
+  log("main node", node:type())
+  log(position[1], line_length - 1, position[1], line_length - 1)
 
   local task_types = {
     { task = "task_default", marker = "task_marker_default", next_text = "[-]" },
@@ -62,8 +67,6 @@ local handle_toggle_task = function()
         local _, _, task_end_row, task_end_col = task_text_node:range()
 
         local indent = vim.fn.indent(vim.fn.line("."))
-
-        -- Session: 2023.03.29 09:22-09:22
         local sessions = lib.ts.find_children(task_node, "task_session")
         local active_sessions = {}
 
@@ -76,7 +79,7 @@ local handle_toggle_task = function()
         -- if there are no sessions, create an instant one
         if #sessions == 0 then
           local session_text = "Session: " .. os.date("%Y.%m.%d %H:%M-%H:%M") .. "\n"
-          session_text = string.rep(" ", (indent + 1) * vim.bo.tabstop) .. session_text
+          session_text = string.rep(" ", indent + vim.bo.tabstop) .. session_text
           local range = {
             start = { line = task_end_row, character = task_end_col },
             ["end"] = { line = task_end_row, character = task_end_col },
@@ -108,10 +111,12 @@ local handle_toggle_task = function()
     { task = "task_cancelled", marker = "task_marker_cancelled", next_text = "[ ]" },
   }
 
-  local position = vim.api.nvim_win_get_cursor(0)
   while node ~= nil do
     local node_line = node:range()
-    if node_line ~= position[1] - 1 then break end
+    if node_line ~= position[1] - 1 then
+      -- log("break", node_line, position[1] - 1)
+      break
+    end
     for _, task_node_type in ipairs(task_types) do
       if node:type() == task_node_type.task then
         local marker_node = node:child(0)
@@ -134,17 +139,14 @@ local handle_toggle_task = function()
   vim.fn.winrestview(view)
 end
 
-local handle_expand_all = function()
-  -- vim.opt.foldlevel = 999
-  require("ufo").openAllFolds()
-  -- vim.cmd("w")
-end
-local handle_collapse_all = function()
-  -- vim.opt.foldlevel = 999
-  -- require("ufo").openAllFolds()
-  -- vim.cmd("w")
-  require("ufo").closeAllFolds()
-end
+-- local handle_expand_all = function()
+--   vim.opt.foldlevel = 999
+--   require("ufo").openAllFolds()
+-- end
+-- local handle_collapse_all = function()
+--   vim.opt.foldlevel = 999
+--   require("ufo").closeAllFolds()
+-- end
 
 local function link(from, to)
   if type(to) == "string" then
@@ -260,8 +262,8 @@ local setup_buffer = function()
 
   -- mappings
   vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true, noremap = true })
-  vim.keymap.set("n", "zR", handle_expand_all, { buffer = true, noremap = true })
-  vim.keymap.set("n", "zM", handle_collapse_all, { buffer = true, noremap = true })
+  -- vim.keymap.set("n", "zR", handle_expand_all, { buffer = true, noremap = true })
+  -- vim.keymap.set("n", "zM", handle_collapse_all, { buffer = true, noremap = true })
   -- vim.keymap.set("n", ">", ">><Cmd>lua require('autolist').tab()<CR>", { buffer = true })
   -- vim.keymap.set("n", "<", "<<<Cmd>lua require('autolist').detab()<CR>", { buffer = true })
 end

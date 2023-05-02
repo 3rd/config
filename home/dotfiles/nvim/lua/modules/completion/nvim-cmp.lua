@@ -238,8 +238,8 @@ return lib.module.create({
   name = "completion/nvim-cmp",
   plugins = {
     {
-      "hrsh7th/nvim-cmp",
-      -- "yioneko/nvim-cmp",
+      -- "hrsh7th/nvim-cmp",
+      "yioneko/nvim-cmp",
       event = { "InsertEnter" },
       dependencies = {
         "hrsh7th/cmp-buffer",

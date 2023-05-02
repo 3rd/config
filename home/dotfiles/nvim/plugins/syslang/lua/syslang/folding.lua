@@ -5,15 +5,15 @@ local handlers = {
   leave = function()
     vim.cmd("mkview")
   end,
-  write_pre = function()
-    vim.cmd("mkview")
-  end,
+  -- write_pre = function()
+  --   vim.cmd("mkview")
+  -- end,
 }
 
 local register = function()
   vim.opt.foldmethod = "expr"
   vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-  -- vim.cmd("silent! loadview")
+  vim.cmd("silent! loadview")
 
   local group = vim.api.nvim_create_augroup("SyslangFoldPersistence", { clear = true })
   local bufnr = vim.api.nvim_get_current_buf()
@@ -27,6 +27,11 @@ local register = function()
     buffer = bufnr,
     callback = handlers.leave,
   })
+  -- vim.api.nvim_create_autocmd({ "BufWritePre" }, {
+  --   group = group,
+  --   buffer = bufnr,
+  --   callback = handlers.write_pre,
+  -- })
 end
 
 return {

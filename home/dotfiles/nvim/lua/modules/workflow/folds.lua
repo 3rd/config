@@ -2,21 +2,16 @@ local get_upper_fold_level = function()
   local winview = vim.fn.winsaveview()
   local foldlevel = -1
   local ok = pcall(vim.cmd, "keepjumps normal! [z")
-  if ok then foldlevel = vim.fn.foldlevel(".") end
+  if ok then foldlevel = vim.fn.foldlevel(vim.fn.line(".")) end
   vim.fn.winrestview(winview)
   return foldlevel
 end
 
 local is_current_line_in_open_fold_and_is_not_first = function()
-  local is_closed_fold = vim.fn.foldclosed(".") ~= -1
+  local is_closed_fold = vim.fn.foldclosed(vim.fn.line(".")) ~= -1
 
-  local foldlevel = vim.fn.foldlevel(".")
+  local foldlevel = vim.fn.foldlevel(vim.fn.line("."))
   local upper_foldlevel = get_upper_fold_level()
-
-  log({
-    foldlevel = foldlevel,
-    upper_foldlevel = upper_foldlevel,
-  })
 
   return foldlevel == upper_foldlevel or is_closed_fold and foldlevel > upper_foldlevel
 end
@@ -198,13 +193,19 @@ local setup_ufo = function()
     end,
   })
 
-  vim.keymap.set("n", "zR", function()
+  local open_all_folds = function()
+    vim.opt_local.foldlevel = 999
     ufo.openAllFolds()
-    -- vim.cmd("w")
-  end, { desc = "Open all folds" })
-  vim.keymap.set("n", "zM", function()
-    ufo.closeAllFolds()
-  end, { desc = "Close all folds" })
+  end
+
+  local close_all_folds = function()
+    vim.opt_local.foldlevel = 999
+    -- ufo.closeAllFolds()
+    ufo.closeFoldsWith(0)
+  end
+
+  vim.keymap.set("n", "zR", open_all_folds, { desc = "Open all folds" })
+  vim.keymap.set("n", "zM", close_all_folds, { desc = "Close all folds" })
 end
 
 local setup_fold_cycle = function()
@@ -214,28 +215,27 @@ local setup_fold_cycle = function()
     softwrap_movement_fix = true,
   })
 
-  -- <tab> - expand
+  -- <tab> - open / cycle
   vim.keymap.set("n", "<tab>", function()
-    local result = require("fold-cycle").open()
+    require("fold-cycle").open()
     -- https://github.com/lukas-reineke/indent-blankline.nvim/issues/449
     -- vim.cmd("IndentBlanklineRefresh")
-    return result
   end, { silent = true, desc = "Fold-cycle: open folds" })
 
   -- <s-tab> - collapse
   vim.keymap.set("n", "<s-tab>", function()
+    -- return require("fold-cycle").close()
     local filetype = vim.bo.filetype
     if filetype == "syslang" then
       local is_open_fold_child = is_current_line_in_open_fold_and_is_not_first()
       if is_open_fold_child then vim.api.nvim_exec2("normal! [z", {}) end
     end
     pcall(vim.api.nvim_exec2, "normal! zc", {})
-    -- return require("fold-cycle").close()
   end, { silent = true, noremap = true })
 
-  vim.keymap.set("n", "zC", function()
-    return require("fold-cycle").close_all()
-  end, { remap = true, silent = true, desc = "Fold-cycle: close all folds" })
+  -- vim.keymap.set("n", "zC", function()
+  --   return require("fold-cycle").close_all()
+  -- end, { remap = true, silent = true, desc = "Fold-cycle: close all folds" })
 end
 
 return lib.module.create({
@@ -253,6 +253,20 @@ return lib.module.create({
       "jghauser/fold-cycle.nvim",
       event = "VeryLazy",
       config = setup_fold_cycle,
+    },
+  },
+  hooks = {
+    lsp = {
+      capabilities = function(capabilities)
+        return vim.tbl_deep_extend("force", capabilities or {}, {
+          textDocument = {
+            foldingRange = {
+              dynamicRegistration = false,
+              lineFoldingOnly = true,
+            },
+          },
+        })
+      end,
     },
   },
 })

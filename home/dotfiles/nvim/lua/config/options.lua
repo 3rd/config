@@ -56,7 +56,9 @@ return {
   -- folds
   -- foldcolumn = "1",
   foldenable = true,
-  foldlevelstart = 999,
+  foldlevel = 999,
+  foldlevelstart = -1,
+  foldopen = "mark,percent,quickfix,search,tag,undo",
   -- foldnestmax = 1,
   -- code style
   expandtab = true,
