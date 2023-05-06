@@ -32,7 +32,7 @@ local setup_auto_session = function()
     },
   })
 
-  vim.o.sessionoptions = "buffers,folds,tabpages,winsize,winpos,terminal,localoptions"
+  vim.o.sessionoptions = "buffers,tabpages,winsize,winpos,terminal,localoptions"
 end
 
 local has_session = true
