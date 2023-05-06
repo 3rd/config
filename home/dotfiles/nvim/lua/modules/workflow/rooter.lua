@@ -4,12 +4,13 @@ local patterns = {
 }
 
 local find_root = function()
-  local path = lib.path.cwd()
+  local buffer_path = lib.buffer.current.get_path()
+  local path = vim.fs.dirname(buffer_path)
   return vim.fs.find(patterns, {
     path = path,
     upward = true,
     stop = vim.loop.os_homedir(),
-  })[1] or nil
+  })[1] or path
 end
 
 local setup = function()
