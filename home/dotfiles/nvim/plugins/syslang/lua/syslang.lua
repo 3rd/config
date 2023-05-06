@@ -52,8 +52,8 @@ local handle_toggle_task = function()
   local position = vim.api.nvim_win_get_cursor(0)
   local line_length = #vim.fn.getline(position[1])
   local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
-  log("main node", node:type())
-  log(position[1], line_length - 1, position[1], line_length - 1)
+  -- log("main node", node:type())
+  -- log(position[1], line_length - 1, position[1], line_length - 1)
 
   local task_types = {
     { task = "task_default", marker = "task_marker_default", next_text = "[-]" },
@@ -107,7 +107,38 @@ local handle_toggle_task = function()
         end
       end,
     },
-    { task = "task_done", marker = "task_marker_done", next_text = "[ ]" },
+    {
+      task = "task_done",
+      marker = "task_marker_done",
+      next_text = "[ ]",
+      next_cb = function(task_node)
+        local sessions = lib.ts.find_children(task_node, "task_session")
+        local line_offset = 0
+        for _, session_node in ipairs(sessions) do
+          local time_nodes = lib.ts.find_children(session_node, "time", true)
+          if #time_nodes == 2 then
+            local datetime_nodes = lib.ts.find_children(session_node, "datetime")
+            local date_nodes = lib.ts.find_children(session_node, "date", true)
+            local time_nodes = lib.ts.find_children(session_node, "time", true)
+            local start_date = vim.treesitter.get_node_text(date_nodes[1], 0)
+            local start_time = vim.treesitter.get_node_text(time_nodes[1], 0)
+            local end_date = start_date
+            if #date_nodes == 2 then end_date = vim.treesitter.get_node_text(date_nodes[2], 0) end
+            local end_time = vim.treesitter.get_node_text(time_nodes[#time_nodes], 0)
+            if start_date == end_date and start_time == end_time then
+              local range = ts_utils.node_to_lsp_range(session_node)
+              range.start.line = range.start.line - line_offset
+              range.start.character = 0
+              range["end"].line = range["end"].line + 1 - line_offset
+              range["end"].character = 0
+              local edit = { range = range, newText = "" }
+              vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
+              line_offset = line_offset + 1
+            end
+          end
+        end
+      end,
+    },
     { task = "task_cancelled", marker = "task_marker_cancelled", next_text = "[ ]" },
   }
 
