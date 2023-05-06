@@ -18,7 +18,7 @@ local setup = function(on_attach)
     null_ls.builtins.diagnostics.deadnix,
     null_ls.builtins.code_actions.statix,
     null_ls.builtins.formatting.nixfmt.with({ extra_args = { "--width", "80" } }),
-    null_ls.builtins.diagnostics.shellcheck,
+    -- null_ls.builtins.diagnostics.shellcheck,
     null_ls.builtins.formatting.shfmt.with({
       args = { "-i", "2", "-ci", "-bn", "-filename", "$FILENAME" },
     }),
@@ -29,6 +29,25 @@ local setup = function(on_attach)
     null_ls.builtins.formatting.rustfmt,
     null_ls.builtins.formatting.prettierd.with({
       env = { PRETTIERD_DEFAULT_CONFIG = paths.prettier_config },
+      filetypes = {
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+        "vue",
+        "css",
+        "scss",
+        "less",
+        "html",
+        "json",
+        "jsonc",
+        "yaml",
+        -- "markdown",
+        -- "markdown.mdx",
+        "graphql",
+        "handlebars",
+        "astro",
+      },
     }),
     null_ls.builtins.formatting.rustywind.with({
       filetypes = { "astro", "javascript", "javascriptreact", "typescript", "typescriptreact", "vue", "svelte", "html" },
@@ -44,6 +63,7 @@ local setup = function(on_attach)
     --     end,
     --   },
     -- }),
+    null_ls.builtins.code_actions.refactoring,
   }
 
   local config = {
@@ -56,6 +76,13 @@ local setup = function(on_attach)
   }
 
   null_ls.setup(config)
+
+  vim.keymap.set(
+    { "n", "v" },
+    "<leader>rr",
+    ":lua require('refactoring').select_refactor()<CR>",
+    { noremap = true, silent = true, expr = false }
+  )
 end
 
 return lib.module.create({
@@ -67,6 +94,7 @@ return lib.module.create({
       dependencies = {
         "neovim/nvim-lspconfig",
         "nvim-lua/plenary.nvim",
+        "ThePrimeagen/refactoring.nvim",
       },
     },
   },

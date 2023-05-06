@@ -5,8 +5,8 @@ local colors = require("config/colors")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    Normal({ fg = colors.foreground }), -- Normal text
+    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -122,7 +122,7 @@ local theme = lush(function(injected)
     -- extra
     Delimiter({ fg = colors.common.delimiter }),
     SpecialComment({ Comment }),
-    Underlined({ gui = "underline" }),
+    Underlined({ gui = "undercurl" }),
     -- Ignore({}),
 
     -- LSP
@@ -348,8 +348,8 @@ local theme = lush(function(injected)
     sym("@slang.tag.context")({ fg = colors.slang.tag.context }),
     sym("@slang.tag.danger")({ bg = colors.slang.tag.danger.bg, fg = colors.slang.tag.danger.fg }),
     sym("@slang.tag.identifier")({ fg = colors.slang.tag.identifier }),
-    sym("@slang.link")({ fg = colors.slang.link.internal, gui = "italic" }),
-    sym("@slang.external_link")({ fg = colors.slang.link.external, gui = "italic, underline" }),
+    sym("@slang.link")({ fg = colors.slang.link.internal, gui = "italic, undercurl" }),
+    sym("@slang.external_link")({ fg = colors.slang.link.external, gui = "italic, undercurl" }),
     sym("@slang.inline_code")({ fg = colors.slang.code.inline }),
     sym("@slang.code_block_start")({ fg = colors.slang.code.block.marker, gui = "italic" }),
     sym("@slang.code_block_language")({ fg = colors.slang.code.block.language, gui = "italic" }),

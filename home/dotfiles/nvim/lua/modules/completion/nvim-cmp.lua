@@ -48,6 +48,22 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- ty ditsuke
+local get_lsp_completion_context = function(completion, source)
+  local ok, source_name = pcall(function()
+    return source.source.client.config.name
+  end)
+  if not ok then return nil end
+  if source_name == "tsserver" then
+    return completion.detail
+  elseif source_name == "vtsls" then
+    if completion.labelDetails ~= nil then return completion.labelDetails.description end
+  elseif source_name == "gopls" then
+    return completion.detail
+  end
+  return nil
+end
+
 local setup = function()
   local cmp = require("cmp")
   local luasnip = require("luasnip")
@@ -135,14 +151,28 @@ local setup = function()
         -- vim_item.dup = ({ nvim_lsp = 0, buffer = 0, treesitter = 0, })[entry.source.name] or 0
         vim_item.dup = 0
 
-        vim_item.menu = ({
-          luasnip = "[snip]",
-          nvim_lsp = "[lsp]",
-          path = "[path]",
-          treesitter = "[tree]",
-        })[entry.source.name]
+        local context = ""
+        local completion_context = get_lsp_completion_context(entry.completion_item, entry.source)
+        if completion_context ~= nil and completion_context ~= "" then
+          local truncated_context = string.sub(completion_context, 1, 30)
+          if truncated_context ~= completion_context then truncated_context = truncated_context .. "..." end
+          log("completion context: " .. truncated_context)
+          context = truncated_context .. " "
+        end
 
-        local icon = kind_icons[vim_item.kind] or "   "
+        log("pre: " .. context, type(context))
+
+        vim_item.menu = ""
+        -- vim_item.menu = ({
+        --   luasnip = "[snip]",
+        --   nvim_lsp = "[lsp]",
+        --   path = "[path]",
+        --   treesitter = "[tree]",
+        -- })[entry.source.name]
+
+        if #context > 0 then vim_item.menu = vim_item.menu .. " " .. context end
+
+        local icon = kind_icons[vim_item.kind] or "§"
         vim_item.kind = icon .. " " .. vim_item.kind
 
         return vim_item
@@ -259,6 +289,16 @@ return lib.module.create({
     lsp = {
       capabilities = function(capabilities)
         return vim.tbl_deep_extend("force", capabilities or {}, require("cmp_nvim_lsp").default_capabilities())
+      end,
+      on_attach_call = function()
+        -- disable the tree-sitter source when a language server is attached
+        local ok, cmp = pcall(require, "cmp")
+        if not ok then return end
+        local filtered_sources = {}
+        for _, source in ipairs(cmp_sources) do
+          if source.name ~= "treesitter" then table.insert(filtered_sources, source) end
+        end
+        cmp.setup.buffer({ sources = filtered_sources })
       end,
     },
   },

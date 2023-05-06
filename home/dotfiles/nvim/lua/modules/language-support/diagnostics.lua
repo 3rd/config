@@ -3,11 +3,13 @@ local config = {
     float = { source = "always" },
     severity_sort = true,
     signs = true,
-    underline = true,
+    underline = false,
     update_in_insert = false,
     virtual_text = { prefix = "»", spacing = 4 },
+    -- virtual_text = false,
+    -- virtual_lines = { highighlight_whole_line = false },
   },
-  signs = { Error = " ", Warn = " ", Info = " ", Hint = "" },
+  signs = { Error = " ", Warn = " ", Info = " ", Hint = " " },
 }
 
 local setup = function()
@@ -68,6 +70,11 @@ return lib.module.create({
       cmd = { "Trouble", "TroubleToggle" },
       config = setup_trouble,
     },
+    -- {
+    --   "https://git.sr.ht/~whynothugo/lsp_lines.nvim",
+    --   event = { "BufReadPost", "BufAdd", "BufNewFile" },
+    --   opts = {},
+    -- },
   },
   mappings = {
     { "n", "<leader>t", "<cmd>TroubleToggle<cr>" },
