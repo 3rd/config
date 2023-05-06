@@ -36,8 +36,13 @@
       # use_system_wcwidth = "yes";
 
       # https://github.com/kovidgoyal/kitty/pull/5969
-      text_gamma_adjustment = "1.7";
-      text_contrast = "30";
+      # text_gamma_adjustment = "1.7";
+      # text_contrast = "30";
+
+      # https://github.com/kovidgoyal/kitty/issues/6209
+      # https://github.com/kovidgoyal/kitty/pull/6218
+      # text_composition_strategy = "legacy";
+      text_composition_strategy = "1.0 0"; # gamma, multiplicative contrast
 
       # font_family = "Bmono";
       # bold_font = "BMono Bold";
@@ -57,12 +62,9 @@
       # font_size = lib.mkDefault "10.5";
 
       font_family = lib.mkDefault "MonoLisa";
-      # font_size = lib.mkDefault "9.5";
-      font_size = lib.mkDefault "9.9";
-      # font_size = lib.mkDefault "10.1";
-      # font_size = lib.mkDefault "10.4";
-      # font_size = lib.mkDefault "10.5";
-      # font_size = lib.mkDefault "11.2";
+      # font_size = lib.mkDefault "8.8";
+      # font_size = lib.mkDefault "9.4";
+      font_size = lib.mkDefault "10.2";
 
       # adjust_line_height = "105%";
 
