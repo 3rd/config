@@ -2,11 +2,12 @@ local setup_auto_session = function()
   require("auto-session").setup({
     log_level = "error",
     auto_session_enabled = true,
+    auto_save_enabled = true,
+    auto_restore_enabled = true,
+    auto_session_create_enabled = false,
     auto_session_enable_last_session = false,
     auto_session_root_dir = lib.env.dirs.vim.sessions .. "/",
     auto_session_suppress_dirs = { "~/", "~/Downloads", "~/Desktop" },
-    auto_save_enabled = true,
-    auto_restore_enabled = true,
     cwd_change_handling = {
       restore_upcoming_session = false,
     },
@@ -35,19 +36,17 @@ local setup_auto_session = function()
   vim.o.sessionoptions = "buffers,tabpages,winsize,winpos,terminal,localoptions"
 end
 
-local has_session = true
 local toggle_session = function()
   local autosession = require("auto-session")
   local autosession_lib = require("auto-session/lib")
-  local does_actually_have_session = pcall(autosession_lib.current_session_name)
-  if not does_actually_have_session then has_session = false end
+  local session_file = ("%s/%s.vim"):format(lib.env.dirs.vim.sessions, autosession_lib.escaped_session_name_from_cwd())
+  local has_session = lib.fs.file.is_readable(session_file)
   if has_session then
     autosession.DeleteSession()
-    has_session = false
     log("Deleted session")
   else
-    autosession.SaveSession(lib.env.dirs.vim.sessions .. "/", false)
-    has_session = true
+    ---@diagnostic disable-next-line: missing-parameter
+    autosession.SaveSession()
     log("Created session")
   end
 end
@@ -57,8 +56,6 @@ return lib.module.create({
   plugins = {
     {
       "rmagatti/auto-session",
-      -- commit = "63984ed9c0fb7eae61eb1c2982bc1147e202d23e",
-      -- branch = "fix-telescope-dependency",
       event = "VimEnter",
       config = setup_auto_session,
     },
