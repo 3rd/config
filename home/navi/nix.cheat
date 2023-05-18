@@ -1,0 +1,10 @@
+% nix
+
+# list installed packages (user)
+nix-env -q
+
+# uninstall package (user)
+nix-env -e <package_name>
+
+
+$ package_name: nix-env -q | awk '{gsub(/-[0-9]+.*/, ""); print}'

@@ -2,13 +2,33 @@
 
 {
   sound.enable = true;
+
   hardware.pulseaudio = {
-    enable = true;
+    enable = false;
     package = pkgs.pulseaudioFull;
-    # extraModules = [ pkgs.pulseaudio-modules-bt ];
     support32Bit = true;
     extraConfig = ''
       load-module module-bluetooth-policy auto_switch=0
     '';
   };
+
+  # https://github.com/NixOS/nixpkgs/issues/102547
+  # https://nixos.wiki/wiki/PipeWire - https://github.com/NixOS/nixpkgs/issues/220967
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    jack.enable = true;
+  };
+  environment.etc = {
+    "wireplumber/bluetooth.lua.d/51-bluez-config.lua".text =
+      "	bluez_monitor.properties = {\n		[\"bluez5.enable-sbc-xq\"] = true,\n		[\"bluez5.enable-msbc\"] = true,\n		[\"bluez5.enable-hw-volume\"] = true,\n		[\"bluez5.headset-roles\"] = \"[ hsp_hs hsp_ag hfp_hf hfp_ag ]\"\n	}\n";
+  };
+  environment.systemPackages = with pkgs;
+    [
+      # for pactl, but superseded by pw-cli, pw-mon, pw-top, wpctl
+      pulseaudio
+    ];
 }

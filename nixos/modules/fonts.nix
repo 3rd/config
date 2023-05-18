@@ -5,36 +5,65 @@
   fonts = {
     enableDefaultFonts = true;
     fontDir.enable = true;
+    # https://wiki.archlinux.org/title/font_configuration
     fontconfig = {
       enable = true;
       cache32Bit = true;
-      defaultFonts = {
-        monospace = [ "BMono" "DejaVu Sans Mono" ];
-        sansSerif = [ "DejaVu Sans" "Noto Sans" ];
-        serif = [ "Linux Libertine" "DejaVu Serif" "Noto Serif" ];
-        emoji = [ "JoyPixels" "Noto Color Emoji" ];
+      antialias = true;
+      subpixel = {
+        lcdfilter = "default"; # light
+        rgba = "rgb";
       };
+      hinting = {
+        enable = true;
+        autohint = false;
+        style = "hintfull"; # hintslight
+      };
+      defaultFonts = {
+        # monospace = [ "MonoLisa" "Symbols Nerd Font Mono" ];
+        monospace = [ "MonoLisa" "Fira Code Nerd Font Mono" ];
+        sansSerif = [ "DejaVu Sans" "Noto Sans" "Fira Code Nerd Font Mono" ];
+        serif = [
+          "Linux Libertine"
+          "DejaVu Serif"
+          "Noto Serif"
+          "Fira Code Nerd Font Mono"
+        ];
+        emoji = [ "JoyPixels" "Noto Color Emoji" "Fira Code Nerd Font Mono" ];
+      };
+      localConf = ''
+        <fontconfig>
+          <!-- because buying MonoLisa gets you no support -->
+          <match target="scan">
+              <test name="family">
+                  <string>MonoLisa</string>
+              </test>
+              <edit name="spacing">
+                  <int>100</int>
+              </edit>
+          </match>
+        </fontconfig>
+      '';
     };
 
     fonts = with pkgs; [
       corefonts
-      joypixels
+      dejavu_fonts
       fira
       fira-code
       fira-code-symbols
       font-awesome
       inconsolata
+      inter
       jetbrains-mono
-      libertine
+      joypixels
+      manrope
       noto-fonts
       noto-fonts-emoji
       noto-fonts-extra
       symbola
       unifont
-      # google-fonts
-      (nerdfonts.override {
-        fonts = [ "Mononoki" "FiraCode" "JetBrainsMono" "Hack" ];
-      })
+      (nerdfonts.override { fonts = [ "FiraCode" "NerdFontsSymbolsOnly" ]; })
     ];
   };
 }

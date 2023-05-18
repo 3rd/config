@@ -22,7 +22,7 @@ function setup_nixos() {
 function setup_home_manager() {
   if test -f "$NIX_HOME"; then
     echo "- home.nix: yes"
-    mkdir -p "$HOME/.config/nixpkgs"
+    mkdir -p "$HOME/.config/home-manager"
     ln -sTf "$NIX_HOME" "$HOME/.config/home-manager/home.nix"
     nix-channel --add https://github.com/nix-community/home-manager/archive/master.tar.gz home-manager
     nix-channel --update

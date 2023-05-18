@@ -159,6 +159,7 @@
     psmisc
     pup
     ranger
+    bridge-utils
     restic
     pciutils
     stable.awscli2
@@ -207,6 +208,7 @@
     up
     urlscan
     vale
+    inferno
     vim
     vulkan-tools
     w3m
@@ -238,6 +240,7 @@
     firefox
     flameshot
     gnome.file-roller
+    gnome.gucharmap
     gnome.gnome-disk-utility
     neovide
     gnome.gnome-font-viewer

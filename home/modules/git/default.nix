@@ -92,6 +92,7 @@ in {
     pull = "git pull";
     push = "git push";
     rebase = "git rebase";
+    merge = "git merge";
     # scripts
     gid = "git-id";
     gbr = "git-branch";

@@ -64,7 +64,8 @@
       font_family = lib.mkDefault "MonoLisa";
       # font_size = lib.mkDefault "8.8";
       # font_size = lib.mkDefault "9.4";
-      font_size = lib.mkDefault "10.2";
+      font_size = lib.mkDefault "9.8";
+      # adjust_baseline = "0";
 
       # adjust_line_height = "105%";
 
@@ -108,8 +109,8 @@
       "ctrl+7" = "goto_tab 7";
       # change font size
       "ctrl+shift+0" = "change_font_size all 8.8";
-      "ctrl+shift+minus" = "change_font_size all -0.1";
-      "ctrl+shift+equal" = "change_font_size all +0.1";
+      "ctrl+shift+minus" = "change_font_size all -0.05";
+      "ctrl+shift+equal" = "change_font_size all +0.05";
       "ctrl+shift+backspace" = "change_font_size all 0";
       # change opacity
       "ctrl+shift+[" = "set_background_opacity -0.01";
@@ -139,12 +140,15 @@
       # <c-i>
       map ctrl+i send_text all \x1b[105;5u
 
-      modify_font underline_position 9
-      modify_font underline_thickness 150%
-      modify_font strikethrough_position 2px
+      # modify_font underline_position 9
+      # modify_font underline_thickness 150%
+      # modify_font strikethrough_position 2px
+      # modify_font baseline 3
 
       # dynamic opacity
       dynamic_background_opacity yes
+
+      narrow_symbols U+f14a,U+f096,U+f00d,U+f00c,U+f02E
     '';
   };
 }

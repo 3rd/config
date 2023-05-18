@@ -1,0 +1,6 @@
+% docs
+
+# Start markdown preview (inlyne)
+inlyne <path_to_file>
+
+$ path_to_file: fd -t f

@@ -33,8 +33,8 @@
     config = with config.colors; {
       "bar/common" = {
         inherit background;
-        font-0 = lib.mkDefault "DejaVuSans Nerd Font:size=11;2";
-        font-1 = lib.mkDefault "Hack Nerd Font Mono:size=16;3";
+        font-0 = lib.mkDefault "Fira:size=11;2";
+        font-1 = lib.mkDefault "Symbols Nerd Font:size=16;3";
       };
       "bar/top" = {
         "inherit" = "bar/common";
