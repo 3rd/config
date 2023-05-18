@@ -343,8 +343,8 @@
 (setq org-confirm-babel-evaluate nil)
 
 (add-hook 'org-mode-hook (lambda ()
-                           (push '("[ ]" .  "") prettify-symbols-alist)
-                           (push '("[X]" . "" ) prettify-symbols-alist)
+                           (push '("[ ]" .  "󰄱") prettify-symbols-alist)
+                           (push '("[X]" . "󰄲" ) prettify-symbols-alist)
                            (push '("[-]" . "⬚" ) prettify-symbols-alist)
                            (prettify-symbols-mode)))
 

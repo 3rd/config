@@ -196,14 +196,14 @@
       "module/pulseaudio" = {
         type = "internal/pulseaudio";
         click-right = "/run/current-system/sw/bin/pavucontrol &";
-        format-volume = "奔 <label-volume>";
+        format-volume = "󰖀 <label-volume>";
         format-volume-background = gray-darkest;
         format-volume-foreground = gray-lighter;
         format-volume-padding = 1;
         label-muted-background = gray-darkest;
         label-muted-foreground = red-light;
         label-muted-padding = 1;
-        label-muted = "婢";
+        label-muted = "󰖁";
       };
       "module/bluetooth" = {
         type = "custom/script";

@@ -1014,8 +1014,8 @@ Install icons: all-the-icons-install-fonts
 *** Checkboxes
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook (lambda ()
-                           (push '("[ ]" .  "") prettify-symbols-alist)
-                           (push '("[X]" . "" ) prettify-symbols-alist)
+                           (push '("[ ]" .  "󰄱") prettify-symbols-alist)
+                           (push '("[X]" . "󰄲" ) prettify-symbols-alist)
                            (push '("[-]" . "⬚" ) prettify-symbols-alist)
                            (prettify-symbols-mode)))
 #+END_SRC

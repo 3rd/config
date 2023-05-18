@@ -9,7 +9,7 @@ local config = {
     -- virtual_text = false,
     -- virtual_lines = { highighlight_whole_line = false },
   },
-  signs = { Error = " ", Warn = " ", Info = " ", Hint = " " },
+  signs = { Error = " ", Warn = " ", Info = " ", Hint = " 󰌶" },
 }
 
 local setup = function()

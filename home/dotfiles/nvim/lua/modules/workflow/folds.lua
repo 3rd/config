@@ -27,11 +27,11 @@ local setup_ufo = function()
       section_collapsed = "⮞",
       section_expanded = "⮟",
       list_item = "•",
-      task_default = "",
+      task_default = "",
       task_active = "➡",
-      task_done = "",
+      task_done = "",
       task_cancelled = "",
-      task_info = "",
+      task_info = "☑",
     },
   }
 
@@ -158,7 +158,7 @@ local setup_ufo = function()
 
     -- default
     local newVirtText = {}
-    local suffix = ("  %d "):format(end_line - start_line)
+    local suffix = (" 󰁂 %d "):format(end_line - start_line)
     local sufWidth = vim.fn.strdisplaywidth(suffix)
     local targetWidth = width - sufWidth
     local curWidth = 0

@@ -403,8 +403,8 @@ watchexec -e ".el" -i straight -r -c "emacs --with-profile default ~/.emacs.d/pr
 ** Checkboxes
 #+BEGIN_SRC emacs-lisp :tangle init.el
 (add-hook 'org-mode-hook (lambda ()
-                           (push '("[ ]" .  "") prettify-symbols-alist)
-                           (push '("[X]" . "" ) prettify-symbols-alist)
+                           (push '("[ ]" .  "󰄱") prettify-symbols-alist)
+                           (push '("[X]" . "󰄲" ) prettify-symbols-alist)
                            (push '("[-]" . "⬚" ) prettify-symbols-alist)
                            (prettify-symbols-mode)))
 #+END_SRC
