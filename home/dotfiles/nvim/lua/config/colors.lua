@@ -6,7 +6,7 @@ local base_hue = 230
 local colors = {
   none = "NONE",
   background = hsl(base_hue, 15, 15),
-  foreground = hsl(base_hue, 60, 85),
+  foreground = hsl("#ADBDEB"),
   primary = hsl(base_hue, 90, 80),
   blue = hsl(200, 90, 60),
   magenta = hsl(280, 80, 80),
@@ -37,12 +37,13 @@ colors.slang = {
     meta_field = colors.magenta,
     meta_field_key = colors.pink,
   },
+  bold = "#C1D1FF",
   string = "#4efa8e",
   number = "#71c9f6",
   ticket = "#fa89f6",
   datetime = "#FC824A",
   code = {
-    inline = "#fba03c",
+    inline = colors.orange.desaturate(10).lighten(10),
     block = {
       background = "#2f3041",
       marker = "#7378a5",
@@ -55,15 +56,20 @@ colors.slang = {
     external = "#5db4e3",
   },
   heading = {
-    one = colors.primary,
-    -- one = "#9999FF",
+    -- one = colors.primary,
+    one = "#9999FF",
     two = "#C08FFF",
     three = "#E38FFF",
     four = "#FFC78F",
     five = "#04D3D0",
     six = "#f0969f",
   },
-  section = colors.foreground.saturate(60).darken(10),
+  section = "#04D3D0",
+  banner = {
+    -- bg = "#262C3",
+    bg = "#38425B",
+    fg = "#A9B9E5", -- #8797C2
+  },
   task = {
     default = colors.foreground.darken(20),
     active = colors.cyan,
@@ -81,12 +87,12 @@ colors.slang = {
     identifier = "#e38fff",
   },
   list_item = {
-    item = colors.foreground.desaturate(20).darken(10),
-    marker = colors.primary.desaturate(50).darken(15),
-    label = "#c881de",
+    -- item = colors.foreground.desaturate(20).darken(10),
+    marker = colors.primary.desaturate(80).darken(40),
+    label = colors.yellow.lighten(20).saturate(30), -- "#c881de",
     label_marker = colors.common.comment,
   },
-  label = colors.orange.desaturate(20),
+  label = colors.yellow.lighten(20).saturate(30),
 }
 
 colors.rainbow = {

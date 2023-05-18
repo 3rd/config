@@ -17,14 +17,13 @@ return {
     -- search
     { "n", "n", "nzzzv", "Next search result" },
     { "n", "N", "Nzzzv", "Previous search result" },
-    { "v", "/", [[<esc>/\%V\v]], "Search in selection" },
-    { "n", "/", [[/\v]], "Search" },
-    { "n", "?", [[?\v]], "Search backwards" },
-    { "c", "%s/", [[%s/\v]], "Search and replace" },
-    { "c", "s/", [[s/\v]], "Search and replace" },
+    { "v", "/", [[<esc>/\%V]], "Search in selection" },
+    -- wrap
+    { "n", "j", "gj", "Move down" },
+    { "n", "k", "gk", "Move up" },
     -- folds
-    { "n", "<tab>", "za", "Toggle fold" },
-    { "n", "<s-tab>", "zc", "Close fold" },
+    -- { "n", "<tab>", "za", "Toggle fold" },
+    -- { "n", "<s-tab>", "zc", "Close fold" },
     -- extend undo
     { "i", ".", ".<c-g>u" },
     { "i", ";", ";<c-g>u" },

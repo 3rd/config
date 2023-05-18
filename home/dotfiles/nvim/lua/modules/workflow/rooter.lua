@@ -4,23 +4,25 @@ local patterns = {
 }
 
 local find_root = function()
-  local buffer_path = lib.buffer.current.get_path()
-  local path = vim.fs.dirname(buffer_path)
+  local path = vim.fs.dirname(lib.buffer.current.get_path())
+  if path == "." then path = vim.loop.cwd() or "" end
+  if path == "" then return nil end
   return vim.fs.find(patterns, {
     path = path,
     upward = true,
     stop = vim.loop.os_homedir(),
-  })[1] or path
+  })[1] or nil
 end
 
 local setup = function()
   vim.api.nvim_create_autocmd("BufEnter", {
     group = vim.api.nvim_create_augroup("rooter", {}),
     callback = function()
-      -- if lib.buffer.current.get_name() == "" then return end
       local root = find_root()
+      -- log("root:", root)
       if not root then return end
-      vim.fn.chdir(vim.fs.dirname(root))
+      local root_path = vim.fs.dirname(root) .. "/"
+      vim.fn.chdir(root_path)
     end,
   })
 end

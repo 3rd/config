@@ -48,8 +48,8 @@ return {
   },
 
   font = wezterm.font_with_fallback({
+    "MonoLisa",
     "Input Mono",
-    "BMono",
     "Hasklig",
     "Fira Code",
     "Noto Color Emoji",

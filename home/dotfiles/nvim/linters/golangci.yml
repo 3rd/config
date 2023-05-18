@@ -10,7 +10,7 @@ linters:
     - ineffassign
     - staticcheck
     - typecheck
-    - unused
+    # - unused
     # extra
     - asasalint
     - asciicheck

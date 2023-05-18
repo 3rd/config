@@ -1,7 +1,8 @@
 local cmp_sources = {
   { name = "nvim_lsp_signature_help" },
-  { name = "luasnip", keyword_length = 1 },
+  { name = "luasnip" },
   { name = "nvim_lsp" },
+  { name = "nvim_lua" },
   {
     name = "treesitter",
     entry_filter = function(entry)
@@ -156,24 +157,23 @@ local setup = function()
         if completion_context ~= nil and completion_context ~= "" then
           local truncated_context = string.sub(completion_context, 1, 30)
           if truncated_context ~= completion_context then truncated_context = truncated_context .. "..." end
-          log("completion context: " .. truncated_context)
           context = truncated_context .. " "
         end
 
-        log("pre: " .. context, type(context))
-
         vim_item.menu = ""
-        -- vim_item.menu = ({
-        --   luasnip = "[snip]",
-        --   nvim_lsp = "[lsp]",
-        --   path = "[path]",
-        --   treesitter = "[tree]",
-        -- })[entry.source.name]
+        vim_item.menu = ({
+          luasnip = "[snip]",
+          nvim_lsp = "[lsp]",
+          path = "[path]",
+          treesitter = "[tree]",
+        })[entry.source.name]
 
         if #context > 0 then vim_item.menu = vim_item.menu .. " " .. context end
 
         local icon = kind_icons[vim_item.kind] or "§"
-        vim_item.kind = icon .. " " .. vim_item.kind
+        vim_item.abbr = icon .. " " .. vim_item.abbr
+        vim_item.abbr_hl_group = "CmpItemKind" .. vim_item.kind
+        vim_item.kind = ""
 
         return vim_item
       end,
@@ -268,8 +268,8 @@ return lib.module.create({
   name = "completion/nvim-cmp",
   plugins = {
     {
-      -- "hrsh7th/nvim-cmp",
-      "yioneko/nvim-cmp",
+      "hrsh7th/nvim-cmp",
+      -- "yioneko/nvim-cmp",
       event = { "InsertEnter" },
       dependencies = {
         "hrsh7th/cmp-buffer",

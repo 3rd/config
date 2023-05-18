@@ -9,18 +9,6 @@ local setup = function()
     opts.max_width = 80
     return orig_util_open_floating_preview(contents, syntax, opts, ...)
   end
-
-  -- hover
-  -- https://github.com/neovim/neovim/blob/master/runtime/lua/vim/lsp/handlers.lua#L351
-  -- vim.lsp.handlers["textDocument/hover"] = function(_, result, ctx, cfg)
-  --   cfg = cfg or {}
-  --   cfg.focus_id = ctx.method
-  --   if not (result and result.contents) then return end
-  --   local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
-  --   markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
-  --   if vim.tbl_isempty(markdown_lines) then return end
-  --   return vim.lsp.util.open_floating_preview(markdown_lines, "markdown", cfg)
-  -- end
 end
 
 local setup_lspconfig = function()
@@ -30,6 +18,7 @@ local setup_lspconfig = function()
     },
     mason_lspconfig = {
       ensure_installed = {
+        "astro",
         "bashls",
         "clangd",
         "cssls",
@@ -43,6 +32,7 @@ local setup_lspconfig = function()
         "prismals",
         "rust_analyzer",
         "tailwindcss",
+        "lua_ls",
         "vimls",
         "vtsls",
         "vuels",
@@ -67,7 +57,6 @@ local setup_lspconfig = function()
       dockerls = {},
       gopls = {
         cmd = { "gopls", "-remote=auto", "-remote.debug=:0" },
-        flags = { allow_incremental_sync = true },
         settings = {
           gopls = {
             analyses = { unusedparams = true, unreachable = false },
@@ -99,7 +88,6 @@ local setup_lspconfig = function()
         },
       },
       html = {},
-      tailwindcss = {},
       vimls = {},
       astro = {},
       clangd = {
@@ -115,7 +103,7 @@ local setup_lspconfig = function()
         },
       },
       lua_ls = {
-        cmd = { vim.fn.exepath("lua-language-server") },
+        -- cmd = { vim.fn.exepath("lua-language-server") },
         settings = {
           Lua = {
             completion = { callSnippet = "Replace" },
@@ -124,6 +112,13 @@ local setup_lspconfig = function()
             workspace = {
               ignoreDir = { "sandbox" },
               checkThirdParty = false,
+              maxPreload = 100000,
+              preloadFileSize = 10000,
+              library = {
+                [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+                [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
+                [vim.fn.stdpath("data") .. "/lazy/lazy.nvim/lua/lazy"] = true,
+              },
             },
             telemetry = { enable = false },
           },
@@ -141,36 +136,15 @@ local setup_lspconfig = function()
       --     hostInfo = "neovim",
       --     disableAutomaticTypingAcquisition = true,
       --     preferences = {
-      --       allowIncompleteCompletions = true,
-      --       includeCompletionsForModuleExports = true,
+      --       allowIncompleteCompletions = false,
+      --       includeCompletionsForModuleExports = false,
+      --       importModuleSpecifierPreference = "shortest",
+      --       includePackageJsonAutoImports = "off",
       --     },
       --     maxTsServerMemory = 2 * 4096,
       --   },
-      --   flags = {
-      --     allow_incremental_sync = true,
-      --     debounce_text_changes = 150,
-      --   },
       --   settings = {
       --     format = { enable = false },
-      --     preferences = {
-      --       disableSuggestions = true,
-      --       quotePreference = "double",
-      --       allowIncompleteCompletions = true,
-      --       allowRenameOfImportPath = true,
-      --       allowTextChangesInNewFiles = true,
-      --       displayPartsForJSDoc = false,
-      --       generateReturnInDocTemplate = true,
-      --       includeAutomaticOptionalChainCompletions = true,
-      --       includeCompletionsForImportStatements = true,
-      --       includeCompletionsForModuleExports = true,
-      --       includeCompletionsWithClassMemberSnippets = true,
-      --       includeCompletionsWithObjectLiteralMethodSnippets = true,
-      --       includeCompletionsWithInsertText = true,
-      --       includeCompletionsWithSnippetText = true,
-      --       jsxAttributeCompletionStyle = "auto",
-      --       providePrefixAndSuffixTextForRename = true,
-      --       provideRefactorNotApplicableReason = true,
-      --     },
       --   },
       --   handlers = {
       --     -- always go to the first definition
@@ -181,29 +155,30 @@ local setup_lspconfig = function()
       --   },
       -- },
       vtsls = {
-        init_options = {
-          hostInfo = "neovim",
-          disableAutomaticTypingAcquisition = true,
-          preferences = {
-            allowIncompleteCompletions = true,
-            includeCompletionsForModuleExports = true,
-            includePackageJsonAutoImports = "off",
-          },
-          maxTsServerMemory = 2 * 4096,
-        },
+        -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
         settings = {
-          format = { enable = false },
+          javascript = {
+            format = { enable = false },
+            preferences = {
+              useAliasesForRenames = false,
+            },
+          },
           typescript = {
+            format = { enable = false },
+            tsserver = {
+              maxTsServerMemory = 8192,
+              -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
+            },
             preferences = {
               includePackageJsonAutoImports = "off",
+              useAliasesForRenames = false,
             },
           },
           vtsls = {
             experimental = {
-              enableProjectDiagnostics = true,
               completion = {
                 enableServerSideFuzzyMatch = true,
-                entriesLimit = 25,
+                entriesLimit = 150,
               },
             },
           },
@@ -264,7 +239,6 @@ local setup_lspconfig = function()
         },
       },
       prismals = {},
-      cssmodules_ls = {},
       jsonls = {
         init_options = {
           provideFormatter = false,
@@ -283,17 +257,13 @@ local setup_lspconfig = function()
           },
         },
       },
+      cssmodules_ls = {},
+      tailwindcss = {},
     },
   }
 
   require("mason").setup(config.mason)
   require("mason-lspconfig").setup(config.mason_lspconfig)
-
-  require("neodev").setup({
-    library = {
-      plugins = true,
-    },
-  })
 
   -- tweaks
   require("lspconfig.ui.windows").default_options.border = "rounded"
@@ -339,7 +309,7 @@ local setup_lspconfig = function()
       on_attach = on_attach,
     })
     opts.flags = opts.flags or {}
-    -- opts.flags.debounce_text_changes = 150
+    opts.flags.allow_incremental_sync = true
     if not opts.root_dir then opts.root_dir = default_root_dir end
     require("lspconfig")[server_name].setup(opts)
   end
@@ -360,7 +330,6 @@ return lib.module.create({
       dependencies = {
         "williamboman/mason.nvim",
         "williamboman/mason-lspconfig.nvim",
-        "folke/neodev.nvim",
         "ibhagwan/fzf-lua",
         "b0o/schemastore.nvim",
       },

@@ -111,6 +111,7 @@ return lib.module.create({
   plugins = {
     {
       "nvim-tree/nvim-tree.lua",
+      dependencies = { "nvim-tree/nvim-web-devicons" },
       config = setup_tree,
     },
     {

@@ -1,4 +1,4 @@
-local setup = function(on_attach)
+local setup = function()
   local lib = require("lib")
   local null_ls = require("null-ls")
   local util = require("lspconfig.util")
@@ -56,6 +56,7 @@ local setup = function(on_attach)
     null_ls.builtins.formatting.clang_format,
     null_ls.builtins.formatting.fixjson,
     null_ls.builtins.diagnostics.gitlint,
+    null_ls.builtins.code_actions.refactoring,
     -- null_ls.builtins.code_actions.gitsigns.with({
     --   config = {
     --     filter_actions = function(title)
@@ -63,19 +64,18 @@ local setup = function(on_attach)
     --     end,
     --   },
     -- }),
-    null_ls.builtins.code_actions.refactoring,
   }
 
-  local config = {
-    debug = false,
+  null_ls.setup({
+    debug = true,
     border = "rounded",
     log_level = "warn",
-    on_attach = on_attach,
+    on_attach = function(client)
+      require("lsp-format").on_attach(client)
+    end,
     root_dir = util.root_pattern(".root", "package.json", ".git") or lib.buffer.current.get_directory(),
     sources = sources,
-  }
-
-  null_ls.setup(config)
+  })
 
   vim.keymap.set(
     { "n", "v" },
@@ -90,15 +90,13 @@ return lib.module.create({
   plugins = {
     {
       "jose-elias-alvarez/null-ls.nvim",
-      event = "VeryLazy",
+      event = "BufEnter",
       dependencies = {
         "neovim/nvim-lspconfig",
         "nvim-lua/plenary.nvim",
         "ThePrimeagen/refactoring.nvim",
       },
+      config = setup,
     },
-  },
-  hooks = {
-    lsp = { on_attach = setup },
   },
 })

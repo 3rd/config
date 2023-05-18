@@ -132,6 +132,38 @@ return lib.module.create({
   name = "wiki",
   plugins = {
     -- { "gaoDean/autolist.nvim", ft = { "syslang" }, config = setup_autolist },
+    -- {
+    --   "jmbuhr/otter.nvim",
+    --   dependencies = {
+    --     "hrsh7th/nvim-cmp",
+    --     -- "yioneko/nvim-cmp",
+    --     "neovim/nvim-lspconfig",
+    --     "nvim-treesitter/nvim-treesitter",
+    --   },
+    --   init = function()
+    --     vim.api.nvim_create_autocmd("FileType", {
+    --       group = vim.api.nvim_create_augroup("syslang-otter", {}),
+    --       pattern = "syslang",
+    --       callback = function()
+    --         local otter = require("otter")
+    --         otter.activate({ "lua", "go", "typescript", "typescriptreact" }, true, {
+    --           syslang = [[
+    --             (code_block
+    --               (code_block_start
+    --                 (code_block_language) @lang
+    --               )
+    --               (code_block_content
+    --                 (text) @code
+    --               )
+    --             )
+    --           ]],
+    --         })
+    --         lib.map.map("n", "gd", ":lua require'otter'.ask_definition()<cr>", { buffer = true })
+    --         lib.map.map("n", "K", ":lua require'otter'.ask_hover()<cr>", { silent = true })
+    --       end,
+    --     })
+    --   end,
+    -- },
   },
   mappings = {
     { "n", "<M-n>", handle_select },

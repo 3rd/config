@@ -4,19 +4,21 @@ local folding = require("syslang/folding")
 local setup_options = function()
   vim.opt_local.foldlevel = 999
 
-  vim.opt_local.wrap = true
+  vim.opt_local.wrap = false
   vim.opt_local.signcolumn = "yes:2"
   vim.opt_local.number = false
   vim.opt_local.breakindent = true
   vim.opt_local.linebreak = true
-  vim.opt_local.breakindentopt = "list:2" -- TODO move to list:-1 with formatlistpat
   vim.opt_local.cursorlineopt = "screenline"
   vim.opt_local.winbar = " "
 
   vim.opt_local.commentstring = "-- %s"
-  vim.opt_local.textwidth = 999999
-  vim.opt_local.formatlistpat = "^\\s*[\\[-]"
+  vim.opt_local.textwidth = 80
+
+  vim.opt_local.breakindentopt = "list:-1"
+  vim.opt_local.formatlistpat = [[ ^\s*(\d)\+\s* ]]
   vim.opt_local.formatoptions = "cqrt"
+
   vim.opt_local.cinwords = "*,-"
   vim.opt_local.smartindent = true
 end
@@ -117,9 +119,7 @@ local handle_toggle_task = function()
         for _, session_node in ipairs(sessions) do
           local time_nodes = lib.ts.find_children(session_node, "time", true)
           if #time_nodes == 2 then
-            local datetime_nodes = lib.ts.find_children(session_node, "datetime")
             local date_nodes = lib.ts.find_children(session_node, "date", true)
-            local time_nodes = lib.ts.find_children(session_node, "time", true)
             local start_date = vim.treesitter.get_node_text(date_nodes[1], 0)
             local start_time = vim.treesitter.get_node_text(time_nodes[1], 0)
             local end_date = start_date

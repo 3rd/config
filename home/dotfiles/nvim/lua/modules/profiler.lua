@@ -3,13 +3,14 @@
 -- https://github.com/nvim-lua/plenary.nvim/issues/225
 -- https://github.com/stevearc/profile.nvim
 
--- LUA_PATH="/nix/store/sqxjph7y9qgl07rz2ynhpc7hidm5wwp5-luajit-2.1.0-2022-10-04/share/lua/5.1"
+-- LUA_PATH="$(dirname (readlink - f (which luajit)))/../share/lua/5.1/jit/vmdef.lua" nvim
 -- inferno-flamegraph profile.log > flame.svg
+-- https://blast.hk/moonloader/luajit/ext_profiler.html
 local profiler_start = function()
+  require("plenary.profile.p").start("-20,i1,s,m0,G,p,F,l", "profile.log")
   vim.notify("Profiler started", vim.log.levels.INFO, { title = "Profiler" })
-  require("plenary.profile").start("profile.log", { flame = true })
   vim.cmd([[
-    command! ProfilerStop lua require("modules.profiler").stop()
+    command! ProfilerStop lua require("modules.profiler").exports.stop()
   ]])
 end
 
@@ -27,5 +28,9 @@ return lib.module.create({
   actions = {
     { "n", "Profiler: Start profiling", profiler_start },
     { "n", "Profiler: Stop profiling", profiler_stop },
+  },
+  exports = {
+    start = profiler_start,
+    stop = profiler_stop,
   },
 })

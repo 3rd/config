@@ -5,8 +5,8 @@ local colors = require("config/colors")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    -- Normal({ fg = colors.foreground }), -- Normal text
+    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -309,7 +309,7 @@ local theme = lush(function(injected)
     sym("@slang.document.meta")({ fg = colors.slang.document.meta }),
     sym("@slang.document.meta.field")({ fg = colors.slang.document.meta_field }),
     sym("@slang.document.meta.field.key")({ fg = colors.slang.document.meta_field_key }),
-    sym("@slang.bold")({ gui = "bold" }),
+    sym("@slang.bold")({ fg = colors.slang.bold, gui = "bold" }),
     sym("@slang.italic")({ gui = "italic" }),
     sym("@slang.underline")({ gui = "underline" }),
     sym("@slang.comment")({ fg = colors.common.comment }),
@@ -336,6 +336,7 @@ local theme = lush(function(injected)
     sym("@slang.heading_6.text")({ fg = colors.slang.heading.six, gui = "bold" }),
     sym("@slang.heading_done")({ fg = colors.slang.task.done, gui = "bold" }),
     sym("@slang.section")({ fg = colors.slang.section }),
+    sym("@slang.banner")({ bg = colors.slang.banner.bg, fg = colors.slang.banner.fg }),
     sym("@slang.task_default")({}),
     sym("@slang.task_active")({ fg = colors.slang.task.active }),
     sym("@slang.task_done")({ fg = colors.slang.task.done }),
@@ -359,7 +360,8 @@ local theme = lush(function(injected)
     sym("@slang.label")({ fg = colors.slang.label }),
     sym("@slang.list_item")({ fg = colors.slang.list_item.item }),
     sym("@slang.list_item_marker")({ fg = colors.slang.list_item.marker }),
-    sym("@slang.list_item_label")({ fg = colors.slang.list_item.label, gui = "bold" }),
+    -- sym("@slang.list_item_label")({ fg = colors.slang.list_item.label, gui = "bold" }),
+    sym("@slang.list_item_label")({ fg = colors.slang.list_item.label, gui = "italic" }),
     sym("@slang.list_item_label_marker")({ fg = colors.slang.list_item.label_marker }),
   }
 end)

@@ -38,7 +38,7 @@ return {
         language = "#6F75A9",
         marker = "#7378a5"
       },
-      inline = "#fba03c"
+      inline = "#F2A354"
     },
     datetime = "#FC824A",
     document = {
@@ -50,24 +50,24 @@ return {
     heading = {
       five = "#04D3D0",
       four = "#FFC78F",
-      one = "#9EADFA",
+      one = "#9999FF",
       six = "#f0969f",
       three = "#E38FFF",
       two = "#C08FFF"
     },
-    label = "#E7994B",
+    label = "#F7C664",
     link = {
       external = "#5db4e3",
       internal = "#5BC0CD"
     },
     list_item = {
       item = "#A8B2E1",
-      label = "#c881de",
+      label = "#F7C664",
       label_marker = "#757DA3",
       marker = "#8995D2"
     },
     number = "#71c9f6",
-    section = "#93A4F6",
+    section = "#04D3D0",
     string = "#4efa8e",
     tag = {
       context = "#F0B642",
