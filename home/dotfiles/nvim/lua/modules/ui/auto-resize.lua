@@ -8,7 +8,7 @@ local setup = function()
   vim.cmd("autocmd VimEnter * doautocmd FileType")
 end
 
-return require("lib").module.create({
+return lib.module.create({
   name = "ui/auto-resize",
   setup = setup,
 })

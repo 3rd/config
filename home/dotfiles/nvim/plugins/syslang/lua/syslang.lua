@@ -13,7 +13,7 @@ local setup_options = function()
   vim.opt_local.winbar = " "
 
   vim.opt_local.commentstring = "-- %s"
-  vim.opt_local.textwidth = 80
+  vim.opt_local.textwidth = 100
 
   vim.opt_local.breakindentopt = "list:-1"
   vim.opt_local.formatlistpat = [[ ^\s*(\d)\+\s* ]]

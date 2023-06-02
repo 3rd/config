@@ -3,6 +3,7 @@ local setup_fzf_lua = function()
 
   local config = {
     fzf_opts = { ["--layout"] = "default" },
+    rg_opts = { ["--column"] = "" },
     winopts = {
       split = "botright new",
       fullscreen = true,
@@ -25,8 +26,18 @@ local setup_fzf_lua = function()
         config = nil,
       },
     },
-    files = { git_icons = false },
-    grep = { git_icons = false },
+    files = {
+      -- path_shorten = 4,
+      git_icons = false,
+    },
+    buffers = {
+      -- path_shorten = 4,
+    },
+    grep = {
+      -- path_shorten = 4,
+      git_icons = false,
+      fzf_opts = { ["--layout"] = "default", ["--no-hscroll"] = "" },
+    },
     tags = { git_icons = false },
     btags = { git_icons = false },
   }
@@ -39,7 +50,10 @@ local setup_fzf_lua = function()
       opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(vim.fn.expand("%"))
     end
     opts.prompt = "> "
-    opts.fzf_opts = { ["--info"] = "inline", ["--tiebreak"] = "index" }
+    opts.fzf_opts = {
+      ["--info"] = "inline",
+      ["--tiebreak"] = "index",
+    }
     fzf.files(opts)
   end, "Find file in project")
   lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
