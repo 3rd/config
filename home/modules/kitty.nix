@@ -33,6 +33,8 @@
       window_border_width = "0";
       window_margin_width = "0";
       window_padding_width = "0 0 0 0";
+      cursor_shape = "block";
+      shell_integration = "no-cursor";
       # use_system_wcwidth = "yes";
 
       # https://github.com/kovidgoyal/kitty/pull/5969
