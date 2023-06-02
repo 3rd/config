@@ -4,16 +4,16 @@ return {
   common = {
     comment = "#757DA3",
     constructor = "#E29D12",
-    delimiter = "#6A75AF",
-    field = "#8490CD",
+    delimiter = "#5F72AB",
+    field = "#7489C8",
     ["function"] = "#3DB8F5",
-    identifier = "#A8B2E1",
+    identifier = "#95A6DB",
     keyword = "#D291F3",
-    operator = "#7481BE",
+    operator = "#657AB8",
     type = "#52E0E0"
   },
   cyan = "#52E0E0",
-  foreground = "#C2C9F0",
+  foreground = "#ADBCEB",
   green = "#AACC66",
   magenta = "#DAA3F5",
   none = "NONE",
@@ -31,6 +31,11 @@ return {
   },
   red = "#E6594C",
   slang = {
+    banner = {
+      bg = "#38425B",
+      fg = "#A9B9E5"
+    },
+    bold = "#C1D1FF",
     code = {
       block = {
         background = "#2f3041",
@@ -61,10 +66,9 @@ return {
       internal = "#5BC0CD"
     },
     list_item = {
-      item = "#A8B2E1",
       label = "#F7C664",
       label_marker = "#757DA3",
-      marker = "#8995D2"
+      marker = "#646C90"
     },
     number = "#71c9f6",
     section = "#04D3D0",
@@ -83,7 +87,7 @@ return {
     task = {
       active = "#52E0E0",
       cancelled = "#fa4040",
-      default = "#7C8DDE",
+      default = "#6B87DB",
       done = "#757DA3",
       schedule = "#FF8000",
       session = "#7378a5"
