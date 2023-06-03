@@ -1,13 +1,12 @@
 local setup = function()
-  local lib = require("lib")
   local null_ls = require("null-ls")
   local util = require("lspconfig.util")
 
   local paths = {
-    stylua_config = vim.fn.expand("~/.config/nvim/linters/stylua.toml"),
-    eslint_config = vim.fn.expand("~/.config/nvim/linters/eslint/dist/main.js"),
-    eslint_node_modules = vim.fn.expand("~/.config/nvim/linters/eslint/node_modules"),
-    prettier_config = vim.fn.expand("~/.config/nvim/linters/prettier.json"),
+    stylua_config = lib.path.resolve_config("linters/stylua.toml"),
+    eslint_config = lib.path.resolve_config("linters/eslint/dist/main.js"),
+    eslint_node_modules = lib.path.resolve_config("linters/eslint/node_modules"),
+    prettier_config = lib.path.resolve_config("linters/prettier.json"),
   }
 
   local sources = {

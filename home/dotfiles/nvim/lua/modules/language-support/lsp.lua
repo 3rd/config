@@ -80,9 +80,7 @@ local setup_lspconfig = function()
       golangci_lint_ls = {
         init_options = {
           command = string.split(
-            ("golangci-lint run -c %s --out-format json"):format(
-              vim.fn.expand("~/.config/nvim/linters/golangci.yml") -- TODO: env dir
-            ),
+            ("golangci-lint run -c %s --out-format json"):format(lib.path.resolve_config("nvim/linters/golangci.yml")),
             " "
           ),
         },
@@ -224,13 +222,13 @@ local setup_lspconfig = function()
             showDocumentation = { enable = true },
           },
           -- experimental = { useFlatConfig = true },
-          nodePath = vim.fn.expand("~/.config/nvim/linters/eslint/node_modules"),
+          nodePath = lib.path.resolve_config("linters/eslint/node_modules"),
           onIgnoredFiles = "off",
           options = {
             cache = true,
             fix = true,
-            overrideConfigFile = vim.fn.expand("~/.config/nvim/linters/eslint/dist/main.js"),
-            resolvePluginsRelativeTo = vim.fn.expand("~/.config/nvim/linters/eslint/node_modules"),
+            overrideConfigFile = lib.path.resolve_config("linters/eslint/dist/main.js"),
+            resolvePluginsRelativeTo = lib.path.resolve_config("linters/eslint/node_modules"),
             useEslintrc = false,
           },
           packageManager = "npm",
