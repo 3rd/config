@@ -100,6 +100,7 @@
     gitlint
     glances
     glow
+    iftop
     glxinfo
     gnumake
     unrar-wrapper
@@ -156,6 +157,7 @@
     powertop
     proselint
     sysstat
+    nethogs
     psmisc
     pup
     ranger

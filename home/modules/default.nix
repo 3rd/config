@@ -40,7 +40,6 @@
     ./starship.nix
     ./syncthing.nix
     ./tmux
-    ./vscode.nix
     ./zathura.nix
     ./zoxide.nix
     # ./wezterm.nix
