@@ -10,5 +10,8 @@ end
 
 return lib.module.create({
   name = "ui/auto-resize",
-  setup = setup,
+  -- setup = setup,
+  mappings = {
+    { "n", "==", ":tabdo wincmd =<cr>" },
+  },
 })

@@ -46,6 +46,14 @@ local setup_lspconfig = function()
         },
       },
     },
+    mason_dap = {
+      ensure_installed = {
+        "chrome", -- chrome-debug-adapter
+        "delve",
+        "js", -- js-debug-adapter
+        "node2", -- node-debug2-adapter
+      },
+    },
     lspconfig = {
       bashls = {},
       cssls = {
@@ -262,6 +270,7 @@ local setup_lspconfig = function()
 
   require("mason").setup(config.mason)
   require("mason-lspconfig").setup(config.mason_lspconfig)
+  require("mason-nvim-dap").setup(config.mason_dap)
 
   -- tweaks
   require("lspconfig.ui.windows").default_options.border = "rounded"
@@ -328,6 +337,7 @@ return lib.module.create({
       dependencies = {
         "williamboman/mason.nvim",
         "williamboman/mason-lspconfig.nvim",
+        "jay-babu/mason-nvim-dap.nvim",
         "ibhagwan/fzf-lua",
         "b0o/schemastore.nvim",
       },
