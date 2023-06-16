@@ -19,15 +19,17 @@ local colors = {
 }
 
 colors.common = {
-  identifier = colors.foreground.darken(10).desaturate(20),
+  identifier = colors.foreground.darken(10),
   operator = colors.foreground.darken(30).desaturate(40),
   keyword = colors.magenta.darken(5),
   ["function"] = colors.blue,
   type = colors.cyan,
-  field = colors.foreground.darken(22).desaturate(30),
+  field = colors.foreground.darken(20).desaturate(30),
   comment = hsl(base_hue, 20, 55),
-  constructor = colors.yellow.darken(20),
   delimiter = colors.foreground.darken(35).desaturate(50),
+  constructor = colors.magenta.lighten(10).desaturate(10),
+  conditional = colors.red.desaturate(10).rotate(20),
+  constant = colors.foreground.darken(10).saturate(40),
 }
 
 colors.slang = {

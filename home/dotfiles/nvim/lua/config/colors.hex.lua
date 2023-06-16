@@ -3,11 +3,13 @@ return {
   blue = "#3DB8F5",
   common = {
     comment = "#757DA3",
-    constructor = "#E29D12",
+    conditional = "#DE8D54",
+    constant = "#819CEF",
+    constructor = "#DCB0F2",
     delimiter = "#5F72AB",
-    field = "#7489C8",
+    field = "#7C8FCB",
     ["function"] = "#3DB8F5",
-    identifier = "#95A6DB",
+    identifier = "#8CA2E3",
     keyword = "#D291F3",
     operator = "#657AB8",
     type = "#52E0E0"
