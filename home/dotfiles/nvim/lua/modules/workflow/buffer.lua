@@ -49,7 +49,8 @@ local get_previous_buffer = function(opts)
   end
 
   -- fallback: last used
-  local buffers = vim.fn.getbufinfo() -- maybe spin-off with { buflisted = true }?
+  -- TODO: do I need this if I require the buffer to be listed? do I need it to switch to unlisted buffers?
+  local buffers = vim.fn.getbufinfo()
   table.sort(buffers, function(a, b)
     return a.loaded and not b.loaded or a.lastused > b.lastused -- { bufnr, lastused, windows, variables }
   end)
@@ -70,7 +71,7 @@ local get_previous_buffer = function(opts)
         end
       end
 
-      if is_valid and (is_listed or (not is_in_floating_window and not is_noname)) then
+      if is_valid and (is_listed and (not is_in_floating_window and not is_noname)) then
         -- log("from history", bufnr)
         return bufnr
       end
