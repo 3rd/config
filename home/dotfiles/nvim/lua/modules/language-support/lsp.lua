@@ -88,7 +88,7 @@ local setup_lspconfig = function()
       golangci_lint_ls = {
         init_options = {
           command = string.split(
-            ("golangci-lint run -c %s --out-format json"):format(lib.path.resolve_config("nvim/linters/golangci.yml")),
+            ("golangci-lint run -c %s --out-format json"):format(lib.path.resolve_config("linters/golangci.yml")),
             " "
           ),
         },
@@ -166,7 +166,7 @@ local setup_lspconfig = function()
           javascript = {
             format = { enable = false },
             preferences = {
-              useAliasesForRenames = false,
+              useAliasesForRenames = true,
             },
           },
           typescript = {
@@ -177,7 +177,7 @@ local setup_lspconfig = function()
             },
             preferences = {
               includePackageJsonAutoImports = "off",
-              useAliasesForRenames = false,
+              useAliasesForRenames = true,
             },
           },
           vtsls = {
