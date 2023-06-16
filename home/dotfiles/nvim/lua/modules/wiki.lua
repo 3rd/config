@@ -50,7 +50,6 @@ end
 
 local setup_autolist = function()
   require("autolist").setup({
-    -- enabled = false,
     list_cap = 50,
     colon = {
       indent = true,
@@ -94,38 +93,11 @@ local setup_autolist = function()
         -- "o",
         -- "O+(true)",
       },
-      tab = {},
-      detab = {},
+      tab = { ">" },
+      detab = { "<" },
       recal = { "dd" },
     },
   })
-
-  -- patch recal() to adjust star outline markers
-  -- local start_line_number = fn.line(".")
-  -- local start_line = fn.getline(start_line_number)
-  -- local start_line_indent = utils.get_indent_lvl(start_line)
-  -- if start_line:match("^%s*%*+%s") then
-  --   local stars = ""
-  --   local indent_level = start_line_indent / config.tabstop + 1
-  --   for i = 1, indent_level do
-  --     stars = stars .. "*"
-  --   end
-  --   utils.set_line_marker(start_line_number, stars, types)
-  --   for i = start_line_number + 1, fn.line("$") do
-  --     local current_line_before = fn.getline(i)
-  --     if current_line_before:match("^%s*%*+%s") then
-  --       break
-  --     end
-  --     local current_indent_level = utils.get_indent_lvl(current_line_before) / config.tabstop + 1
-  --     local current_line_without_indent = current_line_before:gsub("^%s*", "", 1)
-  --     if current_indent_level >= indent_level then
-  --       local indented_line = string.rep(" ", config.tabstop * indent_level) .. current_line_without_indent
-  --       -- log({ indent_level = indent_level, indented_line = indented_line })
-  --       fn.setline(i, indented_line)
-  --     end
-  --   end
-  --   return
-  -- end
 end
 
 return lib.module.create({

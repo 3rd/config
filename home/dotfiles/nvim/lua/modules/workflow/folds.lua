@@ -220,8 +220,37 @@ local setup = function()
   end, { silent = true, noremap = true })
 end
 
+local setup_fold_cycle = function()
+  require("fold-cycle").setup({
+    open_if_max_closed = true,
+    close_if_max_opened = true,
+    softwrap_movement_fix = true,
+  })
+
+  -- <tab> - open / cycle
+  vim.keymap.set("n", "<tab>", function()
+    require("fold-cycle").open()
+    -- https://github.com/lukas-reineke/indent-blankline.nvim/issues/449
+    -- vim.cmd("IndentBlanklineRefresh")
+  end, { silent = true, desc = "Fold-cycle: open folds" })
+
+  -- <s-tab> - collapse
+  vim.keymap.set("n", "<s-tab>", function()
+    -- return require("fold-cycle").close()
+    local filetype = vim.bo.filetype
+    if filetype == "syslang" then
+      local is_open_fold_child = is_current_line_in_open_fold_and_is_not_first()
+      if is_open_fold_child then vim.api.nvim_exec2("normal! [z", {}) end
+    end
+    pcall(vim.api.nvim_exec2, "normal! zc", {})
+  end, { silent = true, noremap = true })
+
+  -- vim.keymap.set("n", "zC", function()
+  --   return require("fold-cycle").close_all()
+  -- end, { remap = true, silent = true, desc = "Fold-cycle: close all folds" })
+end
+
 return lib.module.create({
-  -- enabled = false,
   name = "workflow/folds",
   setup = setup,
   plugins = {
@@ -230,6 +259,11 @@ return lib.module.create({
       event = "VimEnter",
       dependencies = { "nvim-treesitter", "kevinhwang91/promise-async" },
       config = setup_ufo,
+    },
+    {
+      "jghauser/fold-cycle.nvim",
+      event = "VeryLazy",
+      config = setup_fold_cycle,
     },
   },
   hooks = {
