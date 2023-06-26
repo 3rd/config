@@ -8,7 +8,7 @@ local logger_defaults = {
 
 local default_log_formatter = function(opts, ...)
   local parts = {}
-  parts[#parts + 1] = vim.fn.strftime("%H:%M:%S")
+  parts[#parts + 1] = os.date("%H:%M:%S")
   if opts.prefix then parts[#parts + 1] = opts.prefix end
   for _, v in ipairs({ ... }) do
     local format_handler = nil

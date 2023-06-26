@@ -36,6 +36,7 @@ return lib.module.create({
   },
   actions = {
     { "n", "Diagrams: ASCII Blockify", "AsciiBlockify" },
+    { "n", "Diagrams: venn", toggle_venn },
   },
   mappings = {
     { "n", "<leader>v", toggle_venn, { desc = "Toggle venn", noremap = true } },

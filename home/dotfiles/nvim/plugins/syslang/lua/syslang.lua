@@ -5,7 +5,7 @@ local setup_options = function()
   vim.opt_local.foldlevel = 999
 
   vim.opt_local.wrap = false
-  vim.opt_local.signcolumn = "yes:2"
+  vim.opt_local.signcolumn = "yes:1"
   vim.opt_local.number = false
   vim.opt_local.breakindent = true
   vim.opt_local.linebreak = true
@@ -355,8 +355,8 @@ local setup_buffer = function()
 
   -- mappings
   vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true, noremap = true })
-  vim.keymap.set("n", ">", handle_indent, { buffer = true })
-  vim.keymap.set("n", "<", handle_dedent, { buffer = true })
+  -- vim.keymap.set("n", ">", handle_indent, { buffer = true })
+  -- vim.keymap.set("n", "<", handle_dedent, { buffer = true })
   -- vim.keymap.set("n", "zR", handle_expand_all, { buffer = true, noremap = true })
   -- vim.keymap.set("n", "zM", handle_collapse_all, { buffer = true, noremap = true })
 end
