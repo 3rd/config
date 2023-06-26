@@ -8,3 +8,5 @@ home/ssh
 home/wallpaper*
 home/workspaces
 machines
+.git-broken
+home/dotfiles/nvim/plugins/image.nvim
