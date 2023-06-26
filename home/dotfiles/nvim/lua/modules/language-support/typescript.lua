@@ -1,10 +1,70 @@
-local setup_template_string = function()
-  require("template-string").setup()
-end
-
 return lib.module.create({
   name = "language-support/typescript",
   plugins = {
+    {
+      "pmizio/typescript-tools.nvim",
+      ft = {
+        "typescript",
+        "typescriptreact",
+        "javascript",
+        "javascriptreact",
+      },
+      dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
+      opts = {
+        settings = {
+          separate_diagnostic_server = true,
+          publish_diagnostic_on = "insert_leave",
+          tsserver_plugins = { "styled-components" }, -- npm i -g typescript-styled-plugin
+          tsserver_file_preferences = {
+            allowIncompleteCompletions = true,
+            allowRenameOfImportPath = true,
+            allowTextChangesInNewFiles = true,
+            disableLineTextInReferences = true,
+            displayPartsForJSDoc = true,
+            generateReturnInDocTemplate = true,
+            importModuleSpecifierEnding = "auto",
+            includeAutomaticOptionalChainCompletions = true,
+            includeCompletionsForImportStatements = true,
+            includeCompletionsWithClassMemberSnippets = true,
+            includeCompletionsWithObjectLiteralMethodSnippets = true,
+            includeCompletionsWithSnippetText = true,
+            includeInlayEnumMemberValueHints = false,
+            includeInlayFunctionLikeReturnTypeHints = false,
+            includeInlayFunctionParameterTypeHints = false,
+            includeInlayParameterNameHints = "none",
+            includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+            includeInlayPropertyDeclarationTypeHints = false,
+            includeInlayVariableTypeHints = false,
+            includeInlayVariableTypeHintsWhenTypeMatchesName = false,
+            jsxAttributeCompletionStyle = "auto",
+            providePrefixAndSuffixTextForRename = true,
+            provideRefactorNotApplicableReason = true,
+            quotePreference = "auto",
+            useLabelDetailsInCompletionEntries = true,
+          },
+          tsserver_format_options = {
+            indentSwitchCase = true,
+            insertSpaceAfterCommaDelimiter = true,
+            insertSpaceAfterConstructor = false,
+            insertSpaceAfterFunctionKeywordForAnonymousFunctions = true,
+            insertSpaceAfterKeywordsInControlFlowStatements = true,
+            insertSpaceAfterOpeningAndBeforeClosingEmptyBraces = true,
+            insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces = false,
+            insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = true,
+            insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets = false,
+            insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis = false,
+            insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces = false,
+            insertSpaceAfterSemicolonInForStatements = true,
+            insertSpaceAfterTypeAssertion = false,
+            insertSpaceBeforeAndAfterBinaryOperators = true,
+            insertSpaceBeforeFunctionParenthesis = false,
+            placeOpenBraceOnNewLineForControlBlocks = false,
+            placeOpenBraceOnNewLineForFunctions = false,
+            semicolons = "ignore",
+          },
+        },
+      },
+    },
     {
       "axelvc/template-string.nvim",
       ft = {
@@ -13,7 +73,7 @@ return lib.module.create({
         "javascript",
         "javascriptreact",
       },
-      config = setup_template_string,
+      opts = {},
     },
   },
 })

@@ -34,7 +34,7 @@ local setup_lspconfig = function()
         "tailwindcss",
         "lua_ls",
         "vimls",
-        "vtsls",
+        -- "vtsls",
         "vuels",
         "yamlls",
       },
@@ -109,7 +109,7 @@ local setup_lspconfig = function()
         },
       },
       lua_ls = {
-        -- cmd = { vim.fn.exepath("lua-language-server") },
+        cmd = { vim.fn.exepath("lua-language-server") },
         settings = {
           Lua = {
             completion = { callSnippet = "Replace" },
@@ -160,43 +160,43 @@ local setup_lspconfig = function()
       --     end,
       --   },
       -- },
-      vtsls = {
-        -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
-        settings = {
-          javascript = {
-            format = { enable = false },
-            preferences = {
-              useAliasesForRenames = true,
-            },
-          },
-          typescript = {
-            format = { enable = false },
-            tsserver = {
-              maxTsServerMemory = 8192,
-              -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
-            },
-            preferences = {
-              includePackageJsonAutoImports = "off",
-              useAliasesForRenames = true,
-            },
-          },
-          vtsls = {
-            experimental = {
-              completion = {
-                enableServerSideFuzzyMatch = true,
-                entriesLimit = 150,
-              },
-            },
-          },
-        },
-        handlers = {
-          -- always go to the first definition
-          ["textDocument/definition"] = function(err, result, ...)
-            if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
-            vim.lsp.handlers["textDocument/definition"](err, result, ...)
-          end,
-        },
-      },
+      -- vtsls = {
+      --   -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
+      --   settings = {
+      --     javascript = {
+      --       format = { enable = false },
+      --       preferences = {
+      --         useAliasesForRenames = true,
+      --       },
+      --     },
+      --     typescript = {
+      --       format = { enable = false },
+      --       tsserver = {
+      --         maxTsServerMemory = 8192,
+      --         -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
+      --       },
+      --       preferences = {
+      --         includePackageJsonAutoImports = "off",
+      --         useAliasesForRenames = true,
+      --       },
+      --     },
+      --     vtsls = {
+      --       experimental = {
+      --         completion = {
+      --           enableServerSideFuzzyMatch = true,
+      --           entriesLimit = 150,
+      --         },
+      --       },
+      --     },
+      --   },
+      --   handlers = {
+      --     -- always go to the first definition
+      --     ["textDocument/definition"] = function(err, result, ...)
+      --       if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
+      --       vim.lsp.handlers["textDocument/definition"](err, result, ...)
+      --     end,
+      --   },
+      -- },
       vuels = {
         init_options = {
           config = {
@@ -345,6 +345,7 @@ return lib.module.create({
     },
     {
       "j-hui/fidget.nvim",
+      tag = "legacy",
       event = "BufReadPost",
       config = function()
         require("fidget").setup({
