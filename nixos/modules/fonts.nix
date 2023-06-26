@@ -17,7 +17,7 @@
       hinting = {
         enable = true;
         autohint = false;
-        style = "hintfull"; # hintslight
+        style = "full"; # slight
       };
       defaultFonts = {
         # monospace = [ "MonoLisa" "Symbols Nerd Font Mono" ];

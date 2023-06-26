@@ -18,10 +18,13 @@ let
     "typescript"
     "typescript"
   ];
-in
-{
+in {
   home.sessionPath = [ "$HOME/.npm/global/bin" ];
-  home.sessionVariables = { NODE_PATH = "$HOME/.npm/global/lib/node_modules"; };
+  home.sessionVariables = {
+    NODE_PATH = "$HOME/.npm/global/lib/node_modules";
+    NODE_OPTIONS =
+      "--max_old_space_size=16384 --trace-sigint --trace-warnings --use-largepages=silent";
+  };
   home.activation = {
     npm_set_prefix = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       npm set prefix ~/.npm/global

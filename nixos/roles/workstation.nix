@@ -5,9 +5,9 @@
     ../modules/fonts.nix
     ../modules/hardware/audio.nix
     ../modules/hardware/bluetooth.nix
-    ../modules/packages/emacs.nix
+    # ../modules/packages/emacs.nix
     ../modules/packages/neovim.nix
-    ../modules/packages/alien.nix
+    # ../modules/packages/alien.nix
     ../modules/services/docker.nix
     ../modules/services/syncthing.nix
     ../modules/services/tailscale.private.nix
@@ -51,9 +51,16 @@
 
   # sysctl - a
   boot.kernel.sysctl = {
-    "vm.dirty_background_ratio" = 5;
-    "vm.dirty_ratio" = 10;
-    "vm.swappiness" = 0;
+    "kernel.sched_cfs_bandwidth_slice_us" = 3000;
+    "kernel.sched_latency_ns" = 4000000;
+    "kernel.sched_migration_cost_ns" = 250000;
+    "kernel.sched_min_granularity_ns" = 500000;
+    "kernel.sched_nr_migrate" = 128;
+    "kernel.sched_wakeup_granularity_ns" = 50000;
+    "vm.dirty_background_ratio" = 20;
+    "vm.dirty_ratio" = 50;
+    "vm.swappiness" = 90;
+    "vm.vfs_cache_pressure" = 50;
   };
 
   # packages
@@ -63,7 +70,7 @@
     BROWSER = "google-chrome-stable";
   };
   environment.systemPackages = with pkgs; [
-    (python3.withPackages (ps: with ps; [ neovim pynvim ueberzug ]))
+    (python3.withPackages (ps: with ps; [ neovim pynvim ]))
     age
     appimage-run
     bintools-unwrapped
@@ -248,6 +255,7 @@
     gnome.gnome-font-viewer
     gnome.eog
     google-chrome
+    ueberzugpp
     gparted
     hsetroot
     stable.insomnia
@@ -298,6 +306,7 @@
     wezterm
     # sec
     feroxbuster
+    # vscode
   ];
 
   programs.firejail.enable = true;
