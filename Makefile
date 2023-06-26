@@ -49,6 +49,9 @@ nix: ## apply nixos configuration
 	@sudo nixos-rebuild switch --upgrade
 	@sudo /run/current-system/bin/switch-to-configuration boot
 
+nix-offline: ## apply nixos configuration (offline)
+	@sudo nixos-rebuild switch --option substitute false
+
 home: ## apply home-manager configuration
 	@nix-channel --update
 	@home-manager switch
