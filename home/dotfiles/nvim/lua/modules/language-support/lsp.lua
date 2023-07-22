@@ -1,3 +1,11 @@
+local config = {
+  -- override client.server_capabilities.documentFormattingProvider
+  formatting = {
+    enable = { "eslint" },
+    disable = { "html" },
+  },
+}
+
 local setup = function()
   -- lsp border
   local border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" }
@@ -12,7 +20,7 @@ local setup = function()
 end
 
 local setup_lspconfig = function()
-  local config = {
+  local lsp_config = {
     mason = {
       ui = { border = "rounded" },
     },
@@ -109,17 +117,24 @@ local setup_lspconfig = function()
         },
       },
       lua_ls = {
-        cmd = { vim.fn.exepath("lua-language-server") },
+        cmd = {
+          vim.fn.exepath("lua-language-server"),
+          -- "--loglevel=trace",
+          -- "--logpath=/tmp/luals.log",
+        },
         settings = {
           Lua = {
             completion = { callSnippet = "Replace" },
             diagnostics = { enable = true, globals = { "vim", "log", "throw" } },
+            runtime = { version = "LuaJIT" },
             format = { enable = false },
             workspace = {
-              ignoreDir = { "sandbox" },
+              ignoreDir = { "plugins", "sandbox" },
               checkThirdParty = false,
-              maxPreload = 100000,
-              preloadFileSize = 10000,
+              maxPreload = 10000,
+              preloadFileSize = 50000,
+              useGitIgnore = true,
+              ignoreSubmodules = true,
               library = {
                 [vim.fn.expand("$VIMRUNTIME/lua")] = true,
                 [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
@@ -223,6 +238,7 @@ local setup_lspconfig = function()
           "typescript.tsx",
           "vue",
           "svelte",
+          "graphql",
         },
         settings = {
           codeAction = {
@@ -268,9 +284,9 @@ local setup_lspconfig = function()
     },
   }
 
-  require("mason").setup(config.mason)
-  require("mason-lspconfig").setup(config.mason_lspconfig)
-  require("mason-nvim-dap").setup(config.mason_dap)
+  require("mason").setup(lsp_config.mason)
+  require("mason-lspconfig").setup(lsp_config.mason_lspconfig)
+  require("mason-nvim-dap").setup(lsp_config.mason_dap)
 
   -- tweaks
   require("lspconfig.ui.windows").default_options.border = "rounded"
@@ -301,6 +317,16 @@ local setup_lspconfig = function()
       lib.map.map(mode, lhs, rhs, opts)
     end
 
+    -- if client.name == "eslint" then client.server_capabilities.documentFormattingProvider = true end
+    -- log(client.name, client.server_capabilities.documentFormattingProvider)
+
+    -- override client.server_capabilities.documentFormattingProvider
+    if vim.tbl_contains(config.formatting.enable, client.name) then
+      client.server_capabilities.documentFormattingProvider = true
+    elseif vim.tbl_contains(config.formatting.disable, client.name) then
+      client.server_capabilities.documentFormattingProvider = false
+    end
+
     -- on_attach call hooks
     for _, module in ipairs(modules_with_on_attach_call) do
       module.hooks.lsp.on_attach_call(client, bufnr)
@@ -310,7 +336,7 @@ local setup_lspconfig = function()
   -- setup servers
   local root_pattern = require("lspconfig.util").root_pattern
   local default_root_dir = root_pattern(".root", ".git", "go.mod", "package.json") or vim.loop.cwd()
-  for server_name, server_options in pairs(config.lspconfig) do
+  for server_name, server_options in pairs(lsp_config.lspconfig) do
     local opts = vim.tbl_deep_extend("force", server_options, {
       capabilities = capabilities,
       on_attach = on_attach,
@@ -346,7 +372,7 @@ return lib.module.create({
     {
       "j-hui/fidget.nvim",
       tag = "legacy",
-      event = "BufReadPost",
+      event = "VeryLazy",
       config = function()
         require("fidget").setup({
           window = { blend = 0 },

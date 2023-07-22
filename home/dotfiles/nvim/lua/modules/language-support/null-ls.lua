@@ -69,7 +69,15 @@ local setup = function()
     debug = true,
     border = "rounded",
     log_level = "warn",
-    on_attach = function(client)
+    on_attach = function(client, bufnr)
+      -- mappings
+      for _, mapping in ipairs(require("config/mappings").lsp) do
+        local mode, lhs, rhs, opts_or_desc = mapping[1], mapping[2], mapping[3], mapping[4]
+        local opts = lib.is.string(opts_or_desc) and { desc = opts_or_desc } or opts_or_desc or {}
+        opts.buffer = bufnr
+        lib.map.map(mode, lhs, rhs, opts)
+      end
+
       require("lsp-format").on_attach(client)
     end,
     root_dir = util.root_pattern(".root", "package.json", ".git") or lib.buffer.current.get_directory(),
@@ -78,7 +86,7 @@ local setup = function()
 
   vim.keymap.set(
     { "n", "v" },
-    "<leader>rr",
+    "<leader>ar",
     ":lua require('refactoring').select_refactor()<CR>",
     { noremap = true, silent = true, expr = false }
   )
@@ -89,7 +97,7 @@ return lib.module.create({
   plugins = {
     {
       "jose-elias-alvarez/null-ls.nvim",
-      event = "BufEnter",
+      event = { "BufReadPost", "BufAdd", "BufNewFile" },
       dependencies = {
         "neovim/nvim-lspconfig",
         "nvim-lua/plenary.nvim",

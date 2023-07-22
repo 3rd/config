@@ -82,12 +82,6 @@ local config = {
       scope_incremental = "<nop>",
     },
   },
-  rainbow = {
-    enable = true,
-    -- disable = { "jsx", "cpp" },
-    -- query = "rainbow-parens",
-    -- strategy = require("ts-rainbow").strategy.global,
-  },
   matchup = {
     enable = true,
     disable = {},
@@ -145,7 +139,6 @@ return lib.module.create({
       event = "VimEnter",
       dependencies = {
         "nvim-treesitter/playground",
-        "HiPhish/nvim-ts-rainbow2",
       },
       build = ":TSUpdate",
       config = setup_treesitter,

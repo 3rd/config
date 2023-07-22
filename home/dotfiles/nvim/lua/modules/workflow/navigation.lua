@@ -74,10 +74,11 @@ return lib.module.create({
   plugins = {
     {
       "ibhagwan/fzf-lua",
+      event = "VeryLazy",
       dependencies = { "nvim-tree/nvim-web-devicons" },
       config = setup_fzf_lua,
     },
-    { "vijaymarupudi/nvim-fzf" },
+    { "vijaymarupudi/nvim-fzf", event = "VeryLazy" },
     -- { "chrisgrieser/nvim-spider", config = setup_spider },
   },
   -- mappings = {

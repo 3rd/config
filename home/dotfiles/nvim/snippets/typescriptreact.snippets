@@ -1,15 +1,10 @@
 snippet boil "react component"
-	import React from "react";
-
-	interface $1Props {
+	export interface $1Props {
 	}
 
-	const $1 = ({$2}: $1Props) => {
+	export const $1 = ({$2}: $1Props) => {
 		return $0;
 	};
-
-	export { $1 };
-	export default $1;
 
 snippet bstory "react fixture"
 	import React from "react";

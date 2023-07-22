@@ -4,7 +4,7 @@ return lib.module.create({
   plugins = {
     {
       "TabbyML/tabby",
-      lazy = false,
+      event = "InsertEnter",
       init = function(plugin)
         vim.g.tabby_server_url = "http://127.0.0.1:5000"
         vim.g.tabby_filetype_to_languages = {

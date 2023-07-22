@@ -22,6 +22,7 @@ return lib.module.create({
             disableLineTextInReferences = true,
             displayPartsForJSDoc = true,
             generateReturnInDocTemplate = true,
+            importModuleSpecifier = "non-relative",
             importModuleSpecifierEnding = "auto",
             includeAutomaticOptionalChainCompletions = true,
             includeCompletionsForImportStatements = true,

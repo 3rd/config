@@ -223,7 +223,7 @@ local setup = function()
   end
 
   local create_handler = function(command_index)
-    return function(action_name)
+    return vim.schedule_wrap(function(action_name)
       if action_name == "" then return end
       local action = command_index[action_name]
       if action == nil then
@@ -235,7 +235,7 @@ local setup = function()
           cmd(action)
         end
       end
-    end
+    end)
   end
 
   local create_menu = function(command_index)

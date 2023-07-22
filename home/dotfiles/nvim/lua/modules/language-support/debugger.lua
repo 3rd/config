@@ -169,7 +169,7 @@ local setup = function()
   )
   vim.fn.sign_define("DapLogPoint", { text = ".>", texthl = "", linehl = "", numhl = "" })
 
-  vim.keymap.set("n", "<leader>b", function()
+  vim.keymap.set("n", "<leader>db", function()
     require("dap").toggle_breakpoint()
   end)
   vim.keymap.set("n", "<F1>", function()
