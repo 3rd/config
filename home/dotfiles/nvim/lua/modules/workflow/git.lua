@@ -265,6 +265,12 @@ return lib.module.create({
       config = setup_git_signs,
     },
     {
+      "NeogitOrg/neogit",
+      dependencies = "nvim-lua/plenary.nvim",
+      config = true,
+      cmd = { "Neogit" },
+    },
+    {
       "sindrets/diffview.nvim",
       event = { "CursorHold", "CursorHoldI" },
       dependencies = { "nvim-lua/plenary.nvim" },
@@ -273,5 +279,6 @@ return lib.module.create({
   },
   mappings = {
     { "n", "<leader>b", ":GitMessenger<cr>" },
+    { "n", "<leader>g", ":Neogit<cr>" },
   },
 })

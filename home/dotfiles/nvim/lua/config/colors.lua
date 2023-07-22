@@ -24,15 +24,15 @@ local colors = {
   green = hsl(80, 45, 60),
   indigo = hsl(270, 100, 75),
   magenta = hsl(320, 80, 70),
-  orange = hsl(15, 60, 60),
-  pink = hsl(330, 80, 70),
+  orange = hsl(15, 70, 70),
+  pink = hsl(320, 70, 70),
   red = hsl(350, 75, 60),
   yellow = hsl(40, 85, 65),
 }
 
 local variable = colors.foreground.darken(5).saturate(10)
-local property = variable.darken(13).desaturate(20)
-local keyword = hsl(275, 70, 75)
+local property = variable.darken(5).desaturate(20)
+local keyword = hsl(275, 65, 70)
 -- local control = colors.orange
 
 colors.common = {
@@ -45,21 +45,22 @@ colors.common = {
   operator = colors.foreground.darken(30).desaturate(20),
   ["function"] = colors.blue,
   type = colors.cyan,
-  field = colors.orange.desaturate(50).lighten(20),
-  parameter = variable,
+  -- field = colors.orange.desaturate(50).lighten(20),
+  field = property,
+  parameter = colors.yellow.darken(15).desaturate(20),
   -- comment = colors.orange.desaturate(70).darken(40),
-  comment = colors.foreground.desaturate(50).darken(50),
+  comment = colors.foreground.desaturate(50).darken(40),
   delimiter = colors.foreground.darken(40).desaturate(45),
-  boolean = colors.orange,
-  number = hsl(275, 70, 75),
+  boolean = colors.pink,
+  number = colors.pink,
   string = colors.green,
   -- control
   conditional = keyword,
   ["repeat"] = keyword,
   special_keyword = keyword,
   -- extra
-  builtin = colors.red.rotate(-20).desaturate(30),
-  macro = colors.magenta.desaturate(40),
+  builtin = colors.red.rotate(-10).desaturate(20),
+  macro = colors.red.rotate(-20).desaturate(30),
   constructor = colors.blue.lighten(10).desaturate(10),
 }
 

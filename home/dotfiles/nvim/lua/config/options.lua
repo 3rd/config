@@ -37,7 +37,7 @@ return {
   -- windows
   splitbelow = true,
   splitright = true,
-  -- splitkeep = "screen",
+  splitkeep = "screen",
   -- text editing
   autoindent = true,
   backspace = [[indent,eol,start]],

@@ -55,14 +55,18 @@ local actions = {
     local options = "--output /tmp/silicon.png --tab-width 2 --pad-horiz 50 --pad-vert 60 --no-window-controls -l "
       .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_text()
-    lib.shell.exec("silicon " .. options, text)
+    local tmpfile = vim.fn.tempname()
+    lib.fs.file.write(tmpfile, text)
+    lib.shell.exec("silicon " .. options .. " " .. vim.fn.shellescape(tmpfile))
     lib.shell.exec("copyq write image/png - < /tmp/silicon.png && copyq select 0")
   end,
   silicon_visual = function()
     local options = "--output /tmp/silicon.png --tab-width 2 --pad-horiz 50 --pad-vert 60 --no-window-controls -l "
       .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_selected_text()
-    lib.shell.exec("silicon " .. options, text)
+    local tmpfile = vim.fn.tempname()
+    lib.fs.file.write(tmpfile, text)
+    lib.shell.exec("silicon " .. options .. " " .. vim.fn.shellescape(tmpfile))
     lib.shell.exec("copyq write image/png - < /tmp/silicon.png && copyq select 0")
   end,
   silicon_highlight = function()
@@ -71,6 +75,8 @@ local actions = {
       .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_selected_text()
     local context_text = lib.buffer.current.get_selected_text(context)
+    local tmpfile = vim.fn.tempname()
+    lib.fs.file.write(tmpfile, context_text)
     local line_count = #string.split(text, "\n")
     if line_count == 0 then line_count = 1 end
     local lines = {}
@@ -81,7 +87,7 @@ local actions = {
     end
     local line_numbers = vim.fn.shellescape(vim.fn.join(lines, ";"))
     options = options .. " --highlight-lines " .. line_numbers
-    lib.shell.exec("silicon " .. options, context_text)
+    lib.shell.exec("silicon " .. options .. " " .. vim.fn.shellescape(tmpfile))
     lib.shell.exec("copyq write image/png - < /tmp/silicon.png && copyq select 0")
   end,
   -- linx
@@ -111,7 +117,7 @@ local actions = {
   end,
   -- toggle show whitespace
   toggle_whitespace = function()
-    local default_listchars = require("config").options.set.listchars or {}
+    local default_listchars = require("config/options").listchars or {}
     local forced_listchars = {
       space = "␣",
       tab = "» ",

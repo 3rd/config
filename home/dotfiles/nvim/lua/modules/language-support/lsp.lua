@@ -19,33 +19,45 @@ local setup = function()
   end
 end
 
+local ensure_installed = {
+  -- lsp
+  "astro",
+  "bashls",
+  "clangd",
+  "cssls",
+  "cssmodules_ls",
+  "dockerls",
+  "eslint",
+  "golangci_lint_ls",
+  "gopls",
+  "html",
+  "jsonls",
+  "lua_ls",
+  "prismals",
+  "rust_analyzer",
+  "tailwindcss",
+  "vimls",
+  "vuels",
+  "yamlls",
+  -- formatters
+  "prettierd",
+  "rustywind",
+}
+
 local setup_lspconfig = function()
+  require("mason-tool-installer").setup({
+    ensure_installed = ensure_installed,
+    auto_update = false,
+    run_on_start = true,
+    start_delay = 1000,
+    debounce_hours = 5,
+  })
+
   local lsp_config = {
     mason = {
       ui = { border = "rounded" },
     },
     mason_lspconfig = {
-      ensure_installed = {
-        "astro",
-        "bashls",
-        "clangd",
-        "cssls",
-        "cssmodules_ls",
-        "dockerls",
-        "eslint",
-        "golangci_lint_ls",
-        "gopls",
-        "html",
-        "jsonls",
-        "prismals",
-        "rust_analyzer",
-        "tailwindcss",
-        "lua_ls",
-        "vimls",
-        -- "vtsls",
-        "vuels",
-        "yamlls",
-      },
       ui = {
         icons = {
           server_installed = "✓",
@@ -364,6 +376,7 @@ return lib.module.create({
         "williamboman/mason.nvim",
         "williamboman/mason-lspconfig.nvim",
         "jay-babu/mason-nvim-dap.nvim",
+        "WhoIsSethDaniel/mason-tool-installer.nvim",
         "ibhagwan/fzf-lua",
         "b0o/schemastore.nvim",
       },

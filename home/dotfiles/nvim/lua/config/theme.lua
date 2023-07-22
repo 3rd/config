@@ -9,8 +9,8 @@ local colors = require("config/colors")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    -- Normal({ fg = colors.foreground }), -- Normal text
+    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -94,7 +94,7 @@ local theme = lush(function(injected)
     Operator({ fg = colors.common.operator }),
     Function({ fg = colors.common["function"] }),
     Type({ fg = colors.common.type }),
-    Comment({ fg = colors.common.comment }),
+    Comment({ fg = colors.common.comment, gui = "italic" }),
     Constructor({ fg = colors.common.constructor }),
     Field({ fg = colors.common.field }),
     Property({ fg = colors.common.property }),
@@ -312,30 +312,30 @@ local theme = lush(function(injected)
 
     -- lspkind-nvim
     CmpItemKindSnippet({ fg = colors.purple }),
-    CmpItemKindKeyword({ fg = colors.red }),
+    CmpItemKindKeyword({ fg = colors.common.keyword }),
     CmpItemKindText({ fg = colors.foreground }),
-    CmpItemKindMethod({ fg = colors.blue }),
-    CmpItemKindConstructor({ fg = colors.cyan }),
-    CmpItemKindFunction({ fg = colors.blue }),
+    CmpItemKindMethod({ fg = colors.common["function"] }),
+    CmpItemKindConstructor({ fg = colors.common.constructor }),
+    CmpItemKindFunction({ fg = colors.common["function"] }),
     CmpItemKindFolder({ fg = colors.blue }),
     CmpItemKindModule({ fg = colors.yellow }),
-    CmpItemKindConstant({ fg = colors.cyan }),
-    CmpItemKindField({ fg = colors.orange }),
-    CmpItemKindProperty({ fg = colors.orange }),
-    CmpItemKindEnum({ fg = colors.cyan }),
-    CmpItemKindUnit({ fg = colors.cyan }),
-    CmpItemKindClass({ fg = colors.blue }),
-    CmpItemKindVariable({ fg = colors.foreground }),
+    CmpItemKindConstant({ fg = colors.common.constant }),
+    CmpItemKindField({ fg = colors.common.field }),
+    CmpItemKindProperty({ fg = colors.common.property }),
+    CmpItemKindEnum({ fg = colors.common.type }),
+    CmpItemKindUnit({ fg = colors.common.type }),
+    CmpItemKindClass({ fg = colors.common.constructor }),
+    CmpItemKindVariable({ fg = colors.common.identifier }),
     CmpItemKindFile({ fg = colors.blue }),
-    CmpItemKindInterface({ fg = colors.cyan }),
+    CmpItemKindInterface({ fg = colors.common.type }),
     CmpItemKindColor({ fg = colors.purple }),
     CmpItemKindReference({ fg = colors.purple }),
-    CmpItemKindEnumMember({ fg = colors.cyan }),
-    CmpItemKindStruct({ fg = colors.cyan }),
-    CmpItemKindValue({ fg = colors.purple }),
-    CmpItemKindEvent({ fg = colors.yellow }),
-    CmpItemKindOperator({ fg = colors.foreground }),
-    CmpItemKindTypeParameter({ fg = colors.purple }),
+    CmpItemKindEnumMember({ fg = colors.common.type }),
+    CmpItemKindStruct({ fg = colors.common.type }),
+    CmpItemKindValue({ fg = colors.common.boolean }),
+    CmpItemKindEvent({ fg = colors.common.type }),
+    CmpItemKindOperator({ fg = colors.common.operator }),
+    CmpItemKindTypeParameter({ fg = colors.common.type }),
     CmpItemKindCopilot({ fg = colors.pink }),
 
     -- indent-blankline

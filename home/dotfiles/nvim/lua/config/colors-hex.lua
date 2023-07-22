@@ -2,24 +2,24 @@ return {
   background = "#21212C",
   blue = "#4DB5FF",
   common = {
-    boolean = "#D67A5C",
-    builtin = "#CF6399",
-    comment = "#595775",
-    conditional = "#C793EC",
+    boolean = "#E87DC4",
+    builtin = "#D65C85",
+    comment = "#6B688D",
+    conditional = "#BB81E4",
     constant = "#AFABD8",
     constructor = "#69BCF7",
     delimiter = "#69668F",
-    field = "#C6A195",
+    field = "#A6A2CD",
     ["function"] = "#4DB5FF",
     identifier = "#AFABD8",
-    keyword = "#C793EC",
-    macro = "#D78EBF",
-    number = "#C793EC",
+    keyword = "#BB81E4",
+    macro = "#CF6399",
+    number = "#E87DC4",
     operator = "#7874AA",
-    parameter = "#AFABD8",
-    property = "#938EC2",
-    ["repeat"] = "#C793EC",
-    special_keyword = "#C793EC",
+    parameter = "#DAA63E",
+    property = "#A6A2CD",
+    ["repeat"] = "#BB81E4",
+    special_keyword = "#BB81E4",
     string = "#A8C76B",
     type = "#26CAD9"
   },
@@ -29,13 +29,13 @@ return {
   indigo = "#BF80FF",
   magenta = "#F075C7",
   none = "NONE",
-  orange = "#D67A5C",
-  pink = "#F075B3",
+  orange = "#E8987D",
+  pink = "#E87DC4",
   rainbow = {
     blue = "#4B85AF",
     cyan = "#46787C",
     green = "#7A875E",
-    orange = "#8E6557",
+    orange = "#A97666",
     red = "#95505C",
     violet = "#AE6194",
     yellow = "#A78B52"
@@ -54,14 +54,14 @@ return {
         language = "#6F75A9",
         marker = "#7378a5"
       },
-      inline = "#D58A72"
+      inline = "#E6A48F"
     },
     datetime = "#FC824A",
     document = {
       meta = "#F2BF5A",
       meta_field = "#F075C7",
-      meta_field_key = "#F075B3",
-      title = "#D67A5C"
+      meta_field_key = "#E87DC4",
+      title = "#E8987D"
     },
     heading = {
       five = "#04D3D0",
@@ -78,7 +78,7 @@ return {
     },
     list_item = {
       label = "#F8CD77",
-      label_marker = "#595775",
+      label_marker = "#6B688D",
       marker = "#747382"
     },
     number = "#71c9f6",
@@ -99,7 +99,7 @@ return {
       active = "#26CAD9",
       cancelled = "#fa4040",
       default = "#8C88BF",
-      done = "#595775",
+      done = "#6B688D",
       schedule = "#FF8000",
       session = "#7378a5"
     },
