@@ -13,6 +13,7 @@
         # ${pkgs.imagemagick}/bin/convert $IMAGE -blur $BLURTYPE $IMAGE
         ${pkgs.i3lock}/bin/i3lock -i $IMAGE
         ${pkgs.coreutils}/bin/rm $IMAGE
+        ${pkgs.i3}/bin/i3 mode default
       '';
     })
   ];

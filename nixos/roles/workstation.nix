@@ -118,6 +118,7 @@
     gron
     hadolint
     htop
+    btop
     hy
     hyperfine
     i7z
@@ -134,9 +135,10 @@
     lm_sensors
     lsof
     rust-petname
-    luajit
-    luajitPackages.luacheck
-    luajitPackages.moonscript
+
+    (luajit.withPackages (ps: with ps; [ luacheck moonscript luarocks magick ]))
+
+    imagemagickBig
     syncthing
     man-pages
     moreutils
@@ -161,7 +163,10 @@
     pciutils
     peco
     playerctl
-    powertop
+    hexchat
+    apktool
+    jadx
+    frida-tools
     proselint
     sysstat
     nethogs
@@ -179,6 +184,7 @@
     rnix-lsp
     rsync
     rust-analyzer
+    sniffnet
     rustfmt
     rustup
     s-tui
@@ -197,7 +203,6 @@
     cmake
     bottles
     ghostscript
-    thunderbird
     socat
     speedtest-cli
     sshfs
@@ -279,7 +284,6 @@
     obs-studio
     pavucontrol
     pcmanfm
-    peek
     polybarFull
     stable.postman
     qbittorrent
@@ -291,7 +295,6 @@
     stable.smartgithg
     steam
     steam-run-native
-    steam-tui
     steamcmd
     tdesktop
     veracrypt
@@ -300,6 +303,7 @@
     wireshark
     xclip
     xorg.xev
+    xorg.xhost
     xorg.xkill
     xorg.xmodmap
     timg

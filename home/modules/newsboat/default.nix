@@ -151,8 +151,10 @@ in {
       { url = "https://thoughtspile.github.io/atom.xml"; }
       { url = "https://matt-rickard.com/rss/"; }
       { url = "https://www.huy.rocks/rss.xml"; }
+      { url = "https://www.hacklewayne.com/rss/index.xml"; }
+      { url = "https://calendar.perfplanet.com/feed/"; }
       {
-        url = "https://www.hacklewayne.com/rss/index.xml";
+        url = "https://eugeneyan.com/rss/";
       }
 
       # blogs: security
