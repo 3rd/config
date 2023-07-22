@@ -1,35 +1,66 @@
 local lush = require("lush")
 local hsl = lush.hsl
 
-local base_hue = 230
+-- What I want to see:
+-- - keywords
+-- - identifiers
+-- - functions
+-- - literal values (except strings)
+-- - types
+-- Groups:
+-- - things that hold values
+-- - values
+-- - control flow
+-- - function calls
+
+local base_hue = 245
 
 local colors = {
   none = "NONE",
   background = hsl(base_hue, 15, 15),
-  foreground = hsl("#ADBDEB"),
-  primary = hsl(base_hue, 90, 80),
-  blue = hsl(200, 90, 60),
-  magenta = hsl(280, 80, 80),
-  green = hsl(80, 50, 60),
-  orange = hsl(30, 95, 60),
+  foreground = hsl(base_hue, 30, 80),
+  blue = hsl(205, 100, 65),
+  cyan = hsl(185, 70, 50),
+  green = hsl(80, 45, 60),
+  indigo = hsl(270, 100, 75),
+  magenta = hsl(320, 80, 70),
+  orange = hsl(15, 60, 60),
   pink = hsl(330, 80, 70),
-  red = hsl(5, 75, 60),
-  yellow = hsl(40, 85, 60),
-  cyan = hsl(180, 70, 60),
+  red = hsl(350, 75, 60),
+  yellow = hsl(40, 85, 65),
 }
 
+local variable = colors.foreground.darken(5).saturate(10)
+local property = variable.darken(13).desaturate(20)
+local keyword = hsl(275, 70, 75)
+-- local control = colors.orange
+
 colors.common = {
-  identifier = colors.foreground.darken(10),
-  operator = colors.foreground.darken(30).desaturate(40),
-  keyword = colors.magenta.darken(5),
+  -- lab
+  identifier = variable,
+  constant = variable,
+  keyword = keyword,
+  property = property,
+  -- base
+  operator = colors.foreground.darken(30).desaturate(20),
   ["function"] = colors.blue,
   type = colors.cyan,
-  field = colors.foreground.darken(20).desaturate(30),
-  comment = hsl(base_hue, 20, 55),
-  delimiter = colors.foreground.darken(35).desaturate(50),
-  constructor = colors.magenta.lighten(10).desaturate(10),
-  conditional = colors.red.desaturate(10).rotate(20),
-  constant = colors.foreground.darken(10).saturate(40),
+  field = colors.orange.desaturate(50).lighten(20),
+  parameter = variable,
+  -- comment = colors.orange.desaturate(70).darken(40),
+  comment = colors.foreground.desaturate(50).darken(50),
+  delimiter = colors.foreground.darken(40).desaturate(45),
+  boolean = colors.orange,
+  number = hsl(275, 70, 75),
+  string = colors.green,
+  -- control
+  conditional = keyword,
+  ["repeat"] = keyword,
+  special_keyword = keyword,
+  -- extra
+  builtin = colors.red.rotate(-20).desaturate(30),
+  macro = colors.magenta.desaturate(40),
+  constructor = colors.blue.lighten(10).desaturate(10),
 }
 
 colors.slang = {
@@ -58,7 +89,6 @@ colors.slang = {
     external = "#5db4e3",
   },
   heading = {
-    -- one = colors.primary,
     one = "#9999FF",
     two = "#C08FFF",
     three = "#E38FFF",
@@ -90,7 +120,7 @@ colors.slang = {
   },
   list_item = {
     -- item = colors.foreground.desaturate(20).darken(10),
-    marker = colors.primary.desaturate(80).darken(40),
+    marker = colors.foreground.desaturate(80).darken(40),
     label = colors.yellow.lighten(20).saturate(30), -- "#c881de",
     label_marker = colors.common.comment,
   },
@@ -98,13 +128,24 @@ colors.slang = {
 }
 
 colors.rainbow = {
-  one = hsl(250, 60, 70),
-  two = hsl(290, 65, 70),
-  three = hsl(330, 70, 70),
-  four = hsl(10, 60, 70),
-  five = hsl(40, 60, 70),
-  six = hsl(150, 40, 60),
-  seven = hsl(190, 65, 70),
+  red = colors.red.darken(25).desaturate(60),
+  yellow = colors.yellow.darken(25).desaturate(60),
+  blue = colors.blue.darken(25).desaturate(60),
+  orange = colors.orange.darken(25).desaturate(60),
+  green = colors.green.darken(25).desaturate(60),
+  violet = colors.magenta.darken(25).desaturate(60),
+  cyan = colors.cyan.darken(25).desaturate(60),
+}
+
+colors.ui = {
+  surface0 = colors.background.lighten(10),
+  surface1 = colors.background.lighten(15),
+  surface2 = colors.background.lighten(20),
+  subtext0 = colors.foreground.darken(10),
+  subtext1 = colors.foreground.darken(20),
+  yellow = colors.yellow,
+  green = colors.green,
+  red = colors.red,
 }
 
 return colors

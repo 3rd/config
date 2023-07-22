@@ -24,12 +24,15 @@ return lib.module.create({
         local shipwright = require("shipwright")
         local lush = require("shipwright.transform.lush")
         local patchwrite = require("shipwright.transform.patchwrite")
+        local path_to_output = lib.path.resolve(lib.env.dirs.vim.config .. "/colors/static.lua")
+        log("Building theme...")
         shipwright.run(
           require("config/theme"),
           lush.to_lua,
-          { patchwrite, "colors/static.lua", "-- PATCH_OPEN", "-- PATCH_CLOSE" }
+          { patchwrite, path_to_output, "-- PATCH_OPEN", "-- PATCH_CLOSE" }
         )
-        -- config/colors.hex.lua
+        -- config/colors-hex.lua
+        log("Writing colors...")
         local colors = require("config/colors")
         local function parse(part)
           local result = {}
@@ -46,9 +49,9 @@ return lib.module.create({
         end
         local hex_colors = parse(colors)
         local lua_colors = vim.inspect(hex_colors)
-        local colors_path = vim.fn.stdpath("config") .. "/lua/config/colors.hex.lua"
+        local colors_path = vim.fn.stdpath("config") .. "/lua/config/colors-hex.lua"
         lib.fs.file.write(colors_path, "return " .. lua_colors)
-        vim.notify("Theme built!")
+        log("Theme built!")
       end,
     },
   },

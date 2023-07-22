@@ -1,5 +1,5 @@
 local lush = require("lush")
-local colors = require("config.colors")
+local colors = require("config/colors")
 
 -- https://github.com/search?q=language%3Alua+%22%40text.strong%22&type=code
 -- https://github.com/RRethy/nvim-base16/blob/4f3aa29f49b38edb6db1c52cea57e64ce3de2373/lua/base16-colorscheme.lua#L383
@@ -9,8 +9,8 @@ local colors = require("config.colors")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    Normal({ fg = colors.foreground }), -- Normal text
+    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -44,7 +44,7 @@ local theme = lush(function(injected)
     TermCursor({}), -- Cursor in a focused terminal
     TermCursorNC({}), -- Cursor in an unfocused terminal
 
-    LineNr({ fg = colors.background.lighten(25).saturate(5) }),
+    LineNr({ fg = colors.background.lighten(20) }),
     SignColumn({}),
     CursorLine({ bg = colors.background.lighten(10) }),
     CursorLineNr({ bg = colors.background.lighten(10), fg = colors.background.lighten(50) }),
@@ -86,27 +86,29 @@ local theme = lush(function(injected)
     Identifier({ fg = colors.common.identifier }),
     Statement({ fg = colors.common.keyword }),
     Conditional({ fg = colors.common.conditional }),
-    Repeat({ fg = colors.common.keyword }),
+    Repeat({ fg = colors.common["repeat"] }),
     Label({ fg = colors.common.keyword }),
     Keyword({ fg = colors.common.keyword }),
-    Exception({ fg = colors.common.keyword }),
+    SpecialKeyword({ fg = colors.common.special_keyword }),
+    Exception({ fg = colors.common.builtin }),
     Operator({ fg = colors.common.operator }),
     Function({ fg = colors.common["function"] }),
     Type({ fg = colors.common.type }),
     Comment({ fg = colors.common.comment }),
     Constructor({ fg = colors.common.constructor }),
     Field({ fg = colors.common.field }),
+    Property({ fg = colors.common.property }),
     -- blue
     Constant({ fg = colors.common.constant }),
-    Boolean({ fg = colors.blue }),
-    Number({ fg = colors.blue }),
+    Boolean({ fg = colors.common.boolean }),
+    Number({ fg = colors.common.number }),
     Float({ Number }),
     -- cyan
     StorageClass({ Type }),
     Structure({ Type }),
     Typedef({ Type }),
     -- green
-    String({ fg = colors.green }),
+    String({ fg = colors.common.string }),
     Character({ fg = colors.green }),
     -- red
     Debug({ fg = colors.red }),
@@ -114,11 +116,12 @@ local theme = lush(function(injected)
     -- yellow
     Todo({ fg = colors.yellow, gui = "bold,italic" }),
     -- magenta
-    PreProc({ fg = colors.magenta }),
-    Include({ PreProc }),
-    Define({ PreProc }),
-    Macro({ fg = colors.pink.desaturate(25) }),
-    PreCondit({ PreProc }),
+    PreProc({ fg = colors.common.keyword }),
+    Macro({ fg = colors.common.macro }),
+    Parameter({ fg = colors.common.parameter }),
+    Include({ SpecialKeyword }),
+    Define({ SpecialKeyword }),
+    PreCondit({ SpecialKeyword }),
     -- orange
     Special({ fg = colors.orange }),
     SpecialChar({ Special }),
@@ -168,7 +171,8 @@ local theme = lush(function(injected)
     sym("@comment")({ Comment }),
     sym("@conditional")({ Conditional }),
     sym("@constant")({ Constant }),
-    sym("@constant.builtin")({ Special }),
+    sym("@builtin")({ fg = colors.common.builtin }),
+    sym("@constant.builtin")({ sym("@boolean") }),
     sym("@constant.macro")({ Define }),
     sym("@constructor")({ Constructor }),
     sym("@debug")({ Debug }),
@@ -178,24 +182,25 @@ local theme = lush(function(injected)
     sym("@field")({ Field }),
     sym("@float")({ Float }),
     sym("@function")({ Function }),
-    sym("@function.builtin")({ Special }),
+    sym("@function.builtin")({ sym("@builtin") }),
     sym("@function.call")({ Function }),
     sym("@function.macro")({ Macro }),
     sym("@include")({ Include }),
     sym("@keyword")({ Keyword }),
-    sym("@keyword.function")({ Function }),
-    sym("@keyword.operator")({ Keyword }),
-    sym("@keyword.return")({ Keyword }),
+    sym("@keyword.function")({ Keyword }),
+    sym("@keyword.operator")({ Macro }),
+    sym("@keyword.return")({ sym("@builtin") }),
+    sym("@keyword.coroutine")({ SpecialKeyword }),
     sym("@label")({ Label }),
     sym("@macro")({ Macro }),
     sym("@method")({ Function }),
     sym("@method.call")({ Function }),
-    sym("@namespace")({ Include }),
+    sym("@namespace")({ Function }),
     sym("@number")({ Number }),
     sym("@operator")({ Operator }),
-    sym("@parameter")({ Macro }),
+    sym("@parameter")({ Parameter }),
     sym("@preproc")({ PreProc }),
-    sym("@property")({ Field }),
+    sym("@property")({ Property }),
     sym("@punctuation")({ Delimiter }),
     sym("@punctuation.bracket")({ Delimiter }),
     sym("@punctuation.delimiter")({ Delimiter }),
@@ -233,11 +238,11 @@ local theme = lush(function(injected)
     sym("@text.uri")({ Underlined }),
     sym("@text.warning")({ WarningMsg }),
     sym("@type")({ Type }),
-    sym("@type.builtin")({ Type }),
+    sym("@type.builtin")({ sym("@type") }),
     sym("@type.definition")({ Typedef }),
     sym("@type.qualifier")({ Type }),
     sym("@variable")({ Identifier }),
-    sym("@variable.builtin")({ PreProc }),
+    sym("@variable.builtin")({ sym("@builtin") }),
 
     -- semantic tokens
     -- https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
@@ -271,16 +276,31 @@ local theme = lush(function(injected)
     sym("@lsp.type.struct")({ sym("@structure") }),
     sym("@lsp.type.type")({ sym("@type") }),
     sym("@lsp.type.typeAlias")({ sym("@type.definition") }),
-    sym("@lsp.type.typeParameter")({ sym("@field") }),
+    sym("@lsp.type.typeParameter")({ sym("@type") }),
     sym("@lsp.type.variable")({ sym("@variable") }),
     sym("@lsp.typemod.deriveHelper.attribute")({ sym("@attribute") }),
     sym("@lsp.typemod.function.defaultLibrary")({ sym("@function.builtin") }),
+    sym("@lsp.typemod.class.defaultLibrary")({ sym("@function.builtin") }),
     sym("@lsp.typemod.string.constant")({}),
     sym("@lsp.typemod.string.readonly")({}),
     sym("@lsp.typemod.string.static")({}),
-    sym("@lsp.typemod.type.defaultLibrary")({ sym("@type.builtin") }),
+    sym("@lsp.typemod.interface")({ sym("@type") }),
+    sym("@lsp.typemod.type.defaultLibrary")({ sym("@type") }),
     sym("@lsp.typemod.type.readonly")({ sym("@lsp.type.type") }),
     sym("@lsp.typemod.variable.defaultLibrary")({ sym("@variable.builtin") }),
+    sym("@lsp.typemod.typeParameter")({ sym("@type") }),
+
+    -- to move
+    sym("@lsp.typemod.function.readonly")({ sym("@lsp.type.function") }),
+    sym("@namespace")({ sym("@type") }),
+    sym("@lsp.typemod.property.declaration")({ sym("@field") }),
+
+    -- lua
+    sym("@constructor.lua")({ Delimiter }),
+
+    -- tsx
+    sym("@constructor.tsx")({ sym("@function") }),
+    sym("@tag.attribute.tsx")({ sym("@property") }),
 
     -- nvim-cmp
     CmpItemAbbr({ fg = colors.foreground }),
@@ -319,13 +339,12 @@ local theme = lush(function(injected)
     CmpItemKindCopilot({ fg = colors.pink }),
 
     -- indent-blankline
-    IndentBlanklineChar({ fg = colors.common.comment.darken(40).desaturate(20) }),
-    IndentBlanklineIndent1({ fg = colors.common.comment.darken(40).desaturate(20) }),
-    IndentBlanklineIndent2({ fg = colors.common.comment.darken(45).desaturate(20) }),
-    IndentBlanklineIndent3({ fg = colors.common.comment.darken(50).desaturate(20) }),
-    IndentBlanklineIndent4({ fg = colors.common.comment.darken(55).desaturate(20) }),
-    IndentBlanklineIndent5({ fg = colors.common.comment.darken(60).desaturate(20) }),
-    IndentBlanklineIndent6({ fg = colors.common.comment.darken(65).desaturate(20) }),
+    IndentBlanklineIndent1({ fg = colors.background.lighten(21).desaturate(20) }),
+    IndentBlanklineIndent2({ fg = colors.background.lighten(18).desaturate(20) }),
+    IndentBlanklineIndent3({ fg = colors.background.lighten(15).desaturate(20) }),
+    IndentBlanklineIndent4({ fg = colors.background.lighten(12).desaturate(20) }),
+    IndentBlanklineIndent5({ fg = colors.background.lighten(9).desaturate(20) }),
+    IndentBlanklineIndent6({ fg = colors.background.lighten(6).desaturate(20) }),
 
     -- nvim-tree
     NvimTreeNormal({ bg = colors.background.lighten(2) }),
@@ -354,13 +373,13 @@ local theme = lush(function(injected)
     GitSignsDeletePreview({ link = "DiffDelete" }),
 
     -- ts-rainbow
-    TSRainbowRed({ fg = colors.rainbow.one }),
-    TSRainbowYellow({ fg = colors.rainbow.two }),
-    TSRainbowBlue({ fg = colors.rainbow.three }),
-    TSRainbowOrange({ fg = colors.rainbow.four }),
-    TSRainbowGreen({ fg = colors.rainbow.five }),
-    TSRainbowViolet({ fg = colors.rainbow.six }),
-    TSRainbowCyan({ fg = colors.rainbow.seven }),
+    RainbowRed({ fg = colors.rainbow.red }),
+    RainbowYellow({ fg = colors.rainbow.yellow }),
+    RainbowBlue({ fg = colors.rainbow.blue }),
+    RainbowOrange({ fg = colors.rainbow.orange }),
+    RainbowGreen({ fg = colors.rainbow.green }),
+    RainbowViolet({ fg = colors.rainbow.violet }),
+    RainbowCyan({ fg = colors.rainbow.cyan }),
 
     -- syslang
     sym("@slang.error")({ bg = "#7a2633", fg = "#ffffff" }),
