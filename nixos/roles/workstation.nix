@@ -7,7 +7,7 @@
     ../modules/hardware/bluetooth.nix
     # ../modules/packages/emacs.nix
     ../modules/packages/neovim.nix
-    # ../modules/packages/alien.nix
+    ../modules/packages/alien.nix
     ../modules/services/docker.nix
     ../modules/services/syncthing.nix
     ../modules/services/tailscale.private.nix
@@ -112,6 +112,7 @@
     gnumake
     unrar-wrapper
     gnutls
+    fwts
     go-jira
     gotools
     gotop
@@ -172,6 +173,7 @@
     nethogs
     psmisc
     pup
+    sysfsutils
     ranger
     bridge-utils
     restic

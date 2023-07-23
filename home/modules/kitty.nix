@@ -21,7 +21,7 @@
       kitty_mod = "ctrl+shift";
       mouse_hide_wait = "-1";
       placement_strategy = "top-left";
-      repaint_delay = "0";
+      repaint_delay = "8";
       scrollback_lines = "100000";
       sync_to_monitor = "no";
       tab_bar_edge = "bottom";

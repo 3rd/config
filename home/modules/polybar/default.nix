@@ -33,8 +33,11 @@
     config = with config.colors; {
       "bar/common" = {
         inherit background;
-        font-0 = lib.mkDefault "Fira:size=11;2";
-        font-1 = lib.mkDefault "Symbols Nerd Font:size=16;3";
+        # fonts are indexed from 0 here are from 1 when referenced
+        # ex. prop-font = 2 -> uses font-1
+        # so stupid
+        font-0 = lib.mkDefault "MonoLisa:size=11;6";
+        font-2 = lib.mkDefault "Symbols Nerd Font Mono:size=11;4";
       };
       "bar/top" = {
         "inherit" = "bar/common";
@@ -70,7 +73,7 @@
         content = "";
         content-background = background;
         content-foreground = gray-darkest;
-        content-font = 2;
+        content-font = 3;
       };
       "module/<<" = {
         "inherit" = "module/<";
@@ -87,7 +90,7 @@
         content = "";
         content-background = background;
         content-foreground = gray-darkest;
-        content-font = 2;
+        content-font = 3;
       };
       "module/>>" = {
         "inherit" = "module/>";
