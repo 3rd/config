@@ -9,8 +9,8 @@ local colors = require("config/colors")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    Normal({ fg = colors.foreground }), -- Normal text
+    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -149,10 +149,11 @@ local theme = lush(function(injected)
     DiagnosticVirtualTextWarn({ fg = colors.orange.darken(40) }),
     DiagnosticVirtualTextInfo({ fg = colors.blue }),
     DiagnosticVirtualTextHint({ fg = colors.cyan }),
-    DiagnosticUnderlineError({ gui = "undercurl", sp = colors.red }),
-    DiagnosticUnderlineWarn({ gui = "undercurl", sp = colors.orange }),
-    DiagnosticUnderlineInfo({ gui = "undercurl", sp = colors.blue }),
-    DiagnosticUnderlineHint({ gui = "undercurl", sp = colors.cyan }),
+    DiagnosticUnderlineError({ gui = "undercurl" }),
+    DiagnosticUnderlineWarn({ gui = "undercurl" }),
+    DiagnosticUnderlineInfo({ gui = "undercurl" }),
+    DiagnosticUnderlineHint({ gui = "undercurl" }),
+    DiagnosticUnnecessary({ gui = "undercurl" }),
     DiagnosticFloatingError({ fg = colors.red }),
     DiagnosticFloatingWarn({ fg = colors.orange }),
     DiagnosticFloatingInfo({ fg = colors.blue }),

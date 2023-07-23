@@ -12,8 +12,7 @@ local handlers = {
 
 local register = function()
   vim.opt.foldmethod = "expr"
-  vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-  vim.cmd("silent! loadview")
+  vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 
   local group = vim.api.nvim_create_augroup("SyslangFoldPersistence", { clear = true })
   local bufnr = vim.api.nvim_get_current_buf()

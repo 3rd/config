@@ -90,7 +90,7 @@ return lib.module.create({
   plugins = {
     {
       "jose-elias-alvarez/null-ls.nvim",
-      event = { "BufReadPost", "BufAdd", "BufNewFile" },
+      event = { "VeryLazy" },
       dependencies = {
         "neovim/nvim-lspconfig",
         "nvim-lua/plenary.nvim",

@@ -371,7 +371,7 @@ return lib.module.create({
   plugins = {
     {
       "neovim/nvim-lspconfig",
-      event = { "BufReadPost", "BufAdd", "BufNewFile" },
+      event = "VeryLazy",
       dependencies = {
         "williamboman/mason.nvim",
         "williamboman/mason-lspconfig.nvim",

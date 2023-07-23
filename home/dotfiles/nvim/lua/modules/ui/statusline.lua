@@ -83,6 +83,7 @@ local setup = function()
 end
 
 return lib.module.create({
+  -- enabled = false,
   name = "ui/statusline",
   plugins = {
     {

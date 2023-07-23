@@ -1,41 +1,41 @@
 return {
-  background = "#21212C",
+  background = "#23242F",
   blue = "#4DB5FF",
   common = {
     boolean = "#E87DC4",
     builtin = "#D65C85",
-    comment = "#6B688D",
+    comment = "#6F7295",
     conditional = "#BB81E4",
-    constant = "#AFABD8",
+    constant = "#BDC0E0",
     constructor = "#69BCF7",
-    delimiter = "#69668F",
-    field = "#A6A2CD",
+    delimiter = "#6D7097",
+    field = "#B3B6D6",
     ["function"] = "#4DB5FF",
-    identifier = "#AFABD8",
+    identifier = "#BDC0E0",
     keyword = "#BB81E4",
     macro = "#CF6399",
     number = "#E87DC4",
-    operator = "#7874AA",
+    operator = "#8185B1",
     parameter = "#DAA63E",
-    property = "#A6A2CD",
+    property = "#B3B6D6",
     ["repeat"] = "#BB81E4",
     special_keyword = "#BB81E4",
     string = "#A8C76B",
     type = "#26CAD9"
   },
   cyan = "#26CAD9",
-  foreground = "#BFBDDB",
+  foreground = "#CDCFE4",
   green = "#A8C76B",
   indigo = "#BF80FF",
   magenta = "#F075C7",
   none = "NONE",
-  orange = "#E8987D",
+  orange = "#F67E55",
   pink = "#E87DC4",
   rainbow = {
     blue = "#4B85AF",
     cyan = "#46787C",
     green = "#7A875E",
-    orange = "#A97666",
+    orange = "#AA6650",
     red = "#95505C",
     violet = "#AE6194",
     yellow = "#A78B52"
@@ -54,14 +54,14 @@ return {
         language = "#6F75A9",
         marker = "#7378a5"
       },
-      inline = "#E6A48F"
+      inline = "#F09070"
     },
     datetime = "#FC824A",
     document = {
       meta = "#F2BF5A",
       meta_field = "#F075C7",
       meta_field_key = "#E87DC4",
-      title = "#E8987D"
+      title = "#F67E55"
     },
     heading = {
       five = "#04D3D0",
@@ -78,8 +78,8 @@ return {
     },
     list_item = {
       label = "#F8CD77",
-      label_marker = "#6B688D",
-      marker = "#747382"
+      label_marker = "#6F7295",
+      marker = "#7B7C8A"
     },
     number = "#71c9f6",
     section = "#04D3D0",
@@ -98,8 +98,8 @@ return {
     task = {
       active = "#26CAD9",
       cancelled = "#fa4040",
-      default = "#8C88BF",
-      done = "#6B688D",
+      default = "#9599C6",
+      done = "#6F7295",
       schedule = "#FF8000",
       session = "#7378a5"
     },
@@ -108,11 +108,11 @@ return {
   ui = {
     green = "#A8C76B",
     red = "#E64C66",
-    subtext0 = "#A6A2CD",
-    subtext1 = "#8C88BF",
-    surface0 = "#363446",
-    surface1 = "#3E3D52",
-    surface2 = "#47455E",
+    subtext0 = "#B3B6D6",
+    subtext1 = "#9599C6",
+    surface0 = "#343646",
+    surface1 = "#3F4155",
+    surface2 = "#484A61",
     yellow = "#F2BF5A"
   },
   yellow = "#F2BF5A"

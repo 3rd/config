@@ -163,8 +163,7 @@ end
 
 local heading_node_types = { "heading_1", "heading_2", "heading_3", "heading_4", "heading_5", "heading_6" }
 
--- TODO: indent subheadings
--- TODO: dedent
+-- TODO: indent subheadings, dedent
 local handle_indent = function()
   local ts_utils = require("nvim-treesitter.ts_utils")
   local heading_node = lib.ts.find_parent_at_line(heading_node_types)

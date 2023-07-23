@@ -59,6 +59,8 @@ return {
   foldlevel = 999,
   foldlevelstart = -1,
   foldopen = "mark,percent,quickfix,search,tag,undo",
+  foldmethod = "expr",
+  foldexpr = "v:lua.vim.treesitter.foldexpr()",
   -- foldnestmax = 1,
   -- code style
   expandtab = true,

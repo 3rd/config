@@ -3,7 +3,7 @@ vim.diagnostic.config({
   float = { source = "always" },
   severity_sort = true,
   signs = true,
-  underline = false,
+  underline = true,
   update_in_insert = false,
   virtual_text = { prefix = "»", spacing = 4 },
   -- virtual_lines = { highighlight_whole_line = false },
@@ -19,10 +19,6 @@ end
 return lib.module.create({
   name = "language-support/diagnostics",
   plugins = {
-    -- {
-    --   "https://git.sr.ht/~whynothugo/lsp_lines.nvim",
-    --   event = { "BufReadPost", "BufAdd", "BufNewFile" },
-    --   opts = {},
-    -- },
+    -- { "https://git.sr.ht/~whynothugo/lsp_lines.nvim" },
   },
 })

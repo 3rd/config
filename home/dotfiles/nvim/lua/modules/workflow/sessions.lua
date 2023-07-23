@@ -33,7 +33,7 @@ local setup_auto_session = function()
     },
   })
 
-  vim.o.sessionoptions = "buffers,tabpages,winsize,winpos,terminal,localoptions"
+  vim.o.sessionoptions = "buffers,tabpages,winsize,winpos,terminal"
 end
 
 local toggle_session = function()

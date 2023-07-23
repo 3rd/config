@@ -13,18 +13,18 @@ local hsl = lush.hsl
 -- - control flow
 -- - function calls
 
-local base_hue = 245
+local base_hue = 235
 
 local colors = {
   none = "NONE",
-  background = hsl(base_hue, 15, 15),
-  foreground = hsl(base_hue, 30, 80),
+  background = hsl(base_hue, 15, 16),
+  foreground = hsl(base_hue, 30, 85),
   blue = hsl(205, 100, 65),
   cyan = hsl(185, 70, 50),
   green = hsl(80, 45, 60),
   indigo = hsl(270, 100, 75),
   magenta = hsl(320, 80, 70),
-  orange = hsl(15, 70, 70),
+  orange = hsl(15, 90, 65),
   pink = hsl(320, 70, 70),
   red = hsl(350, 75, 60),
   yellow = hsl(40, 85, 65),
