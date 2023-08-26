@@ -185,8 +185,8 @@ in {
           {
             always = true;
             command =
-              "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill --no-fehbg --randomize ~/brain/config/home/wallpapers";
-            # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/home/wallpaper";
+              # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill --no-fehbg --randomize ~/brain/config/home/wallpapers";
+              "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/home/wallpaper";
             # ''--no-startup-id ${pkgs.hsetroot}/bin/hsetroot -solid "${config.colors.gray-darker}"'';
           }
           # {

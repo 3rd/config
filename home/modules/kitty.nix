@@ -66,8 +66,10 @@
       font_family = lib.mkDefault "MonoLisa";
       # font_size = lib.mkDefault "8.8";
       # font_size = lib.mkDefault "9.4";
-      font_size = lib.mkDefault "9.8";
-      # adjust_baseline = "0";
+      # font_size = lib.mkDefault "9.8";
+      font_size = lib.mkDefault "10.4";
+      # font_size = lib.mkDefault "11.1";
+      # font_size = lib.mkDefault "11.6";
 
       # adjust_line_height = "105%";
 

@@ -130,8 +130,9 @@ in {
       { url = "https://sive.rs/en.atom"; }
       { url = "https://ralphammer.com/feed/"; }
       { url = "https://alain.xyz/rss"; }
+      { url = "https://www.lucacambiaghi.com/feed.xml"; }
       {
-        url = "https://www.lucacambiaghi.com/feed.xml";
+        url = "https://blog.owulveryck.info/index.xml";
       }
 
       # blogs: dev

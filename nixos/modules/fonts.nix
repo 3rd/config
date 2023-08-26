@@ -3,7 +3,7 @@
 {
   nixpkgs.config.joypixels.acceptLicense = true;
   fonts = {
-    enableDefaultFonts = true;
+    # enableDefaultFonts = true;
     fontDir.enable = true;
     # https://wiki.archlinux.org/title/font_configuration
     fontconfig = {
@@ -46,7 +46,7 @@
       '';
     };
 
-    fonts = with pkgs; [
+    packages = with pkgs; [
       corefonts
       dejavu_fonts
       fira

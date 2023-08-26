@@ -16,10 +16,8 @@
 
   nix = {
     package = pkgs.nixVersions.stable;
-    extraOptions = ''
-      experimental-features = nix-command flakes
-    '';
     settings = {
+      experimental-features = [ "nix-command" "flakes" ];
       sandbox = true;
       substituters =
         [ "https://nix-community.cachix.org" "https://cache.nixos.org" ];
@@ -80,14 +78,13 @@
     cachix
     anki
     bc
-    calibre
     cargo-edit
+    (import (fetchTarball "https://install.devenv.sh/latest")).default
     cargo-watch
     clang-tools
     coreutils
     cpufrequtils
     curl
-    curlie
     deadnix
     diskonaut
     dnsutils
@@ -96,7 +93,6 @@
     fd
     ffmpeg-full
     file
-    fsrx
     fzf
     gcc
     gdb
@@ -105,23 +101,21 @@
     git
     git-lfs
     gitlint
-    glances
+    gimp
     glow
     iftop
     glxinfo
     gnumake
     unrar-wrapper
     gnutls
-    fwts
-    go-jira
     gotools
     gotop
     gron
-    hadolint
     htop
+    msr-tools
     btop
-    hy
     hyperfine
+    poppler_utils
     i7z
     inetutils
     inxi
@@ -135,7 +129,7 @@
     stable.libreoffice
     lm_sensors
     lsof
-    rust-petname
+    # rust-petname
 
     (luajit.withPackages (ps: with ps; [ luacheck moonscript luarocks magick ]))
 
@@ -155,18 +149,18 @@
     nixos-option
     nodePackages.pnpm
     patchelf
-    nodejs
+    nodejs_latest
     openssl
     openvpn
     p7zip
     pandoc
     pass
     pciutils
-    peco
     playerctl
     hexchat
     apktool
     jadx
+    hasura-cli
     frida-tools
     proselint
     sysstat
@@ -181,9 +175,7 @@
     stable.awscli2
     efibootmgr
     ripgrep
-    ripgrep-all
     rlwrap
-    rnix-lsp
     rsync
     rust-analyzer
     sniffnet
@@ -211,13 +203,12 @@
     sshuttle
     stable.openfortivpn
     tmuxp
-    tor-browser-bundle-bin
     statix
     stress
     stylua
-    sumneko-lua-language-server
     terminal-typeracer
     tmux
+    lua-language-server
     tree
     tree-sitter
     unzip
@@ -233,17 +224,17 @@
     sox
     whois
     wmctrl
-    x2x
     xdotool
     xorg.xdpyinfo
     yarn
     youtube-dl
     zellij
-    zenith
     yad
     zip
     zoxide
     zx
+    autorandr
+    arandr
     # gui
     cutter
     cool-retro-term
@@ -258,7 +249,6 @@
     gnome.file-roller
     gnome.gucharmap
     gnome.gnome-disk-utility
-    neovide
     gnome.gnome-font-viewer
     gnome.eog
     google-chrome
@@ -289,7 +279,7 @@
     polybarFull
     stable.postman
     qbittorrent
-    stable.qimgv
+    qimgv
     scrcpy
     skypeforlinux
     slack
@@ -301,8 +291,9 @@
     tdesktop
     veracrypt
     virt-manager
-    wine
     wireshark
+    ffmpegthumbnailer
+    xfce.tumbler
     xclip
     xorg.xev
     xorg.xhost
@@ -310,23 +301,7 @@
     xorg.xmodmap
     timg
     wezterm
-    # sec
-    feroxbuster
-    # vscode
   ];
-
-  programs.firejail.enable = true;
-  programs.firejail.wrappedBinaries = {
-    firefox = {
-      executable = "${pkgs.lib.getBin pkgs.firefox}/bin/firefox";
-      profile = "${pkgs.firejail}/etc/firejail/firefox.profile";
-    };
-    chromium = {
-      executable = "${pkgs.lib.getBin pkgs.chromium}/bin/chromium";
-      profile = "${pkgs.firejail}/etc/firejail/chromium.profile";
-    };
-  };
-  security.chromiumSuidSandbox.enable = true;
 
   programs.adb.enable = true;
   programs.dconf.enable = true;
@@ -340,6 +315,8 @@
   services.udev.packages = [ pkgs.android-udev-rules ];
   services.udisks2.enable = true;
 
+  services.gvfs.enable = true; # MTP
+
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.lightdm.enableGnomeKeyring = true;
   security.pam.services.sddm.enableGnomeKeyring = true;
@@ -352,6 +329,8 @@
         xdg-desktop-portal-wlr
         xdg-desktop-portal-gtk
       ];
+      wlr.enable = true;
+      xdgOpenUsePortal = true;
     };
   };
 
