@@ -5,13 +5,20 @@ local is = require("lib/is")
 ---@field on_attach nil|fun(on_attach: function)
 ---@field on_attach_call nil|fun(client: table, bufnr: number)
 
+---@class hooks
+---@field lsp lsp_hooks|nil
+---@field treesitter string[]|nil
+---@field lspconfig table<string, lsp_hooks>|nil
+---@field null table<any>|nil
+---@field mason string[]|nil
+
 ---@class Module
 ---@field name string
 ---@field enabled boolean|nil
 ---@field debug boolean|nil
 ---@field plugins LazyPluginSpec[]|nil
 ---@field setup function|nil
----@field hooks {lsp?: lsp_hooks}|nil
+---@field hooks hooks|nil
 ---@field mappings ({ [1]: "n"|"i"|"v"|"x"|"!"|"", [2]: string, [3]: string|function, [4]: string|table })[]|nil
 ---@field actions ({ [1]: string, [2]: string, [3]: string|function})[]|nil
 ---@field exports table<string, any>|nil

@@ -1,5 +1,5 @@
 return lib.module.create({
-  enabled = false,
+  -- enabled = false,
   name = "misc/rainbow",
   plugins = {
     {

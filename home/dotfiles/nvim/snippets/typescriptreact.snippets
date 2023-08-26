@@ -6,41 +6,25 @@ snippet boil "react component"
 		return $0;
 	};
 
-snippet bstory "react fixture"
-	import React from "react";
-	import { ComponentStory, ComponentMeta } from '@storybook/react';
+snippet bstory "react story"
+  import type { StoryObj, Meta } from '@storybook/react';
+  import { action } from '@storybook/addon-actions';
+  import { $1 } from './$1';
 
-	import $1 from "./$1";
+  const meta: Meta<typeof $1> = {
+    title: '$1',
+    component: $1,
+    // decorators: [],
+    // parameters: { background: { default: 'dark' } },
+  };
+  export default meta;
 
-	export default {
-		title: '$1',
-		component: $1,
-		argTypes: {
-			// https://storybook.js.org/docs/react/api/argtypes
-			backgroundColor: { control: 'color' },
-			onClick: { action: "clicked" },
-		},
-	} as ComponentMeta<typeof $1>;
+  type Story = StoryObj<typeof $1>;
 
-	// https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-	const Template: ComponentStory<typeof $1> = (args) => <$1 {...args} />;
-
-	export const Default = Template.bind({});
-	// https://storybook.js.org/docs/react/writing-stories/args
-	Default.args = {
-		primary: true,
-		label: '$1',
-	};
-
-snippet bcontext "context"
-	import { createContext, useContext } from "react";
-
-	type $1ContextType = {
-		$2
-	};
-
-	const $1Context = createContext<$1ContextType>({} as $1ContextType);
-
-	export const $1Provider = $1Context.Provider;
-
-	export const use$1 = () => useContext($1Context);
+  export const Default: Story = {
+    args: {
+      // onClick: action("onClick"),
+    },
+    // name: '$1',
+    // render: (args) => <$1 {...args} />,
+  };

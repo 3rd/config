@@ -86,7 +86,7 @@ local setup = function()
 end
 
 return lib.module.create({
-  name = "null-ls",
+  name = "language-support/null",
   plugins = {
     {
       "jose-elias-alvarez/null-ls.nvim",

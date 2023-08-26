@@ -37,6 +37,7 @@ local setup = function()
     local status = ""
 
     local setup_copilot_status = function()
+      initialized = true
       local ok, api = pcall(require, "copilot.api")
       if not ok then return end
       api.register_status_notification_handler(function(data)
@@ -48,7 +49,6 @@ local setup = function()
           status = data.status or "⦸"
         end
       end)
-      initialized = true
     end
 
     return function()

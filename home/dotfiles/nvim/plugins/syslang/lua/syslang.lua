@@ -1,9 +1,7 @@
-local syntax = require("syslang/syntax")
 local folding = require("syslang/folding")
 
 local setup_options = function()
   vim.opt_local.foldlevel = 999
-
   vim.opt_local.wrap = false
   vim.opt_local.signcolumn = "yes:1"
   vim.opt_local.number = false
@@ -11,33 +9,14 @@ local setup_options = function()
   vim.opt_local.linebreak = true
   vim.opt_local.cursorlineopt = "screenline"
   vim.opt_local.winbar = " "
-
   vim.opt_local.commentstring = "-- %s"
   vim.opt_local.textwidth = 100
-
   vim.opt_local.breakindentopt = "list:-1"
   vim.opt_local.formatlistpat = [[ ^\s*(\d)\+\s* ]]
   vim.opt_local.formatoptions = "cqrt"
-
   vim.opt_local.cinwords = "*,-"
   vim.opt_local.smartindent = true
 end
-
--- local handle_toggle_task = function()
---   local view = vim.fn.winsaveview()
---   local line = vim.fn.getline(".")
---   if vim.fn.match(line, "\\v\\[\\s\\]") >= 0 then -- [ ] -> [-]
---     vim.api.nvim_exec2("s/\\v\\[\\zs\\s\\ze\\]/-/g", { output = true })
---   elseif vim.fn.match(line, "\\v\\[-\\]") >= 0 then -- [-] -> [x]
---     vim.api.nvim_exec2("s/\\v\\[\\zs-\\ze\\]/x/g", { output = true })
---   elseif vim.fn.match(line, "\\v\\[(✔|x|X)\\]") >= 0 then -- [x] -> [ ]
---     vim.api.nvim_exec2("s/\\v\\[\\zs(✔|x|X)\\ze\\]/ /g", { output = true })
---   else
---     vim.api.nvim_exec2("s/\\v\\zs\\S\\ze/[ ] \\0/g", { output = true }) -- .* -> [ ] \0
---   end
---   vim.cmd("nohl")
---   vim.fn.winrestview(view)
--- end
 
 local handle_toggle_task = function()
   local ts_utils = require("nvim-treesitter.ts_utils")
@@ -63,7 +42,7 @@ local handle_toggle_task = function()
         local sessions = lib.ts.find_children(task_node, "task_session")
         local active_sessions = {}
 
-        -- active session have a single (time) node
+        -- active sessions have a single (time) node
         for _, session_node in ipairs(sessions) do
           local time_nodes = lib.ts.find_children(session_node, "time", true)
           if #time_nodes == 1 then table.insert(active_sessions, session_node) end
@@ -135,10 +114,7 @@ local handle_toggle_task = function()
 
   while node ~= nil do
     local node_line = node:range()
-    if node_line ~= position[1] - 1 then
-      -- log("break", node_line, position[1] - 1)
-      break
-    end
+    if node_line ~= position[1] - 1 then break end
     for _, task_node_type in ipairs(task_types) do
       if node:type() == task_node_type.task then
         local marker_node = node:child(0)
@@ -161,198 +137,7 @@ local handle_toggle_task = function()
   vim.fn.winrestview(view)
 end
 
-local heading_node_types = { "heading_1", "heading_2", "heading_3", "heading_4", "heading_5", "heading_6" }
-
--- TODO: indent subheadings, dedent
-local handle_indent = function()
-  local ts_utils = require("nvim-treesitter.ts_utils")
-  local heading_node = lib.ts.find_parent_at_line(heading_node_types)
-  if heading_node ~= nil then
-    local heading_level = heading_node:type():match("%d")
-    local heading_node_range = ts_utils.node_to_lsp_range(heading_node)
-
-    local heading_text_node = lib.ts.find_child(heading_node, "text_to_eol")
-    if heading_text_node == nil then throw("no text node found") end
-    local heading_text = vim.treesitter.get_node_text(heading_text_node, 0)
-    local heading_text_range = ts_utils.node_to_lsp_range(heading_text_node)
-
-    local newIndent = string.rep("  ", heading_level)
-    local newMarker = string.rep("*", heading_level + 1)
-    local newText = newIndent .. newMarker .. " " .. heading_text
-    local row = vim.fn.line(".") - 1
-
-    -- adjust indent for all child lines
-    local children_lines = string.split(vim.treesitter.get_node_text(heading_node, 0), "\n")
-    if #children_lines > 1 then
-      -- log("children_lines", children_lines)
-      local newLines = {}
-      -- skip first and regulate indent for all other lines
-      -- local previousChildIndent = string.rep("  ", heading_level)
-      -- local newChildIndent = string.rep("  ", heading_level + 1)
-      for i = 2, #children_lines do
-        local childLine = children_lines[i]
-        -- if childLine:match("^" .. previousChildIndent) then
-        --   childLine = childLine:gsub("^" .. previousChildIndent, "")
-        -- end
-        -- childLine = newChildIndent .. childLine
-        childLine = "  " .. childLine
-        table.insert(newLines, childLine)
-      end
-      local newChildrenText = table.concat(newLines, "\n")
-      -- log("children", {
-      --   previousIndent = previousChildIndent,
-      --   newIndent = newChildIndent,
-      --   lines = newLines,
-      -- })
-
-      local edit = {
-        range = {
-          start = { line = row + 1, character = 0 },
-          ["end"] = { line = heading_node_range["end"].line, character = heading_node_range["end"].character },
-        },
-        newText = newChildrenText,
-      }
-      vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
-    end
-
-    -- replace heading text
-    -- log("replace heading text", newText)
-    local edit = {
-      range = {
-        start = { line = row, character = 0 },
-        ["end"] = { line = heading_node_range.start.line, character = heading_text_range["end"].character },
-      },
-      newText = newText,
-    }
-    vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
-
-    return
-  end
-
-  -- fallback to default indent
-  vim.cmd("normal! >>")
-end
-
-local handle_dedent = function()
-  log("dedent")
-
-  -- fallback to default dedent
-  vim.cmd("normal! <<")
-end
-
-local function link(from, to)
-  if type(to) == "string" then
-    local group = "@slang." .. from
-    group = group:gsub("._$", "")
-    -- log("linking " .. group .. " to " .. to)
-    vim.cmd("hi! link " .. group .. " " .. to)
-  else
-    for k, v in pairs(to) do
-      link(from .. "." .. k, v)
-    end
-  end
-end
-
-local link_highlights = function()
-  local links = {
-    error = "Error",
-    document = {
-      title = "Question",
-      meta = {
-        _ = "Question",
-        field = {
-          _ = "String",
-          key = "Identifier",
-          value = "String",
-        },
-      },
-    },
-    bold = "ModeMsg",
-    italic = "Italic",
-    underline = "Underlined",
-    comment = "Comment",
-    string = "String",
-    number = "Number",
-    ticket = "Blue",
-    time = "SpecialChar",
-    timerange = "SpecialChar",
-    date = "SpecialChar",
-    daterange = "SpecialChar",
-    datetime = "SpecialChar",
-    datetimerange = "SpecialChar",
-    heading_1 = {
-      marker = "Title",
-      text = "Title",
-    },
-    heading_2 = {
-      marker = "Title",
-      text = "Title",
-    },
-    heading_3 = {
-      marker = "Title",
-      text = "Title",
-    },
-    heading_4 = {
-      marker = "Title",
-      text = "Title",
-    },
-    heading_5 = {
-      marker = "Title",
-      text = "Title",
-    },
-    heading_6 = {
-      marker = "Title",
-      text = "Title",
-    },
-    section = "Type",
-    task_default = "Normal",
-    task_active = "CyanItalic",
-    task_done = "Comment",
-    task_cancelled = "Red",
-    task_session = "Comment",
-    task_schedule = "Comment",
-    tag = {
-      hash = "Cyan",
-      positive = "Green",
-      negative = "Red",
-      context = "Yellow",
-      danger = "TSDanger",
-      identifier = "Identifier",
-    },
-    link = "HintText",
-    external_link = "HintText",
-    inline_code = "Macro",
-    code_block_start = "Comment",
-    code_block_language = "Comment",
-    code_block_fence = "Comment",
-    code_block_content = "PreProc",
-    code_block_end = "Comment",
-    label = "CyanItalic",
-    list_item = "Normal",
-    list_item_marker = "Comment",
-    list_item_label = "Cyan",
-    list_item_label_marker = "Comment",
-  }
-
-  for k, v in pairs(links) do
-    link(k, v)
-  end
-
-  vim.cmd("hi! Bold gui=bold")
-  vim.cmd("hi! Italic gui=italic")
-  vim.cmd("hi! Underlined gui=underline")
-end
-
-local setup_buffer = function()
-  if vim.b.slang_loaded then return end
-  vim.b.slang_loaded = true
-
-  setup_options()
-  syntax.register()
-  folding.register()
-  -- link_highlights()
-
-  -- mappings
+local setup_mappings = function()
   vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true, noremap = true })
   -- vim.keymap.set("n", ">", handle_indent, { buffer = true })
   -- vim.keymap.set("n", "<", handle_dedent, { buffer = true })
@@ -360,6 +145,15 @@ local setup_buffer = function()
   -- vim.keymap.set("n", "zM", handle_collapse_all, { buffer = true, noremap = true })
 end
 
+local setup = function()
+  if vim.b.slang_loaded then return end
+  vim.b.slang_loaded = true
+
+  setup_options()
+  setup_mappings()
+  folding.setup()
+end
+
 return {
-  setup_buffer = setup_buffer,
+  setup = setup,
 }

@@ -262,7 +262,7 @@ return lib.module.create({
     },
     {
       "jghauser/fold-cycle.nvim",
-      event = "VeryLazy",
+      ft = { "syslang" },
       config = setup_fold_cycle,
     },
   },

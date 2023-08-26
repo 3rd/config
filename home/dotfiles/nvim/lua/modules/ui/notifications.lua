@@ -24,10 +24,10 @@ end
 return lib.module.create({
   name = "ui/notifications",
   plugins = {
-    -- {
-    --   "rcarriga/nvim-notify",
-    --   event = "VeryLazy",
-    --   config = setup_nvim_notify,
-    -- },
+    {
+      "rcarriga/nvim-notify",
+      event = "VeryLazy",
+      config = setup_nvim_notify,
+    },
   },
 })

@@ -1,1 +1,1 @@
-require("syslang").setup_buffer()
+require("syslang").setup()

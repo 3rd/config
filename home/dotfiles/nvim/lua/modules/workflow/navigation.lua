@@ -37,6 +37,7 @@ local setup_fzf_lua = function()
       -- path_shorten = 4,
       git_icons = false,
       fzf_opts = { ["--layout"] = "default", ["--no-hscroll"] = "" },
+      -- rg_opts = "--hidden",
     },
     tags = { git_icons = false },
     btags = { git_icons = false },
@@ -47,7 +48,7 @@ local setup_fzf_lua = function()
     local opts = vim.deepcopy(config)
     opts.cmd = "rg --files --hidden --glob=!.git/ --smart-case"
     if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
-      opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(vim.fn.expand("%"))
+      opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%")))
     end
     opts.prompt = "> "
     opts.fzf_opts = {
@@ -57,7 +58,17 @@ local setup_fzf_lua = function()
     fzf.files(opts)
   end, "Find file in project")
   lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
-  lib.map.map("n", "<c-f>", "<cmd>lua require('fzf-lua').grep_project()<CR>", "Find text in project")
+  lib.map.map("n", "<c-f>", function()
+    local opts = vim.deepcopy(config)
+    opts.cmd =
+      "rg --hidden --iglob '!.git' --iglob '!*.lock' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
+    opts.prompt = "> "
+    opts.fzf_opts = {
+      ["--info"] = "inline",
+      ["--tiebreak"] = "index",
+    }
+    fzf.grep_project(opts)
+  end, "Find text in project")
   lib.map.map("n", "<leader>l", "<cmd>lua require('fzf-lua').blines()<CR>", "Find line in buffer")
   lib.map.map("n", "<leader>L", "<cmd>lua require('fzf-lua').lines()<CR>", "Find line in project")
   lib.map.map("n", "<leader><leader>", "<cmd>lua require('fzf-lua').resume()<CR>", "Resume last fzf-lua command")

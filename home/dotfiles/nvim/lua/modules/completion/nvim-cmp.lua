@@ -201,12 +201,7 @@ local setup = function()
         elseif luasnip.jumpable(1) then
           luasnip.jump(1)
         else
-          local ok, suggestion = pcall(require, "copilot.suggestion")
-          if ok and suggestion.is_visible() then
-            suggestion.accept()
-          else
-            fallback()
-          end
+          fallback()
         end
       end, { "i", "s" }),
       ["<S-Tab>"] = cmp.mapping(function(fallback)

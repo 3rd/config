@@ -74,13 +74,13 @@ local theme = lush(function(injected)
     -- SpellRare    { }, -- Word that is recognized by the spellchecker as one that is hardly ever used. |spell| Combined with the highlighting used otherwise.
     -- StatusLine   { }, -- Status line of current window
     -- StatusLineNC { }, -- Status lines of not-current windows. Note: If this is equal to "StatusLine" Vim will use "^^^" in the status line of the current window.
-    -- TabLine      { }, -- Tab pages line, not active tab page label
-    -- TabLineFill  { }, -- Tab pages line, where there are no labels
-    -- TabLineSel   { }, -- Tab pages line, active tab page label
     -- VisualNOS    { }, -- Visual mode selection when vim is "Not Owning the Selection".
-    WarningMsg({}), -- Warning messages
     -- Winseparator { }, -- Separator between window splits. Inherts from |hl-VertSplit| by default, which it will replace eventually.
     -- WildMenu     { }, -- Current match in 'wildmenu' completion
+    TabLine({ bg = colors.ui.surface1 }), -- Tab pages line, not active tab page label
+    TabLineFill({ bg = colors.ui.surface0 }), -- Tab pages line, where there are no labels
+    TabLineSel({ bg = colors.ui.surface2 }), -- Tab pages line, active tab page label
+    WarningMsg({}), -- Warning messages
 
     -- common
     Identifier({ fg = colors.common.identifier }),
@@ -243,16 +243,11 @@ local theme = lush(function(injected)
     sym("@type.definition")({ Typedef }),
     sym("@type.qualifier")({ Type }),
     sym("@variable")({ Identifier }),
-    sym("@variable.builtin")({ sym("@builtin") }),
+    sym("@variable.builtin")({ sym("@boolean") }),
 
     -- semantic tokens
     -- https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
     -- https://github.com/Iron-E/nvim-highlite/blob/master-v4/lua/highlite/groups/default.lua#L240
-    sym("@lsp.mod.annotation")({ sym("@macro") }),
-    sym("@lsp.mod.constant")({ sym("@constant") }),
-    sym("@lsp.mod.interpolation")({ sym("@string.special") }),
-    sym("@lsp.mod.readonly")({ sym("@lsp.mod.constant") }),
-    sym("@lsp.mod.static")({ gui = "italic" }),
     sym("@lsp.type.boolean")({ sym("@boolean") }),
     sym("@lsp.type.character")({ sym("@character") }),
     sym("@lsp.type.class")({ sym("@constructor") }),
@@ -261,9 +256,9 @@ local theme = lush(function(injected)
     sym("@lsp.type.enumMember")({ sym("@constant") }),
     sym("@lsp.type.event")({ fg = colors.orange }),
     sym("@lsp.type.float")({ sym("@float") }),
-    sym("@lsp.type.function")({ sym("@function") }),
+    sym("@lsp.type.function")({}),
     sym("@lsp.type.identifier")({ Identifier }),
-    sym("@lsp.type.interface")({ sym("@keyword") }),
+    sym("@lsp.type.interface")({ sym("@type") }),
     sym("@lsp.type.keyword")({ sym("@keyword") }),
     sym("@lsp.type.lifetime")({ fg = colors.pink }),
     sym("@lsp.type.macro")({ sym("@macro") }),
@@ -279,29 +274,39 @@ local theme = lush(function(injected)
     sym("@lsp.type.typeAlias")({ sym("@type.definition") }),
     sym("@lsp.type.typeParameter")({ sym("@type") }),
     sym("@lsp.type.variable")({ sym("@variable") }),
+
+    sym("@lsp.mod.annotation")({ sym("@macro") }),
+    sym("@lsp.mod.interpolation")({ sym("@string.special") }),
+    sym("@lsp.mod.static")({ gui = "italic" }),
+    sym("@lsp.mod.constant")({}),
+    sym("@lsp.mod.readonly")({}),
+
     sym("@lsp.typemod.deriveHelper.attribute")({ sym("@attribute") }),
-    sym("@lsp.typemod.function.defaultLibrary")({ sym("@function.builtin") }),
-    sym("@lsp.typemod.class.defaultLibrary")({ sym("@function.builtin") }),
+    sym("@lsp.typemod.interface")({ sym("@type") }),
+    sym("@lsp.typemod.property.declaration")({ sym("@field") }),
     sym("@lsp.typemod.string.constant")({}),
     sym("@lsp.typemod.string.readonly")({}),
     sym("@lsp.typemod.string.static")({}),
-    sym("@lsp.typemod.interface")({ sym("@type") }),
-    sym("@lsp.typemod.type.defaultLibrary")({ sym("@type") }),
-    sym("@lsp.typemod.type.readonly")({ sym("@lsp.type.type") }),
-    sym("@lsp.typemod.variable.defaultLibrary")({ sym("@variable.builtin") }),
+    sym("@lsp.typemod.type.readonly")({ sym("@type") }),
     sym("@lsp.typemod.typeParameter")({ sym("@type") }),
 
+    sym("@lsp.typemod.function")({}),
+
+    sym("@lsp.typemod.class.defaultLibrary")({ sym("@macro") }),
+    sym("@lsp.typemod.function.defaultLibrary")({ sym("@macro") }),
+    sym("@lsp.typemod.type.defaultLibrary")({ sym("@type") }),
+    sym("@lsp.typemod.variable.defaultLibrary")({ sym("@macro") }),
+
     -- to move
-    sym("@lsp.typemod.function.readonly")({ sym("@lsp.type.function") }),
     sym("@namespace")({ sym("@type") }),
-    sym("@lsp.typemod.property.declaration")({ sym("@field") }),
 
     -- lua
     sym("@constructor.lua")({ Delimiter }),
 
     -- tsx
-    sym("@constructor.tsx")({ sym("@function") }),
-    sym("@tag.attribute.tsx")({ sym("@property") }),
+    sym("@constructor.tsx")({}),
+    sym("@tag.tsx")({ SpecialKeyword }),
+    sym("@tag.attribute.tsx")({ sym("@parameter") }),
 
     -- nvim-cmp
     CmpItemAbbr({ fg = colors.foreground }),
@@ -312,7 +317,7 @@ local theme = lush(function(injected)
     CmpItemAbbrMatchFuzzy({ fg = colors.blue, gui = "bold" }),
 
     -- lspkind-nvim
-    CmpItemKindSnippet({ fg = colors.purple }),
+    CmpItemKindSnippet({ fg = colors.indigo }),
     CmpItemKindKeyword({ fg = colors.common.keyword }),
     CmpItemKindText({ fg = colors.foreground }),
     CmpItemKindMethod({ fg = colors.common["function"] }),

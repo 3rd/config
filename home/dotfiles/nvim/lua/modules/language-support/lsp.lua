@@ -1,5 +1,5 @@
 local config = {
-  -- override client.server_capabilities.documentFormattingProvider
+  -- client.server_capabilities.documentFormattingProvider
   formatting = {
     enable = { "eslint" },
     disable = { "html" },
@@ -32,16 +32,19 @@ local ensure_installed = {
   "gopls",
   "html",
   "jsonls",
-  "lua_ls",
   "prismals",
   "rust_analyzer",
   "tailwindcss",
   "vimls",
   "vuels",
+  "typescript-language-server",
+  "nil_ls",
+  "vtsls",
   "yamlls",
   -- formatters
   "prettierd",
   "rustywind",
+  "fixjson",
 }
 
 local setup_lspconfig = function()
@@ -75,6 +78,9 @@ local setup_lspconfig = function()
       },
     },
     lspconfig = {
+      nixd = {},
+      -- nil_ls = {},
+      zls = {},
       bashls = {},
       cssls = {
         settings = {
@@ -87,7 +93,10 @@ local setup_lspconfig = function()
         cmd = { "gopls", "-remote=auto", "-remote.debug=:0" },
         settings = {
           gopls = {
-            analyses = { unusedparams = true, unreachable = false },
+            analyses = {
+              unusedparams = true,
+              unreachable = false,
+            },
             codelenses = {
               generate = true,
               gc_details = true,
@@ -103,14 +112,6 @@ local setup_lspconfig = function()
             gofumpt = false,
             buildFlags = { "-tags", "integration" },
           },
-        },
-      },
-      golangci_lint_ls = {
-        init_options = {
-          command = string.split(
-            ("golangci-lint run -c %s --out-format json"):format(lib.path.resolve_config("linters/golangci.yml")),
-            " "
-          ),
         },
       },
       html = {},
@@ -129,29 +130,28 @@ local setup_lspconfig = function()
         },
       },
       lua_ls = {
-        cmd = {
-          vim.fn.exepath("lua-language-server"),
-          -- "--loglevel=trace",
-          -- "--logpath=/tmp/luals.log",
-        },
+        -- cmd = {
+        --   vim.fn.exepath("lua-language-server"),
+        --   "--loglevel=trace",
+        --   "--logpath=/tmp/luals.log",
+        -- },
         settings = {
           Lua = {
             completion = { callSnippet = "Replace" },
             diagnostics = { enable = true, globals = { "vim", "log", "throw" } },
-            runtime = { version = "LuaJIT" },
             format = { enable = false },
+            runtime = { version = "LuaJIT" },
             workspace = {
               ignoreDir = { "plugins", "sandbox" },
               checkThirdParty = false,
-              maxPreload = 10000,
-              preloadFileSize = 50000,
               useGitIgnore = true,
               ignoreSubmodules = true,
-              library = {
-                [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-                [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
-                [vim.fn.stdpath("data") .. "/lazy/lazy.nvim/lua/lazy"] = true,
-              },
+              library = { vim.env.VIMRUNTIME },
+              -- library = {
+              -- [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+              -- [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
+              -- [vim.fn.stdpath("data") .. "/lazy/lazy.nvim/lua/lazy"] = true,
+              -- },
             },
             telemetry = { enable = false },
           },
@@ -187,43 +187,43 @@ local setup_lspconfig = function()
       --     end,
       --   },
       -- },
-      -- vtsls = {
-      --   -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
-      --   settings = {
-      --     javascript = {
-      --       format = { enable = false },
-      --       preferences = {
-      --         useAliasesForRenames = true,
-      --       },
-      --     },
-      --     typescript = {
-      --       format = { enable = false },
-      --       tsserver = {
-      --         maxTsServerMemory = 8192,
-      --         -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
-      --       },
-      --       preferences = {
-      --         includePackageJsonAutoImports = "off",
-      --         useAliasesForRenames = true,
-      --       },
-      --     },
-      --     vtsls = {
-      --       experimental = {
-      --         completion = {
-      --           enableServerSideFuzzyMatch = true,
-      --           entriesLimit = 150,
-      --         },
-      --       },
-      --     },
-      --   },
-      --   handlers = {
-      --     -- always go to the first definition
-      --     ["textDocument/definition"] = function(err, result, ...)
-      --       if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
-      --       vim.lsp.handlers["textDocument/definition"](err, result, ...)
-      --     end,
-      --   },
-      -- },
+      vtsls = {
+        -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
+        settings = {
+          javascript = {
+            format = { enable = false },
+            preferences = {
+              useAliasesForRenames = true,
+            },
+          },
+          typescript = {
+            format = { enable = false },
+            tsserver = {
+              maxTsServerMemory = 4000,
+              -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
+            },
+            preferences = {
+              includePackageJsonAutoImports = "off",
+              useAliasesForRenames = true,
+            },
+          },
+          vtsls = {
+            experimental = {
+              completion = {
+                enableServerSideFuzzyMatch = true,
+                entriesLimit = 150,
+              },
+            },
+          },
+        },
+        handlers = {
+          -- always go to the first definition
+          ["textDocument/definition"] = function(err, result, ...)
+            if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
+            vim.lsp.handlers["textDocument/definition"](err, result, ...)
+          end,
+        },
+      },
       vuels = {
         init_options = {
           config = {
@@ -268,7 +268,7 @@ local setup_lspconfig = function()
             useEslintrc = false,
           },
           packageManager = "npm",
-          run = "onType",
+          run = "onSave",
           workingDirectory = { mode = "auto" },
         },
       },
@@ -319,6 +319,11 @@ local setup_lspconfig = function()
   for _, module in ipairs(modules_with_capabilities) do
     capabilities = module.hooks.lsp.capabilities(capabilities)
   end
+  capabilities = vim.tbl_deep_extend(
+    "force",
+    capabilities,
+    { workspace = { didChangeWatchedFiles = { dynamicRegistration = true } } }
+  )
 
   local on_attach = function(client, bufnr)
     -- mappings
@@ -329,10 +334,7 @@ local setup_lspconfig = function()
       lib.map.map(mode, lhs, rhs, opts)
     end
 
-    -- if client.name == "eslint" then client.server_capabilities.documentFormattingProvider = true end
-    -- log(client.name, client.server_capabilities.documentFormattingProvider)
-
-    -- override client.server_capabilities.documentFormattingProvider
+    -- lsp formatting
     if vim.tbl_contains(config.formatting.enable, client.name) then
       client.server_capabilities.documentFormattingProvider = true
     elseif vim.tbl_contains(config.formatting.disable, client.name) then
@@ -363,6 +365,8 @@ local setup_lspconfig = function()
   for _, module in ipairs(modules_with_on_attach) do
     module.hooks.lsp.on_attach(on_attach)
   end
+
+  vim.api.nvim_exec_autocmds("FileType", {})
 end
 
 return lib.module.create({

@@ -1,57 +1,71 @@
-local setup = function()
-  -- https://github.com/fauxpilot/fauxpilot/discussions/72
-  -- https://github.com/nzlov/cmp-fauxpilot
-  -- vim.g.copilot_proxy = "http://localhost:5000"
+-- https://github.com/fauxpilot/fauxpilot/discussions/72
+-- https://github.com/nzlov/cmp-fauxpilot
+-- vim.g.copilot_proxy = "http://localhost:5000"
 
-  require("copilot").setup({
-    panel = {
-      enabled = true,
-      auto_refresh = false,
-      keymap = {
-        jump_prev = "[[",
-        jump_next = "]]",
-        accept = "<CR>",
-        refresh = "gr",
-        open = "<M-CR>",
+local config = {
+  panel = {
+    enabled = true,
+    auto_refresh = true,
+    keymap = {
+      open = "<M-CR>",
+      accept = "<CR>",
+      refresh = "gr",
+      jump_next = "]]",
+      jump_prev = "[[",
+    },
+  },
+  suggestion = {
+    enabled = true,
+    auto_trigger = true,
+    debounce = 75,
+    keymap = {
+      accept = "<c-l>",
+      next = "<c-right>",
+      prev = "<c-left>",
+    },
+  },
+  filetypes = {
+    -- "*" = false,
+    cvs = false,
+    gitcommit = false,
+    gitrebase = false,
+    help = false,
+    markdown = false,
+    syslang = false,
+    sh = function()
+      if string.match(vim.fs.basename(vim.api.nvim_buf_get_name(0)), "^%.env.*") then return false end
+      return true
+    end,
+  },
+  -- https://github.com/zbirenbaum/copilot.lua/blob/master/SettingsOpts.md
+  server_opts_overrides = {
+    trace = "verbose",
+    settings = {
+      editor = {
+        delayCompletions = 0,
+        formatOnType = false,
       },
-    },
-    suggestion = {
-      enabled = true,
-      auto_trigger = true,
-      debounce = 300,
-      keymap = {
-        accept = "<c-l>",
-        next = "<c-right>",
-        prev = "<c-left>",
-        dismiss = "<c-]>",
-      },
-    },
-    filetypes = {
-      -- "*" = false,
-      sh = function()
-        if string.match(vim.fs.basename(vim.api.nvim_buf_get_name(0)), "^%.env.*") then return false end
-        return true
-      end,
-      syslang = false,
-    },
-    -- https://github.com/zbirenbaum/copilot.lua/blob/master/SettingsOpts.md
-    server_opts_overrides = {
-      trace = "verbose",
-      settings = {
-        advanced = {
-          listCount = 10, -- panel
-          inlineSuggestCount = 3, -- getCompletions
-          length = 1000,
-          top_p = 1,
-          temperature = 0,
-          debug = {
-            githubCTSIntegrationEnabled = false,
-          },
+      advanced = {
+        listCount = 5,
+        inlineSuggestCount = 5,
+        length = 1000,
+        top_p = 1,
+        temperature = 0,
+        debug = {
+          githubCTSIntegrationEnabled = false,
+          showScores = "",
+          useSuffix = "",
+          -- overrideProxyUrl = "",
+          -- testOverrideProxyUrl = "",
+          -- overrideEngine = "",
+          -- overrideLogLevels = "",
+          -- filterLogCategories = "",
+          -- acceptSelfSignedCertificate = "",
         },
       },
     },
-  })
-end
+  },
+}
 
 return lib.module.create({
   enabled = false,
@@ -60,8 +74,11 @@ return lib.module.create({
     -- { "github/copilot.vim" },
     {
       "zbirenbaum/copilot.lua",
-      event = { "InsertEnter" },
-      config = setup,
+      event = { "InsertEnter", "LspAttach" },
+      opts = config,
     },
+  },
+  mappings = {
+    { "n", "<leader>p", "<cmd>lua require('copilot.panel').open()<cr>" },
   },
 })

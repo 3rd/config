@@ -5,6 +5,7 @@ local config = {
     "c",
     "cpp",
     "css",
+    "zig",
     "dockerfile",
     "fish",
     "go",
@@ -103,9 +104,6 @@ local setup_treesitter = function()
   }
 
   treesitter.setup(config)
-
-  vim.api.nvim_set_option_value("foldmethod", "expr", {})
-  vim.api.nvim_set_option_value("foldexpr", "nvim_treesitter#foldexpr()", {})
 end
 
 local setup_tsnode_marker = function()
