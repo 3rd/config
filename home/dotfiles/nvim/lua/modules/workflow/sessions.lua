@@ -36,30 +36,76 @@ local setup_auto_session = function()
   vim.o.sessionoptions = "buffers,tabpages,winsize,winpos,terminal"
 end
 
+-- local toggle_session = function()
+--   local autosession = require("auto-session")
+--   local autosession_lib = require("auto-session/lib")
+--   local session_file = ("%s/%s.vim"):format(lib.env.dirs.vim.sessions, autosession_lib.escaped_session_name_from_cwd())
+--   local has_session = lib.fs.file.is_readable(session_file)
+--   if has_session then
+--     autosession.DeleteSession()
+--     log("Deleted session")
+--   else
+--     ---@diagnostic disable-next-line: missing-parameter
+--     autosession.SaveSession()
+--     log("Created session")
+--   end
+-- end
+
 local toggle_session = function()
-  local autosession = require("auto-session")
-  local autosession_lib = require("auto-session/lib")
-  local session_file = ("%s/%s.vim"):format(lib.env.dirs.vim.sessions, autosession_lib.escaped_session_name_from_cwd())
-  local has_session = lib.fs.file.is_readable(session_file)
-  if has_session then
-    autosession.DeleteSession()
+  local Path = require("plenary.path")
+  local session_manager = require("session_manager")
+  -- local config = require("session_manager.config")
+  local utils = require("session_manager.utils")
+  local last_session = utils.get_last_session_filename()
+
+  if last_session then
+    utils.is_session = false
+    -- config.autosave_last_session = false -- when autosave_only_in_session == false
+    Path:new(last_session):rm()
     log("Deleted session")
   else
     ---@diagnostic disable-next-line: missing-parameter
-    autosession.SaveSession()
+    session_manager.save_current_session()
     log("Created session")
   end
 end
 
 return lib.module.create({
+  -- enabled = false,
   name = "workflow/sessions",
   plugins = {
+    -- {
+    --   "rmagatti/auto-session",
+    --   event = "VimEnter",
+    --   config = setup_auto_session,
+    -- },
+    -- { "olimorris/persisted.nvim" },
     {
-      "rmagatti/auto-session",
-      event = "VimEnter",
-      config = setup_auto_session,
+      "Shatur/neovim-session-manager",
+      event = "VeryLazy",
+      dependencies = { "nvim-lua/plenary.nvim" },
+      config = function()
+        local Path = require("plenary.path")
+        local config = require("session_manager.config")
+        require("session_manager").setup({
+          sessions_dir = Path:new(lib.env.dirs.vim.sessions),
+          -- session_filename_to_dir = session_filename_to_dir,
+          -- dir_to_session_filename = dir_to_session_filename,
+          autoload_mode = config.AutoloadMode.CurrentDir,
+          autosave_last_session = true,
+          autosave_ignore_not_normal = true,
+          autosave_ignore_dirs = {},
+          autosave_ignore_filetypes = {
+            "gitcommit",
+            "gitrebase",
+          },
+          autosave_ignore_buftypes = {},
+          autosave_only_in_session = true,
+          max_path_length = 80,
+        })
+        require("session_manager").load_current_dir_session()
+      end,
     },
-    -- { "olimorris/persisted.nvim" } -- alternative
   },
   mappings = {
     { "n", "<leader>s", toggle_session, "Toggle session" },

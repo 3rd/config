@@ -319,11 +319,12 @@ local setup_lspconfig = function()
   for _, module in ipairs(modules_with_capabilities) do
     capabilities = module.hooks.lsp.capabilities(capabilities)
   end
-  capabilities = vim.tbl_deep_extend(
-    "force",
-    capabilities,
-    { workspace = { didChangeWatchedFiles = { dynamicRegistration = true } } }
-  )
+  capabilities = vim.tbl_deep_extend("force", capabilities, {
+    workspace = {
+      -- https://github.com/neovim/neovim/issues/23291
+      -- didChangeWatchedFiles = { dynamicRegistration = false },
+    },
+  })
 
   local on_attach = function(client, bufnr)
     -- mappings

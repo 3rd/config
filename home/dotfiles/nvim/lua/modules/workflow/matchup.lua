@@ -26,7 +26,7 @@ return lib.module.create({
   plugins = {
     {
       "andymass/vim-matchup",
-      event = "VeryLazy",
+      lazy = false,
       config = setup,
     },
     -- {
