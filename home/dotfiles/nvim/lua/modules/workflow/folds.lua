@@ -224,7 +224,7 @@ local setup_fold_cycle = function()
   require("fold-cycle").setup({
     open_if_max_closed = true,
     close_if_max_opened = true,
-    softwrap_movement_fix = true,
+    softwrap_movement_fix = false,
   })
 
   -- <tab> - open / cycle

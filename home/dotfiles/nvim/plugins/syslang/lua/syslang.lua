@@ -145,6 +145,36 @@ local setup_mappings = function()
   -- vim.keymap.set("n", "zM", handle_collapse_all, { buffer = true, noremap = true })
 end
 
+local function fold_tasks()
+  local view = vim.fn.winsaveview()
+  local parser = vim.treesitter.get_parser()
+  local root = parser:parse()[1]:root()
+
+  local task_node_types = {
+    "task_default",
+    "task_active",
+    "task_done",
+    "task_cancelled",
+  }
+  local task_nodes = {}
+  for _, task_node_type in ipairs(task_node_types) do
+    local nodes = lib.ts.find_children(root, task_node_type, true)
+    for _, node in ipairs(nodes) do
+      table.insert(task_nodes, node)
+    end
+  end
+
+  for _, node in ipairs(task_nodes) do
+    local row = node:range()
+    local has_fold = vim.fn.foldlevel(row + 1) ~= 0
+    local is_folded = vim.fn.foldclosed(row + 1) ~= -1
+    local children = lib.ts.find_children(node, nil)
+    local has_children = #children > 2
+    if has_fold and has_children and not is_folded then vim.api.nvim_command("silent! " .. row + 1 .. "foldclose") end
+  end
+  vim.fn.winrestview(view)
+end
+
 local setup = function()
   if vim.b.slang_loaded then return end
   vim.b.slang_loaded = true
@@ -152,6 +182,10 @@ local setup = function()
   setup_options()
   setup_mappings()
   folding.setup()
+
+  vim.schedule_wrap(function()
+    fold_tasks()
+  end)()
 end
 
 return {
