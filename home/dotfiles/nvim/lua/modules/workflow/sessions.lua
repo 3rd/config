@@ -91,7 +91,7 @@ return lib.module.create({
           sessions_dir = Path:new(lib.env.dirs.vim.sessions),
           -- session_filename_to_dir = session_filename_to_dir,
           -- dir_to_session_filename = dir_to_session_filename,
-          autoload_mode = config.AutoloadMode.CurrentDir,
+          autoload_mode = config.AutoloadMode.Disabled,
           autosave_last_session = true,
           autosave_ignore_not_normal = true,
           autosave_ignore_dirs = {},
