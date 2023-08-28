@@ -1,6 +1,6 @@
 local colors = require("config/colors-hex").ui
 
-local config = {
+local barbecue_config = {
   create_autocmd = false,
   attach_navic = false,
   exclude_filetypes = {
@@ -11,8 +11,8 @@ local config = {
     "terminal",
   },
   symbols = {
-    modified = "●",
     ellipsis = "…",
+    modified = "●",
     separator = "❯",
   },
   theme = {
@@ -22,7 +22,7 @@ local config = {
 }
 
 return lib.module.create({
-  enabled = false,
+  -- enabled = false,
   name = "language-support/breadcrumbs",
   plugins = {
     {
@@ -33,7 +33,7 @@ return lib.module.create({
         "nvim-tree/nvim-web-devicons",
       },
       config = function()
-        require("barbecue").setup(config)
+        require("barbecue").setup(barbecue_config)
 
         vim.api.nvim_create_autocmd({
           "WinScrolled",
@@ -56,7 +56,7 @@ return lib.module.create({
     lsp = {
       on_attach_call = function(client, bufnr)
         local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
-        if vim.tbl_contains(config.exclude_filetypes, ft) then return end
+        if vim.tbl_contains(barbecue_config.exclude_filetypes, ft) then return end
         if client.server_capabilities.documentSymbolProvider then require("nvim-navic").attach(client, bufnr) end
       end,
     },

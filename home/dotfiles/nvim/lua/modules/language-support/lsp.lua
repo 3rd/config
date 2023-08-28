@@ -146,12 +146,11 @@ local setup_lspconfig = function()
               checkThirdParty = false,
               useGitIgnore = true,
               ignoreSubmodules = true,
-              library = { vim.env.VIMRUNTIME },
-              -- library = {
-              -- [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-              -- [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
-              -- [vim.fn.stdpath("data") .. "/lazy/lazy.nvim/lua/lazy"] = true,
-              -- },
+              library = {
+                [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+                [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
+                [vim.fn.stdpath("data") .. "/lazy/lazy.nvim/lua/lazy"] = true,
+              },
             },
             telemetry = { enable = false },
           },

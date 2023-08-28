@@ -1,6 +1,6 @@
 return lib.module.create({
   enabled = false,
-  name = "language-support/typescript",
+  name = "language-support/languages/typescript",
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
@@ -17,7 +17,7 @@ return lib.module.create({
         "williamboman/mason.nvim",
       },
       config = function()
-        local api = require("typescript-tools.api")
+        -- local api = require("typescript-tools.api")
         -- local mason_registry = require("mason-registry")
         -- local tsserver_path = mason_registry.get_package("typescript-language-server"):get_install_path()
 

@@ -5,16 +5,14 @@ return lib.module.create({
       "L3MON4D3/LuaSnip",
       config = function()
         local luasnip = require("luasnip")
-
-        -- global snippets
         luasnip.filetype_extend("all", { "_" })
 
-        -- load snippets
+        -- load
         require("luasnip.loaders.from_snipmate").load({
           path = { lib.path.resolve(lib.env.dirs.vim.config .. "/snippets") },
         })
 
-        -- https://github.com/L3MON4D3/LuaSnip/issues/656
+        -- cancel snippet - https://github.com/L3MON4D3/LuaSnip/issues/656
         vim.api.nvim_create_autocmd("ModeChanged", {
           group = vim.api.nvim_create_augroup("snippet-cancel", {}),
           pattern = { "s:n", "i:*" },

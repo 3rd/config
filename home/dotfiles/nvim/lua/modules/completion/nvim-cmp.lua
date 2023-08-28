@@ -49,7 +49,7 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- ty ditsuke
+-- better context - ty ditsuke
 local get_lsp_completion_context = function(completion, source)
   local ok, source_name = pcall(function()
     return source.source.client.config.name
@@ -70,21 +70,16 @@ local setup = function()
   local luasnip = require("luasnip")
 
   local kind_icons = {
+    -- base
     Class = "󰠱",
     Color = "󰏘",
     Constant = "",
     Constructor = "",
-    -- Constructor = "",
-    -- Constructor = "󰆧",
     Enum = "",
     EnumMember = "",
     Event = "",
-    Field = "󰜢",
-    -- Field = "󰅩",
-    -- Field = "󰇽",
-    -- Field = "",
+    Field = "󰅩",
     File = "󰈙",
-    -- File = "󰈔",
     Folder = "󰉋",
     Function = "󰊕",
     Interface = "",
@@ -92,24 +87,15 @@ local setup = function()
     Method = "󰆧",
     Module = "",
     Operator = "󰆕",
-    Property = "",
-    -- Property = "󰜢",
-    Reference = "",
-    -- Reference = "",
-    -- Reference = "󰈇",
+    Property = "󰜢",
+    Reference = "󰈇",
     Snippet = "",
-    -- Snippet = "",
     Struct = "󰙅",
-    -- Struct = "",
     Text = "󰉿",
-    -- Text = "",
     TypeParameter = "󰊄",
-    -- TypeParameter = "󱃗",
     Unit = "",
     Value = "󰎠",
     Variable = "󰆧",
-    -- Variable = "",
-    -- Variable = "󰀫",
     -- tree-sitter
     String = "󰉿",
   }
@@ -160,13 +146,12 @@ local setup = function()
           context = truncated_context .. " "
         end
 
-        vim_item.menu = ""
         vim_item.menu = ({
           luasnip = "[snip]",
           nvim_lsp = "[lsp]",
           path = "[path]",
           treesitter = "[tree]",
-        })[entry.source.name]
+        })[entry.source.name] or ""
 
         if #context > 0 then vim_item.menu = vim_item.menu .. " " .. context end
 
@@ -268,11 +253,11 @@ return lib.module.create({
       event = { "InsertEnter" },
       dependencies = {
         "hrsh7th/cmp-buffer",
+        "hrsh7th/cmp-emoji",
         "hrsh7th/cmp-nvim-lsp",
         "hrsh7th/cmp-nvim-lsp-signature-help",
         "hrsh7th/cmp-nvim-lua",
         "hrsh7th/cmp-path",
-        "hrsh7th/cmp-emoji",
         "ray-x/cmp-treesitter",
         "saadparwaiz1/cmp_luasnip",
         "nvim-web-devicons",

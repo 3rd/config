@@ -4,8 +4,8 @@ return lib.module.create({
   plugins = {
     {
       "3rd/image.nvim",
-      dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "image.nvim"),
       -- event = "VeryLazy",
+      dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "image.nvim"),
       ft = { "markdown", "norg" },
       opts = {},
     },

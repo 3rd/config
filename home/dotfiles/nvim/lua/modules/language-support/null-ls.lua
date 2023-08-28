@@ -55,7 +55,7 @@ local setup = function()
     null_ls.builtins.formatting.clang_format,
     null_ls.builtins.formatting.fixjson,
     null_ls.builtins.diagnostics.gitlint,
-    null_ls.builtins.code_actions.refactoring,
+    -- null_ls.builtins.code_actions.refactoring,
   }
 
   null_ls.setup({
@@ -76,13 +76,6 @@ local setup = function()
     root_dir = util.root_pattern(".root", "package.json", ".git") or lib.buffer.current.get_directory(),
     sources = sources,
   })
-
-  vim.keymap.set(
-    { "n", "v" },
-    "<leader>ar",
-    ":lua require('refactoring').select_refactor()<CR>",
-    { noremap = true, silent = true, expr = false }
-  )
 end
 
 return lib.module.create({
@@ -94,7 +87,6 @@ return lib.module.create({
       dependencies = {
         "neovim/nvim-lspconfig",
         "nvim-lua/plenary.nvim",
-        "ThePrimeagen/refactoring.nvim",
       },
       config = setup,
     },

@@ -19,7 +19,6 @@ local setup = function()
     group = vim.api.nvim_create_augroup("rooter", {}),
     callback = function()
       local root = find_root()
-      -- log("root:", root)
       if not root then return end
       local root_path = vim.fs.dirname(root) .. "/"
       vim.fn.chdir(root_path)

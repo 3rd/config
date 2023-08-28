@@ -89,7 +89,6 @@ return lib.module.create({
     {
       "nvim-lualine/lualine.nvim",
       lazy = false,
-      -- event = "VeryLazy",
       dependencies = { "nvim-tree/nvim-web-devicons" },
       config = setup,
     },

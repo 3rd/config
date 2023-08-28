@@ -15,6 +15,7 @@ local setup_peepsight = function()
 end
 
 return lib.module.create({
+  enabled = false,
   name = "workflow/focus",
   plugins = {
     {

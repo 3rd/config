@@ -274,14 +274,14 @@ return lib.module.create({
       "n",
       "<c-s-p>",
       function()
-        open_normal_menu()
+        if open_normal_menu then open_normal_menu() end
       end,
     },
     {
       "v",
       "<c-s-p>",
       function()
-        open_visual_menu()
+        if open_visual_menu then open_visual_menu() end
       end,
     },
   },

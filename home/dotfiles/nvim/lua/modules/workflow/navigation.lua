@@ -57,7 +57,9 @@ local setup_fzf_lua = function()
     }
     fzf.files(opts)
   end, "Find file in project")
+
   lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
+
   lib.map.map("n", "<c-f>", function()
     local opts = vim.deepcopy(config)
     opts.cmd =
@@ -69,6 +71,7 @@ local setup_fzf_lua = function()
     }
     fzf.grep_project(opts)
   end, "Find text in project")
+
   lib.map.map("n", "<leader>l", "<cmd>lua require('fzf-lua').blines()<CR>", "Find line in buffer")
   lib.map.map("n", "<leader>L", "<cmd>lua require('fzf-lua').lines()<CR>", "Find line in project")
   lib.map.map("n", "<leader><leader>", "<cmd>lua require('fzf-lua').resume()<CR>", "Resume last fzf-lua command")
@@ -90,12 +93,5 @@ return lib.module.create({
       config = setup_fzf_lua,
     },
     { "vijaymarupudi/nvim-fzf", event = "VeryLazy" },
-    -- { "chrisgrieser/nvim-spider", config = setup_spider },
   },
-  -- mappings = {
-  --   { { "n", "o", "x" }, "w", "<cmd>lua require('spider').motion('w')<CR>", { desc = "Spider-w" } },
-  --   { { "n", "o", "x" }, "e", "<cmd>lua require('spider').motion('e')<CR>", { desc = "Spider-e" } },
-  --   { { "n", "o", "x" }, "b", "<cmd>lua require('spider').motion('b')<CR>", { desc = "Spider-b" } },
-  --   { { "n", "o", "x" }, "ge", "<cmd>lua require('spider').motion('ge')<CR>", { desc = "Spider-ge" } },
-  -- },
 })

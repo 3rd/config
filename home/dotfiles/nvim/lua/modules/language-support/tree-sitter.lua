@@ -38,7 +38,7 @@ local config = {
   },
   highlight = {
     enable = true,
-    disable = function(_lang, buf)
+    disable = function(_, buf)
       local max_filesize = 1024 * 1024
       local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
       if ok and stats and stats.size > max_filesize then
@@ -112,8 +112,8 @@ local setup_tsnode_marker = function()
     pattern = "markdown",
     callback = function(ctx)
       require("tsnode-marker").set_automark(ctx.buf, {
-        target = { "code_fence_content" }, -- list of target node types
-        hl_group = "CursorLine", -- highlight group
+        target = { "code_fence_content" },
+        hl_group = "CursorLine",
       })
     end,
   })
@@ -122,8 +122,8 @@ local setup_tsnode_marker = function()
     pattern = "syslang",
     callback = function(ctx)
       require("tsnode-marker").set_automark(ctx.buf, {
-        target = { "code_block" }, -- list of target node types
-        hl_group = "@slang.code_block_fence", -- highlight group
+        target = { "code_block" },
+        hl_group = "@slang.code_block_fence",
       })
     end,
   })

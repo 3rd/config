@@ -20,7 +20,7 @@ local reset_folds = function()
 end
 
 return lib.module.create({
-  name = "workflow/reset-folds",
+  name = "workflow/reset-view",
   actions = {
     { "n", "Reset view & folds", reset_folds },
   },

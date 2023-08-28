@@ -1,5 +1,5 @@
 return lib.module.create({
-  name = "language-support/lsp-format",
+  name = "language-support/format",
   plugins = {
     {
       "lukas-reineke/lsp-format.nvim",

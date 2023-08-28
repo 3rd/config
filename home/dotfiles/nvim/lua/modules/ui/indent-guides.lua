@@ -21,12 +21,11 @@ local setup = function()
     filetype_exclude = {
       "",
       "help",
-      "packer",
-      "lspinfo",
-      "lsp-installer",
-      "null-ls-info",
       "NvimTree",
-      -- "syslang",
+      "lsp-installer",
+      "lspinfo",
+      "null-ls-info",
+      "packer",
     },
   })
 
@@ -42,6 +41,5 @@ return lib.module.create({
       event = "VeryLazy",
       config = setup,
     },
-    -- { "shellRaining/hlchunk.nvim" } -- alternative
   },
 })

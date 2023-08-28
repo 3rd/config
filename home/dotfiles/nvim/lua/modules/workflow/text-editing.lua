@@ -19,11 +19,11 @@ return lib.module.create({
   name = "workflow/text-editing",
   plugins = {
     {
-      "christoomey/vim-sort-motion",
+      "christoomey/vim-sort-motion", -- gs
       event = "VeryLazy",
     },
     {
-      "tommcdo/vim-lion",
+      "tommcdo/vim-lion", -- gl
       event = "VeryLazy",
     },
     {

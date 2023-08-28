@@ -134,7 +134,15 @@ local setup = function()
     },
   }
 
-  dap_vt.setup({})
+  dap.listeners.after.event_initialized["dapui_config"] = function()
+    dapui.open({ reset = true })
+  end
+  dap.listeners.before.event_terminated["dapui_config"] = function()
+    dapui.close()
+  end
+  dap.listeners.before.event_exited["dapui_config"] = function()
+    dapui.close()
+  end
 
   dapui.setup({
     expand_lines = true,
@@ -149,16 +157,7 @@ local setup = function()
     -- mappings = {},
   })
 
-  dap.listeners.after.event_initialized["dapui_config"] = function()
-    -- dapui.open()
-    dapui.open({ reset = true })
-  end
-  dap.listeners.before.event_terminated["dapui_config"] = function()
-    dapui.close()
-  end
-  dap.listeners.before.event_exited["dapui_config"] = function()
-    dapui.close()
-  end
+  dap_vt.setup({})
 
   vim.fn.sign_define("DapBreakpoint", { text = " ", texthl = "", linehl = "", numhl = "" })
   vim.fn.sign_define("DapBreakpointRejected", { text = " ", texthl = "DiagnosticError", linehl = "", numhl = "" })
@@ -196,9 +195,9 @@ return lib.module.create({
       "mfussenegger/nvim-dap",
       event = "VeryLazy",
       dependencies = {
-        "williamboman/mason.nvim",
-        "theHamsta/nvim-dap-virtual-text",
         "rcarriga/nvim-dap-ui",
+        "theHamsta/nvim-dap-virtual-text",
+        "williamboman/mason.nvim",
       },
       config = setup,
     },

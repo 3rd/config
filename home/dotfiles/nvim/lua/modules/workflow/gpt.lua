@@ -1,5 +1,4 @@
 local COMPLETION_ENDPOINT = "https://api.openai.com/v1/engines/davinci-codex/completions"
-local EDIT_ENDPOINT = "https://api.openai.com/v1/edits"
 local CHAT_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 local API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -30,39 +29,6 @@ local gpt_complete = function(prompt, max_tokens, stops)
     )
   )
 
-  if response and response.choices then
-    return response.choices[1].text
-  else
-    log("GPT fail: ", {
-      request = body,
-      response = response,
-    })
-  end
-end
-
-local gpt_edit = function(input, instruction)
-  local body = {
-    model = "code-davinci-edit-001",
-    input = input,
-    instruction = instruction,
-    temperature = 0.2,
-    top_p = 0,
-  }
-
-  local tmpfile = vim.fn.tempname()
-  lib.fs.file.write(tmpfile, vim.fn.json_encode(body))
-
-  local response = vim.fn.json_decode(
-    vim.fn.system(
-      string.format(
-        "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -d '@%s' %s",
-        API_KEY,
-        tmpfile,
-        EDIT_ENDPOINT
-      )
-    )
-  )
-  -- log(response)
   if response and response.choices then
     return response.choices[1].text
   else

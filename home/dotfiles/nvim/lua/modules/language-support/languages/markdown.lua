@@ -14,7 +14,7 @@ local setup_markdown_preview = function()
 end
 
 return lib.module.create({
-  name = "language-support/markdown",
+  name = "language-support/languages/markdown",
   setup = setup,
   plugins = {
     {

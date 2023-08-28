@@ -27,9 +27,7 @@ local get_previous_buffer = function(opts)
     local bufnr = window_history[i]
     if bufnr ~= current_bufnr then
       local is_valid = vim.api.nvim_buf_is_valid(bufnr)
-      -- local is_loaded = vim.api.nvim_buf_is_loaded(bufnr)
       local info = vim.fn.getbufinfo(bufnr)
-      -- local is_closed = #info == 1 and info[1].lastused ~= 0 and not is_loaded
       local is_listed = #info == 1 and info[1].listed == 1
       local is_noname = #info == 1 and info[1].name == ""
       local is_in_floating_window = false
@@ -42,7 +40,6 @@ local get_previous_buffer = function(opts)
 
       if is_valid and (is_listed or (not is_in_floating_window and not is_noname)) then
         if opts.pop then table.remove(window_history, i) end
-        -- log("from history", bufnr)
         return bufnr
       end
     end
@@ -58,9 +55,7 @@ local get_previous_buffer = function(opts)
     local bufnr = buffer.bufnr
     if bufnr ~= current_bufnr then
       local is_valid = vim.api.nvim_buf_is_valid(bufnr)
-      -- local is_loaded = vim.api.nvim_buf_is_loaded(bufnr)
       local info = vim.fn.getbufinfo(bufnr)
-      -- local is_closed = #info == 1 and info[1].lastused ~= 0 and not is_loaded
       local is_listed = #info == 1 and info[1].listed == 1
       local is_noname = #info == 1 and info[1].name == ""
       local is_in_floating_window = false
@@ -71,10 +66,7 @@ local get_previous_buffer = function(opts)
         end
       end
 
-      if is_valid and (is_listed and (not is_in_floating_window and not is_noname)) then
-        -- log("from history", bufnr)
-        return bufnr
-      end
+      if is_valid and (is_listed and (not is_in_floating_window and not is_noname)) then return bufnr end
     end
   end
 
@@ -99,10 +91,7 @@ local handle_close = function()
   local info = vim.fn.getbufinfo(current_bufnr)
   local previous_bufnr = get_previous_buffer({ pop = true })
 
-  if previous_bufnr then
-    -- log("switch", previous_buffer)
-    vim.api.nvim_set_current_buf(previous_bufnr)
-  end
+  if previous_bufnr then vim.api.nvim_set_current_buf(previous_bufnr) end
 
   local is_open_in_other_windows = false
   if #info == 1 then
