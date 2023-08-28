@@ -103,7 +103,9 @@ return lib.module.create({
           autosave_only_in_session = true,
           max_path_length = 80,
         })
-        require("session_manager").load_current_dir_session()
+        if vim.fn.argc() == 0 and not vim.g.started_with_stdin then
+          require("session_manager").load_current_dir_session()
+        end
       end,
     },
   },
