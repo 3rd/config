@@ -15,14 +15,10 @@ local handle_select = function()
 
   local fzf = require("fzf")
   coroutine.wrap(function()
-    local options = {
-      height = 10,
-      relative = "win",
-    }
-
+    local win_options = { height = 10, relative = "win" }
     vim.cmd([[20 new]])
     local result =
-      fzf.provided_win_fzf(entries, "--print-query --nth 1 --print-query --expect=ctrl-s,ctrl-v,ctrl-x", options)
+      fzf.provided_win_fzf(entries, "--print-query --nth 1 --print-query --expect=ctrl-s,ctrl-v,ctrl-x", win_options)
     if not result then return end
 
     local target = result[3]
@@ -46,6 +42,45 @@ local handle_search = function()
   require("fzf-lua").grep_project({
     cwd = vim.env.HOME .. "/brain/wiki",
   })
+end
+
+local handle_navigate_to_symbol = function()
+  local parser = vim.treesitter.get_parser()
+  local root = parser:parse()[1]:root()
+
+  local kinds = {
+    "heading_1",
+    "heading_2",
+    "heading_3",
+    "heading_4",
+    "heading_5",
+    "heading_6",
+  }
+  local symbols = lib.ts.find_children(root, kinds, true)
+
+  local entries = {}
+  for _, symbol in ipairs(symbols) do
+    local text = vim.treesitter.get_node_text(symbol, 0)
+    local first_line = string.split(text, "\n")[1]
+    local row = symbol:start()
+    table.insert(entries, string.format("%s: %s", row, first_line))
+  end
+
+  local fzf = require("fzf")
+
+  coroutine.wrap(function()
+    local win_options = { height = 10, relative = "win" }
+    vim.cmd([[20 new]])
+    local result = fzf.provided_win_fzf(entries, "--print-query --nth 3", win_options)
+    if not result then return end
+
+    local target = result[2]
+    local row = string.split(target, ":")[1]
+
+    vim.schedule(function()
+      vim.api.nvim_win_set_cursor(0, { row + 1, 0 })
+    end)
+  end)()
 end
 
 local setup_autolist = function()
@@ -140,5 +175,6 @@ return lib.module.create({
   mappings = {
     { "n", "<M-n>", handle_select },
     { "n", "<M-m>", handle_search },
+    { "n", "<leader>r", handle_navigate_to_symbol },
   },
 })

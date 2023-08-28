@@ -220,18 +220,18 @@ local setup = function()
     end
   end
 
-  local create_source = function(entries)
+  local create_source = function(cmds)
     local result = {}
-    for k, _ in pairs(entries) do
+    for k, _ in pairs(cmds) do
       table.insert(result, k)
     end
     return result
   end
 
-  local create_handler = function(command_index)
+  local create_handler = function(cmds)
     return vim.schedule_wrap(function(action_name)
       if action_name == "" then return end
-      local action = command_index[action_name]
+      local action = cmds[action_name]
       if action == nil then
         throw("Command menu cannot find mapped action.")
       else
@@ -244,9 +244,9 @@ local setup = function()
     end)
   end
 
-  local create_menu = function(command_index)
-    local source = create_source(command_index)
-    local handler = create_handler(command_index)
+  local create_menu = function(cmds)
+    local source = create_source(cmds)
+    local handler = create_handler(cmds)
 
     return function()
       local fzf = require("fzf")

@@ -14,14 +14,22 @@ M.find_child = function(node, type, deep)
   return nil
 end
 
+local contains = function(table, element)
+  for _, value in ipairs(table) do
+    if value == element then return true end
+  end
+  return false
+end
 --- @param node TSNode
---- @param type string | nil
+--- @param type string[] | nil
 --- @param deep? boolean
 M.find_children = function(node, type, deep)
   local result = {}
   for i = 0, node:named_child_count() - 1 do
     local child = node:named_child(i)
-    if type == nil or child:type() == type then table.insert(result, child) end
+    if type == nil or child:type() == type or (lib.is.table(type) and contains(type, child:type())) then
+      table.insert(result, child)
+    end
     if deep then
       local children = M.find_children(child, type, deep)
       for _, c in ipairs(children) do
