@@ -1,6 +1,6 @@
 local setup = function()
-  vim.opt.foldmethod = "expr"
-  vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+  -- vim.opt.foldmethod = "expr"
+  -- vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
   vim.cmd("silent! loadview")
 
   local group = vim.api.nvim_create_augroup("SyslangFoldPersistence", { clear = true })

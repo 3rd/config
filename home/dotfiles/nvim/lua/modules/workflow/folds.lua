@@ -74,7 +74,7 @@ local setup_ufo = function()
   end
 
   ---@diagnostic disable-next-line: unused-local
-  local handler = function(originalVirtualTextChunks, start_line, end_line, width, truncate)
+  local virtual_text_handler = function(originalVirtualTextChunks, start_line, end_line, width, truncate)
     if lib.buffer.current.get_filetype() == "syslang" then
       local virtualTextChunks = slang_conceal(originalVirtualTextChunks)
       local folded_lines = vim.api.nvim_buf_get_lines(0, start_line, end_line, true)
@@ -183,11 +183,11 @@ local setup_ufo = function()
     return newVirtText
   end
 
+  -- ufo
   local ufo = require("ufo")
-
   ufo.setup({
     open_fold_hl_timeout = 0,
-    fold_virt_text_handler = handler,
+    fold_virt_text_handler = virtual_text_handler,
     provider_selector = function(bufnr, filetype, buftype)
       return { "treesitter" }
     end,
@@ -267,17 +267,16 @@ return lib.module.create({
     },
   },
   hooks = {
-    lsp = {
-      capabilities = function(capabilities)
-        return vim.tbl_deep_extend("force", capabilities or {}, {
-          textDocument = {
-            foldingRange = {
-              dynamicRegistration = false,
-              lineFoldingOnly = true,
-            },
-          },
-        })
-      end,
-    },
+    -- lsp = {
+    --   capabilities = function(capabilities)
+    --     return vim.tbl_deep_extend("force", capabilities or {}, {
+    --       textDocument = {
+    --         foldingRange = {
+    --           lineFoldingOnly = true,
+    --         },
+    --       },
+    --     })
+    --   end,
+    -- },
   },
 })

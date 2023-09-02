@@ -22,7 +22,7 @@ local barbecue_config = {
 }
 
 return lib.module.create({
-  -- enabled = false,
+  enabled = false,
   name = "language-support/breadcrumbs",
   plugins = {
     {
