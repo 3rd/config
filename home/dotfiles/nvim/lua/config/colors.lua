@@ -3,14 +3,14 @@ local hsluv = lush.hsluv
 local hsl = lush.hsl
 
 local gen = function(hue)
-  local background = hsluv(hue, 15, 14)
-  local foreground = hsluv(hue, 60, 78)
+  local background = hsluv(hue, 20, 13)
+  local foreground = hsluv(hue, 20, 70)
 
   -- identifiers
   local variable = foreground
   local constant = variable
   local property = foreground.abs_darken(10).abs_desaturate(5)
-  local field = foreground.abs_darken(10).abs_desaturate(25)
+  local field = foreground.abs_darken(10).abs_saturate(10)
   local parameter = foreground.rotate(130).abs_darken(10).saturation(65)
   -- control
   local keyword = foreground.rotate(20).saturation(75).lightness(65)
@@ -21,7 +21,7 @@ local gen = function(hue)
   local special_keyword = keyword.saturation(100).lightness(70)
   -- types
   local type = foreground.rotate(290).abs_saturate(40).abs_darken(5)
-  local boolean = foreground.rotate(150).abs_saturate(20).abs_darken(5)
+  local boolean = foreground.rotate(165).abs_saturate(80)
   local number = boolean
   local string = foreground.rotate(210).saturation(75).lightness(75)
   -- misc
@@ -166,7 +166,7 @@ end
 local dynamic = true
 
 if dynamic then
-  local base_hue = 265
+  local base_hue = 260
   return gen(base_hue)
 else
   local base_hue = 227
