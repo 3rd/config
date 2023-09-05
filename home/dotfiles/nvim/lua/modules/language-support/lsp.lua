@@ -186,43 +186,43 @@ local setup_lspconfig = function()
       --     end,
       --   },
       -- },
-      vtsls = {
-        -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
-        settings = {
-          javascript = {
-            format = { enable = false },
-            preferences = {
-              useAliasesForRenames = true,
-            },
-          },
-          typescript = {
-            format = { enable = false },
-            tsserver = {
-              maxTsServerMemory = 4000,
-              -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
-            },
-            preferences = {
-              includePackageJsonAutoImports = "off",
-              useAliasesForRenames = true,
-            },
-          },
-          vtsls = {
-            experimental = {
-              completion = {
-                enableServerSideFuzzyMatch = true,
-                entriesLimit = 150,
-              },
-            },
-          },
-        },
-        handlers = {
-          -- always go to the first definition
-          ["textDocument/definition"] = function(err, result, ...)
-            if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
-            vim.lsp.handlers["textDocument/definition"](err, result, ...)
-          end,
-        },
-      },
+      -- vtsls = {
+      --   -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
+      --   settings = {
+      --     javascript = {
+      --       format = { enable = false },
+      --       preferences = {
+      --         useAliasesForRenames = true,
+      --       },
+      --     },
+      --     typescript = {
+      --       format = { enable = false },
+      --       tsserver = {
+      --         maxTsServerMemory = 4000,
+      --         -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
+      --       },
+      --       preferences = {
+      --         includePackageJsonAutoImports = "off",
+      --         useAliasesForRenames = true,
+      --       },
+      --     },
+      --     vtsls = {
+      --       experimental = {
+      --         completion = {
+      --           enableServerSideFuzzyMatch = true,
+      --           entriesLimit = 150,
+      --         },
+      --       },
+      --     },
+      --   },
+      --   handlers = {
+      --     -- always go to the first definition
+      --     ["textDocument/definition"] = function(err, result, ...)
+      --       if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
+      --       vim.lsp.handlers["textDocument/definition"](err, result, ...)
+      --     end,
+      --   },
+      -- },
       vuels = {
         init_options = {
           config = {
