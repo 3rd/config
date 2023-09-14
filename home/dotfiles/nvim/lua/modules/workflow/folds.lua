@@ -209,15 +209,15 @@ local setup_ufo = function()
 end
 
 local setup = function()
-  vim.keymap.set("n", "<tab>", "za")
-  vim.keymap.set("n", "<s-tab>", function()
-    local filetype = vim.bo.filetype
-    if filetype == "syslang" then
-      local is_open_fold_child = is_current_line_in_open_fold_and_is_not_first()
-      if is_open_fold_child then vim.api.nvim_exec2("normal! [z", {}) end
-    end
-    pcall(vim.api.nvim_exec2, "normal! zc", {})
-  end, { silent = true, noremap = true })
+  -- vim.keymap.set("n", "<tab>", "za")
+  -- vim.keymap.set("n", "<s-tab>", function()
+  --   local filetype = vim.bo.filetype
+  --   if filetype == "syslang" then
+  --     local is_open_fold_child = is_current_line_in_open_fold_and_is_not_first()
+  --     if is_open_fold_child then vim.api.nvim_exec2("normal! [z", {}) end
+  --   end
+  --   pcall(vim.api.nvim_exec2, "normal! zc", {})
+  -- end, { silent = true, noremap = true })
 end
 
 local setup_fold_cycle = function()

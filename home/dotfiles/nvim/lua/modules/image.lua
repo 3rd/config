@@ -9,5 +9,11 @@ return lib.module.create({
       ft = { "markdown", "norg" },
       opts = {},
     },
+    {
+      "3rd/nyancat.nvim",
+      event = "VeryLazy",
+      dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "nyancat.nvim"),
+      opts = {},
+    },
   },
 })

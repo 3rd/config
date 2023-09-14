@@ -7,6 +7,7 @@ return {
   ui = { border = "rounded" },
   performance = {
     rtp = {
+      reset = false,
       paths = {},
       disabled_plugins = {
         "gzip",

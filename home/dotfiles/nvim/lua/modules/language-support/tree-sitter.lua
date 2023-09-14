@@ -127,6 +127,8 @@ local setup_tsnode_marker = function()
       })
     end,
   })
+
+  vim.api.nvim_exec_autocmds("FileType", {})
 end
 
 return lib.module.create({
@@ -134,7 +136,7 @@ return lib.module.create({
   plugins = {
     {
       "nvim-treesitter/nvim-treesitter",
-      event = "VimEnter",
+      lazy = false,
       dependencies = {
         "nvim-treesitter/playground",
       },

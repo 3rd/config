@@ -1,5 +1,5 @@
 return {
-  background = "#1F212C",
+  background = "#1E1F27",
   blue = "#3DB8F5",
   common = {
     boolean = "#CEA700",
@@ -48,10 +48,10 @@ return {
     bold = "#C1D1FF",
     code = {
       block = {
-        background = "#2f3041",
+        background = "#232430",
         content = "#BDC7EE",
         language = "#6F75A9",
-        marker = "#7378a5"
+        marker = "#41445e"
       },
       inline = "#F09070"
     },
@@ -109,9 +109,9 @@ return {
     red = "#D65C66",
     subtext0 = "#9497AE",
     subtext1 = "#80859F",
-    surface0 = "#313444",
-    surface1 = "#42465A",
-    surface2 = "#565B74",
+    surface0 = "#30323D",
+    surface1 = "#434655",
+    surface2 = "#55596B",
     yellow = "#FBCB6A"
   },
   yellow = "#FBCB6A"

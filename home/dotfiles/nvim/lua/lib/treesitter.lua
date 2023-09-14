@@ -21,19 +21,21 @@ local contains = function(table, element)
   return false
 end
 --- @param node TSNode
---- @param type string[] | nil
+--- @param type string | string[] | nil
 --- @param deep? boolean
 M.find_children = function(node, type, deep)
   local result = {}
   for i = 0, node:named_child_count() - 1 do
     local child = node:named_child(i)
-    if type == nil or child:type() == type or (lib.is.table(type) and contains(type, child:type())) then
-      table.insert(result, child)
-    end
-    if deep then
-      local children = M.find_children(child, type, deep)
-      for _, c in ipairs(children) do
-        table.insert(result, c)
+    if child then
+      if type == nil or child:type() == type or (lib.is.table(type) and contains(type, child:type())) then
+        table.insert(result, child)
+      end
+      if deep then
+        local children = M.find_children(child, type, deep)
+        for _, c in ipairs(children) do
+          table.insert(result, c)
+        end
       end
     end
   end
@@ -68,6 +70,7 @@ M.find_parent_at_line = function(type)
   while current ~= nil do
     local current_parent_line = current:range()
     if current_parent_line ~= parent_line then break end
+    ---@cast types string[]
     for _, t in ipairs(types) do
       if current:type() == t then return current end
     end
