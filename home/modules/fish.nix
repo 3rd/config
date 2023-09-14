@@ -18,6 +18,10 @@
       set path (echo "$PATH" | sed "s/\\:[^\\:]*python3[^\\:]*\\:/:/g")
       set -x PATH "$path"
 
+      # bun
+      set -x BUN_INSTALL "$HOME/.bun"
+      set -x PATH $BUN_INSTALL/bin $PATH
+
       ulimit -n 99999
 
       # zoxide init fish | source

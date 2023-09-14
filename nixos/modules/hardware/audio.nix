@@ -4,7 +4,7 @@
   sound.enable = true;
 
   hardware.pulseaudio = {
-    enable = false;
+    enable = true;
     package = pkgs.pulseaudioFull;
     support32Bit = true;
     extraConfig = ''
@@ -15,14 +15,14 @@
   # https://github.com/NixOS/nixpkgs/issues/102547
   # https://nixos.wiki/wiki/PipeWire - https://github.com/NixOS/nixpkgs/issues/220967
   security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    wireplumber.enable = true;
-    jack.enable = true;
-  };
+  # services.pipewire = {
+  #   enable = true;
+  #   alsa.enable = true;
+  #   alsa.support32Bit = true;
+  #   pulse.enable = true;
+  #   wireplumber.enable = true;
+  #   jack.enable = true;
+  # };
   # environment.etc = {
   #   "wireplumber/bluetooth.lua.d/51-bluez-config.lua".text = ''
   #     bluez_monitor.properties = {

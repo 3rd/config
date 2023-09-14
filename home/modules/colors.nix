@@ -1,8 +1,9 @@
 {
   imports = [ ./options/colors.nix ];
   colors = {
-    # background = "#191923";
-    background = "#1e1f29";
+    # background = "#161618";
+    background = "#1E1F27";
+    # background = "#1e1f29";
     # background = "#21222c";
     foreground = "#BDC7EE";
     cursor = "#f2b90d";
@@ -16,7 +17,7 @@
     gray-darkish = "#464A6C";
     gray-dark = "#444869";
     gray-darker = "#343751";
-    gray-darkest = "#21222c";
+    gray-darkest = "#18192a";
     blue-lightest = "#9cdcfc";
     blue-lighter = "#6acbfb";
     blue-light = "#38b9fa";

@@ -77,7 +77,6 @@
       selection_background = selection-background;
       selection_foreground = selection-foreground;
       inherit background;
-      # background = "#000000";
       inherit foreground;
       inherit cursor;
       inherit color0;

@@ -1,11 +1,11 @@
 { pkgs, ... }:
 
 {
-  programs.exa.enable = true;
+  programs.eza.enable = true;
 
   programs.fish.shellAliases = {
-    l = "exa -l --group-directories-first";
-    la = "exa -alBhg --group-directories-first --time-style long-iso";
-    tree = "exa --tree --icons";
+    l = "eza -l --group-directories-first";
+    la = "eza -alBhg --group-directories-first --time-style long-iso";
+    tree = "eza --tree --icons";
   };
 }

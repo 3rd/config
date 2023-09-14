@@ -21,7 +21,6 @@ in {
     git-backup
     git-crecord
     git-sizer
-    gitoxide
     gitstats
     gource
     lazygit
@@ -76,9 +75,8 @@ in {
     };
   };
 
-  programs.fish.shellAbbrs = { "g" = "git"; };
-  programs.fish.shellAliases = {
-    # aliases
+  programs.fish.shellAbbrs = {
+    "g" = "git";
     ga = "git add";
     gc = "git commit";
     gs = "git status -sb";
@@ -93,6 +91,8 @@ in {
     push = "git push";
     rebase = "git rebase";
     merge = "git merge";
+  };
+  programs.fish.shellAliases = {
     # scripts
     gid = "git-id";
     gbr = "git-branch";

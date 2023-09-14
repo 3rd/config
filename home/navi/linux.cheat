@@ -1,0 +1,20 @@
+% linux
+
+# journal (all)
+journalctl -e
+
+# journal (current boot)
+journalctl -b -e
+
+# journal (kernel)
+journalctl -k -e
+
+# journal (..warn)
+journalctl -e -p 4
+
+# journal (system)
+journalctl --system -e
+
+# journal (user)
+journalctl --user -e
+

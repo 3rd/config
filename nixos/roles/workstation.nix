@@ -6,13 +6,16 @@
     ../modules/hardware/audio.nix
     ../modules/hardware/bluetooth.nix
     # ../modules/packages/emacs.nix
-    ../modules/packages/neovim.nix
+    # ../modules/packages/neovim.nix
+    # ../modules/packages/zig.nix
     ../modules/packages/alien.nix
     ../modules/services/docker.nix
     ../modules/services/syncthing.nix
     ../modules/services/tailscale.private.nix
     ../modules/security.private.nix
   ];
+
+  hardware.enableAllFirmware = true;
 
   nix = {
     package = pkgs.nixVersions.stable;
@@ -74,9 +77,9 @@
     bintools-unwrapped
     bottom
     brightnessctl
-    bun
+    # bun
     cachix
-    anki
+    stable.anki
     bc
     cargo-edit
     (import (fetchTarball "https://install.devenv.sh/latest")).default
@@ -85,6 +88,7 @@
     coreutils
     cpufrequtils
     curl
+    nixd
     deadnix
     diskonaut
     dnsutils
@@ -112,6 +116,7 @@
     gotop
     gron
     htop
+    conda
     msr-tools
     btop
     hyperfine
@@ -155,6 +160,7 @@
     p7zip
     pandoc
     pass
+    stripe-cli
     pciutils
     playerctl
     hexchat
@@ -175,6 +181,7 @@
     stable.awscli2
     efibootmgr
     ripgrep
+    fswatch
     rlwrap
     rsync
     rust-analyzer
@@ -279,7 +286,7 @@
     polybarFull
     stable.postman
     qbittorrent
-    qimgv
+    stable.qimgv
     scrcpy
     skypeforlinux
     slack

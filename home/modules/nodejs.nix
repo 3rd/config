@@ -31,4 +31,10 @@ in {
       # npm install -g ${lib.concatMapStringsSep " " (x: x) packages}
     '';
   };
+
+  programs.fish.shellAbbrs = {
+    npx = "bunx";
+    pnpx = "bunx";
+    run = "bun run";
+  };
 }

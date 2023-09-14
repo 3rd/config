@@ -14,6 +14,7 @@
     ./workflow
     ./work
 
+    ./neovim.nix
     ./atuin.nix
     ./bat.nix
     ./custom-vault
