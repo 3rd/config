@@ -36,7 +36,8 @@ local handle_toggle_task = function()
       --- @param task_node TSNode
       next_cb = function(task_node)
         local task_text_node = task_node:child(1)
-        local _, _, task_end_row, task_end_col = task_text_node:range()
+        if not task_text_node then return end
+        local _, _, task_text_end_row, task_text_end_col = task_text_node:range()
 
         local indent = vim.fn.indent(vim.fn.line("."))
         local sessions = lib.ts.find_children(task_node, "task_session")
@@ -53,8 +54,8 @@ local handle_toggle_task = function()
           local session_text = "Session: " .. os.date("%Y.%m.%d %H:%M-%H:%M") .. "\n"
           session_text = string.rep(" ", indent + vim.bo.tabstop) .. session_text
           local range = {
-            start = { line = task_end_row, character = task_end_col },
-            ["end"] = { line = task_end_row, character = task_end_col },
+            start = { line = task_text_end_row, character = task_text_end_col },
+            ["end"] = { line = task_text_end_row, character = task_text_end_col },
           }
           local edit = { range = range, newText = session_text }
           vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
@@ -65,6 +66,7 @@ local handle_toggle_task = function()
               local datetime_node = lib.ts.find_child(session_node, "datetime", true)
               local start_date_node = lib.ts.find_child(session_node, "date", true)
               local start_time_node = lib.ts.find_child(session_node, "time", true)
+              if not start_date_node or not start_time_node then return end
               local start_date = vim.treesitter.get_node_text(start_date_node, 0)
               local start_time = vim.treesitter.get_node_text(start_time_node, 0)
               local end_date = os.date("%Y.%m.%d")
@@ -77,6 +79,95 @@ local handle_toggle_task = function()
             end
           end
         end
+
+        -- tree-sitter has a bug where it returns the child as its own parent
+        local parent = task_node:parent()
+        local child_row = task_node:range()
+        local parent_row = parent and parent:range() or nil
+        while parent and parent_row and child_row == parent_row do
+          parent = parent:parent()
+          parent_row = parent and parent:range() or nil
+        end
+
+        if not parent then return end
+        -- log({
+        --   parent_type = parent:type(),
+        --   parent_text = vim.treesitter.get_node_text(parent, 0),
+        --   parent_row = parent_row,
+        --   child_type = task_node:type(),
+        --   child_text = vim.treesitter.get_node_text(task_node, 0),
+        --   child_row = child_row,
+        -- })
+        local index_of_task = nil
+        local num_children = parent:named_child_count()
+        local first_task_index = nil
+        local last_done_task_index = nil
+
+        -- move the task under the previous done task on the same level or as the first task
+        for i = 0, num_children - 1 do
+          local current_child = parent:named_child(i)
+          if not current_child then return end
+          local curren_child_row = current_child:range()
+          -- can't compare by reference here, by row is good enough
+          if curren_child_row == child_row then
+            index_of_task = i
+            break
+          else
+            if current_child then
+              local child_type = current_child:type()
+              if child_type == "task_done" then
+                last_done_task_index = i
+                if first_task_index and i > first_task_index then first_task_index = nil end
+              else
+                if child_type == "task_default" or child_type == "task_active" then
+                  if not first_task_index then first_task_index = i end
+                else
+                  first_task_index = nil
+                  last_done_task_index = nil
+                end
+              end
+            end
+          end
+        end
+
+        -- check index and
+        if not index_of_task then return error("index_of_task is nil") end
+
+        -- bail if first or preceded by a done task and auto-fold
+        if last_done_task_index == index_of_task - 1 or (last_done_task_index == nil and first_task_index == nil) then
+          -- why the fuck doesn't this work programatically?
+          -- local row = task_node:range() + 1
+          -- local command = "silent! " .. row + 1 .. " foldclose"
+          -- vim.api.nvim_command(command)
+          return
+        end
+
+        -- get target
+        local target_index = math.max(last_done_task_index or 0, first_task_index or 0)
+        if not target_index then return end
+        local target_node = parent:named_child(target_index)
+        if not target_node then return end
+
+        -- log({
+        --   index_of_task = index_of_task,
+        --   first_task_index = first_task_index,
+        --   last_done_task_index = last_done_task_index,
+        --   target_index = target_index,
+        --   source = vim.treesitter.get_node_text(task_node, 0),
+        --   target = vim.treesitter.get_node_text(target_node, 0),
+        -- })
+
+        local start_row, _, end_row = task_node:range()
+        local target_start_row = target_node:range()
+        if start_row < target_start_row then target_start_row = target_start_row + 1 end
+
+        -- log({ start_row = start_row, end_row = end_row, target_start_row = target_start_row })
+        vim.cmd(string.format("%d,%dm%d", start_row + 1, end_row, target_start_row))
+
+        -- TODO: fix empty line inserted when at the end of the file and there's no trailing newline
+        -- TODO: move cursor
+        -- TODO: auto-fold broken here as well
+        -- vim.api.nvim_command("silent! " .. target_start_row + 1 .. "foldclose")
       end,
     },
     {
@@ -118,6 +209,7 @@ local handle_toggle_task = function()
     for _, task_node_type in ipairs(task_types) do
       if node:type() == task_node_type.task then
         local marker_node = node:child(0)
+        if not marker_node then return end
         if marker_node:type() == task_node_type.marker then -- overkill
           local range = ts_utils.node_to_lsp_range(marker_node)
           local edit = { range = range, newText = task_node_type.next_text }
