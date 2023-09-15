@@ -104,6 +104,14 @@ local setup_treesitter = function()
   }
 
   treesitter.setup(config)
+
+  -- only enable folds for selected grammars
+  local grammars_with_folds_enabled = { "syslang", "markdown" }
+  for grammar in pairs(parser_config) do
+    if not vim.tbl_contains(grammars_with_folds_enabled, grammar) then
+      pcall(vim.treesitter.query.set, grammar, "folds", "")
+    end
+  end
 end
 
 local setup_tsnode_marker = function()

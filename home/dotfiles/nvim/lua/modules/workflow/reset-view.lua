@@ -15,6 +15,7 @@ local reset_folds = function()
     os.remove(path)
     vim.cmd("silent! loadview")
     vim.notify("View file has been nuked.", vim.log.levels.INFO, { title = "Reset view file" })
+    log(path)
   else
     vim.api.nvim_err_writeln("Cannot find view file at: " .. path)
   end
