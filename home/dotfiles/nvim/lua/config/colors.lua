@@ -3,7 +3,7 @@ local hsluv = lush.hsluv
 local hsl = lush.hsl
 
 local gen = function(hue)
-  local background = hsluv(hue, 15, 12)
+  local background = hsluv(hue, 15, 13)
   local foreground = hsluv(hue, 20, 70)
 
   -- identifiers
@@ -91,9 +91,9 @@ local gen = function(hue)
     code = {
       inline = out.orange.desaturate(10).lighten(10),
       block = {
-        background = "#232430",
-        marker = "#41445e",
-        language = "#6F75A9",
+        background = background.lighten(6),
+        marker = background.lighten(30),
+        language = background.lighten(40),
         content = "#BDC7EE",
       },
     },
