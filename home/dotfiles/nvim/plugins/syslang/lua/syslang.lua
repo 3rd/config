@@ -18,6 +18,24 @@ local setup_options = function()
   vim.opt_local.smartindent = true
 end
 
+local function toggle_task(node, task_types)
+  local ts_utils = require("nvim-treesitter.ts_utils")
+  for _, task_node_type in ipairs(task_types) do
+    if node:type() == task_node_type.task then
+      local marker_node = node:child(0)
+      if not marker_node then return end
+      if marker_node:type() == task_node_type.marker then
+        local range = ts_utils.node_to_lsp_range(marker_node)
+        local edit = { range = range, newText = task_node_type.next_text }
+        vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
+        if task_node_type.next_cb then task_node_type.next_cb(node) end
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local handle_toggle_task = function()
   local ts_utils = require("nvim-treesitter.ts_utils")
   local parser = vim.treesitter.get_parser()
@@ -203,21 +221,17 @@ local handle_toggle_task = function()
     { task = "task_cancelled", marker = "task_marker_cancelled", next_text = "[ ]" },
   }
 
-  while node ~= nil do
+  -- toggle task nodes or parent task nodes if called on a session node
+  while node do
     local node_line = node:range()
     if node_line ~= position[1] - 1 then break end
-    for _, task_node_type in ipairs(task_types) do
-      if node:type() == task_node_type.task then
-        local marker_node = node:child(0)
-        if not marker_node then return end
-        if marker_node:type() == task_node_type.marker then -- overkill
-          local range = ts_utils.node_to_lsp_range(marker_node)
-          local edit = { range = range, newText = task_node_type.next_text }
-          vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
-          if task_node_type.next_cb ~= nil then task_node_type.next_cb(node) end
-          return
-        end
+    if node:type() == "task_session" then
+      local parent_task_node = node:parent()
+      if parent_task_node then
+        if toggle_task(parent_task_node, task_types) then return end
       end
+    else
+      if toggle_task(node, task_types) then return end
     end
     node = node:parent()
   end
