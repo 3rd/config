@@ -63,22 +63,28 @@ local handle_navigate_to_symbol = function()
     local text = vim.treesitter.get_node_text(symbol, 0)
     local first_line = string.split(text, "\n")[1]
     local row = symbol:start()
-    table.insert(entries, string.format("%s: %s", row, first_line))
+    table.insert(entries, string.format("%s: %s", row + 1, first_line))
   end
 
   local fzf = require("fzf")
+  local current_file = vim.fn.expand("%:p")
 
   coroutine.wrap(function()
     local win_options = { height = 10, relative = "win" }
     vim.cmd([[20 new]])
-    local result = fzf.provided_win_fzf(entries, "--print-query --nth 3", win_options)
+
+    local preview =
+      string.format([[bat --style=numbers --color=always --line-range (echo {} | cut -d: -f1): %s]], current_file)
+    local options = "--print-query --nth 3.. --preview '" .. preview .. "' --preview-window right:50%"
+
+    local result = fzf.provided_win_fzf(entries, options, win_options)
     if not result then return end
 
     local target = result[2]
     local row = string.split(target, ":")[1]
 
     vim.schedule(function()
-      vim.api.nvim_win_set_cursor(0, { row + 1, 0 })
+      vim.api.nvim_win_set_cursor(0, { row + 0, 0 })
     end)
   end)()
 end
