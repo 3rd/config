@@ -444,9 +444,9 @@ local theme = lush(function(injected)
     sym("@slang.label")({ fg = colors.slang.label }),
     sym("@slang.list_item")({ fg = colors.slang.list_item.item }),
     sym("@slang.list_item_marker")({ fg = colors.slang.list_item.marker }),
-    -- sym("@slang.list_item_label")({ fg = colors.slang.list_item.label, gui = "bold" }),
     sym("@slang.list_item_label")({ fg = colors.slang.list_item.label, gui = "italic" }),
     sym("@slang.list_item_label_marker")({ fg = colors.slang.list_item.label_marker }),
+    sym("@slang.image")({ fg = colors.slang.label }),
   }
 end)
 

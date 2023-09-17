@@ -129,7 +129,9 @@ local handle_paste = function()
     lib.shell.exec(command)
 
     -- insert image
-    local formatted_image = string.format("![](%s)", path)
+    local alt_date = os.date("%Y-%m-%d %H:%M")
+    local alt = "Paste: " .. alt_date
+    local formatted_image = string.format("![%s](%s)", alt, path)
     vim.fn.setreg("+", formatted_image)
     vim.cmd("normal! p")
     return
