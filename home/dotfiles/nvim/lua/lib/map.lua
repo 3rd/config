@@ -1,5 +1,6 @@
 ---@enum option
 local default_options = {
+  desc = "",
   buffer = false,
   expr = false,
   nowait = false,

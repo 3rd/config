@@ -89,99 +89,75 @@ local handle_navigate_to_symbol = function()
   end)()
 end
 
-local setup_autolist = function()
-  require("autolist").setup({
-    list_cap = 50,
-    colon = {
-      indent = true,
-      indent_raw = false,
-      preferred = "-",
-    },
-    lists = {
-      preloaded = {
-        generic = {
-          "[-+]",
-          "*+",
-          "%d+[.)]",
-          "%a[.)]",
-        },
-      },
-      filetypes = {
-        generic = {
-          "markdown",
-          "text",
-          "syslang",
-        },
-      },
-    },
-    recal_function_hooks = {
-      "new",
-    },
-    insert_mappings = {
-      new = {
-        -- "<CR>"
-      },
-      tab = { "<c-t>" },
-      detab = { "<c-d>" },
-      recal = { "<c-z>" },
-      indent = {
-        "<tab>+[catch]('>>')",
-        "<s-tab>+[catch]('<<')",
-      },
-    },
-    normal_mappings = {
-      new = {
-        -- "o",
-        -- "O+(true)",
-      },
-      tab = { ">" },
-      detab = { "<" },
-      recal = { "dd" },
-    },
+local get_asset_dir = function()
+  local cwd = vim.fn.getcwd()
+  ---@type string|nil
+  local asset_dir = cwd .. "/_media/images"
+  if vim.fn.isdirectory(asset_dir) == 0 then asset_dir = nil end
+  return asset_dir
+end
+
+local get_image_path = function()
+  local relative_path = vim.fn.expand("%:t:r") .. "-" .. os.time() .. ".png"
+  local asset_dir = get_asset_dir()
+  if asset_dir then return vim.fn.expand(asset_dir .. "/" .. relative_path) end
+  return vim.fn.expand("%:p:h") .. "/" .. relative_path
+end
+
+local handle_paste = function()
+  local clipboard_content = lib.shell.exec("xclip -selection clipboard -o -t TARGETS")
+
+  local is_image = string.match(clipboard_content, "image/")
+  -- local is_text = string.match(clipboard_content, "UTF8_STRING")
+
+  if is_image then
+    -- input name
+    -- vim.fn.inputsave()
+    -- local name = vim.fn.input("Name: ")
+    -- vim.fn.inputrestore()
+    -- if not name or name == "" then return end
+    -- compute path
+    -- local current_file = vim.fn.expand("%:p")
+    -- ---@cast current_file string
+    -- local current_dir = vim.fn.fnamemodify(current_file, ":h")
+    -- local path = current_dir .. "/" .. name .. ".png"
+
+    local path = get_image_path()
+
+    -- write image to file
+    local command = string.format("xclip -selection clipboard -t image/png -o > '%s'", path)
+    lib.shell.exec(command)
+
+    -- insert image
+    local formatted_image = string.format("![](%s)", path)
+    vim.fn.setreg("+", formatted_image)
+    vim.cmd("normal! p")
+    return
+  end
+
+  -- fallback
+  vim.cmd("normal! p")
+end
+
+local setup = function()
+  vim.api.nvim_create_autocmd("FileType", {
+    group = vim.api.nvim_create_augroup("wiki-syslang", {}),
+    pattern = "syslang",
+    callback = function()
+      lib.map.map("n", "<leader>r", handle_navigate_to_symbol, { desc = "Navigate to symbol", buffer = true })
+      lib.map.map("n", "p", handle_paste, { desc = "Paste", buffer = true })
+    end,
   })
 end
 
 return lib.module.create({
   name = "wiki",
-  plugins = {
-    -- { "gaoDean/autolist.nvim", ft = { "syslang" }, config = setup_autolist },
-    -- {
-    --   "jmbuhr/otter.nvim",
-    --   dependencies = {
-    --     "hrsh7th/nvim-cmp",
-    --     -- "yioneko/nvim-cmp",
-    --     "neovim/nvim-lspconfig",
-    --     "nvim-treesitter/nvim-treesitter",
-    --   },
-    --   init = function()
-    --     vim.api.nvim_create_autocmd("FileType", {
-    --       group = vim.api.nvim_create_augroup("syslang-otter", {}),
-    --       pattern = "syslang",
-    --       callback = function()
-    --         local otter = require("otter")
-    --         otter.activate({ "lua", "go", "typescript", "typescriptreact" }, true, {
-    --           syslang = [[
-    --             (code_block
-    --               (code_block_start
-    --                 (code_block_language) @lang
-    --               )
-    --               (code_block_content
-    --                 (text) @code
-    --               )
-    --             )
-    --           ]],
-    --         })
-    --         lib.map.map("n", "gd", ":lua require'otter'.ask_definition()<cr>", { buffer = true })
-    --         lib.map.map("n", "K", ":lua require'otter'.ask_hover()<cr>", { silent = true })
-    --       end,
-    --     })
-    --   end,
-    -- },
-  },
+  setup = setup,
   mappings = {
     { "n", "<M-n>", handle_select },
     { "n", "<M-m>", handle_search },
     --  TODO: only in slang buffers
     { "n", "<leader>r", handle_navigate_to_symbol },
+    { "n", "<leader>p", handle_paste },
   },
 })
