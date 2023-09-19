@@ -13,6 +13,21 @@ local models = {
   ["gpt-3.5-turbo-instruct"] = { type = "complete", max_length = 4096 },
 }
 
+---@class GPTFunctionProperty
+---@field type string
+---@field description string
+---@field enum? string[]
+
+---@class GPTFunctionParameters
+---@field type "object"
+---@field parameters { type: "object", properties: table<string, GPTFunctionProperty> }
+---@field required? string[]
+
+---@class GPTFunction
+---@field name string
+---@field description string
+---@field parameters string[]
+
 ---@class GPTOptions
 ---@field model? string
 ---@field max_tokens? number
@@ -22,6 +37,8 @@ local models = {
 ---@field presence_penalty? number
 ---@field n? number
 ---@field stop? string[]
+---@field functions? GPTFunction[]
+---@field function_call? string -- "auto" by default
 
 ---@class GPTMessage
 ---@field role string
@@ -45,6 +62,7 @@ end
 local gpt_fetch = function(payload)
   local model = models[payload.model]
   if not model then error("Invalid model: " .. payload.model) end
+  if model.type ~= "chat" and payload.functions then error("Invalid model for function calling: " .. payload.model) end
 
   local endpoint = model.type == "chat" and CHAT_ENDPOINT or COMPLETION_ENDPOINT
 
@@ -76,13 +94,24 @@ local gpt_fetch = function(payload)
 
   if response and response.choices then
     if model.type == "chat" then
-      return vim.fn.trim(response.choices[1].message.content, "\n")
+      local message = response.choices[1].message
+      if payload.functions and message.function_call then return message.function_call end
+      return vim.fn.trim(message.content, "\n")
     else
       return vim.fn.trim(response.choices[1].text, "\n")
     end
   else
     log("GPT fail: ", { request = payload, response = response })
   end
+end
+
+---@param payload GPTOptions
+---@return string | { name: string, arguments: string }
+local gpt_fetch_func = function(payload)
+  local response = gpt_fetch(payload)
+  if type(response) == "string" then return response end
+  local arguments = vim.fn.json_decode(response.arguments)
+  return { name = response.name, arguments = arguments }
 end
 
 ---@param messages GPTMessage[]
@@ -473,7 +502,12 @@ return lib.module.create({
             "Prompt: " .. input,
           }, "\n")
 
-          local model = get_optimal_model_for_prompt(prompt, { "gpt-3.5-turbo-instruct", "gpt-4", "gpt-3.5-turbo-16k" })
+          local model = get_optimal_model_for_prompt(prompt, {
+            --
+            "gpt-3.5-turbo-instruct",
+            "gpt-4",
+            "gpt-3.5-turbo-16k",
+          })
           local result = complete(prompt, { model = model })
 
           local lines = vim.split(result, "\n", {})
@@ -508,7 +542,6 @@ return lib.module.create({
 
         vim.ui.input({ prompt = "Edit: " }, function(change_prompt)
           if not change_prompt then return end
-
           local result = edit(content, change_prompt)
 
           local lines = vim.split(result, "\n", {})
@@ -524,7 +557,6 @@ return lib.module.create({
 
         vim.ui.input({ prompt = "Edit: " }, function(change_prompt)
           if change_prompt == nil then return end
-
           local result = edit(content, change_prompt)
 
           local lines = vim.split(result, "\n", {})
