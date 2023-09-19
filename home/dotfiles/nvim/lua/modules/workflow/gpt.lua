@@ -1,99 +1,202 @@
-local COMPLETION_ENDPOINT = "https://api.openai.com/v1/engines/davinci-codex/completions"
+local COMPLETION_ENDPOINT = "https://api.openai.com/v1/completions"
 local CHAT_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 local API_KEY = os.getenv("OPENAI_API_KEY")
 
-local gpt_complete = function(prompt, max_tokens, stops)
-  local body = {
-    model = "code-davinci-002",
-    prompt = prompt,
-    max_tokens = max_tokens or 500,
-    temperature = 0.2,
-    top_p = 0,
-    frequency_penalty = 0,
-    presence_penalty = 0,
-    n = 1,
-  }
-  if stops then body.stop = stops end
+local DEBUG = true
+local TOKEN_ESTIMATION_MARGIN = 50
+
+---@type table<string, { type: string, max_length: number }>
+local models = {
+  ["gpt-4"] = { type = "chat", max_length = 8191 },
+  ["gpt-3.5-turbo"] = { type = "chat", max_length = 4096 },
+  ["gpt-3.5-turbo-16k"] = { type = "chat", max_length = 16384 },
+  ["gpt-3.5-turbo-instruct"] = { type = "complete", max_length = 4096 },
+}
+
+---@class GPTOptions
+---@field model? string
+---@field max_tokens? number
+---@field temperature? number
+---@field top_p? number
+---@field frequency_penalty? number
+---@field presence_penalty? number
+---@field n? number
+---@field stop? string[]
+
+---@class GPTMessage
+---@field role string
+---@field content string
+
+local estimate_prompt_tokens = function(prompt)
+  return math.floor(vim.fn.strchars(prompt) / 3) + TOKEN_ESTIMATION_MARGIN
+end
+
+local estimate_messages_tokens = function(messages)
+  local tokens = TOKEN_ESTIMATION_MARGIN
+  for _, message in ipairs(messages) do
+    tokens = tokens + 3
+    tokens = tokens + estimate_prompt_tokens(message.content)
+  end
+  tokens = tokens + 3
+  return tokens
+end
+
+---@param payload GPTOptions
+local gpt_fetch = function(payload)
+  local model = models[payload.model]
+  if not model then error("Invalid model: " .. payload.model) end
+
+  local endpoint = model.type == "chat" and CHAT_ENDPOINT or COMPLETION_ENDPOINT
+
+  -- debug
+  local estimated_tokens = 0
+  if model.type == "chat" then
+    ---@diagnostic disable-next-line: undefined-field
+    estimated_tokens = estimate_messages_tokens(payload.messages)
+  else
+    ---@diagnostic disable-next-line: undefined-field
+    estimated_tokens = estimate_prompt_tokens(payload.prompt)
+  end
+  if DEBUG then
+    log("GPT request: ", { endpoint = endpoint, estimated_tokens = estimated_tokens, payload = payload })
+  end
 
   local tmpfile = vim.fn.tempname()
-  lib.fs.file.write(tmpfile, vim.fn.json_encode(body))
+  lib.fs.file.write(tmpfile, vim.fn.json_encode(payload))
 
-  local response = vim.fn.json_decode(
-    vim.fn.system(
-      string.format(
-        "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -d '@%s' %s",
-        API_KEY,
-        tmpfile,
-        COMPLETION_ENDPOINT
-      )
-    )
+  local command = string.format(
+    "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -d '@%s' %s",
+    API_KEY,
+    tmpfile,
+    endpoint
   )
+  local response = vim.fn.json_decode(vim.fn.system(command))
+
+  if DEBUG then log("GPT response: ", { response = response }) end
 
   if response and response.choices then
-    return response.choices[1].text
+    if model.type == "chat" then
+      return vim.fn.trim(response.choices[1].message.content, "\n")
+    else
+      return vim.fn.trim(response.choices[1].text, "\n")
+    end
   else
-    log("GPT fail: ", {
-      request = body,
-      response = response,
-    })
+    log("GPT fail: ", { request = payload, response = response })
   end
 end
 
-local gpt_chat = function(messages, stops)
-  local body = {
-    -- model = "gpt-3.5-turbo",
+---@param messages GPTMessage[]
+---@param options? GPTOptions
+local gpt_chat = function(messages, options)
+  local opts = vim.tbl_deep_extend("force", {
     model = "gpt-4",
-    messages = messages,
     temperature = 0,
     top_p = 0,
     frequency_penalty = 0,
     presence_penalty = 0,
-  }
-  if stops then body.stop = stops end
+    n = 1,
+  }, options or {})
 
-  local tmpfile = vim.fn.tempname()
-  lib.fs.file.write(tmpfile, vim.fn.json_encode(body))
+  local model = models[opts.model]
+  if not model or model.type ~= "chat" then error("Invalid model for chat: " .. opts.model) end
 
-  local response = vim.fn.json_decode(
-    vim.fn.system(
-      string.format(
-        "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -d '@%s' %s",
-        API_KEY,
-        tmpfile,
-        CHAT_ENDPOINT
-      )
-    )
-  )
-
-  if response and response.choices then
-    return response.choices[1].message.content
+  local input_tokens = estimate_messages_tokens(messages)
+  if opts.max_tokens then
+    local remaining_tokens = model.max_length - input_tokens
+    if opts.max_tokens > remaining_tokens then
+      error("Max tokens too high: " .. opts.max_tokens .. " > " .. remaining_tokens)
+    end
   else
-    log("GPT fail: ", {
-      request = body,
-      response = response,
-    })
+    opts.max_tokens = model.max_length - input_tokens
   end
+
+  local payload = vim.tbl_deep_extend("force", opts, { messages = messages })
+  return gpt_fetch(payload)
+end
+
+---@param prompt string
+---@param options? GPTOptions
+local gpt_complete = function(prompt, options)
+  local opts = vim.tbl_deep_extend("force", {
+    model = "gpt-3.5-turbo-instruct",
+    temperature = 0,
+    top_p = 0,
+    frequency_penalty = 0,
+    presence_penalty = 0,
+    n = 1,
+  }, options or {})
+
+  local model = models[opts.model]
+  if not model or model.type ~= "complete" then error("Invalid model for completion: " .. opts.model) end
+
+  local input_tokens = estimate_prompt_tokens(prompt)
+  if opts.max_tokens then
+    local remaining_tokens = model.max_length - input_tokens
+    if opts.max_tokens > remaining_tokens then
+      error("Max tokens too high: " .. opts.max_tokens .. " > " .. remaining_tokens)
+    end
+  else
+    opts.max_tokens = model.max_length - input_tokens
+  end
+
+  local payload = vim.tbl_deep_extend("force", opts, { prompt = prompt })
+  return gpt_fetch(payload)
+end
+
+---@param prompt string
+---@param options? GPTOptions
+local complete = function(prompt, options)
+  local model_name = options and options.model or "gpt-4"
+  local model = models[model_name]
+  if not model then error("Invalid model: " .. model_name) end
+
+  if model.type == "chat" then
+    local messages = { { role = "system", content = prompt } }
+    return gpt_chat(messages, options)
+  elseif model.type == "complete" then
+    return gpt_complete(prompt, options)
+  else
+    error("Invalid model type: " .. model.type)
+  end
+end
+
+---@param prompt string
+---@param available_models string[]
+---@param min_tokens? number
+local get_optimal_model_for_prompt = function(prompt, available_models, min_tokens)
+  local prompt_tokens = estimate_prompt_tokens(prompt)
+  local min_target_tokens = min_tokens or 1000
+
+  for _, model_name in ipairs(available_models) do
+    local model = models[model_name]
+    if not model then error("Invalid model: " .. model_name) end
+
+    local remaining_tokens = model.max_length - prompt_tokens
+    if remaining_tokens >= min_target_tokens then return model_name end
+  end
+
+  error(
+    "No model can handle this prompt size: "
+      .. prompt_tokens
+      .. " + "
+      .. min_target_tokens
+      .. " = "
+      .. prompt_tokens + min_target_tokens
+  )
 end
 
 local explain = function(code)
   local filename = vim.fn.expand("%:t")
   local filetype = vim.bo.filetype
 
-  local messages = {
-    {
-      role = "system",
-      content = "Explain what the following code does.\n"
-        .. "Filename: "
-        .. filename
-        .. "\nContent:\n```"
-        .. filetype
-        .. "\n"
-        .. code
-        .. "\n```",
-    },
-  }
+  local prompt = vim.fn.join({
+    "Explain what the following code does.\n",
+    "Filename: " .. filename,
+    "Content:\n```" .. filetype .. "\n" .. code .. "\n```",
+    "Explanation:",
+  }, "\n")
+  local result = complete(prompt)
 
-  local result = gpt_chat(messages)
   result = result:gsub("^%s*(.-)%s*$", "%1")
   local result_lines = vim.split(result, "\n", {})
 
@@ -101,14 +204,10 @@ local explain = function(code)
   local popup = require("nui.popup")({
     enter = true,
     focusable = true,
-    border = {
-      style = "rounded",
-    },
+    border = { style = "rounded" },
     position = "50%",
-    size = {
-      width = "80%",
-      height = "60%",
-    },
+    size = { width = "80%", height = "60%" },
+    win_options = { wrap = true },
   })
   popup:mount()
   popup:on(event.BufLeave, function()
@@ -116,7 +215,6 @@ local explain = function(code)
   end)
   vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, result_lines)
   vim.api.nvim_buf_set_option(popup.bufnr, "ft", "markdown")
-  vim.api.nvim_buf_set_option(popup.bufnr, "wrap", true)
   popup:on(event.BufEnter, function()
     vim.cmd("normal! gg")
   end)
@@ -127,29 +225,26 @@ local ask = function(code)
 
   vim.ui.input({ prompt = "Ask: " }, function(input)
     if input == nil then return end
-    local messages = {
-      {
-        role = "system",
-        content = "```" .. filetype .. "\n" .. code .. "\n```\n\n" .. input,
-      },
-    }
 
-    local result = gpt_chat(messages)
-    result = result:gsub("^%s*(.-)%s*$", "%1")
+    local prompt = "```" .. filetype .. "\n" .. code .. "\n```\n\n" .. input
+    local result = complete(prompt)
+
     local result_lines = vim.split(result, "\n", {})
+    while result_lines[1] == "" do
+      table.remove(result_lines, 1)
+    end
+    while result_lines[#result_lines] == "" do
+      table.remove(result_lines, #result_lines)
+    end
 
     local event = require("nui.utils.autocmd").event
     local popup = require("nui.popup")({
       enter = true,
       focusable = true,
-      border = {
-        style = "rounded",
-      },
+      border = { style = "rounded" },
       position = "50%",
-      size = {
-        width = "80%",
-        height = "60%",
-      },
+      size = { width = "80%", height = "60%" },
+      win_options = { wrap = true },
     })
     popup:mount()
     popup:on(event.BufLeave, function()
@@ -157,7 +252,6 @@ local ask = function(code)
     end)
     vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, result_lines)
     vim.api.nvim_buf_set_option(popup.bufnr, "ft", "markdown")
-    vim.api.nvim_buf_set_option(popup.bufnr, "wrap", true)
     popup:on(event.BufEnter, function()
       vim.cmd("normal! gg")
     end)
@@ -291,14 +385,10 @@ describe('AvatarButton', () => {
   local popup = require("nui.popup")({
     enter = true,
     focusable = true,
-    border = {
-      style = "rounded",
-    },
+    border = { style = "rounded" },
     position = "50%",
-    size = {
-      width = "80%",
-      height = "60%",
-    },
+    size = { width = "80%", height = "60%" },
+    win_options = { wrap = true },
   })
   popup:mount()
   popup:on(event.BufLeave, function()
@@ -308,40 +398,45 @@ describe('AvatarButton', () => {
   vim.api.nvim_buf_set_option(popup.bufnr, "ft", "markdown")
   popup:on(event.BufEnter, function()
     vim.cmd("normal! gg")
-    vim.api.nvim_buf_set_option(popup.bufnr, "wrap", true)
   end)
-end
-
-local setup_backseat = function()
-  require("backseat").setup({
-    openai_api_key = API_KEY,
-    openai_model_id = "gpt-3.5-turbo",
-    split_threshold = 100,
-    -- additional_instruction = "",
-  })
 end
 
 return lib.module.create({
   name = "gpt",
   plugins = {
-    {
-      "james1236/backseat.nvim",
-      event = "VeryLazy",
-      config = setup_backseat,
-    },
+    -- {
+    --   "james1236/backseat.nvim",
+    --   event = "VeryLazy",
+    --   opts = {
+    --     openai_api_key = API_KEY,
+    --     openai_model_id = "gpt-3.5-turbo",
+    --     split_threshold = 100,
+    --     -- additional_instruction = "",
+    --   },
+    -- },
   },
   actions = {
     {
       "n",
       "Codex: Generate code",
       function()
-        vim.ui.input({ prompt = "Prompt: " }, function(prompt)
-          if prompt == nil then return end
-          vim.ui.input({ prompt = "Max tokens: " }, function(max_tokens)
-            if max_tokens == nil then return end
-            local result = gpt_complete(prompt, tonumber(max_tokens))
-            vim.api.nvim_put({ result }, "l", true, true)
-          end)
+        vim.ui.input({ prompt = "Prompt: " }, function(input)
+          if input == nil then return end
+
+          local filename = vim.fn.expand("%:t")
+          local filetype = vim.bo.filetype
+
+          local prompt = vim.fn.join({
+            "Language: " .. filetype,
+            "Filename: " .. filename,
+            "Prompt: " .. input,
+          }, "\n")
+
+          local model = get_optimal_model_for_prompt(prompt, { "gpt-3.5-turbo-instruct", "gpt-4", "gpt-3.5-turbo-16k" })
+          local result = complete(prompt, { model = model })
+
+          local lines = vim.split(result, "\n", {})
+          vim.api.nvim_put(lines, "l", true, true)
         end)
       end,
     },
@@ -369,39 +464,83 @@ return lib.module.create({
         local start_line = vim.fn.getpos("'<")[2] - 1
         local end_line = vim.fn.getpos("'>")[2]
         local filetype = vim.bo.filetype
+        local filename = vim.fn.expand("%:t")
 
         local content = lib.buffer.current.get_selected_text()
 
         vim.ui.input({ prompt = "Edit: " }, function(change_prompt)
           if change_prompt == nil then return end
 
-          local messages = {
-            {
-              role = "system",
-              content = "Edit the following code according to the following instructions:\n"
-                .. change_prompt
-                .. "\n"
-                .. "Reply only with the complete resulting code after the changes have been made, with no other explainations or comments.\n"
-                .. "\n```"
-                .. filetype
-                .. "\n"
-                .. content
-                .. "\n```",
-            },
-          }
+          local prompt = vim.fn.join({
+            "Language: " .. filetype,
+            "Filename: " .. filename,
+            "Content:\n```" .. filetype .. "\n" .. content .. "\n```",
+            "",
+            "Instructions: " .. change_prompt,
+          }, "\n")
 
-          local result = gpt_chat(messages)
-          result = result:gsub("^%s*(.-)%s*$", "%1")
-          result = result:gsub("```" .. filetype .. "\n", "")
-          result = result:gsub("\n```", "")
-          local result_lines = vim.split(result, "\n", {})
+          local model_name = get_optimal_model_for_prompt(prompt, {
+            --
+            -- "gpt-3.5-turbo-instruct",
+            "gpt-4",
+            "gpt-3.5-turbo-16k",
+          })
+          local model = models[model_name]
 
-          -- local result = edit(code, change_prompt)
-          -- log("bufnr: ", bufnr, " start: ", start_line, " end: ", end_line)
-          -- log("result:", result)
-          -- local result_lines = vim.split(result, "\n", {})
+          if model.type == "complete" then
+            prompt = vim.fn.join({
+              prompt,
+              "",
+              "Result:",
+              "```" .. filetype,
+            }, "\n")
+          end
 
-          vim.api.nvim_buf_set_lines(bufnr, start_line, end_line, false, result_lines)
+          local result = complete(prompt, { model = model_name })
+
+          -- handle code blocks
+          local start_idx, end_idx = string.find(result, "```[%w-]+\n(.+)```")
+          if start_idx and end_idx then
+            local _, _, block_content = string.find(string.sub(result, start_idx, end_idx), "```[%w-]+\n(.+)```")
+            result = vim.fn.trim(block_content, "\n")
+          end
+
+          local lines = vim.split(result, "\n", {})
+          vim.api.nvim_buf_set_lines(bufnr, start_line, end_line, false, lines)
+        end)
+      end,
+    },
+    {
+      "n",
+      "Codex: Edit code",
+      function()
+        local filetype = vim.bo.filetype
+        local filename = vim.fn.expand("%:t")
+        local content = lib.buffer.current.get_text()
+
+        vim.ui.input({ prompt = "Edit: " }, function(change_prompt)
+          if change_prompt == nil then return end
+
+          local prompt = vim.fn.join({
+            "Language: " .. filetype,
+            "Filename: " .. filename,
+            "Content:\n```" .. filetype .. "\n" .. content .. "\n```",
+            "",
+            "Instructions: " .. change_prompt,
+          }, "\n")
+
+          local model = get_optimal_model_for_prompt(prompt, { "gpt-3.5-turbo-instruct", "gpt-4", "gpt-3.5-turbo-16k" })
+          local result = complete(prompt, { model = model })
+
+          -- handle code blocks
+          local start_idx, end_idx = string.find(result, "```[%w-]+\n(.+)```")
+          if start_idx and end_idx then
+            local _, _, block_content = string.find(string.sub(result, start_idx, end_idx), "```[%w-]+\n(.+)```")
+            result = vim.fn.trim(block_content, "\n")
+          end
+
+          local lines = vim.split(result, "\n", {})
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
         end)
       end,
     },
