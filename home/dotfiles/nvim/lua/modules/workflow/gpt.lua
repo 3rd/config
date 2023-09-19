@@ -258,6 +258,47 @@ local ask = function(code)
   end)
 end
 
+local edit = function(code, instructions)
+  local filetype = vim.bo.filetype
+  local filename = vim.fn.expand("%:t")
+
+  local prompt = table.concat({
+    "Language: " .. filetype,
+    "Filename: " .. filename,
+    "Content:\n```" .. filetype .. "\n" .. code .. "\n```",
+    "",
+    "Instructions: " .. instructions,
+  }, "\n")
+
+  local model_name = get_optimal_model_for_prompt(prompt, {
+    --
+    "gpt-3.5-turbo-instruct",
+    "gpt-4",
+    "gpt-3.5-turbo-16k",
+  })
+  local model = models[model_name]
+
+  if model.type == "complete" then
+    prompt = table.concat({
+      prompt,
+      "",
+      "Result:",
+      "```" .. filetype,
+    }, "\n")
+  end
+
+  local result = complete(prompt, { model = model_name })
+
+  -- handle code blocks
+  local start_idx, end_idx = string.find(result, "```[%w-]+\n(.+)```")
+  if start_idx and end_idx then
+    local _, _, block_content = string.find(string.sub(result, start_idx, end_idx), "```[%w-]+\n(.+)```")
+    result = vim.fn.trim(block_content, "\n")
+  end
+
+  return result
+end
+
 local generate_tests = function()
   local filename = vim.fn.expand("%:t")
   local filetype = vim.bo.filetype
@@ -463,47 +504,12 @@ return lib.module.create({
         local bufnr = vim.api.nvim_get_current_buf()
         local start_line = vim.fn.getpos("'<")[2] - 1
         local end_line = vim.fn.getpos("'>")[2]
-        local filetype = vim.bo.filetype
-        local filename = vim.fn.expand("%:t")
-
         local content = lib.buffer.current.get_selected_text()
 
         vim.ui.input({ prompt = "Edit: " }, function(change_prompt)
-          if change_prompt == nil then return end
+          if not change_prompt then return end
 
-          local prompt = vim.fn.join({
-            "Language: " .. filetype,
-            "Filename: " .. filename,
-            "Content:\n```" .. filetype .. "\n" .. content .. "\n```",
-            "",
-            "Instructions: " .. change_prompt,
-          }, "\n")
-
-          local model_name = get_optimal_model_for_prompt(prompt, {
-            --
-            -- "gpt-3.5-turbo-instruct",
-            "gpt-4",
-            "gpt-3.5-turbo-16k",
-          })
-          local model = models[model_name]
-
-          if model.type == "complete" then
-            prompt = vim.fn.join({
-              prompt,
-              "",
-              "Result:",
-              "```" .. filetype,
-            }, "\n")
-          end
-
-          local result = complete(prompt, { model = model_name })
-
-          -- handle code blocks
-          local start_idx, end_idx = string.find(result, "```[%w-]+\n(.+)```")
-          if start_idx and end_idx then
-            local _, _, block_content = string.find(string.sub(result, start_idx, end_idx), "```[%w-]+\n(.+)```")
-            result = vim.fn.trim(block_content, "\n")
-          end
+          local result = edit(content, change_prompt)
 
           local lines = vim.split(result, "\n", {})
           vim.api.nvim_buf_set_lines(bufnr, start_line, end_line, false, lines)
@@ -514,30 +520,12 @@ return lib.module.create({
       "n",
       "Codex: Edit code",
       function()
-        local filetype = vim.bo.filetype
-        local filename = vim.fn.expand("%:t")
         local content = lib.buffer.current.get_text()
 
         vim.ui.input({ prompt = "Edit: " }, function(change_prompt)
           if change_prompt == nil then return end
 
-          local prompt = vim.fn.join({
-            "Language: " .. filetype,
-            "Filename: " .. filename,
-            "Content:\n```" .. filetype .. "\n" .. content .. "\n```",
-            "",
-            "Instructions: " .. change_prompt,
-          }, "\n")
-
-          local model = get_optimal_model_for_prompt(prompt, { "gpt-3.5-turbo-instruct", "gpt-4", "gpt-3.5-turbo-16k" })
-          local result = complete(prompt, { model = model })
-
-          -- handle code blocks
-          local start_idx, end_idx = string.find(result, "```[%w-]+\n(.+)```")
-          if start_idx and end_idx then
-            local _, _, block_content = string.find(string.sub(result, start_idx, end_idx), "```[%w-]+\n(.+)```")
-            result = vim.fn.trim(block_content, "\n")
-          end
+          local result = edit(content, change_prompt)
 
           local lines = vim.split(result, "\n", {})
           vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
