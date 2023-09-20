@@ -294,9 +294,8 @@ local edit = function(code, instructions)
   local prompt = table.concat({
     "Language: " .. filetype,
     "Filename: " .. filename,
-    "Content:\n```" .. filetype .. "\n" .. code .. "\n```",
+    "Initial code:\n```" .. filetype .. "\n" .. code .. "\n```",
     "",
-    "Instructions: " .. instructions,
   }, "\n")
 
   local model_name = get_optimal_model_for_prompt(prompt, {
@@ -307,22 +306,40 @@ local edit = function(code, instructions)
   })
   local model = models[model_name]
 
+  if model.type == "chat" then prompt = table.concat({
+    prompt,
+    "Instructions: " .. instructions,
+  }, "\n") end
+
   if model.type == "complete" then
     prompt = table.concat({
       prompt,
+      "The developer has received the following instructions:\n",
+      instructions,
       "",
-      "Result:",
+      "After following the instructions, the developer has written the following code:\n",
       "```" .. filetype,
     }, "\n")
   end
 
   local result = complete(prompt, { model = model_name })
 
-  -- handle code blocks
-  local start_idx, end_idx = string.find(result, "```[%w-]+\n(.+)```")
-  if start_idx and end_idx then
-    local _, _, block_content = string.find(string.sub(result, start_idx, end_idx), "```[%w-]+\n(.+)```")
-    result = vim.fn.trim(block_content, "\n")
+  -- extract code for completion
+  if model.type == "complete" then
+    local parts = vim.split(result, "```")
+    local code_parts = vim.fn.slice(parts, 0, #parts - 1)
+    log("code_parts: ", code_parts)
+    result = table.concat(code_parts, "```")
+    log("result: ", result)
+  end
+
+  -- extract code for chat
+  if model.type == "chat" then
+    local start_idx, end_idx = string.find(result, "```[%w-]+\n(.+)```")
+    if start_idx and end_idx then
+      local _, _, block_content = string.find(string.sub(result, start_idx, end_idx), "```[%w-]+\n(.+)```")
+      result = vim.fn.trim(block_content, "\n")
+    end
   end
 
   return result
@@ -477,12 +494,7 @@ return lib.module.create({
     -- {
     --   "james1236/backseat.nvim",
     --   event = "VeryLazy",
-    --   opts = {
-    --     openai_api_key = API_KEY,
-    --     openai_model_id = "gpt-3.5-turbo",
-    --     split_threshold = 100,
-    --     -- additional_instruction = "",
-    --   },
+    --   opts = { openai_api_key = API_KEY, openai_model_id = "gpt-3.5-turbo", split_threshold = 100, },
     -- },
   },
   actions = {
