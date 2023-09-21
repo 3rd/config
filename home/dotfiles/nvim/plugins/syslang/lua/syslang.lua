@@ -216,14 +216,6 @@ local function toggle_task(node)
   return false
 end
 
--- local function get_new_node(old_node)
---   local parser = vim.treesitter.get_parser()
---   local root = parser:parse()[1]:root()
---
---   local start_line, start_col, end_line, end_col = old_node:range()
---   return root:named_descendant_for_range(start_line, start_col, end_line, end_col)
--- end
---
 local is_task_node = function(node)
   for _, task_node_type in ipairs(task_types) do
     if node:type() == task_node_type.task then return true end
@@ -295,8 +287,83 @@ local handle_toggle_task = function()
   vim.fn.winrestview(view)
 end
 
+local handle_set_schedule = function()
+  vim.ui.input({ prompt = "Schedule: " }, function(input)
+    if not input or input == "" then return end
+    local date = lib.node.chrono.to_schedule(input)
+    if type(date) ~= "string" then return end
+
+    local parser = vim.treesitter.get_parser()
+    local root = parser:parse()[1]:root()
+
+    local position = vim.api.nvim_win_get_cursor(0)
+    local line_length = #vim.fn.getline(position[1])
+    local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
+
+    while node do
+      local node_line = node:range()
+      if node_line ~= position[1] - 1 then break end
+      local target = node
+
+      local schedule_text = "Schedule: " .. date .. "\n"
+
+      -- edit existing schedule
+      if node:type() == "task_schedule" then
+        -- set the text of the whole session node
+        local range = ts_utils.node_to_lsp_range(node)
+        local edit = { range = range, newText = schedule_text }
+        vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
+      end
+
+      -- add new schedule after all the schedules and sessions and before anything else
+      if is_task_node(target) then
+        local last_pre_node = target:child(0)
+        local task_row = target:range()
+
+        for curr in target:iter_children() do
+          local curr_row = curr:range()
+          if curr_row == task_row then goto continue end
+
+          if curr:type() == "task_schedule" or curr:type() == "task_session" then
+            last_pre_node = curr
+          else
+            break
+          end
+
+          ::continue::
+        end
+
+        local row = last_pre_node:range()
+
+        local indent = vim.fn.indent(row + 1) + (last_pre_node == target:child(0) and vim.bo.tabstop or 0)
+        schedule_text = string.rep(" ", indent) .. schedule_text
+
+        local range = {
+          start = { line = row + 1, character = 0 },
+          ["end"] = { line = row + 1, character = 0 },
+        }
+        local edit = { range = range, newText = schedule_text }
+        vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
+      end
+
+      node = node:parent()
+    end
+  end)
+end
+
+local handle_cr = function()
+  -- local parser = vim.treesitter.get_parser()
+  -- local root = parser:parse()[1]:root()
+  --
+  -- local position = vim.api.nvim_win_get_cursor(0)
+  -- local line_length = #vim.fn.getline(position[1])
+  -- local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
+end
+
 local setup_mappings = function()
   vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true, noremap = true })
+  vim.keymap.set("n", "<leader>es", handle_set_schedule, { buffer = true, noremap = true })
+  vim.keymap.set("n", "<cr>", handle_cr, { buffer = true, noremap = true })
   -- vim.keymap.set("n", ">", handle_indent, { buffer = true })
   -- vim.keymap.set("n", "<", handle_dedent, { buffer = true })
   -- vim.keymap.set("n", "zR", handle_expand_all, { buffer = true, noremap = true })

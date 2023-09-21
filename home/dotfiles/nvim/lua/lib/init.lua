@@ -35,4 +35,6 @@ _G.lib = {
   random = require("lib/random"),
   shell = require("lib/shell"),
   ts = require("lib/treesitter"),
+  ui = require("lib/ui"),
+  node = require("lib/node"),
 }

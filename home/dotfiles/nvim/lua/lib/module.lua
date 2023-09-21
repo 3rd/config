@@ -82,7 +82,7 @@ local get_modules = function(opts)
     if is.no.empty(path) then
       local ok, module = pcall(require, path)
       ---@cast module Module
-      if ok and module.__is_module then table.insert(result, module) end
+      if ok and type(module) == "table" and module.__is_module then table.insert(result, module) end
     end
   end
   return result

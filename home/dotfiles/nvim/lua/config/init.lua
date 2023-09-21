@@ -15,7 +15,7 @@ for _, dir in ipairs(directories) do
 end
 
 -- disable crap
-vim.g.loaded_node_provider = 0
+-- vim.g.loaded_node_provider = 0
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_python3_provider = 0
 vim.g.loaded_ruby_provider = 0
@@ -62,6 +62,10 @@ end
 local plugins = table.join(
   lib.module.get_module_plugins(),
   table.map({
+    {
+      dir = "tslib",
+      lazy = false,
+    },
     {
       dir = "syslang",
       ft = "syslang",

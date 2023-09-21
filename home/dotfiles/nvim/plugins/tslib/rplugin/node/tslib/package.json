@@ -1,0 +1,19 @@
+{
+  "name": "tslib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/main.js",
+  "source": "./src/main.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch"
+  },
+  "dependencies": {
+    "chrono-node": "^2.7.0",
+    "neovim": "^4.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.6.3",
+    "typescript": "^5.2.2"
+  }
+}
