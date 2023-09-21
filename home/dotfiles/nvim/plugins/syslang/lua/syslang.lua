@@ -412,7 +412,7 @@ local setup = function()
     fold_tasks()
   end)()
 
-  local group = vim.api.nvim_create_augroup("SyslangFoldPersistence", { clear = true })
+  local group = vim.api.nvim_create_augroup("syslang:tasks", { clear = true })
   local bufnr = vim.api.nvim_get_current_buf()
   vim.api.nvim_create_autocmd({ "CursorMoved" }, {
     group = group,
