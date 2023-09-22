@@ -1,16 +1,18 @@
+local filetypes = {
+  "typescript",
+  "typescriptreact",
+  "javascript",
+  "javascriptreact",
+}
+
 return lib.module.create({
   -- enabled = false,
   name = "language-support/languages/typescript",
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
-      ft = {
-        "typescript",
-        "typescriptreact",
-        "javascript",
-        "javascriptreact",
-      },
       -- event = "VeryLazy",
+      ft = filetypes,
       dependencies = {
         "nvim-lua/plenary.nvim",
         "neovim/nvim-lspconfig",
@@ -27,7 +29,7 @@ return lib.module.create({
             separate_diagnostic_server = false,
             publish_diagnostic_on = "insert_leave",
             expose_as_code_action = { "fix_all", "add_missing_imports", "remove_unused" },
-            tsserver_max_memory = 4096, -- or "auto"
+            tsserver_max_memory = 4096, -- 4096 | "auto"
             -- complete_function_calls = false,
             -- handlers = {
             --   ["textDocument/publishDiagnostics"] = api.filter_diagnostics(
@@ -65,27 +67,12 @@ return lib.module.create({
               -- quotePreference = "auto",
               -- useLabelDetailsInCompletionEntries = true,
             },
-            tsserver_format_options = {
-              -- indentSwitchCase = true,
-              -- insertSpaceAfterCommaDelimiter = true,
-              -- insertSpaceAfterConstructor = false,
-              -- insertSpaceAfterFunctionKeywordForAnonymousFunctions = true,
-              -- insertSpaceAfterKeywordsInControlFlowStatements = true,
-              -- insertSpaceAfterOpeningAndBeforeClosingEmptyBraces = true,
-              -- insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces = false,
-              -- insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = true,
-              -- insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets = false,
-              -- insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis = false,
-              -- insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces = false,
-              -- insertSpaceAfterSemicolonInForStatements = true,
-              -- insertSpaceAfterTypeAssertion = false,
-              -- insertSpaceBeforeAndAfterBinaryOperators = true,
-              -- insertSpaceBeforeFunctionParenthesis = false,
-              -- placeOpenBraceOnNewLineForControlBlocks = false,
-              -- placeOpenBraceOnNewLineForFunctions = false,
-              -- semicolons = "ignore",
-            },
           },
+          -- TODO: export this to other modules
+          on_attach = function(client, bufnr)
+            require("twoslash-queries").attach(client, bufnr)
+            lib.map.map("n", "<leader>?", ":TwoslashQueriesInspect<CR>", { buffer = bufnr })
+          end,
         })
 
         vim.api.nvim_exec_autocmds("FileType", {})
@@ -93,13 +80,16 @@ return lib.module.create({
     },
     {
       "axelvc/template-string.nvim",
-      ft = {
-        "typescript",
-        "typescriptreact",
-        "javascript",
-        "javascriptreact",
-      },
+      ft = filetypes,
       opts = {},
+    },
+    {
+      "marilari88/twoslash-queries.nvim",
+      ft = filetypes,
+      opts = {
+        highlight = "Type",
+        multi_line = true,
+      },
     },
   },
 })

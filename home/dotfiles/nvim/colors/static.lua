@@ -1,6 +1,6 @@
 local colors = {
   -- PATCH_OPEN
-Normal = {fg = "#A7AABD", bg = "#20212A"},
+Normal = {fg = "#A7AABD"},
 ["@text"] = {link = "Normal"},
 ["@text.literal.markdown"] = {link = "Normal"},
 Boolean = {fg = "#CEA700"},
