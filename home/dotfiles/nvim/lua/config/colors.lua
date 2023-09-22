@@ -109,7 +109,7 @@ colors.slang = {
     label = colors.yellow.lighten(20).saturate(30), -- "#c881de",
     label_marker = colors.common.comment,
   },
-  label = colors.yellow.lighten(20).saturate(30),
+  label = colors.yellow,
 }
 
 colors.rainbow = {

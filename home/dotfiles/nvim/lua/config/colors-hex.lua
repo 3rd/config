@@ -71,7 +71,7 @@ return {
       three = "#E38FFF",
       two = "#C08FFF"
     },
-    label = "#F4AD67",
+    label = "#EB9947",
     link = {
       external = "#5db4e3",
       internal = "#5BC0CD"

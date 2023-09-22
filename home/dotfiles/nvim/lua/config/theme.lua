@@ -423,6 +423,7 @@ local theme = lush(function(injected)
     sym("@slang.section")({ fg = colors.slang.section }),
     sym("@slang.banner")({ bg = colors.slang.banner.bg, fg = colors.slang.banner.fg }),
     sym("@slang.task_default")({}),
+    sym("@slang.task_marker_default")({ fg = colors.slang.task.done }),
     sym("@slang.task_active")({ fg = colors.slang.task.active }),
     sym("@slang.task_done")({ fg = colors.slang.task.done }),
     sym("@slang.task_cancelled")({ fg = colors.slang.task.cancelled }),
