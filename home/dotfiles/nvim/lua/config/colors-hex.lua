@@ -1,43 +1,44 @@
 return {
-  background = "#20212A",
-  blue = "#3DB8F5",
+  background = "#1E2029",
+  blue = "#38B9FA",
   common = {
-    boolean = "#CEA700",
-    builtin = "#E6687B",
-    comment = "#6A6A6A",
-    conditional = "#B18CE7",
-    constant = "#A7AABD",
-    constructor = "#49C5F8",
-    delimiter = "#5E5E5E",
-    field = "#888FB3",
-    ["function"] = "#49C5F8",
-    identifier = "#A7AABD",
-    keyword = "#B18CE7",
-    macro = "#BC8EC6",
-    number = "#CEA700",
-    operator = "#C4639B",
-    parameter = "#CD7C54",
-    property = "#8D90A2",
-    ["repeat"] = "#B18CE7",
-    special_keyword = "#C297FF",
-    string = "#97C75B",
-    type = "#68A9A7"
+    boolean = "#EC79C6",
+    builtin = "#D65C66",
+    comment = "#717AA8",
+    conditional = "#BF93EC",
+    constant = "#EC79C6",
+    constructor = "#54BEF2",
+    delimiter = "#68719C",
+    field = "#9DA8E2",
+    ["function"] = "#38B9FA",
+    identifier = "#C2C9F0",
+    keyword = "#BF93EC",
+    macro = "#BF93EC",
+    number = "#EC79C6",
+    operator = "#6878CA",
+    parameter = "#EB9947",
+    property = "#9DA8E2",
+    ["repeat"] = "#BF93EC",
+    special_keyword = "#BF93EC",
+    string = "#99D65C",
+    type = "#3CDDDD"
   },
-  cyan = "#52E0E0",
-  foreground = "#A7AABD",
-  green = "#8CD147",
+  cyan = "#3CDDDD",
+  foreground = "#C2C9F0",
+  green = "#99D65C",
   indigo = "#BF80FF",
   magenta = "#F075C7",
+  none = "NONE",
   orange = "#F67E55",
   pink = "#EC79C6",
   rainbow = {
-    blue = "#4CA8D6",
-    cyan = "#5CC7C7",
-    green = "#85B851",
-    orange = "#DB8061",
-    red = "#BF636B",
-    violet = "#DA7CBB",
-    yellow = "#E3BE72"
+    blue = "#47819E",
+    cyan = "#4B8686",
+    green = "#738E57",
+    orange = "#AA6650",
+    red = "#8E575C",
+    violet = "#AE6194",
+    yellow = "#97734E"
   },
   red = "#D65C66",
   slang = {
@@ -48,16 +49,16 @@ return {
     bold = "#C1D1FF",
     code = {
       block = {
-        background = "#2A2C36",
-        content = "#BDC7EE",
-        language = "#6D7187",
-        marker = "#585B6E"
+        background = "#272935",
+        content = "#C2C9F0",
+        language = "#575C75",
+        marker = "#43475B"
       },
       inline = "#F09070"
     },
     datetime = "#FC824A",
     document = {
-      meta = "#FBCB6A",
+      meta = "#EB9947",
       meta_field = "#F075C7",
       meta_field_key = "#EC79C6",
       title = "#F67E55"
@@ -70,21 +71,21 @@ return {
       three = "#E38FFF",
       two = "#C08FFF"
     },
-    label = "#FBCB6A",
+    label = "#F4AD67",
     link = {
       external = "#5db4e3",
       internal = "#5BC0CD"
     },
     list_item = {
-      label = "#FBCB6A",
-      label_marker = "#6A6A6A",
-      marker = "#626368"
+      label = "#F4AD67",
+      label_marker = "#717AA8",
+      marker = "#737891"
     },
-    number = "#CEA700",
+    number = "#71c9f6",
     section = "#04D3D0",
-    string = "#97C75B",
+    string = "#4efa8e",
     tag = {
-      context = "#FBCB6A",
+      context = "#EB9947",
       danger = {
         bg = "#C3423F",
         fg = "#ffffff"
@@ -95,24 +96,24 @@ return {
       positive = "#9BC53D"
     },
     task = {
-      active = "#52E0E0",
+      active = "#3CDDDD",
       cancelled = "#fa4040",
-      default = "#80859F",
-      done = "#6A6A6A",
+      default = "#7C8DDE",
+      done = "#717AA8",
       schedule = "#FF8000",
       session = "#7378a5"
     },
     ticket = "#fa89f6"
   },
   ui = {
-    green = "#8CD147",
+    green = "#99D65C",
     red = "#D65C66",
-    subtext0 = "#9497AE",
-    subtext1 = "#80859F",
-    surface0 = "#323440",
-    surface1 = "#434655",
-    surface2 = "#585B6E",
-    yellow = "#FBCB6A"
+    subtext0 = "#A1ADE8",
+    subtext1 = "#7C8DDE",
+    surface0 = "#323543",
+    surface1 = "#3B3E4F",
+    surface2 = "#43475B",
+    yellow = "#EB9947"
   },
-  yellow = "#FBCB6A"
+  yellow = "#EB9947"
 }

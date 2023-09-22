@@ -3,6 +3,18 @@ local folding = require("syslang/folding")
 
 local task_was_just_completed_and_moved = false
 
+---@param node TSNode
+---@param type string
+local closest = function(node, type)
+  if node:type() == type then return node end
+  local parent = node:parent()
+  while parent do
+    if parent:type() == type then return parent end
+    parent = parent:parent()
+  end
+  return nil
+end
+
 local setup_options = function()
   vim.opt_local.foldlevel = 999
   vim.opt_local.wrap = false
@@ -352,12 +364,33 @@ local handle_set_schedule = function()
 end
 
 local handle_cr = function()
-  -- local parser = vim.treesitter.get_parser()
-  -- local root = parser:parse()[1]:root()
-  --
-  -- local position = vim.api.nvim_win_get_cursor(0)
-  -- local line_length = #vim.fn.getline(position[1])
-  -- local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
+  local parser = vim.treesitter.get_parser()
+  local root = parser:parse()[1]:root()
+
+  local position = vim.api.nvim_win_get_cursor(0)
+  local line_length = #vim.fn.getline(position[1])
+  local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
+  if not node then return end
+
+  -- if on an internal_link node capture internal_link_target
+  local internal_link = closest(node, "internal_link")
+  if internal_link then
+    local target = lib.ts.find_child(internal_link, "internal_link_target", true)
+    if not target then return end
+    local target_text = vim.treesitter.get_node_text(target, 0)
+    if not target_text then return end
+
+    -- node name transforms
+    target_text = string.gsub(target_text, "%s+", "-")
+    target_text = string.lower(target_text)
+
+    local command =
+      string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
+    local path = lib.shell.exec(command)
+    vim.cmd(string.format("e %s", vim.fn.fnameescape(path)))
+
+    return
+  end
 end
 
 local setup_mappings = function()

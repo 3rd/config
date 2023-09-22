@@ -1,4 +1,5 @@
 local cmp_sources = {
+  { name = "syslang", keyword_length = 1 },
   { name = "nvim_lsp_signature_help" },
   { name = "luasnip" },
   { name = "nvim_lsp" },
@@ -30,8 +31,8 @@ local cmp_sources = {
     entry_filter = function()
       return false
     end,
+    { name = "emoji", keyword_length = 1 },
   },
-  { name = "emoji", keyword_length = 1 },
 }
 
 -- disable treesitter source for syslang buffers
@@ -68,6 +69,9 @@ end
 local setup = function()
   local cmp = require("cmp")
   local luasnip = require("luasnip")
+
+  local syslang_source = require("modules/wiki/cmp")
+  cmp.register_source("syslang", syslang_source.new())
 
   local kind_icons = {
     -- base
@@ -182,7 +186,7 @@ local setup = function()
       ["<CR>"] = cmp.mapping.confirm({ select = false }),
       ["<Tab>"] = cmp.mapping(function(fallback)
         if cmp.visible() then
-          cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
+          cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
         elseif luasnip.jumpable(1) then
           luasnip.jump(1)
         else
@@ -191,7 +195,7 @@ local setup = function()
       end, { "i", "s" }),
       ["<S-Tab>"] = cmp.mapping(function(fallback)
         if cmp.visible() then
-          cmp.select_prev_item()
+          cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })
         elseif luasnip.jumpable(-1) then
           luasnip.jump(-1)
         else

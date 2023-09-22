@@ -9,8 +9,8 @@ local colors = require("config/colors")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    Normal({ fg = colors.foreground }), -- Normal text
+    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -306,7 +306,7 @@ local theme = lush(function(injected)
     -- tsx
     sym("@constructor.tsx")({}),
     sym("@tag.tsx")({ SpecialKeyword }),
-    sym("@tag.attribute.tsx")({ sym("@parameter") }),
+    sym("@tag.attribute.tsx")({ sym("Special") }),
 
     -- nvim-cmp
     CmpItemAbbr({ fg = colors.foreground }),
@@ -370,6 +370,7 @@ local theme = lush(function(injected)
     NvimTreeSymlink({ fg = colors.purple }),
     NvimTreeFolderIcon({ fg = colors.blue.darken(10) }),
     NvimTreeFolderName({ fg = colors.foreground }),
+    -- NvimTreeFileIcon({ fg = colors.orange }),
 
     -- gitsigns
     GitSignsAdd({ fg = colors.green.darken(20) }),
@@ -447,6 +448,8 @@ local theme = lush(function(injected)
     sym("@slang.list_item_label")({ fg = colors.slang.list_item.label, gui = "italic" }),
     sym("@slang.list_item_label_marker")({ fg = colors.slang.list_item.label_marker }),
     sym("@slang.image")({ fg = colors.slang.label }),
+    sym("@text.literal.syslang")({ fg = colors.foreground }),
+    sym("@slang.internal_link")({ fg = colors.slang.link.internal, gui = "undercurl" }),
   }
 end)
 

@@ -96,6 +96,7 @@ local function layout()
 end
 
 return lib.module.create({
+  enabled = false,
   name = "alpha",
   plugins = {
     {

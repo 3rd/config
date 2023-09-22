@@ -31,7 +31,7 @@ local setup_tree = function()
     },
     git = {
       enable = true,
-      ignore = true,
+      ignore = false,
       timeout = 500,
     },
     view = {
