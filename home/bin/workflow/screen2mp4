@@ -9,12 +9,6 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
 
   OUTPUT="${1%.mp4}.mp4"
 
-  # trap '' INT
-  # ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" -pix_fmt yuv420p -preset ultrafast "$OUTPUT.mkv"
-  # trap - INT
-  # ffmpeg -i "$OUTPUT.mkv" -c copy "$OUTPUT"
-  # rm "$OUTPUT.mkv"
-
   while true; do
     read -r -p "Record audio? [y/N] " audio
     case $audio in
@@ -56,15 +50,15 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   trap '' INT
   echo "Recording..."
   if [ ${#audio[@]} -gt 0 ]; then
-    ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s """${W}x$H" -i ":0.0+""$X,$Y" -pix_fmt yuv420p -preset ultrafast """$OUTPUT".mkv
+    ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" "${audio[@]}" -preset ultrafast -pix_fmt yuv420p "$OUTPUT".mkv
   else
-    ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s """${W}x$H" -i ":0.0+""$X,$Y" -pix_fmt yuv420p -preset ultrafast """$OUTPUT".mkv """${audio[@]}"
+    ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" -preset ultrafast -pix_fmt yuv420p "$OUTPUT".mkv
   fi
   trap - INT
   if [ ${#audio_conv[@]} -gt 0 ]; then
-    ffmpeg -i """$OUTPUT".mkv -c copy -movflags +faststart """$OUTPUT"
+    ffmpeg -i "$OUTPUT".mkv -c copy "${audio_conv[@]}" -movflags +faststart "$OUTPUT"
   else
-    ffmpeg -i """$OUTPUT".mkv -c copy "${audio_conv[@]}" -movflags +faststart """$OUTPUT"
+    ffmpeg -i "$OUTPUT".mkv -c copy -movflags +faststart "$OUTPUT"
   fi
   rm """$OUTPUT".mkv
   while true; do

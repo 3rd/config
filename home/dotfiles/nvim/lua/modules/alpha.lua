@@ -142,7 +142,10 @@ return lib.module.create({
                   -- 1. delay and start up instantly when restoring a session, the image will be rendered after the dashboard
                   -- 2. don't relay, the image will be rendered at the same time as the dashboard, but the startup will be delayed
                   local with_delay = false
-                  local handler = with_delay and vim.defer_fn
+                  local handler = with_delay
+                      and function(fn)
+                        vim.defer_fn(fn, 0)
+                      end
                     or function(fn)
                       return fn()
                     end
