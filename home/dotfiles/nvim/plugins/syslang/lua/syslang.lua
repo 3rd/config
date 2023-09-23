@@ -368,11 +368,17 @@ local handle_cr = function()
   local root = parser:parse()[1]:root()
 
   local position = vim.api.nvim_win_get_cursor(0)
-  local line_length = #vim.fn.getline(position[1])
-  local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
+  local node = root:named_descendant_for_range(position[1] - 1, position[2], position[1] - 1, position[2])
   if not node then return end
 
-  -- if on an internal_link node capture internal_link_target
+  -- external link
+  if node:type() == "external_link" then
+    local url = vim.treesitter.get_node_text(node, 0)
+    lib.shell.open(url)
+    return
+  end
+
+  -- internal link
   local internal_link = closest(node, "internal_link")
   if internal_link then
     local target = lib.ts.find_child(internal_link, "internal_link_target", true)

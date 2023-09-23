@@ -19,7 +19,6 @@ source.new = function()
 end
 
 function source.is_available()
-  log("syslang is available", vim.bo.filetype == "syslang")
   return vim.bo.filetype == "syslang"
 end
 
@@ -46,8 +45,6 @@ function source.complete(self, _, callback)
   else
     items = self.cache[bufnr]
   end
-
-  log("syslang completion items", items)
 
   callback({ items = items or {}, isIncomplete = false })
 end
