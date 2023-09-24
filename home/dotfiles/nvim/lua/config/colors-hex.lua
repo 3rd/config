@@ -100,7 +100,7 @@ return {
       cancelled = "#fa4040",
       default = "#7C8DDE",
       done = "#717AA8",
-      schedule = "#FF8000",
+      schedule = "#7378a5",
       session = "#7378a5"
     },
     ticket = "#fa89f6"

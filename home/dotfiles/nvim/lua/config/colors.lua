@@ -93,7 +93,7 @@ colors.slang = {
     done = colors.common.comment,
     cancelled = "#fa4040",
     session = "#7378a5",
-    schedule = "#FF8000",
+    schedule = "#7378a5",
   },
   tag = {
     hash = "#5BC0EB",

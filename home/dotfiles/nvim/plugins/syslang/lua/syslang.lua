@@ -397,6 +397,41 @@ local handle_cr = function()
 
     return
   end
+
+  -- fallback: if there's a single link on the line, open it
+  local leftmost_node = node
+  while leftmost_node:parent() do
+    local parent = leftmost_node:parent()
+    if not parent then break end
+    if parent:range() ~= node:range() then break end
+    leftmost_node = parent
+  end
+  local leftmost_internal_links = lib.ts.find_children(leftmost_node, "internal_link", true)
+  if #leftmost_internal_links == 1 then
+    local leftmost_internal_link = leftmost_internal_links[1]
+    local target = lib.ts.find_child(leftmost_internal_link, "internal_link_target", true)
+    if not target then return end
+    local target_text = vim.treesitter.get_node_text(target, 0)
+    if not target_text then return end
+
+    -- node name transforms
+    target_text = string.gsub(target_text, "%s+", "-")
+    target_text = string.lower(target_text)
+
+    local command =
+      string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
+    local path = lib.shell.exec(command)
+    vim.cmd(string.format("e %s", vim.fn.fnameescape(path)))
+
+    return
+  end
+  local external_links = lib.ts.find_children(leftmost_node, "external_link", true)
+  if #external_links == 1 then
+    local external_link = external_links[1]
+    local url = vim.treesitter.get_node_text(external_link, 0)
+    lib.shell.open(url)
+    return
+  end
 end
 
 local setup_mappings = function()
