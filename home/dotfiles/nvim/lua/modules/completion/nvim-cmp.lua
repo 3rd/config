@@ -116,7 +116,12 @@ local setup = function()
   end
 
   local config = {
-    auto_select = true,
+    enabled = function()
+      -- disable completion in comments
+      local context = require("cmp.config.context")
+      return not context.in_treesitter_capture("comment") and not context.in_syntax_group("Comment")
+    end,
+    auto_select = false,
     formatting = {
       format = function(entry, vim_item)
         if entry.source.name == "path" then
@@ -177,16 +182,12 @@ local setup = function()
         luasnip.lsp_expand(args.body)
       end,
     },
-    enabled = function()
-      -- disable completion in comments
-      local context = require("cmp.config.context")
-      return not context.in_treesitter_capture("comment") and not context.in_syntax_group("Comment")
-    end,
+    preselect = cmp.PreselectMode.None,
     mapping = {
       ["<CR>"] = cmp.mapping.confirm({ select = false }),
       ["<Tab>"] = cmp.mapping(function(fallback)
         if cmp.visible() then
-          cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
+          cmp.select_next_item({ behavior = cmp.SelectBehavior.Replace, select = false })
         elseif luasnip.jumpable(1) then
           luasnip.jump(1)
         else
@@ -195,14 +196,14 @@ local setup = function()
       end, { "i", "s" }),
       ["<S-Tab>"] = cmp.mapping(function(fallback)
         if cmp.visible() then
-          cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })
+          cmp.select_prev_item({ behavior = cmp.SelectBehavior.Replace, select = false })
         elseif luasnip.jumpable(-1) then
           luasnip.jump(-1)
         else
           return fallback()
         end
       end, { "i", "s" }),
-      ["<C-Space>"] = cmp.mapping(cmp.mapping.complete({}), { "i", "c" }),
+      ["<C-Space>"] = cmp.mapping(cmp.mapping.complete(), { "i", "c" }),
       ["<C-d>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
       ["<C-u>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
     },
@@ -240,7 +241,6 @@ local setup = function()
         cmp.config.compare.kind,
       },
     },
-    preselect = cmp.PreselectMode.None,
   }
 
   cmp.setup(config)
