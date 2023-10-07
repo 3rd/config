@@ -9,38 +9,28 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
 
   OUTPUT="${1%.mp4}.mp4"
 
-  while true; do
-    read -r -p "Record audio? [y/N] " audio
-    case $audio in
+  read -r -p "Record audio? [y/N] " audio
+  case $audio in
+    [Yy]*)
+      source=$(pactl list sources short | grep bluez | awk '{print $1}')
+      audio=(-f pulse -ac 2 -i "$source")
+      audio_conv=(-c:a aac)
+      ;;
+    *)
+      audio=()
+      ;;
+  esac
+
+  if [ ${#audio[@]} -eq 0 ]; then
+    read -r -p "Record microphone? [y/N] " mic
+    case $mic in
       [Yy]*)
-        source=$(pactl list sources short | grep bluez | awk '{print $1}')
-        audio=(-f pulse -ac 2 -i "$source")
+        audio=(-f pulse -ac 2 -i default)
         audio_conv=(-c:a aac)
-        break
         ;;
-      *)
-        break
-        ;;
+      *) ;;
     esac
-  done
-
-  if [ ${#audio[@]} -gt 0 ]; then
-    while true; do
-      read -r -p "Record microphone? [y/N] " mic
-      case $mic in
-        [Yy]*)
-          audio=(-f pulse -ac 2 -i default)
-          audio_conv=(-c:a aac)
-          break
-          ;;
-        *)
-          break
-          ;;
-      esac
-    done
   fi
-
-  echo "${#audio[@]}"
 
   slop=$(slop -f "%x %y %w %h %g %i") || exit 1
   IFS=$' ' read -r X Y W H _ < <(echo """$slop")
@@ -49,9 +39,11 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
 
   trap '' INT
   echo "Recording..."
+
   if [ ${#audio[@]} -gt 0 ]; then
     ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" "${audio[@]}" -preset ultrafast -pix_fmt yuv420p "$OUTPUT".mkv
   else
+    echo "$W" "$H" "$X" "$Y" "$OUTPUT"
     ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" -preset ultrafast -pix_fmt yuv420p "$OUTPUT".mkv
   fi
   trap - INT
@@ -60,12 +52,12 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   else
     ffmpeg -i "$OUTPUT".mkv -c copy -movflags +faststart "$OUTPUT"
   fi
-  rm """$OUTPUT".mkv
+  rm "$OUTPUT".mkv
   while true; do
     read -r -p "Preview? [y/N] " preview
     case $preview in
       [Yy]*)
-        mpv """$OUTPUT"
+        mpv "$OUTPUT"
         break
         ;;
       *)
