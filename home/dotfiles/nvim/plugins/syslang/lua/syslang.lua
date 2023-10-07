@@ -132,10 +132,11 @@ local transition_task_active_to_done = function(task_node)
   -- check index and
   if not index_of_task then return error("index_of_task is nil") end
 
-  -- bail if first or preceded by a done task and auto-fold
+  -- bail if first or preceded by a done task
   if last_done_task_index == index_of_task - 1 or (last_done_task_index == nil and first_task_index == nil) then
-    --   local row = task_node:range() + 1
-    --   delayed_fold_close(row)
+    -- -- auto-fold
+    -- local row = task_node:range() + 1
+    -- delayed_fold_close(row)
     return
   end
 
@@ -469,7 +470,13 @@ local function fold_tasks()
     local is_folded = vim.fn.foldclosed(row + 1) ~= -1
     local children = lib.ts.find_children(node, nil)
     local has_children = #children > 2
-    if has_fold and has_children and not is_folded then vim.api.nvim_command("silent! " .. row + 1 .. "foldclose") end
+    if has_fold and has_children and not is_folded then
+      -- how it should work: vim.api.nvim_command("silent! " .. row + 1 .. "foldclose")
+      -- but both this and "<range>foldd zc" will make neovim crash with "corrupted doubly-linked list"
+      -- so we'll do it the dumb way
+      vim.api.nvim_win_set_cursor(0, { row + 1, 0 })
+      vim.api.nvim_command("normal! zc")
+    end
   end
   vim.fn.winrestview(view)
 end
@@ -482,9 +489,9 @@ local setup = function()
   setup_mappings()
   folding.setup()
 
-  vim.schedule_wrap(function()
+  vim.schedule(function()
     fold_tasks()
-  end)()
+  end)
 
   local group = vim.api.nvim_create_augroup("syslang:tasks", { clear = true })
   local bufnr = vim.api.nvim_get_current_buf()

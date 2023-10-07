@@ -10,8 +10,8 @@ local setup_git_messenger = function()
     group = vim.api.nvim_create_augroup("git-messenger", {}),
     pattern = "gitmessengerpopup",
     callback = function()
-      lib.map.map("n", "<C-o>", "o", { buffer = true })
-      lib.map.map("n", "<C-i>", "O", { buffer = true })
+      lib.map.map("n", "<C-o>", ":normal o<cr>", { buffer = true, desc = "Navigate to the previous commit" })
+      lib.map.map("n", "<C-i>", ":normal O<cr>", { buffer = true, desc = "Navigate to the next commit" })
     end,
   })
 end
@@ -20,7 +20,8 @@ end
 local setup_git_signs = function()
   local gitsigns = require("gitsigns")
 
-  -- if lib.path.cwd_is_git_repo() then
+  -- if not lib.path.cwd_is_git_repo() then return end
+
   gitsigns.setup({
     signcolumn = true,
     numhl = false,
@@ -77,7 +78,7 @@ local setup_diffview = function()
 
   require("diffview").setup({
     diff_binaries = false, -- Show diffs for binaries
-    enhanced_diff_hl = false, -- See ':h diffview-config-enhanced_diff_hl'
+    enhanced_diff_hl = true, -- See ':h diffview-config-enhanced_diff_hl'
     git_cmd = { "git" }, -- The git executable followed by default args.
     use_icons = true, -- Requires nvim-web-devicons
     watch_index = true, -- Update views and index buffers when the git index changes.
@@ -267,18 +268,18 @@ return lib.module.create({
     {
       "NeogitOrg/neogit",
       dependencies = "nvim-lua/plenary.nvim",
-      config = true,
       cmd = { "Neogit" },
     },
     {
       "sindrets/diffview.nvim",
-      event = { "CursorHold", "CursorHoldI" },
+      -- event = { "VeryLazy" },
+      cmd = { "DiffviewOpen", "DiffviewFileHistory" },
       dependencies = { "nvim-lua/plenary.nvim" },
       config = setup_diffview,
     },
   },
   mappings = {
-    { "n", "<leader>b", ":GitMessenger<cr>" },
-    { "n", "<leader>g", ":Neogit<cr>" },
+    { "n", "<leader>b", ":GitMessenger<cr>", { desc = "Blame line" } },
+    { "n", "<leader>g", ":DiffviewOpen<cr>", { desc = "Open diff view " } },
   },
 })

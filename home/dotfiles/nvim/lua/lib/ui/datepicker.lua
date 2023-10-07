@@ -8,10 +8,10 @@ local function create_float_win(height, width)
     height = height,
     border = "single",
   })
-  vim.api.nvim_win_set_option(win, "number", false)
-  vim.api.nvim_win_set_option(win, "relativenumber", false)
-  vim.api.nvim_win_set_option(win, "signcolumn", "no")
-  vim.api.nvim_win_set_option(win, "sidescrolloff", 0)
+  vim.api.nvim_set_option_value("number", false, { win = win })
+  vim.api.nvim_set_option_value("relativenumber", false, { win = win })
+  vim.api.nvim_set_option_value("signcolumn", "no", { win = win })
+  vim.api.nvim_set_option_value("sidescrolloff", 0, { win = win })
   return buf, win
 end
 

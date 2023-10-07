@@ -79,6 +79,6 @@ return lib.module.create({
     },
   },
   mappings = {
-    { "n", "<leader>p", "<cmd>lua require('copilot.panel').open()<cr>" },
+    { "n", "<leader>p", "<cmd>lua require('copilot.panel').open()<cr>", { desc = "Open Copilot panel" } },
   },
 })

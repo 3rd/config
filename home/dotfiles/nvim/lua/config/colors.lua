@@ -3,7 +3,7 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(230, 15, 14),
+  background = hsl(230, 15, 15),
   foreground = hsl(230, 60, 85),
   blue = hsl(200, 95, 60),
   cyan = hsl(180, 70, 55),
@@ -11,7 +11,7 @@ local colors = {
   indigo = hsl(270, 100, 75),
   magenta = hsl(320, 80, 70),
   orange = hsl(15, 90, 65),
-  pink = hsl(320, 75, 70),
+  pink = hsl(320, 60, 70),
   red = hsl(355, 60, 60),
   yellow = hsl(30, 80, 60),
 }
@@ -63,7 +63,7 @@ colors.slang = {
   code = {
     inline = colors.orange.desaturate(10).lighten(10),
     block = {
-      background = colors.background.lighten(5),
+      background = colors.background.lighten(10),
       marker = colors.background.lighten(20),
       language = colors.background.lighten(30),
       content = colors.foreground,

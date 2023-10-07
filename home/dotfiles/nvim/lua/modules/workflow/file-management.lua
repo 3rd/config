@@ -36,7 +36,6 @@ local setup_tree = function()
     },
     view = {
       width = 50,
-      hide_root_folder = false,
       side = "left",
       number = false,
       relativenumber = false,

@@ -158,8 +158,5 @@ return lib.module.create({
   mappings = {
     { "n", "<M-n>", handle_select },
     { "n", "<M-m>", handle_search },
-    --  TODO: only in slang buffers
-    { "n", "<leader>r", handle_navigate_to_symbol },
-    { "n", "<leader>p", handle_paste },
   },
 })

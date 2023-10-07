@@ -9,7 +9,7 @@ return {
   modeline = false,
   mouse = "nv",
   secure = true,
-  shell = "bash",
+  shell = vim.fn.exepath("bash"),
   shortmess = "filnxtToOFcs",
   termguicolors = true,
   timeout = true,
@@ -37,6 +37,7 @@ return {
   -- windows
   splitbelow = true,
   splitright = true,
+  equalalways = false,
   splitkeep = "screen",
   -- text editing
   autoindent = true,

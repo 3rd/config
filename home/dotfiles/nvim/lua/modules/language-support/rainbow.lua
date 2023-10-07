@@ -1,6 +1,6 @@
 return lib.module.create({
   -- https://github.com/HiPhish/rainbow-delimiters.nvim/issues/36
-  enabled = false,
+  -- enabled = false,
   name = "misc/rainbow",
   plugins = {
     {

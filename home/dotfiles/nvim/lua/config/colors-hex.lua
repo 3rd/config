@@ -1,12 +1,12 @@
 return {
-  background = "#1E2029",
+  background = "#21222C",
   blue = "#38B9FA",
   common = {
-    boolean = "#EC79C6",
+    boolean = "#E085C2",
     builtin = "#D65C66",
     comment = "#717AA8",
     conditional = "#BF93EC",
-    constant = "#EC79C6",
+    constant = "#E085C2",
     constructor = "#54BEF2",
     delimiter = "#68719C",
     field = "#9DA8E2",
@@ -14,7 +14,7 @@ return {
     identifier = "#C2C9F0",
     keyword = "#BF93EC",
     macro = "#BF93EC",
-    number = "#EC79C6",
+    number = "#E085C2",
     operator = "#6878CA",
     parameter = "#EB9947",
     property = "#9DA8E2",
@@ -30,7 +30,7 @@ return {
   magenta = "#F075C7",
   none = "NONE",
   orange = "#F67E55",
-  pink = "#EC79C6",
+  pink = "#E085C2",
   rainbow = {
     blue = "#47819E",
     cyan = "#4B8686",
@@ -49,10 +49,10 @@ return {
     bold = "#C1D1FF",
     code = {
       block = {
-        background = "#272935",
+        background = "#343746",
         content = "#C2C9F0",
-        language = "#575C75",
-        marker = "#43475B"
+        language = "#595E78",
+        marker = "#45495E"
       },
       inline = "#F09070"
     },
@@ -60,7 +60,7 @@ return {
     document = {
       meta = "#EB9947",
       meta_field = "#F075C7",
-      meta_field_key = "#EC79C6",
+      meta_field_key = "#E085C2",
       title = "#F67E55"
     },
     heading = {
@@ -110,9 +110,9 @@ return {
     red = "#D65C66",
     subtext0 = "#A1ADE8",
     subtext1 = "#7C8DDE",
-    surface0 = "#323543",
-    surface1 = "#3B3E4F",
-    surface2 = "#43475B",
+    surface0 = "#343746",
+    surface1 = "#3D4052",
+    surface2 = "#45495E",
     yellow = "#EB9947"
   },
   yellow = "#EB9947"
