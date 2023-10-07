@@ -1,4 +1,3 @@
-{ config, lib, pkgs, ... }:
 let
   chrome = "google-chrome.desktop";
   zathura = "org.pwmt.zathura.desktop";
@@ -7,7 +6,7 @@ in {
     enable = true;
     defaultApplications = {
       # inode
-      "inode/directory" = "org.kde.dolphin.desktop";
+      "inode/directory" = "pcmanfm-qt.desktop";
       # text
       "text/plain" = "nvim.desktop";
       # web
@@ -22,18 +21,20 @@ in {
       "x-scheme-handler/http" = chrome;
       "x-scheme-handler/https" = chrome;
       "x-scheme-handler/chrome" = chrome;
+      "x-scheme-handler/unknown" = chrome;
       # mail
       "x-scheme-handler/mailto" = "org.gnome.Evolution.desktop";
       # telegram
       "x-scheme-handler/tg" = "telegramdesktop.desktop";
       # media
-      "image/*" = "imv-folder.desktop";
-      "video/*" = "umpv.desktop";
+      "image/png" = "qimgv.desktop";
+      "image/jpeg" = "qimgv.desktop";
+      "image/gif" = "qimgv.desktop";
       # archives
       "application/zip" = "org.gnome.FileRoller.desktop";
       "application/rar" = "org.gnome.FileRoller.desktop";
       "application/7z" = "org.gnome.FileRoller.desktop";
-      "application/*tar" = "org.gnome.FileRoller.desktop";
+      "application/tar" = "org.gnome.FileRoller.desktop";
       # zathura
       "application/pdf" = zathura;
       "application/postscript" = zathura;

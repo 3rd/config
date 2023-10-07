@@ -1,50 +1,52 @@
-{ lib, config, pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   nixpkgs.config = { allowUnfree = true; };
 
-  programs.home-manager.enable = true;
-  news.display = "silent";
-
   imports = [
-    ./data-processing
-    ./development
-    ./misc
-    ./toolkit
-    ./workflow
-    ./work
+    ./services/polybar
+    ./services/dunst.nix
+    ./services/i3.nix
+    ./services/picom.nix
+    ./services/syncthing.nix
 
-    ./neovim.nix
-    ./atuin.nix
-    ./bat.nix
-    ./custom-vault
-    ./custom-wiki.nix
-    ./direnv.nix
-    ./dunst.nix
-    ./exa.nix
-    ./fish.nix
-    ./fzf.nix
-    ./git
-    ./golang
-    ./gpg.nix
-    ./gtk.nix
-    ./kitty.nix
-    ./lock.nix
-    ./mime.nix
-    ./navi.nix
-    ./newsboat
+    ./programs/bat.nix
+    ./programs/direnv.nix
+    ./programs/eza.nix
+    ./programs/fish.nix
+    ./programs/fzf.nix
+    ./programs/git
+    ./programs/kitty.nix
+    ./programs/navi.nix
+    ./programs/neovim.nix
+    ./programs/newsboat
+    ./programs/rofi.nix
+    ./programs/starship.nix
+    ./programs/tmux
+    ./programs/urxvt.nix
+    ./programs/zathura.nix
+    ./programs/zoxide.nix
+
+    ./golang.nix
     ./nodejs.nix
-    ./private.nix
-    ./remarkable.nix
-    ./rofi.nix
     ./rust.nix
-    ./starship.nix
-    ./syncthing.nix
-    ./tmux
-    ./zathura.nix
-    ./zoxide.nix
-    # ./wezterm.nix
+
+    ./gtk.nix
+    ./mime.nix
+    ./remarkable.nix
+    ./utilities.nix
+    ./xresources.nix
+
+    ./custom/work
+    ./custom/journal.nix
+    ./custom/lock.nix
+    ./custom/private.nix
+    ./custom/vault.nix
+    ./custom/wiki.nix
+
   ];
+
+  programs.home-manager.enable = true;
 
   home.sessionPath = [ "$HOME/.local/bin" ];
   home.sessionVariables = {
@@ -55,25 +57,7 @@
 
   # https://github.com/NixOS/nixpkgs/issues/196651
   manual.manpages.enable = false;
-
-  # https://github.com/NixOS/nixpkgs/issues/201324
-  # nixpkgs.overlays = [
-  #   (self: super: {
-  #     gnomefix = self.gnome // {
-  #       gnome-keyring = super.gnome.gnome-keyring.override {
-  #         glib = self.glib.overrideAttrs (a: rec {
-  #           patches = a.patches ++ [
-  #             (super.fetchpatch {
-  #               url =
-  #                 "https://gitlab.gnome.org/GNOME/glib/-/commit/2a36bb4b7e46f9ac043561c61f9a790786a5440c.patch";
-  #               sha256 = "b77Hxt6WiLxIGqgAj9ZubzPWrWmorcUOEe/dp01BcXA=";
-  #             })
-  #           ];
-  #         });
-  #       };
-  #     };
-  #   })
-  # ];
+  news.display = "silent";
 
   xsession.profileExtra = ''
     systemctl --user import-environment

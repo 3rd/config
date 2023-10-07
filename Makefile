@@ -64,8 +64,11 @@ link: ## link configuration files
 	@echo " 🔥 Linking configuration for ${YELLOW}☯ $(HOSTNAME)${RESET} ${MAGENTA}($(UNAME))${RESET}"
 	$(call print_mod_start,Link)
 	$(call link,home/bin,~/.config/bin)
+	@mkdir -p ~/.local/share/fonts
 	$(call link,home/fonts,~/.local/share/fonts/custom)
 	$(call link,home/ssh,~/.ssh)
+	@mkdir -p ~/.config/tmux
+	$(call link,home/modules/programs/tmux/tmux.conf,~/.config/tmux/tmux.conf)
 	$(call linkdot,nvim,~/.config/nvim)
 	$(call linkdot,emacs,~/.emacs.d)
 	$(call linkdot,wezterm,~/.config/wezterm)

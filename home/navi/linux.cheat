@@ -18,3 +18,5 @@ journalctl --system -e
 # journal (user)
 journalctl --user -e
 
+# query mime handler
+XDG_UTILS_DEBUG_LEVEL=3 xdg-mime query default <mime-type>

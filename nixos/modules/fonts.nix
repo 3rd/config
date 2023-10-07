@@ -1,4 +1,4 @@
-{ config, pkgs, options, ... }:
+{ config, pkgs, ... }:
 
 {
   nixpkgs.config.joypixels.acceptLicense = true;

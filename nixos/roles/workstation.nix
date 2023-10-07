@@ -8,11 +8,12 @@
     # ../modules/packages/emacs.nix
     # ../modules/packages/neovim.nix
     # ../modules/packages/zig.nix
-    ../modules/packages/alien.nix
+    # ../modules/packages/alien.nix
     ../modules/services/docker.nix
     ../modules/services/syncthing.nix
     ../modules/services/tailscale.private.nix
     ../modules/security.private.nix
+    ../modules/services/ssh.nix
   ];
 
   hardware.enableAllFirmware = true;
@@ -67,7 +68,6 @@
   # packages
   environment.variables = {
     TERMINAL = "kitty";
-    EDITOR = "nvim";
     BROWSER = "google-chrome-stable";
   };
   environment.systemPackages = with pkgs; [
@@ -126,6 +126,7 @@
     inxi
     iotop
     jdk17
+    exiv2
     jless
     dbeaver
     cppcheck
@@ -158,6 +159,7 @@
     openssl
     openvpn
     p7zip
+    mprocs
     pandoc
     pass
     stripe-cli
@@ -190,6 +192,7 @@
     rustup
     s-tui
     selene
+    clang
     shellcheck
     shellharden
     shfmt
@@ -209,12 +212,12 @@
     sshfs
     sshuttle
     stable.openfortivpn
+    tmux
     tmuxp
     statix
     stress
     stylua
     terminal-typeracer
-    tmux
     lua-language-server
     tree
     tree-sitter
@@ -259,14 +262,13 @@
     gnome.gnome-font-viewer
     gnome.eog
     google-chrome
-    ueberzugpp
+    # ueberzugpp
     gparted
     hsetroot
     stable.insomnia
     keepassxc
     openai
     ksystemlog
-    lutris
     masterpdfeditor4
     quickemu
     spicy
@@ -291,10 +293,6 @@
     skypeforlinux
     slack
     stable.copyq
-    stable.smartgithg
-    steam
-    steam-run-native
-    steamcmd
     tdesktop
     veracrypt
     virt-manager
@@ -341,13 +339,6 @@
     };
   };
 
-  # ssh & gpg
-  services.openssh = {
-    enable = true;
-    # forwardX11 = true;
-    # gatewayPorts = "yes";
-  };
-  programs.ssh.setXAuthLocation = true;
   programs.gamemode.enable = true;
 
   environment.etc."issue.d/ip.issue".text = ''

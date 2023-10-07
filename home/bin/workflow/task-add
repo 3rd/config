@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-TEXT=$(yad --entry --text "Inbox entry:")
+TEXT=$(yad --entry --text "Inbox entry:" --width 600)
 DEST=~/brain/wiki/_inbox/tasks
 
 # https://stackoverflow.com/questions/3183444/check-for-valid-link-url
 regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
 
 if [ "$TEXT" != "" ]; then
-  DATE=$(date +%Y-%m-%d)
+  DATE=$(date "+%Y-%m-%d")
   ENTRY="$DATE: $TEXT"
 
   if [[ $TEXT =~ $regex ]]; then
