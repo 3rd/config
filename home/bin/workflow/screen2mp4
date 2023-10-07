@@ -43,7 +43,6 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   if [ ${#audio[@]} -gt 0 ]; then
     ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" "${audio[@]}" -preset ultrafast -pix_fmt yuv420p "$OUTPUT".mkv
   else
-    echo "$W" "$H" "$X" "$Y" "$OUTPUT"
     ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" -preset ultrafast -pix_fmt yuv420p "$OUTPUT".mkv
   fi
   trap - INT
