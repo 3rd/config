@@ -114,8 +114,8 @@
       "ctrl+7" = "goto_tab 7";
       # change font size
       "ctrl+shift+0" = "change_font_size all 8.8";
-      "ctrl+shift+minus" = "change_font_size all -0.1";
-      "ctrl+shift+equal" = "change_font_size all +0.1";
+      "ctrl+shift+minus" = "change_font_size all -0.05";
+      "ctrl+shift+equal" = "change_font_size all +0.05";
       "ctrl+shift+backspace" = "change_font_size all 0";
       # change opacity
       "ctrl+shift+[" = "set_background_opacity -0.01";

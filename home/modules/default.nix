@@ -9,6 +9,7 @@
     ./services/i3.nix
     ./services/picom.nix
     ./services/syncthing.nix
+    ./services/activitywatch.nix
 
     ./programs/bat.nix
     ./programs/direnv.nix

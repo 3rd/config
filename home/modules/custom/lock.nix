@@ -18,5 +18,12 @@
     })
   ];
 
-  home.packages = with pkgs; [ lock i3lock scrot ];
+  home.packages = with pkgs; [ lock i3lock scrot xss-lock ];
+
+  # lock on suspend
+  xsession.windowManager.i3.config.startup = [{
+    always = true;
+    command =
+      "--no-startup-id ${pkgs.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
+  }];
 }
