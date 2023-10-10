@@ -4,8 +4,10 @@ return lib.module.create({
   plugins = {
     {
       "3rd/image.nvim",
-      -- event = "VeryLazy",
       dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "image.nvim"),
+      -- "benlubas/image.nvim",
+      -- branch = "fix_cropping_issues",
+      -- event = "VeryLazy",
       ft = { "markdown", "norg", "syslang", "vimwiki" },
       opts = {},
     },

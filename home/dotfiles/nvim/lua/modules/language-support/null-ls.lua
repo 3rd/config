@@ -82,7 +82,7 @@ return lib.module.create({
   name = "language-support/null",
   plugins = {
     {
-      "jose-elias-alvarez/null-ls.nvim",
+      "nvimtools/none-ls.nvim",
       event = { "VeryLazy" },
       dependencies = {
         "neovim/nvim-lspconfig",
