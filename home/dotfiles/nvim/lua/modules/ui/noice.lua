@@ -48,6 +48,7 @@ end
 
 return lib.module.create({
   name = "ui/noice",
+  -- enabled = false,
   plugins = {
     {
       "folke/noice.nvim",

@@ -1,7 +1,6 @@
 return lib.module.create({
-  -- https://github.com/HiPhish/rainbow-delimiters.nvim/issues/36
-  -- enabled = false,
   name = "misc/rainbow",
+  -- enabled = false,
   plugins = {
     {
       "HiPhish/rainbow-delimiters.nvim",
@@ -9,7 +8,7 @@ return lib.module.create({
       config = function()
         local rainbow = require("rainbow-delimiters")
 
-        require("rainbow-delimiters.setup")({
+        require("rainbow-delimiters.setup").setup({
           strategy = {
             [""] = rainbow.strategy["global"],
             -- [""] = rainbow.strategy["local"],

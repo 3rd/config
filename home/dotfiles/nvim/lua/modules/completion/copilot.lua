@@ -33,7 +33,9 @@ local config = {
     markdown = false,
     syslang = false,
     sh = function()
-      if string.match(vim.fs.basename(vim.api.nvim_buf_get_name(0)), "^%.env.*") then return false end
+      local basename = vim.fs.basename(vim.api.nvim_buf_get_name(0))
+      if not basename then return true end
+      if string.match(basename, "^%.env.*") then return false end
       return true
     end,
   },
@@ -65,11 +67,12 @@ local config = {
       },
     },
   },
+  copilot_node_command = "/run/current-system/sw/bin/node",
 }
 
 return lib.module.create({
-  enabled = false,
   name = "completion/copilot",
+  -- enabled = false,
   plugins = {
     -- { "github/copilot.vim" },
     {
@@ -77,8 +80,5 @@ return lib.module.create({
       event = { "InsertEnter", "LspAttach" },
       opts = config,
     },
-  },
-  mappings = {
-    { "n", "<leader>p", "<cmd>lua require('copilot.panel').open()<cr>", { desc = "Open Copilot panel" } },
   },
 })

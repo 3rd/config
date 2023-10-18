@@ -22,12 +22,12 @@ local barbecue_config = {
 }
 
 return lib.module.create({
-  enabled = false,
   name = "language-support/breadcrumbs",
+  enabled = false,
   plugins = {
     {
       "utilyre/barbecue.nvim",
-      event = "VimEnter",
+      event = "VeryLazy",
       dependencies = {
         "SmiteshP/nvim-navic",
         "nvim-tree/nvim-web-devicons",
@@ -55,7 +55,7 @@ return lib.module.create({
   hooks = {
     lsp = {
       on_attach_call = function(client, bufnr)
-        local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
+        local ft = vim.bo.filetype
         if vim.tbl_contains(barbecue_config.exclude_filetypes, ft) then return end
         if client.server_capabilities.documentSymbolProvider then require("nvim-navic").attach(client, bufnr) end
       end,

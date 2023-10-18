@@ -51,6 +51,9 @@ local config = {
       --   return false
     end,
   },
+  indent = {
+    enable = true,
+  },
   playground = {
     enable = true,
     disable = {},

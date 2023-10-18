@@ -20,7 +20,7 @@ end
 local setup_git_signs = function()
   local gitsigns = require("gitsigns")
 
-  -- if not lib.path.cwd_is_git_repo() then return end
+  if not lib.path.cwd_is_git_repo() then return end
 
   gitsigns.setup({
     signcolumn = true,
@@ -61,14 +61,8 @@ local setup_git_signs = function()
       -- disable for syslang ft
       if vim.api.nvim_buf_get_option(bufnr, "ft") == "syslang" then return false end
 
-      -- Setup keymaps
-      -- vim.api.nvim_buf_set_keymap(
-      --   bufnr,
-      --   "n",
-      --   "hs",
-      --   '<cmd>lua require"gitsigns".stage_hunk()<CR>',
-      --   {}
-      -- )
+      -- keymaps
+      -- vim.api.nvim_buf_set_keymap(bufnr, "n", "hs", '<cmd>lua require"gitsigns".stage_hunk()<CR>', {})
     end,
   })
 end
@@ -261,7 +255,7 @@ return lib.module.create({
     },
     {
       "lewis6991/gitsigns.nvim",
-      event = { "CursorHold", "CursorHoldI" },
+      event = { "BufReadPre", "BufNewFile" },
       dependencies = { "nvim-lua/plenary.nvim" },
       config = setup_git_signs,
     },
@@ -272,7 +266,6 @@ return lib.module.create({
     },
     {
       "sindrets/diffview.nvim",
-      -- event = { "VeryLazy" },
       cmd = { "DiffviewOpen", "DiffviewFileHistory" },
       dependencies = { "nvim-lua/plenary.nvim" },
       config = setup_diffview,

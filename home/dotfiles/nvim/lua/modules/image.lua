@@ -1,15 +1,17 @@
 return lib.module.create({
-  -- enabled = false,
   name = "image",
+  -- enabled = false,
   plugins = {
     {
       "3rd/image.nvim",
       dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "image.nvim"),
       -- "benlubas/image.nvim",
-      -- branch = "fix_cropping_issues",
-      -- event = "VeryLazy",
+      -- branch = "consistent_cropping",
       ft = { "markdown", "norg", "syslang", "vimwiki" },
-      opts = {},
+      opts = {
+        -- backend = "ueberzug",
+        tmux_show_only_in_active_window = true,
+      },
     },
     -- {
     --   "3rd/nyancat.nvim",
