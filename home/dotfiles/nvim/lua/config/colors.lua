@@ -4,7 +4,7 @@ local hsl = lush.hsl
 local colors = {
   none = "NONE",
   background = hsl(230, 15, 15),
-  foreground = hsl(230, 60, 85),
+  foreground = hsl(230, 60, 83),
   blue = hsl(200, 95, 60),
   cyan = hsl(180, 70, 55),
   green = hsl(90, 60, 60),
@@ -113,13 +113,13 @@ colors.slang = {
 }
 
 colors.rainbow = {
-  red = colors.red.darken(25).desaturate(60),
-  yellow = colors.yellow.darken(25).desaturate(60),
-  blue = colors.blue.darken(25).desaturate(60),
-  orange = colors.orange.darken(25).desaturate(60),
-  green = colors.green.darken(25).desaturate(60),
-  violet = colors.magenta.darken(25).desaturate(60),
-  cyan = colors.cyan.darken(25).desaturate(60),
+  red = colors.red.darken(20).desaturate(40),
+  yellow = colors.yellow.darken(20).desaturate(40),
+  blue = colors.blue.darken(20).desaturate(40),
+  orange = colors.orange.darken(20).desaturate(40),
+  green = colors.green.darken(20).desaturate(40),
+  violet = colors.magenta.darken(20).desaturate(40),
+  cyan = colors.cyan.darken(20).desaturate(40),
 }
 
 colors.ui = {

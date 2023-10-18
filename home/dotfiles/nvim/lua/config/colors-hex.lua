@@ -4,27 +4,27 @@ return {
   common = {
     boolean = "#E085C2",
     builtin = "#D65C66",
-    comment = "#717AA8",
+    comment = "#6E77A6",
     conditional = "#BF93EC",
     constant = "#E085C2",
     constructor = "#54BEF2",
-    delimiter = "#68719C",
-    field = "#9DA8E2",
+    delimiter = "#656E9A",
+    field = "#95A1DF",
     ["function"] = "#38B9FA",
-    identifier = "#C2C9F0",
+    identifier = "#BAC2EE",
     keyword = "#BF93EC",
     macro = "#BF93EC",
     number = "#E085C2",
-    operator = "#6878CA",
+    operator = "#6072C7",
     parameter = "#EB9947",
-    property = "#9DA8E2",
+    property = "#95A1DF",
     ["repeat"] = "#BF93EC",
     special_keyword = "#BF93EC",
     string = "#99D65C",
     type = "#3CDDDD"
   },
   cyan = "#3CDDDD",
-  foreground = "#C2C9F0",
+  foreground = "#BAC2EE",
   green = "#99D65C",
   indigo = "#BF80FF",
   magenta = "#F075C7",
@@ -32,13 +32,13 @@ return {
   orange = "#F67E55",
   pink = "#E085C2",
   rainbow = {
-    blue = "#47819E",
-    cyan = "#4B8686",
-    green = "#738E57",
-    orange = "#AA6650",
-    red = "#8E575C",
-    violet = "#AE6194",
-    yellow = "#97734E"
+    blue = "#3592C0",
+    cyan = "#419F9F",
+    green = "#7AA64E",
+    orange = "#C76443",
+    red = "#A64E56",
+    violet = "#C559A1",
+    yellow = "#B57A40"
   },
   red = "#D65C66",
   slang = {
@@ -50,7 +50,7 @@ return {
     code = {
       block = {
         background = "#343746",
-        content = "#C2C9F0",
+        content = "#BAC2EE",
         language = "#595E78",
         marker = "#45495E"
       },
@@ -78,8 +78,8 @@ return {
     },
     list_item = {
       label = "#F4AD67",
-      label_marker = "#717AA8",
-      marker = "#737891"
+      label_marker = "#6E77A6",
+      marker = "#70758F"
     },
     number = "#71c9f6",
     section = "#04D3D0",
@@ -98,8 +98,8 @@ return {
     task = {
       active = "#3CDDDD",
       cancelled = "#fa4040",
-      default = "#7C8DDE",
-      done = "#717AA8",
+      default = "#7486DC",
+      done = "#6E77A6",
       schedule = "#7378a5",
       session = "#7378a5"
     },
@@ -108,8 +108,8 @@ return {
   ui = {
     green = "#99D65C",
     red = "#D65C66",
-    subtext0 = "#A1ADE8",
-    subtext1 = "#7C8DDE",
+    subtext0 = "#99A6E6",
+    subtext1 = "#7486DC",
     surface0 = "#343746",
     surface1 = "#3D4052",
     surface2 = "#45495E",
