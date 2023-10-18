@@ -72,6 +72,7 @@ link: ## link configuration files
 	$(call linkdot,nvim,~/.config/nvim)
 	$(call linkdot,emacs,~/.emacs.d)
 	$(call linkdot,wezterm,~/.config/wezterm)
+	$(call linkdot,ranger,~/.config/ranger)
 	$(call print_mod_end)
 
 clean: ## clean
