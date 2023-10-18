@@ -14,10 +14,4 @@
       '';
     };
   };
-
-  programs.fish.shellAbbrs = {
-    npx = "bunx";
-    pnpx = "bunx";
-    run = "bun run";
-  };
 }

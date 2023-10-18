@@ -77,7 +77,7 @@
     bintools-unwrapped
     bottom
     brightnessctl
-    # bun
+    bun
     cachix
     stable.anki
     bc
@@ -130,6 +130,7 @@
     jless
     dbeaver
     cppcheck
+    contour
     jq
     libnotify
     stable.libreoffice
@@ -252,7 +253,6 @@
     alacritty
     android-file-transfer
     # bottles
-    chromium
     discord
     firefox
     flameshot
@@ -262,10 +262,11 @@
     gnome.gnome-font-viewer
     gnome.eog
     google-chrome
-    # ueberzugpp
+    ueberzugpp
     gparted
     hsetroot
     stable.insomnia
+    bruno
     keepassxc
     openai
     ksystemlog

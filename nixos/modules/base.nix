@@ -13,12 +13,16 @@
     dhcpcd = {
       enable = false;
       wait = "background";
+      extraConfig = "noarp";
     };
     useDHCP = false;
     networkmanager.enable = true;
-    firewall.enable = true;
-    firewall.allowedTCPPorts = [ 19000 ];
-    interfaces.wlp0s20f3.useDHCP = true;
+    firewall = {
+      enable = true;
+      allowedTCPPorts = [ ];
+    };
+    usePredictableInterfaceNames = true;
+    nameservers = [ "1.0.0.1" "1.1.1.1" ];
   };
   programs.nm-applet.enable = true;
 
@@ -29,9 +33,10 @@
 
   # hardware
   hardware = {
+    firmware = with pkgs; [ firmwareLinuxNonfree ];
     enableAllFirmware = true;
     enableRedistributableFirmware = true;
-    firmware = with pkgs; [ firmwareLinuxNonfree ];
+    i2c.enable = true;
   };
 
   # security

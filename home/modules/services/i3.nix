@@ -130,7 +130,7 @@ in {
           "${modifier}+r" = "mode resize";
           "${modifier}+x" = "mode power";
           # launchers
-          "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty -1";
+          "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
           # "F4" = "exec ${pkgs.kitty}/bin/kitty";
           "${modifier}+p" = "exec ${pkgs.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs.flameshot}/bin/flameshot gui";
