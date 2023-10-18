@@ -1,10 +1,12 @@
 return lib.module.create({
-  name = "activitywatcher",
+  name = "activitywatch",
   plugins = {
     {
-      "ActivityWatch/aw-watcher-vim",
-      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "aw-watcher-vim"),
+      "3rd/aw-watcher-nvim",
       event = "VeryLazy",
+      init = function()
+        vim.g.aw_branch = true
+      end,
       config = function()
         vim.api.nvim_command("AWStart")
       end,
