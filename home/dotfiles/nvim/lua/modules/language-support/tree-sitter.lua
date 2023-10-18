@@ -83,7 +83,7 @@ local config = {
       init_selection = "<cr>",
       node_incremental = "<cr>",
       node_decremental = "<bs>",
-      scope_incremental = "<nop>",
+      scope_incremental = false,
     },
   },
   matchup = {
@@ -117,37 +117,12 @@ local setup_treesitter = function()
   end
 end
 
-local setup_tsnode_marker = function()
-  vim.api.nvim_create_autocmd("FileType", {
-    group = vim.api.nvim_create_augroup("tsnode-marker-markdown", {}),
-    pattern = "markdown",
-    callback = function(ctx)
-      require("tsnode-marker").set_automark(ctx.buf, {
-        target = { "code_fence_content" },
-        hl_group = "CursorLine",
-      })
-    end,
-  })
-  vim.api.nvim_create_autocmd("FileType", {
-    group = vim.api.nvim_create_augroup("tsnode-marker-syslang", {}),
-    pattern = "syslang",
-    callback = function(ctx)
-      require("tsnode-marker").set_automark(ctx.buf, {
-        target = { "code_block" },
-        hl_group = "@slang.code_block_fence",
-      })
-    end,
-  })
-
-  vim.api.nvim_exec_autocmds("FileType", {})
-end
-
 return lib.module.create({
   name = "language-support/tree-sitter",
   plugins = {
     {
       "nvim-treesitter/nvim-treesitter",
-      lazy = false,
+      event = { "BufReadPre", "BufNewFile" },
       dependencies = {
         "nvim-treesitter/playground",
       },
@@ -157,7 +132,30 @@ return lib.module.create({
     {
       "atusy/tsnode-marker.nvim",
       event = "VeryLazy",
-      config = setup_tsnode_marker,
+      config = function()
+        vim.api.nvim_create_autocmd("FileType", {
+          group = vim.api.nvim_create_augroup("tsnode-marker-markdown", {}),
+          pattern = "markdown",
+          callback = function(ctx)
+            require("tsnode-marker").set_automark(ctx.buf, {
+              target = { "code_fence_content" },
+              hl_group = "CursorLine",
+            })
+          end,
+        })
+        vim.api.nvim_create_autocmd("FileType", {
+          group = vim.api.nvim_create_augroup("tsnode-marker-syslang", {}),
+          pattern = "syslang",
+          callback = function(ctx)
+            require("tsnode-marker").set_automark(ctx.buf, {
+              target = { "code_block" },
+              hl_group = "@slang.code_block_fence",
+            })
+          end,
+        })
+
+        vim.api.nvim_exec_autocmds("FileType", {})
+      end,
     },
   },
 })

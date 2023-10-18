@@ -2,13 +2,21 @@ local cmp_sources = {
   { name = "syslang", keyword_length = 1 },
   { name = "nvim_lsp_signature_help" },
   { name = "luasnip" },
-  { name = "nvim_lsp" },
+  {
+    name = "nvim_lsp",
+    entry_filter = function(entry)
+      local banned_kinds = { "Text" }
+      local kind = require("cmp.types").lsp.CompletionItemKind[entry:get_kind()]
+      if vim.tbl_contains(banned_kinds, kind) then return false end
+      return true
+    end,
+  },
   { name = "nvim_lua" },
   {
     name = "treesitter",
     entry_filter = function(entry)
       local banned_kinds = { "Error", "Comment" }
-      local kind = entry:get_completion_item().cmp.kind_text
+      local kind = require("cmp.types").lsp.CompletionItemKind[entry:get_kind()]
       if vim.tbl_contains(banned_kinds, kind) then return false end
       return true
     end,
@@ -31,7 +39,6 @@ local cmp_sources = {
     entry_filter = function()
       return false
     end,
-    { name = "emoji", keyword_length = 1 },
   },
 }
 
@@ -257,7 +264,6 @@ return lib.module.create({
       event = { "InsertEnter" },
       dependencies = {
         "hrsh7th/cmp-buffer",
-        "hrsh7th/cmp-emoji",
         "hrsh7th/cmp-nvim-lsp",
         "hrsh7th/cmp-nvim-lsp-signature-help",
         "hrsh7th/cmp-nvim-lua",
@@ -265,6 +271,7 @@ return lib.module.create({
         "ray-x/cmp-treesitter",
         "saadparwaiz1/cmp_luasnip",
         "nvim-web-devicons",
+        { "abecodes/tabout.nvim", opts = { ignore_beginning = false, completion = false } },
       },
       config = setup,
     },
