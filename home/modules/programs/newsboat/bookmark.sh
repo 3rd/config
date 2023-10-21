@@ -22,5 +22,5 @@ grep -F -q "$month_heading" "$BOOKMARK_FILE" || echo "$month_heading" >>"$BOOKMA
 day_heading="** $(date +"%Y/%m/%d")"
 grep -F -q "$day_heading" "$BOOKMARK_FILE" || echo "$day_heading" >>"$BOOKMARK_FILE"
 
-content="- [[$url][$title ($domain)]]"
+content="  - [$title ($domain)]($url)"
 grep -F -q "[$url]" "$BOOKMARK_FILE" || echo "$content" >>"$BOOKMARK_FILE"

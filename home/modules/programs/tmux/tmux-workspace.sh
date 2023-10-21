@@ -35,6 +35,7 @@ fi
 
 # cancel if not session was selected
 if [ "$SESSION" = "" ]; then
+  tmux wait -S tmux-workspace-exit
   exit 1
 fi
 
@@ -42,7 +43,9 @@ fi
 SESSION_FILE="$WORKSPACE_DIR/$SESSION.yml"
 if [ "$TMUX" != "" ]; then
   # inside tmux, switch
-  tmux switch-client -t "$SESSION" || tmuxp load "$SESSION_FILE" 2>/dev/null || tmux -2 new-session -d -s "$SESSION" && tmux switch-client -t "$SESSION"
+  tmux switch-client -t "$SESSION" || tmuxp load -y "$SESSION_FILE" 2>/dev/null || tmux -2 new-session -d -s "$SESSION" && tmux switch-client -t "$SESSION"
 else
-  tmux attach -t "$SESSION" 2>/dev/null || tmuxp load "$SESSION_FILE" 2>/dev/null || tmux new -s "$SESSION"
+  tmux attach -t "$SESSION" 2>/dev/null || tmuxp load -y "$SESSION_FILE" 2>/dev/null || tmux new -s "$SESSION"
 fi
+
+tmux wait -S tmux-workspace-exit

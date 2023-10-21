@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -uf -o pipefail
+IFS=$'\n\t'
+
+WORKSPACE_NAME=$1
+WORKSPACE_PATH="$HOME/brain/config/home/workspaces/$WORKSPACE_NAME.yml"
+
+if [ -z "$WORKSPACE_NAME" ]; then
+  echo "Usage: workspace-create <name>"
+  exit 1
+fi
+
+if [ -f "$WORKSPACE_PATH" ]; then
+  echo "Workspace already exists: $WORKSPACE_PATH"
+  exit 1
+fi
+
+CWD=$(pwd)
+
+cat <<EOF >"$WORKSPACE_PATH"
+session_name: $WORKSPACE_NAME
+windows:
+  - window_name: $WORKSPACE_NAME
+    shell_command_before:
+      - cd $CWD
+    panes:
+      - shell_command:
+          - l
+  - window_name: exit
+    panes:
+      - exit
+EOF
+
+nvim "$WORKSPACE_PATH"
+
+echo "Created workspace: $WORKSPACE_PATH"
