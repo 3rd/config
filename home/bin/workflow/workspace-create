@@ -19,16 +19,56 @@ CWD=$(pwd)
 
 cat <<EOF >"$WORKSPACE_PATH"
 session_name: $WORKSPACE_NAME
+start_directory: $CWD
+suppress_history: false
+
+# Global options:
+#
+# before_script: ./bootstrap
+# shell_command_before: "echo ${PWD}"
+# shell_command_before:
+#   - cmd: echo ${PWD}
+#     sleep_before: 1
+#     sleep_after: 1
+#     enter: false
+
+# Layouts:
+#
+# Main horizontal          | main  |
+# layout: main-horizontal  | a | b |
+#   options:
+#     main-pane-height: 35
+#
+# Main vertical          | ma | a |
+# layout: main-vertical  | in | b |
+#   options:
+#     main-pane-width: 35
+#
+# Tiled                    | a | b |
+# layout: tiled            | c | d |
+#
+# Extra: even-horizontal, even-vertical
+
 windows:
-  - window_name: $WORKSPACE_NAME
-    shell_command_before:
-      - cd $CWD
+  - window_name: dev
+    layout: main-vertical
+    options:
+      main-pane-width: 100
     panes:
-      - shell_command:
-          - l
+      - focus: true
   - window_name: exit
+    options:
+      automatic-rename: true
     panes:
-      - exit
+      - pane
+
+  # - window_name: example
+  #   shell_command_before: cd backend
+  #   panes:
+  #     - pane with a single command
+  #     - shell_command:
+  #       - pane with
+  #       - multiple commands
 EOF
 
 nvim "$WORKSPACE_PATH"
