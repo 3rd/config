@@ -2,21 +2,16 @@
 
 {
   imports = [
-    ../modules/fonts.nix
     ../modules/hardware/audio.nix
     ../modules/hardware/bluetooth.nix
-    # ../modules/packages/emacs.nix
-    # ../modules/packages/neovim.nix
-    # ../modules/packages/zig.nix
-    # ../modules/packages/alien.nix
     ../modules/services/docker.nix
-    ../modules/services/syncthing.nix
-    ../modules/services/tailscale.private.nix
-    ../modules/security.private.nix
     ../modules/services/ssh.nix
+    ../modules/fonts.nix
+    ../modules/services/tailscale.private.nix
+    ../modules/services/syncthing.private.nix
+    ../modules/security.private.nix
+    # ../modules/packages/emacs.nix
   ];
-
-  hardware.enableAllFirmware = true;
 
   nix = {
     package = pkgs.nixVersions.stable;
@@ -64,7 +59,6 @@
     "vm.swappiness" = 90;
     "vm.vfs_cache_pressure" = 50;
   };
-
   boot.supportedFilesystems = [ "ntfs" ];
 
   # packages
@@ -73,264 +67,250 @@
     BROWSER = "google-chrome-stable";
   };
   environment.systemPackages = with pkgs; [
+    (import (fetchTarball "https://install.devenv.sh/latest")).default
+    (luajit.withPackages (ps: with ps; [ luacheck moonscript luarocks magick ]))
     (python3.withPackages (ps: with ps; [ neovim pynvim ]))
+    nodePackages.pnpm
+
     age
+    alacritty
+    android-file-transfer
+    apktool
     appimage-run
+    arandr
+    autorandr
     bintools-unwrapped
     bottom
+    bridge-utils
     brightnessctl
+    bruno
+    btop
     bun
     cachix
-    stable.anki
-    bc
     cargo-edit
-    (import (fetchTarball "https://install.devenv.sh/latest")).default
     cargo-watch
+    clang
     clang-tools
+    cmake
+    conda
     coreutils
+    cppcheck
     cpufrequtils
     curl
-    nixd
-    deadnix
-    diskonaut
+    cutter
+    deno
+    discord
+    dmidecode
     dnsutils
-    duf
-    entr
+    efibootmgr
+    evemu
+    exiv2
     fd
     ffmpeg-full
+    ffmpegthumbnailer
     file
+    firefox
+    flameshot
+    flyctl
+    frida-tools
+    fswatch
     fzf
     gcc
     gdb
     gdu
     gh
+    ghostscript
+    gimp
     git
     git-lfs
-    gitlint
-    gimp
     glow
-    iftop
     glxinfo
+    gnome.eog
+    gnome.file-roller
+    gnome.gnome-disk-utility
+    gnome.gnome-font-viewer
+    gnome.gucharmap
     gnumake
-    unrar-wrapper
     gnutls
+    google-chrome
     gotools
-    gotop
+    gparted
     gron
+    hasura-cli
+    hdparm
+    hexchat
+    hsetroot
     htop
-    conda
-    msr-tools
-    btop
     hyperfine
-    poppler_utils
     i7z
+    iftop
+    imagemagickBig
     inetutils
+    inferno
     inxi
     iotop
+    jadx
     jdk17
-    exiv2
     jless
-    dbeaver
-    cppcheck
-    contour
     jq
+    keepassxc
+    ksystemlog
     libnotify
-    stable.libreoffice
     lm_sensors
+    lshw
     lsof
-    # rust-petname
-
-    (luajit.withPackages (ps: with ps; [ luacheck moonscript luarocks magick ]))
-
-    imagemagickBig
-    syncthing
+    lua-language-server
     man-pages
+    masterpdfeditor4
+    microsoft-edge-dev
     moreutils
-    mosh
+    mprocs
+    mpv
+    msr-tools
     ncdu
     neofetch
+    nethogs
     netlify-cli
     ngrok
+    nitrogen
     niv
+    nixd
     nixfmt
-    proximity-sort
-    flyctl
     nixos-option
-    nodePackages.pnpm
-    patchelf
     nodejs_latest
+    nvtop-amd
+    obs-studio
+    openai
     openssl
     openvpn
     p7zip
-    mprocs
     pandoc
     pass
-    stripe-cli
+    patchelf
+    pavucontrol
     pciutils
+    pciutils
+    pcmanfm
+    pkg-config
     playerctl
-    hexchat
-    apktool
-    jadx
-    hasura-cli
-    frida-tools
+    polybarFull
+    poppler_utils
     proselint
-    sysstat
-    nethogs
+    proximity-sort
     psmisc
     pup
-    sysfsutils
+    qbittorrent
+    quickemu
     ranger
-    bridge-utils
     restic
-    pciutils
-    stable.awscli2
-    efibootmgr
     ripgrep
-    fswatch
     rlwrap
     rsync
     rust-analyzer
-    sniffnet
     rustfmt
     rustup
     s-tui
+    scrcpy
     selene
-    clang
     shellcheck
     shellharden
     shfmt
     silicon
-    fio
-    hdparm
-    dmidecode
-    usbutils
-    nvtop-amd
-    lshw
+    skypeforlinux
+    sl
+    slack
     slop
-    cmake
-    bottles
-    ghostscript
+    sniffnet
     socat
+    sox
     speedtest-cli
+    spicy
+    spotify
     sshfs
     sshuttle
+    stable.anki
+    stable.awscli2
+    stable.copyq
+    stable.insomnia
+    stable.libreoffice
     stable.openfortivpn
+    stable.postman
+    stable.qimgv
+    statix
+    stress-ng
+    stripe-cli
+    stylua
+    syncthing
+    sysfsutils
+    sysstat
+    tdesktop
+    terminal-typeracer
+    timg
     tmux
     tmuxp
-    statix
-    stress
-    stylua
-    terminal-typeracer
-    lua-language-server
     tree
     tree-sitter
+    ueberzugpp
+    unrar-wrapper
     unzip
     up
     urlscan
+    usbutils
     vale
-    inferno
+    veracrypt
     vim
+    virt-manager
     vulkan-tools
     w3m
     wget
     which
-    sox
     whois
-    wmctrl
-    xdotool
-    xorg.xdpyinfo
-    yarn
-    youtube-dl
-    zellij
-    yad
-    zip
-    zoxide
-    zx
-    autorandr
-    arandr
-    # gui
-    cutter
-    cool-retro-term
-    # wezterm
-    alacritty
-    android-file-transfer
-    # bottles
-    discord
-    firefox
-    flameshot
-    gnome.file-roller
-    gnome.gucharmap
-    gnome.gnome-disk-utility
-    gnome.gnome-font-viewer
-    gnome.eog
-    google-chrome
-    ueberzugpp
-    gparted
-    hsetroot
-    stable.insomnia
-    bruno
-    keepassxc
-    openai
-    ksystemlog
-    masterpdfeditor4
-    quickemu
-    spicy
-    pkg-config
-    yarn2nix
-    evemu
-    deno
-    # microsoft-edge-dev
-    spotify
-    stress-ng
-    sl
-    mpv
-    nitrogen
-    obs-studio
-    pavucontrol
-    pcmanfm
-    polybarFull
-    stable.postman
-    qbittorrent
-    stable.qimgv
-    scrcpy
-    skypeforlinux
-    slack
-    stable.copyq
-    tdesktop
-    veracrypt
-    virt-manager
     wireshark
-    ffmpegthumbnailer
-    xfce.tumbler
+    wmctrl
     xclip
+    xdotool
+    xfce.tumbler
+    xorg.xdpyinfo
     xorg.xev
     xorg.xhost
     xorg.xkill
     xorg.xmodmap
-    timg
-    wezterm
+    yad
+    yarn
+    yarn2nix
+    youtube-dl
+    zellij
+    zip
+    zoxide
+    zx
   ];
 
-  programs.adb.enable = true;
-  programs.dconf.enable = true;
-  programs.light.enable = true;
-  services.avahi.enable = true;
-  services.dbus.enable = true;
-  services.flatpak.enable = true;
-  services.fstrim.enable = true;
-  services.fwupd.enable = true;
-  services.timesyncd.enable = lib.mkDefault true;
-  services.udev.packages = [ pkgs.android-udev-rules ];
-  services.udisks2.enable = true;
+  programs = {
+    adb.enable = true;
+    dconf.enable = true;
+    light.enable = true;
+    seahorse.enable = true;
+    gamemode.enable = true;
+  };
 
-  services.gvfs.enable = true; # MTP
+  services = {
+    avahi.enable = true;
+    dbus.enable = true;
+    flatpak.enable = true;
+    fstrim.enable = true;
+    fwupd.enable = true;
+    timesyncd.enable = lib.mkDefault true;
+    udev.packages = [ pkgs.android-udev-rules ];
+    udisks2.enable = true;
+    gvfs.enable = true; # MTP
+    gnome.gnome-keyring.enable = true;
+    atd.enable = true;
+  };
 
-  services.gnome.gnome-keyring.enable = true;
-  security.pam.services.lightdm.enableGnomeKeyring = true;
-  security.pam.services.sddm.enableGnomeKeyring = true;
-  programs.seahorse.enable = true;
-
-  services.atd.enable = true;
+  security.pam.services = {
+    lightdm.enableGnomeKeyring = true;
+    sddm.enableGnomeKeyring = true;
+  };
 
   xdg = {
     portal = {
@@ -343,8 +323,6 @@
       xdgOpenUsePortal = true;
     };
   };
-
-  programs.gamemode.enable = true;
 
   environment.etc."issue.d/ip.issue".text = ''
     \4
@@ -382,35 +360,4 @@
     KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0086", MODE:="666"
     KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0090", MODE:="666"
   '';
-
-  # systemd.extraConfig = ''
-  #   # file descriptor limit
-  #   DefaultLimitNOFILE=65535
-  # '';
-
-  # Google Chrome ulimit upping
-  # https://bugs.chromium.org/p/chromium/issues/detail?id=362603#c28
-  # security.pam.loginLimits = [{
-  #   domain = "*";
-  #   item = "nofile";
-  #   type = "-";
-  #   value = "65535";
-  # }];
-
-  # https://github.com/NixOS/nixpkgs/issues/159964
-  # systemd.services."user@1000".serviceConfig.LimitNOFILE = "65535";
-  # security.pam.loginLimits = [
-  #   {
-  #     domain = "*";
-  #     item = "nofile";
-  #     type = "-";
-  #     value = "65535";
-  #   }
-  #   {
-  #     domain = "*";
-  #     item = "memlock";
-  #     type = "-";
-  #     value = "65535";
-  #   }
-  # ];
 }

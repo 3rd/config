@@ -4,7 +4,10 @@
 nix-env -q
 
 # uninstall package (user)
-nix-env -e <package_name>
+nix-env -e <user_package_name>
 
+# find why a package is installed (why-depends)
+nix why-depends /run/current-system <system_package>
 
-$ package_name: nix-env -q | awk '{gsub(/-[0-9]+.*/, ""); print}'
+$ system_package: nix path-info -r /run/current-system
+$ user_package_name: nix-env -q | awk '{gsub(/-[0-9]+.*/, ""); print}'

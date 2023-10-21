@@ -262,7 +262,9 @@ return lib.module.create({
       config = setup_ufo,
     },
     {
-      "jghauser/fold-cycle.nvim",
+      -- "jghauser/fold-cycle.nvim",
+      "3rd/fold-cycle.nvim",
+      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "fold-cycle.nvim"),
       ft = { "syslang" },
       config = setup_fold_cycle,
     },

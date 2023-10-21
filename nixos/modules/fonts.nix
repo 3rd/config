@@ -3,24 +3,21 @@
 {
   nixpkgs.config.joypixels.acceptLicense = true;
   fonts = {
-    # enableDefaultFonts = true;
     fontDir.enable = true;
-    # https://wiki.archlinux.org/title/font_configuration
     fontconfig = {
       enable = true;
       cache32Bit = true;
       antialias = true;
       subpixel = {
-        lcdfilter = "default"; # light
+        lcdfilter = "default";
         rgba = "rgb";
       };
       hinting = {
         enable = true;
         autohint = false;
-        style = "full"; # slight
+        style = "full";
       };
       defaultFonts = {
-        # monospace = [ "MonoLisa" "Symbols Nerd Font Mono" ];
         monospace = [ "MonoLisa" "Fira Code Nerd Font Mono" ];
         sansSerif = [ "DejaVu Sans" "Noto Sans" "Fira Code Nerd Font Mono" ];
         serif = [

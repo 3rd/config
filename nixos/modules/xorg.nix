@@ -1,6 +1,5 @@
 { pkgs, lib, ... }:
 
-# https://gist.github.com/kborling/76805ade81ac5bfdd712df294208c878
 {
   environment.systemPackages = with pkgs; [ libinput ];
 
@@ -23,9 +22,6 @@
           lib.getBin pkgs.dbus
         }/bin/dbus-update-activation-environment --systemd --all
       '';
-    };
-    desktopManager = {
-      # plasma5.enable = true;
     };
     layout = "us";
     libinput = {

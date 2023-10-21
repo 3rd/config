@@ -106,14 +106,17 @@ in {
       } # ThePrimeagen
       {
         url =
+          "https://www.youtube.com/feeds/videos.xml?channel_id=UCUyeluBRhGPCW4rPe_UvBZQ";
+      } # ThePrimeTimeagen
+      {
+        url =
           "https://www.youtube.com/feeds/videos.xml?channel_id=UCXPHFM88IlFn68OmLwtPmZA";
       } # Greg Hurrell
 
       # software
       { url = "---software---"; }
-      { url = "http://blog.chromium.org/feeds/posts/default"; }
       {
-        url = "https://github.com/ogham/exa/releases.atom";
+        url = "http://blog.chromium.org/feeds/posts/default";
       }
 
       # podcasts
