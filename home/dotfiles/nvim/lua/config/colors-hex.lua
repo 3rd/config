@@ -1,30 +1,30 @@
 return {
-  background = "#21222C",
+  background = "#252732",
   blue = "#38B9FA",
   common = {
     boolean = "#E085C2",
     builtin = "#D65C66",
-    comment = "#6E77A6",
+    comment = "#6771A2",
     conditional = "#BF93EC",
     constant = "#E085C2",
     constructor = "#54BEF2",
-    delimiter = "#656E9A",
-    field = "#95A1DF",
+    delimiter = "#616994",
+    field = "#8997DC",
     ["function"] = "#38B9FA",
-    identifier = "#BAC2EE",
+    identifier = "#ADB8EB",
     keyword = "#BF93EC",
     macro = "#BF93EC",
     number = "#E085C2",
-    operator = "#6072C7",
+    operator = "#596BC5",
     parameter = "#EB9947",
-    property = "#95A1DF",
+    property = "#8997DC",
     ["repeat"] = "#BF93EC",
     special_keyword = "#BF93EC",
-    string = "#99D65C",
+    string = "#7ABC38",
     type = "#3CDDDD"
   },
   cyan = "#3CDDDD",
-  foreground = "#BAC2EE",
+  foreground = "#ADB8EB",
   green = "#99D65C",
   indigo = "#BF80FF",
   magenta = "#F075C7",
@@ -46,13 +46,13 @@ return {
       bg = "#38425B",
       fg = "#A9B9E5"
     },
-    bold = "#C1D1FF",
+    bold = "#BEC6EF",
     code = {
       block = {
-        background = "#343746",
-        content = "#BAC2EE",
-        language = "#595E78",
-        marker = "#45495E"
+        background = "#363949",
+        content = "#ADB8EB",
+        language = "#5B607B",
+        marker = "#4A4E64"
       },
       inline = "#F09070"
     },
@@ -61,7 +61,7 @@ return {
       meta = "#EB9947",
       meta_field = "#F075C7",
       meta_field_key = "#E085C2",
-      title = "#F67E55"
+      title = "#F183BA"
     },
     heading = {
       five = "#04D3D0",
@@ -78,12 +78,12 @@ return {
     },
     list_item = {
       label = "#F4AD67",
-      label_marker = "#6E77A6",
-      marker = "#70758F"
+      label_marker = "#6771A2",
+      marker = "#6C7189"
     },
-    number = "#71c9f6",
+    number = "#E085C2",
     section = "#04D3D0",
-    string = "#4efa8e",
+    string = "#CF7A5E",
     tag = {
       context = "#EB9947",
       danger = {
@@ -98,8 +98,8 @@ return {
     task = {
       active = "#3CDDDD",
       cancelled = "#fa4040",
-      default = "#7486DC",
-      done = "#6E77A6",
+      default = "#6C7EDA",
+      done = "#6771A2",
       schedule = "#7378a5",
       session = "#7378a5"
     },
@@ -108,11 +108,11 @@ return {
   ui = {
     green = "#99D65C",
     red = "#D65C66",
-    subtext0 = "#99A6E6",
-    subtext1 = "#7486DC",
-    surface0 = "#343746",
-    surface1 = "#3D4052",
-    surface2 = "#45495E",
+    subtext0 = "#8D9BE2",
+    subtext1 = "#6C7EDA",
+    surface0 = "#363949",
+    surface1 = "#3F4355",
+    surface2 = "#4A4E64",
     yellow = "#EB9947"
   },
   yellow = "#EB9947"

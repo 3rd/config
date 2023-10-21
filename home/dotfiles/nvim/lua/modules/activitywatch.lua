@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "activitywatch",
+  -- enabled = false,
   plugins = {
     {
       "3rd/aw-watcher-nvim",

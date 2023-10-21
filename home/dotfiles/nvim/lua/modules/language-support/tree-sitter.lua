@@ -5,7 +5,6 @@ local config = {
     "c",
     "cpp",
     "css",
-    "zig",
     "dockerfile",
     "fish",
     "go",
@@ -35,6 +34,7 @@ local config = {
     "vimdoc",
     "vue",
     "yaml",
+    "zig",
   },
   highlight = {
     enable = true,
@@ -52,7 +52,7 @@ local config = {
     end,
   },
   indent = {
-    enable = true,
+    enable = false,
   },
   playground = {
     enable = true,
@@ -86,10 +86,10 @@ local config = {
       scope_incremental = false,
     },
   },
-  matchup = {
-    enable = true,
-    disable = {},
-  },
+  -- matchup = {
+  --   enable = true,
+  --   disable = {},
+  -- },
 }
 
 local setup_treesitter = function()
@@ -123,15 +123,13 @@ return lib.module.create({
     {
       "nvim-treesitter/nvim-treesitter",
       event = { "BufReadPre", "BufNewFile" },
-      dependencies = {
-        "nvim-treesitter/playground",
-      },
+      dependencies = { "nvim-treesitter/playground" },
       build = ":TSUpdate",
       config = setup_treesitter,
     },
     {
       "atusy/tsnode-marker.nvim",
-      event = "VeryLazy",
+      ft = { "syslang", "markdown" },
       config = function()
         vim.api.nvim_create_autocmd("FileType", {
           group = vim.api.nvim_create_augroup("tsnode-marker-markdown", {}),
@@ -153,8 +151,7 @@ return lib.module.create({
             })
           end,
         })
-
-        vim.api.nvim_exec_autocmds("FileType", {})
+        -- vim.api.nvim_exec_autocmds("FileType", {})
       end,
     },
   },

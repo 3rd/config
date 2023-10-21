@@ -53,8 +53,8 @@ local setup = function()
 end
 
 return lib.module.create({
-  enabled = true,
   name = "indent-guides",
+  -- enabled = false,
   plugins = {
     {
       "lukas-reineke/indent-blankline.nvim",

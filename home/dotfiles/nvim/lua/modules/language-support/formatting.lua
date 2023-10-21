@@ -65,7 +65,7 @@ return lib.module.create({
             end
 
             return {
-              timeout_ms = 300,
+              timeout_ms = 500,
               lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
             },
               on_format

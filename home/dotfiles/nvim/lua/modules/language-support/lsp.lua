@@ -80,15 +80,16 @@ local setup_lspconfig = function()
         Lua = {
           runtime = { version = "LuaJIT" },
           completion = { callSnippet = "Replace" },
-          diagnostics = { enable = true, globals = { "vim", "log", "throw" } },
-          format = { enable = false },
+          diagnostics = { globals = { "vim", "log", "throw" } },
           workspace = {
+            checkThirdParty = false,
             library = {
               [vim.fn.expand("$VIMRUNTIME/lua")] = true,
               [vim.fn.stdpath("config") .. "/lua"] = true,
             },
           },
           telemetry = { enable = false },
+          hint = { enable = true },
         },
       },
       handlers = {

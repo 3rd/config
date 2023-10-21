@@ -3,8 +3,8 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(230, 15, 15),
-  foreground = hsl(230, 60, 83),
+  background = hsl(230, 15, 17),
+  foreground = hsl(230, 60, 80),
   blue = hsl(200, 95, 60),
   cyan = hsl(180, 70, 55),
   green = hsl(90, 60, 60),
@@ -37,7 +37,7 @@ colors.common = {
   delimiter = colors.foreground.darken(40).desaturate(65),
   boolean = colors.pink,
   number = colors.pink,
-  string = colors.green,
+  string = colors.green.desaturate(10).darken(20),
   -- control
   conditional = keyword,
   ["repeat"] = keyword,
@@ -50,14 +50,14 @@ colors.common = {
 
 colors.slang = {
   document = {
-    title = colors.orange,
+    title = colors.magenta.rotate(10).lighten(10),
     meta = colors.yellow,
     meta_field = colors.magenta,
     meta_field_key = colors.pink,
   },
-  bold = "#C1D1FF",
-  string = "#4efa8e",
-  number = "#71c9f6",
+  bold = colors.foreground.lighten(20),
+  string = colors.orange.desaturate(40).darken(10),
+  number = colors.common.number,
   ticket = "#fa89f6",
   datetime = "#FC824A",
   code = {

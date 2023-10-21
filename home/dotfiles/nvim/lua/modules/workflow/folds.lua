@@ -189,7 +189,8 @@ local setup_ufo = function()
     open_fold_hl_timeout = 0,
     fold_virt_text_handler = virtual_text_handler,
     provider_selector = function(bufnr, filetype, buftype)
-      return { "treesitter" }
+      if filetype == "syslang" then return { "treesitter" } end
+      return ""
     end,
   })
 
@@ -256,7 +257,7 @@ return lib.module.create({
   plugins = {
     {
       "kevinhwang91/nvim-ufo",
-      event = "VimEnter",
+      ft = "syslang",
       dependencies = { "nvim-treesitter", "kevinhwang91/promise-async" },
       config = setup_ufo,
     },

@@ -300,7 +300,7 @@ local edit = function(code, instructions)
 
   local model_name = get_optimal_model_for_prompt(prompt, {
     --
-    "gpt-3.5-turbo-instruct",
+    -- "gpt-3.5-turbo-instruct",
     "gpt-4",
     "gpt-3.5-turbo-16k",
   })
