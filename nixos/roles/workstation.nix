@@ -65,6 +65,8 @@
     "vm.vfs_cache_pressure" = 50;
   };
 
+  boot.supportedFilesystems = [ "ntfs" ];
+
   # packages
   environment.variables = {
     TERMINAL = "kitty";
@@ -327,6 +329,8 @@
   security.pam.services.lightdm.enableGnomeKeyring = true;
   security.pam.services.sddm.enableGnomeKeyring = true;
   programs.seahorse.enable = true;
+
+  services.atd.enable = true;
 
   xdg = {
     portal = {
