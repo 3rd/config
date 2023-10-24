@@ -31,7 +31,7 @@ local setup = function()
   }
 
   local copilot_status = (function()
-    if not require("modules/completion/copilot").enabled then return nil end
+    if not require("modules/completion/copilot").enabled then return "" end
 
     local initialized = false
     local status = ""

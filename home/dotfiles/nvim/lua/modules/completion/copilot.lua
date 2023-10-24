@@ -72,13 +72,16 @@ local config = {
 
 return lib.module.create({
   name = "completion/copilot",
-  -- enabled = false,
+  enabled = false,
   plugins = {
     -- { "github/copilot.vim" },
     {
       "zbirenbaum/copilot.lua",
       event = { "InsertEnter", "LspAttach" },
-      opts = config,
+      config = function()
+        require("copilot").setup(config)
+        -- vim.cmd(":silent! Copilot disable")
+      end,
     },
   },
 })

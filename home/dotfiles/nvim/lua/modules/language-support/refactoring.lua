@@ -1,5 +1,14 @@
 local setup = function()
-  require("refactoring").setup()
+  require("refactoring").setup({
+    print_var_statements = {
+      typescript = {
+        "console.log('🐞 %s', %s)",
+      },
+      javascript = {
+        "console.log('🐞 %s', %s)",
+      },
+    },
+  })
 
   vim.keymap.set(
     { "n", "v" },
