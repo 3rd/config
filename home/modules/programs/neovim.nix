@@ -5,7 +5,7 @@
     (import (builtins.fetchTarball {
       url =
         "https://github.com/nix-community/neovim-nightly-overlay/archive/master.tar.gz";
-      # "https://github.com/nix-community/neovim-nightly-overlay/archive/d68c4f9302b2a7fb5c9dedc3cfa3ac9bd33fb0c6.tar.gz";
+      # "https://github.com/nix-community/neovim-nightly-overlay/archive/5240f631102f4aba8c498f07b3996355edbe62fa.tar.gz";
     }))
   ];
 

@@ -21,12 +21,12 @@ end
 -- end
 
 return lib.module.create({
-  enabled = false, -- kills performance even on a stupidly beefy machine
   name = "workflow/matchup",
+  -- enabled = false, -- kills performance even on a stupidly beefy machine
   plugins = {
     {
       "andymass/vim-matchup",
-      lazy = false,
+      event = "VeryLazy",
       config = setup,
     },
     -- {

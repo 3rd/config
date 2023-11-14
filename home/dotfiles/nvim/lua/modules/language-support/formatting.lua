@@ -39,6 +39,7 @@ return lib.module.create({
             typescriptreact = web_formatters,
             javascript = web_formatters,
             javascriptreact = web_formatters,
+            astro = web_formatters,
             json = { "fixjson", "prettierd" },
             jsonc = { "fixjson", "prettierd" },
             html = { "prettierd" },
@@ -65,7 +66,7 @@ return lib.module.create({
             end
 
             return {
-              timeout_ms = 500,
+              timeout_ms = 2000,
               lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
             },
               on_format

@@ -23,7 +23,7 @@ local barbecue_config = {
 
 return lib.module.create({
   name = "language-support/breadcrumbs",
-  enabled = false,
+  -- enabled = false,
   plugins = {
     {
       "utilyre/barbecue.nvim",
@@ -51,6 +51,11 @@ return lib.module.create({
         })
       end,
     },
+    -- {
+    --   "Bekaboo/dropbar.nvim",
+    --   event = "VeryLazy",
+    --   opts = {},
+    -- },
   },
   hooks = {
     lsp = {

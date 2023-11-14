@@ -24,8 +24,8 @@ local setup_ufo = function()
     show_folded_line_count = false,
     chars = {
       heading = "◉",
-      section_collapsed = "⮞",
-      section_expanded = "⮟",
+      section_collapsed = "▶",
+      section_expanded = "▼",
       list_item = "•",
       task_default = "",
       task_active = "➡",
@@ -37,18 +37,21 @@ local setup_ufo = function()
 
   local slang_conceal = function(chunks)
     if not lib.is.table(chunks) then return chunks end
+
+    -- substituting here can remove initial flicker
     local substitutions = {
       -- heading
-      ["\\v^\\s*\\zs\\*+\\ze"] = config.chars.heading,
+      -- ["\\v^\\s*\\zs\\*+\\ze"] = config.chars.heading,
       -- section
-      ["\\v^\\s*\\zs\\>\\ze"] = config.chars.section_collapsed,
+      -- ["\\v^\\s*\\zs\\>\\ze"] = config.chars.section_collapsed,
       -- list item
-      ["\\v^\\s*\\zs\\-\\ze"] = config.chars.list_item,
+      -- ["\\v^\\s*\\zs\\-\\ze"] = config.chars.list_item,
       -- tasks
-      ["\\v^\\s*\\zs\\[\\s\\]\\ze"] = config.chars.task_default,
-      ["\\v^\\s*\\zs\\[\\-\\]\\ze"] = config.chars.task_active,
-      ["\\v^\\s*\\zs\\[x\\]\\ze"] = config.chars.task_done,
-      ["\\v^\\s*\\zs\\[_\\]\\ze"] = config.chars.task_cancelled,
+      -- ["\\v^\\s*\\zs\\[\\s\\]\\ze"] = config.chars.task_default,
+      -- ["\\v^\\s*\\zs\\[\\-\\]\\ze"] = config.chars.task_active,
+      -- ["\\v^\\s*\\zs\\[x\\]\\ze"] = config.chars.task_done,
+      -- ["\\v^\\s*\\zs\\[_\\]\\ze"] = config.chars.task_cancelled,
+      [config.chars.section_expanded] = config.chars.section_collapsed,
     }
 
     local has_changed = false
@@ -262,8 +265,8 @@ return lib.module.create({
       config = setup_ufo,
     },
     {
-      -- "jghauser/fold-cycle.nvim",
-      "3rd/fold-cycle.nvim",
+      "jghauser/fold-cycle.nvim",
+      -- "3rd/fold-cycle.nvim",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "fold-cycle.nvim"),
       ft = { "syslang" },
       config = setup_fold_cycle,

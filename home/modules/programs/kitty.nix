@@ -87,17 +87,21 @@
       # font_family = lib.mkDefault "Comic Code Ligatures";
       # font_size = lib.mkDefault "10.5";
 
-      font_family = lib.mkDefault "MonoLisa";
-      font_size = lib.mkDefault "9";
+      # font_family = lib.mkDefault "MonoLisa";
+      # font_size = lib.mkDefault "9";
       # font_size = lib.mkDefault "9.4";
 
-      # font_family = lib.mkDefault "Berkeley Mono";
-      # font_size = lib.mkDefault "10.8";
+      font_family = lib.mkDefault "Berkeley Mono";
+      font_size = lib.mkDefault "9.9";
+      # font_size = lib.mkDefault "10.5";
       # font_size = lib.mkDefault "10";
 
       # font_family = lib.mkDefault "Maple Mono";
       # font_size = lib.mkDefault "8.7";
       # font_size = lib.mkDefault "10.3";
+
+      # font_family = lib.mkDefault "Monaspace Neon";
+      # font_size = lib.mkDefault "9.9";
     };
     keybindings = {
       "kitty_mod+c" = "copy_to_clipboard";
@@ -114,7 +118,7 @@
       "ctrl+6" = "goto_tab 6";
       "ctrl+7" = "goto_tab 7";
       # change font size
-      "ctrl+shift+0" = "change_font_size all 8.8";
+      "ctrl+shift+0" = "change_font_size all 8.6";
       "ctrl+shift+minus" = "change_font_size all -0.1";
       "ctrl+shift+equal" = "change_font_size all +0.1";
       "ctrl+shift+backspace" = "change_font_size all 0";
@@ -143,6 +147,9 @@
       # https://www.monolisa.dev/faq#how-to-enable-stylistic-sets-for-the-kitty-terminal
       font_features MonoLisa-Medium +zero +ss04 +ss07 +ss08 +ss09
       font_features MonoLisa-MediumItalic +zero +ss04 +ss07 +ss08 +ss09
+
+      # berkeley
+      modify_font cell_width 100%
     '';
   };
 }

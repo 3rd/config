@@ -62,43 +62,7 @@ end
 local plugins = table.join(
   lib.module.get_module_plugins(),
   table.map({
-    {
-      dir = "tslib",
-      lazy = false,
-    },
-    {
-      dir = "syslang",
-      ft = "syslang",
-      init = function()
-        vim.filetype.add({
-          pattern = {
-            [".*"] = function(_, bufnr)
-              -- abort if filetype already set
-              if lib.buffer.get_option(bufnr, "filetype") ~= "" then return end
-
-              -- abort scratch
-              if not vim.api.nvim_buf_get_option(bufnr, "buflisted") then return end
-              if vim.api.nvim_buf_get_option(bufnr, "bufhidden") ~= "" then return end
-              if vim.api.nvim_buf_get_name(bufnr) == "" then return end
-
-              -- abort if floating window
-              local ok, win = pcall(vim.api.nvim_win_get_config, 0)
-              if ok and win.relative ~= "" then return end
-
-              -- abort if path has extension != syslang
-              local path_parts = string.split(vim.api.nvim_buf_get_name(bufnr), "/")
-              local filename = path_parts[#path_parts]
-              local extension_parts = string.split(filename, ".")
-              local extension = extension_parts[#extension_parts]
-              if filename ~= extension and extension ~= "syslang" then return end
-
-              -- setf
-              return "syslang"
-            end,
-          },
-        })
-      end,
-    },
+    { dir = "tslib", lazy = false },
   }, function(item)
     item.dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", item.dir)
     return item
@@ -122,3 +86,5 @@ end
 lib.lazy.install()
 vim.opt.rtp:prepend(lib.env.dirs.vim.lazy.plugin)
 lib.lazy.setup(plugins, require("config/lazy"))
+package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?/init.lua;"
+package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?.lua;"

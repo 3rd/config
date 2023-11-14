@@ -8,6 +8,7 @@
     # shading = 90;
     fonts = lib.mkDefault [
       #
+      "xft:Berkeley Mono:size=10"
       "xft:MonoLisa:size=10.8"
       "xft:Unifont:size=10.8"
       "xft:FiraCode Nerd Font Mono:size=10.8"

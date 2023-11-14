@@ -27,6 +27,7 @@
     ./programs/urxvt.nix
     ./programs/zathura.nix
     ./programs/zoxide.nix
+    ./tailspin.nix
 
     ./golang.nix
     ./nodejs.nix

@@ -137,9 +137,6 @@ local actions = {
       vim.opt.list = true
     end
   end,
-  focus_toggle_autoresize = function()
-    vim.cmd("FocusToggle")
-  end,
   refactor = function()
     require("refactoring").select_refactor()
   end,
@@ -185,7 +182,6 @@ local commands = {
     -- ["Hex: Toggle hex mode"] = actions.toggle_hex,
     ["Treesitter: Open playground"] = actions.ts_playground,
     ["Toggle whitespace"] = actions.toggle_whitespace,
-    ["Focus: Toggle auto-resize"] = actions.focus_toggle_autoresize,
     ["Refactor"] = actions.refactor,
   },
   visual = {

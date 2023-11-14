@@ -10,3 +10,4 @@ home/workspaces
 machines
 .git-broken
 home/dotfiles/nvim/plugins/image.nvim
+rewrite

@@ -1,5 +1,5 @@
-local lush = require("lush")
 local colors = require("config/colors")
+local lush = require("lush")
 
 -- https://github.com/search?q=language%3Alua+%22%40text.strong%22&type=code
 -- https://github.com/RRethy/nvim-base16/blob/4f3aa29f49b38edb6db1c52cea57e64ce3de2373/lua/base16-colorscheme.lua#L383
@@ -9,8 +9,8 @@ local colors = require("config/colors")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    -- Normal({ fg = colors.foreground }), -- Normal text
+    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -149,7 +149,7 @@ local theme = lush(function(injected)
     DiagnosticVirtualTextWarn({ fg = colors.orange.darken(40) }),
     DiagnosticVirtualTextInfo({ fg = colors.blue }),
     DiagnosticVirtualTextHint({ fg = colors.cyan }),
-    DiagnosticUnderlineError({ gui = "undercurl" }),
+    DiagnosticUnderlineError({ bg = colors.red.darken(70).desaturate(80), gui = "none" }),
     DiagnosticUnderlineWarn({ gui = "undercurl" }),
     DiagnosticUnderlineInfo({ gui = "undercurl" }),
     DiagnosticUnderlineHint({ gui = "undercurl" }),
@@ -421,7 +421,9 @@ local theme = lush(function(injected)
     sym("@slang.heading_6.text")({ fg = colors.slang.heading.six, gui = "bold" }),
     sym("@slang.heading_done")({ fg = colors.slang.task.done, gui = "bold" }),
     sym("@slang.section")({ fg = colors.slang.section }),
-    sym("@slang.banner")({ bg = colors.slang.banner.bg, fg = colors.slang.banner.fg }),
+    sym("@slang.banner")({
+      -- bg = colors.slang.banner.bg, fg = colors.slang.banner.fg
+    }),
     sym("@slang.task_default")({}),
     sym("@slang.task_marker_default")({ fg = colors.slang.task.done }),
     sym("@slang.task_active")({ fg = colors.slang.task.active }),
@@ -451,6 +453,16 @@ local theme = lush(function(injected)
     sym("@slang.image")({ fg = colors.slang.label }),
     sym("@text.literal.syslang")({ fg = colors.foreground }),
     sym("@slang.internal_link")({ fg = colors.slang.link.internal, gui = "undercurl" }),
+
+    -- headlines
+    sym("Headline1")({ bg = colors.slang.heading.one.darken(40), gui = "bold" }),
+    sym("Headline2")({ bg = colors.slang.heading.two.darken(40), gui = "bold" }),
+    sym("Headline3")({ bg = colors.slang.heading.three.darken(40), gui = "bold" }),
+    sym("Headline4")({ bg = colors.slang.heading.four.darken(40), gui = "bold" }),
+    sym("Headline5")({ bg = colors.slang.heading.five.darken(40), gui = "bold" }),
+    sym("Headline6")({ bg = colors.slang.heading.six.darken(40), gui = "bold" }),
+    sym("Quote")({ fg = colors.slang.banner.bg, gui = "bold" }),
+    sym("CodeBlock")({ bg = colors.slang.code.block.background }),
   }
 end)
 

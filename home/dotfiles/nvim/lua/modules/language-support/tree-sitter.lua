@@ -86,10 +86,6 @@ local config = {
       scope_incremental = false,
     },
   },
-  -- matchup = {
-  --   enable = true,
-  --   disable = {},
-  -- },
 }
 
 local setup_treesitter = function()
@@ -126,33 +122,6 @@ return lib.module.create({
       dependencies = { "nvim-treesitter/playground" },
       build = ":TSUpdate",
       config = setup_treesitter,
-    },
-    {
-      "atusy/tsnode-marker.nvim",
-      ft = { "syslang", "markdown" },
-      config = function()
-        vim.api.nvim_create_autocmd("FileType", {
-          group = vim.api.nvim_create_augroup("tsnode-marker-markdown", {}),
-          pattern = "markdown",
-          callback = function(ctx)
-            require("tsnode-marker").set_automark(ctx.buf, {
-              target = { "code_fence_content" },
-              hl_group = "CursorLine",
-            })
-          end,
-        })
-        vim.api.nvim_create_autocmd("FileType", {
-          group = vim.api.nvim_create_augroup("tsnode-marker-syslang", {}),
-          pattern = "syslang",
-          callback = function(ctx)
-            require("tsnode-marker").set_automark(ctx.buf, {
-              target = { "code_block" },
-              hl_group = "@slang.code_block_fence",
-            })
-          end,
-        })
-        -- vim.api.nvim_exec_autocmds("FileType", {})
-      end,
     },
   },
 })

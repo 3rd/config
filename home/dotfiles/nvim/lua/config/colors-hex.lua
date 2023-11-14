@@ -64,12 +64,12 @@ return {
       title = "#F183BA"
     },
     heading = {
-      five = "#04D3D0",
+      five = "#04D2CE",
       four = "#FFC78F",
       one = "#9999FF",
-      six = "#f0969f",
+      six = "#F0949D",
       three = "#E38FFF",
-      two = "#C08FFF"
+      two = "#BF8FFF"
     },
     label = "#EB9947",
     link = {
@@ -82,7 +82,7 @@ return {
       marker = "#6C7189"
     },
     number = "#E085C2",
-    section = "#04D3D0",
+    section = "#8797C2",
     string = "#CF7A5E",
     tag = {
       context = "#EB9947",

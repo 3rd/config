@@ -59,7 +59,6 @@
     "vm.swappiness" = 90;
     "vm.vfs_cache_pressure" = 50;
   };
-  boot.supportedFilesystems = [ "ntfs" ];
 
   # packages
   environment.variables = {
@@ -97,7 +96,6 @@
     cppcheck
     cpufrequtils
     curl
-    cutter
     deno
     discord
     dmidecode

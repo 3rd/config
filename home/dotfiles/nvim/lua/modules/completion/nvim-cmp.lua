@@ -1,5 +1,4 @@
 local cmp_sources = {
-  { name = "syslang", keyword_length = 1 },
   { name = "nvim_lsp_signature_help" },
   { name = "luasnip" },
   {
@@ -49,10 +48,17 @@ vim.api.nvim_create_autocmd("FileType", {
   callback = function()
     local ok, cmp = pcall(require, "cmp")
     if not ok then return end
-    local filtered_sources = {}
+
+    local filtered_sources = {
+      { name = "syslang", keyword_length = 1 },
+    }
     for _, source in ipairs(cmp_sources) do
       if source.name ~= "treesitter" then table.insert(filtered_sources, source) end
     end
+
+    local syslang_source = require("modules/wiki/cmp")
+    cmp.register_source("syslang", syslang_source.new())
+
     cmp.setup.buffer({ sources = filtered_sources })
   end,
 })
@@ -76,9 +82,6 @@ end
 local setup = function()
   local cmp = require("cmp")
   local luasnip = require("luasnip")
-
-  local syslang_source = require("modules/wiki/cmp")
-  cmp.register_source("syslang", syslang_source.new())
 
   local kind_icons = {
     -- base

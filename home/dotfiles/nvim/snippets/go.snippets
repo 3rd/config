@@ -1,3 +1,24 @@
+snippet iferr "if err"
+  if ${1:err} != nil {
+    $0
+  }
+
+snippet ifnoterr "if data, err; !err"
+  if ${1:data}, ${2:err} := ${3:exp}; $2 != nil {
+    $0
+  }
+
+snippet ifok "if data, ok"
+  if ${1:data}, ${2:ok} := ${3:exp}; $2 {
+    $0
+  }
+
+snippet fmp "fmt.Printf"
+  fmt.Printf("%+v\n", ${1:obj})
+
+snippet fms "fmt.Sprintf"
+  fmt.Sprintf("%+v", ${1:obj})
+
 snippet qq "qq"
 	q.Q(${1:})
 	${2}

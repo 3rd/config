@@ -15,8 +15,32 @@ return {
     { "n", "Y", "y$", "Yank to end of line" },
     { "n", "J", "mzJ`z", "Join with the next line" },
     -- search
-    { "n", "n", "nzzzv", "Next search result" },
-    { "n", "N", "Nzzzv", "Previous search result" },
+    {
+      "n",
+      "n",
+      function()
+        -- if vim.fn.searchcount() == 0 then
+        --   vim.cmd("normal! nzzzv")
+        -- else
+        --   vim.cmd("normal! *")
+        -- end
+        vim.cmd("normal! nzzzv")
+      end,
+      "Next search result",
+    },
+    {
+      "n",
+      "N",
+      function()
+        -- if vim.fn.searchcount() == 0 then
+        --   vim.cmd("normal! Nzzzv")
+        -- else
+        --   vim.cmd("normal! #")
+        -- end
+        vim.cmd("normal! Nzzzv")
+      end,
+      "Previous search result",
+    },
     { "v", "/", [[<esc>/\%V]], "Search in selection" },
     -- wrap
     { "n", "j", "gj", "Move down" },
@@ -70,7 +94,13 @@ return {
     { "n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>", "LSP: Go to implementation" },
     { "n", "gt", "<cmd>lua vim.lsp.buf.type_definition()<CR>", "LSP: Go to type definition" },
     -- { "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", "LSP: Show signature help" },
-    { { "n", "v" }, "<leader>ac", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP: Code action" },
+    -- { { "n", "v" }, "<leader>ac", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP: Code action" },
+    {
+      { "n", "v" },
+      "<leader>ac",
+      require("modules/language-support/code-actions").code_action,
+      "LSP: Code action",
+    },
     { "n", "<leader>er", "<cmd>lua vim.lsp.buf.rename()<cr>", "LSP: Rename symbol" },
     { "n", "<leader>r", "<cmd>lua require('fzf-lua').lsp_document_symbols()<CR>", "LSP: Show document symbols" },
     { "n", "<leader>R", "<cmd>lua require('fzf-lua').lsp_live_workspace_symbols()<CR>", "LSP: Show workspace symbols" },

@@ -1,12 +1,16 @@
 { lib, pkgs, ... }:
 
 {
+
+  home.packages = with pkgs; [ electron ];
+
   home = {
     sessionPath = [ "$HOME/.npm/global/bin" "$HOME/.pnpm" ];
     sessionVariables = {
       NODE_PATH = "$HOME/.npm/global/lib/node_modules";
       NODE_OPTIONS = "";
       PNPM_HOME = "$HOME/.pnpm";
+      ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
     };
     activation = {
       npm_set_prefix = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

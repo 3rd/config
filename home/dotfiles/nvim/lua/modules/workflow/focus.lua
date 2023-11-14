@@ -15,9 +15,14 @@ local setup_peepsight = function()
 end
 
 return lib.module.create({
-  enabled = false,
+  -- enabled = false,
   name = "workflow/focus",
   plugins = {
+    {
+      "nvim-focus/focus.nvim",
+      cmd = { "FocusEnable", "FocusToggle" },
+      opts = {},
+    },
     {
       "koenverburg/peepsight.nvim",
       config = setup_peepsight,
@@ -25,6 +30,7 @@ return lib.module.create({
     },
   },
   actions = {
+    { "n", "Focus: Toggle auto-resize", "FocusToggle" },
     { "n", "Peepsight: Toggle context focusing", "Peepsight" },
   },
 })

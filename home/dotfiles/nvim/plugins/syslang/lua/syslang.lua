@@ -1,5 +1,5 @@
-local ts_utils = require("nvim-treesitter.ts_utils")
 local folding = require("syslang/folding")
+local ts_utils = require("nvim-treesitter.ts_utils")
 
 local task_was_just_completed_and_moved = false
 

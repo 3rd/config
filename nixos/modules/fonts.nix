@@ -18,7 +18,7 @@
         style = "full";
       };
       defaultFonts = {
-        monospace = [ "MonoLisa" "Fira Code Nerd Font Mono" ];
+        monospace = [ "Berkeley Mono" "Fira Code Nerd Font Mono" ];
         sansSerif = [ "DejaVu Sans" "Noto Sans" "Fira Code Nerd Font Mono" ];
         serif = [
           "Linux Libertine"
@@ -34,6 +34,14 @@
           <match target="scan">
               <test name="family">
                   <string>MonoLisa</string>
+              </test>
+              <edit name="spacing">
+                  <int>100</int>
+              </edit>
+          </match>
+          <match target="scan">
+              <test name="family">
+                  <string>Monaspace Neon</string>
               </test>
               <edit name="spacing">
                   <int>100</int>
