@@ -9,7 +9,9 @@ local default_options = {
   unique = false,
 }
 
----@param mode "n"|"i"|"v"|"x"|"!"|""
+---@alias MappingMode "n"|"i"|"v"|"x"|"!"|""
+
+---@param mode MappingMode|MappingMode[]
 ---@param lhs string
 ---@param rhs string|function
 ---@param optionsOrDescription? table<option, boolean>|string

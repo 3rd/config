@@ -12,6 +12,8 @@ local is = require("lib/is")
 ---@field null table<any>|nil
 ---@field mason string[]|nil
 
+---@alias MappingMode "n"|"i"|"v"|"x"|"!"|""
+
 ---@class Module
 ---@field name string
 ---@field enabled boolean|nil
@@ -19,7 +21,7 @@ local is = require("lib/is")
 ---@field plugins LazyPluginSpec[]|nil
 ---@field setup function|nil
 ---@field hooks hooks|nil
----@field mappings ({ [1]: "n"|"i"|"v"|"x"|"!"|"", [2]: string, [3]: string|function, [4]: string|table })[]|nil
+---@field mappings ({ [1]: MappingMode|MappingMode[], [2]: string, [3]: string|function, [4]: string|table })[]|nil
 ---@field actions ({ [1]: string, [2]: string, [3]: string|function})[]|nil
 ---@field exports table<string, any>|nil
 local Module = {

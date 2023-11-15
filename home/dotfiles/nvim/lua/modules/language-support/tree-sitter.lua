@@ -78,7 +78,7 @@ local config = {
     lint_events = { "BufWrite", "CursorHold" },
   },
   incremental_selection = {
-    enable = false,
+    enable = true,
     keymaps = {
       init_selection = "<cr>",
       node_incremental = "<cr>",

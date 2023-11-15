@@ -80,7 +80,6 @@ return lib.module.create({
           on_attach = function(client, bufnr)
             client.server_capabilities.documentFormattingProvider = false
             client.server_capabilities.documentRangeFormattingProvider = false
-
             client.handlers["textDocument/definition"] = function(err, result, ...)
               local patched_result = {}
               if (vim.tbl_islist(result) or type(result) == "table") and #result > 1 then
@@ -94,7 +93,12 @@ return lib.module.create({
             end
 
             require("twoslash-queries").attach(client, bufnr)
-            lib.map.map("n", "<leader>?", ":TwoslashQueriesInspect<CR>", { buffer = bufnr })
+            lib.map.map(
+              "n",
+              "<leader>?",
+              ":TwoslashQueriesInspect<CR>",
+              { buffer = bufnr, desc = "Add type inspect comment" }
+            )
           end,
         })
 

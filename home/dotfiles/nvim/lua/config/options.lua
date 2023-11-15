@@ -27,6 +27,7 @@ return {
   backupdir = env.dirs.vim.backup,
   history = 10000,
   swapfile = false,
+
   undodir = env.dirs.vim.undo,
   viewdir = env.dirs.vim.view,
   undofile = true,
@@ -47,7 +48,7 @@ return {
   textwidth = 999,
   -- completion
   complete = ".",
-  completeopt = [[menu,menuone,noselect]],
+  completeopt = [[menu,menuone,noinsert,noselect]],
   -- search
   gdefault = true,
   ignorecase = true,

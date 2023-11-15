@@ -95,12 +95,6 @@ return {
     { "n", "gt", "<cmd>lua vim.lsp.buf.type_definition()<CR>", "LSP: Go to type definition" },
     -- { "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", "LSP: Show signature help" },
     -- { { "n", "v" }, "<leader>ac", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP: Code action" },
-    {
-      { "n", "v" },
-      "<leader>ac",
-      require("modules/language-support/code-actions").code_action,
-      "LSP: Code action",
-    },
     { "n", "<leader>er", "<cmd>lua vim.lsp.buf.rename()<cr>", "LSP: Rename symbol" },
     { "n", "<leader>r", "<cmd>lua require('fzf-lua').lsp_document_symbols()<CR>", "LSP: Show document symbols" },
     { "n", "<leader>R", "<cmd>lua require('fzf-lua').lsp_live_workspace_symbols()<CR>", "LSP: Show workspace symbols" },
