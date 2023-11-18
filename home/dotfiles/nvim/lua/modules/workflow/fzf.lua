@@ -46,7 +46,7 @@ local setup_fzf_lua = function()
 
   lib.map.map("n", "<c-p>", function()
     local opts = vim.deepcopy(config)
-    opts.cmd = "rg --files --hidden --glob=!.git/ --smart-case"
+    opts.cmd = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
     if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
       opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%")))
     end
@@ -63,7 +63,7 @@ local setup_fzf_lua = function()
   lib.map.map("n", "<c-f>", function()
     local opts = vim.deepcopy(config)
     opts.cmd =
-      "rg --hidden --iglob '!.git' --iglob '!*.lock' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
+      "rg --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
     opts.prompt = "> "
     opts.fzf_opts = {
       ["--info"] = "inline",
@@ -84,7 +84,7 @@ end
 -- end
 
 return lib.module.create({
-  name = "workflow/navigation",
+  name = "workflow/fzf",
   plugins = {
     {
       "ibhagwan/fzf-lua",

@@ -13,7 +13,7 @@ local colors = {
   orange = hsl(15, 90, 65),
   pink = hsl(320, 60, 70),
   red = hsl(355, 60, 60),
-  yellow = hsl(30, 80, 60),
+  yellow = hsl(46, 80, 60),
 }
 
 local variable = colors.foreground
@@ -31,7 +31,7 @@ colors.common = {
   operator = colors.foreground.darken(30).desaturate(20),
   ["function"] = colors.blue,
   type = colors.cyan,
-  parameter = colors.yellow,
+  parameter = colors.orange,
   -- comment = colors.orange.desaturate(75).darken(35),
   comment = colors.foreground.desaturate(60).darken(35),
   delimiter = colors.foreground.darken(40).desaturate(65),
@@ -131,6 +131,7 @@ colors.ui = {
   yellow = colors.yellow,
   green = colors.green,
   red = colors.red,
+  cword = colors.background.lighten(20),
 }
 
 return colors

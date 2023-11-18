@@ -227,7 +227,7 @@ local theme = lush(function(injected)
     sym("@text.literal.markdown_inline")({ Special }),
     sym("@text.math")({ Special }),
     sym("@text.note")({ SpecialComment }),
-    sym("@text.reference")({ Constant }),
+    sym("@text.reference")({ Underlined }),
     sym("@text.strike")({ gui = "strikethrough" }),
     sym("@text.strong")({ gui = "bold" }),
     sym("@text.title")({ Title }),
@@ -235,7 +235,6 @@ local theme = lush(function(injected)
     sym("@text.todo.checked")({ Comment }),
     sym("@text.todo.unchecked")({ Todo }),
     sym("@text.underline")({ Underlined }),
-    sym("@text.uri")({ Underlined }),
     sym("@text.uri")({ Underlined }),
     sym("@text.warning")({ WarningMsg }),
     sym("@type")({ Type }),
@@ -463,6 +462,9 @@ local theme = lush(function(injected)
     sym("Headline6")({ bg = colors.slang.heading.six.darken(40), gui = "bold" }),
     sym("Quote")({ fg = colors.slang.banner.bg, gui = "bold" }),
     sym("CodeBlock")({ bg = colors.slang.code.block.background }),
+
+    -- local-highlight
+    CWordHighlight({ bg = colors.ui.cword }),
   }
 end)
 

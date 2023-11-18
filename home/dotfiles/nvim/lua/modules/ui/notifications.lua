@@ -11,7 +11,7 @@ local setup_nvim_notify = function()
       WARN = "",
     },
     level = 2,
-    max_width = 40,
+    max_width = 80,
     render = "minimal",
     stages = "fade",
     -- stages = "fade_in_slide_out",

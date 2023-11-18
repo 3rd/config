@@ -29,7 +29,7 @@ local Module = {
   name = "",
   enabled = true,
   debug = true,
-  plugins = nil,
+  plugins = {},
   setup = nil,
   hooks = nil,
   mappings = nil,
@@ -40,20 +40,20 @@ local Module = {
 ---@param props Module
 ---@return Module
 function Module:new(props)
-  local instance = {
-    enabled = Module.enabled,
-    debug = props.debug or false,
-    name = props.name,
-    plugins = props.plugins or {},
-    setup = props.setup or Module.setup,
-    hooks = props.hooks or Module.hooks,
-    mappings = props.mappings or Module.mappings,
-    actions = props.actions or Module.actions,
-    exports = props.exports or Module.exports,
-  }
-  if is.bool(props.enabled) then instance.enabled = props.enabled end
-  setmetatable(instance, self)
-  self.__index = self
+  props = props or {}
+
+  local instance = setmetatable({
+    enabled = props.enabled == nil and self.enabled or props.enabled,
+    debug = props.debug == nil and self.debug or props.debug,
+    name = props.name or self.name,
+    plugins = props.plugins or self.plugins,
+    setup = props.setup or self.setup,
+    hooks = props.hooks or self.hooks,
+    mappings = props.mappings or self.mappings,
+    actions = props.actions or self.actions,
+    exports = props.exports or self.exports,
+  }, { __index = self })
+
   return instance
 end
 

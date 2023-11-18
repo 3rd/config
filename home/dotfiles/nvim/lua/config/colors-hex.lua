@@ -16,7 +16,7 @@ return {
     macro = "#BF93EC",
     number = "#E085C2",
     operator = "#596BC5",
-    parameter = "#EB9947",
+    parameter = "#F67E55",
     property = "#8997DC",
     ["repeat"] = "#BF93EC",
     special_keyword = "#BF93EC",
@@ -38,7 +38,7 @@ return {
     orange = "#C76443",
     red = "#A64E56",
     violet = "#C559A1",
-    yellow = "#B57A40"
+    yellow = "#B59A40"
   },
   red = "#D65C66",
   slang = {
@@ -58,7 +58,7 @@ return {
     },
     datetime = "#FC824A",
     document = {
-      meta = "#EB9947",
+      meta = "#EBC547",
       meta_field = "#F075C7",
       meta_field_key = "#E085C2",
       title = "#F183BA"
@@ -71,13 +71,13 @@ return {
       three = "#E38FFF",
       two = "#BF8FFF"
     },
-    label = "#EB9947",
+    label = "#EBC547",
     link = {
       external = "#5db4e3",
       internal = "#5BC0CD"
     },
     list_item = {
-      label = "#F4AD67",
+      label = "#F4D367",
       label_marker = "#6771A2",
       marker = "#6C7189"
     },
@@ -85,7 +85,7 @@ return {
     section = "#8797C2",
     string = "#CF7A5E",
     tag = {
-      context = "#EB9947",
+      context = "#EBC547",
       danger = {
         bg = "#C3423F",
         fg = "#ffffff"
@@ -106,6 +106,7 @@ return {
     ticket = "#fa89f6"
   },
   ui = {
+    cword = "#4A4E64",
     green = "#99D65C",
     red = "#D65C66",
     subtext0 = "#8D9BE2",
@@ -113,7 +114,7 @@ return {
     surface0 = "#363949",
     surface1 = "#3F4355",
     surface2 = "#4A4E64",
-    yellow = "#EB9947"
+    yellow = "#EBC547"
   },
-  yellow = "#EB9947"
+  yellow = "#EBC547"
 }
