@@ -186,14 +186,12 @@ return lib.module.create({
             -- by removing them from the list.
             -- If you rather use another key, you can map them
             -- to something else, e.g., { [";"] = "L", [","] = H }
-            keys = { "f", "F", "t", "T", [";"] = "n", [","] = "N" },
+            keys = { "f", "F", "t", "T" },
             ---@alias Flash.CharActions table<string, "next" | "prev" | "right" | "left">
             -- The direction for `prev` and `next` is determined by the motion.
             -- `left` and `right` are always left and right.
             char_actions = function(motion)
               return {
-                ["n"] = "next", -- set to `right` to always go right
-                ["N"] = "prev", -- set to `left` to always go left
                 -- clever-f style
                 [motion:lower()] = "next",
                 [motion:upper()] = "prev",
@@ -257,11 +255,11 @@ return lib.module.create({
       },
       -- stylua: ignore
       keys = {
-        { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
-        { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
-        { "r", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
-        { "R", mode = { "o", "x" }, function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
-        { "<c-s>", mode = { "c" }, function() require("flash").toggle() end, desc = "Toggle Flash Search" },
+        -- { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+        -- { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+        -- { "r", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
+        -- { "R", mode = { "o", "x" }, function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
+        -- { "<c-s>", mode = { "c" }, function() require("flash").toggle() end, desc = "Toggle Flash Search" },
       },
     },
   },

@@ -16,14 +16,23 @@ local barbecue_config = {
     separator = "❯",
   },
   theme = {
-    normal = { bg = colors.surface1, fg = colors.subtext0 },
-    separator = { fg = colors.subtext1 },
+    normal = { bg = colors.surface0, fg = colors.subtext0 },
+    separator = { fg = colors.surface2 },
   },
 }
 
 return lib.module.create({
   name = "language-support/breadcrumbs",
   -- enabled = false,
+  hooks = {
+    lsp = {
+      on_attach_call = function(client, bufnr)
+        local ft = vim.bo.filetype
+        if vim.tbl_contains(barbecue_config.exclude_filetypes, ft) then return end
+        if client.server_capabilities.documentSymbolProvider then require("nvim-navic").attach(client, bufnr) end
+      end,
+    },
+  },
   plugins = {
     {
       "utilyre/barbecue.nvim",
@@ -49,20 +58,6 @@ return lib.module.create({
             require("barbecue.ui").update()
           end,
         })
-      end,
-    },
-    -- {
-    --   "Bekaboo/dropbar.nvim",
-    --   event = "VeryLazy",
-    --   opts = {},
-    -- },
-  },
-  hooks = {
-    lsp = {
-      on_attach_call = function(client, bufnr)
-        local ft = vim.bo.filetype
-        if vim.tbl_contains(barbecue_config.exclude_filetypes, ft) then return end
-        if client.server_capabilities.documentSymbolProvider then require("nvim-navic").attach(client, bufnr) end
       end,
     },
   },

@@ -27,14 +27,22 @@ return lib.module.create({
         clear_action.setup({
           silent = true,
           signs = {
-            enable = false,
+            enable = true,
             combine = true,
             position = "eol",
-            show_count = true,
-            show_label = false,
+            show_count = false,
+            show_label = true,
+            label_fmt = function(actions)
+              local refactor_actions = {}
+              for _, action in ipairs(actions) do
+                if vim.startswith(action.kind, "refactor") then table.insert(refactor_actions, action) end
+              end
+              if #refactor_actions > 0 then return "⭍" .. #refactor_actions end
+              return ""
+            end,
             update_on_insert = false,
             icons = {
-              combined = "🔧",
+              combined = "",
             },
             highlights = {
               combined = "NonText",
@@ -51,6 +59,8 @@ return lib.module.create({
             },
           },
           mappings = {
+            refactor_inline = "<leader>ae",
+            refactor_extract = "<leader>ai",
             actions = {
               ["typescript-tools"] = {
                 -- waiting to inline function - https://github.com/Microsoft/TypeScript/issues/27070
@@ -65,6 +75,10 @@ return lib.module.create({
         lib.map.map({ "n", "v" }, "<leader>ar", function()
           clear_action.code_action({
             context = { only = { "refactor" } },
+            filter = function(action)
+              if vim.startswith(action.kind, "refactor") then return true end
+              return false
+            end,
           })
         end, { desc = "LSP: Refactor" })
       end,

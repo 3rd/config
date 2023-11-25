@@ -53,7 +53,7 @@ local actions = {
   -- silicon
   silicon_normal = function()
     local options = "--output /tmp/silicon.png --tab-width 2 --pad-horiz 50 --pad-vert 60 --no-window-controls -l "
-      .. lib.buffer.current.get_filetype()
+        .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_text()
     local tmpfile = vim.fn.tempname()
     lib.fs.file.write(tmpfile, text)
@@ -62,7 +62,7 @@ local actions = {
   end,
   silicon_visual = function()
     local options = "--output /tmp/silicon.png --tab-width 2 --pad-horiz 50 --pad-vert 60 --no-window-controls -l "
-      .. lib.buffer.current.get_filetype()
+        .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_selected_text()
     local tmpfile = vim.fn.tempname()
     lib.fs.file.write(tmpfile, text)
@@ -72,7 +72,7 @@ local actions = {
   silicon_highlight = function()
     local context = 6
     local options = "--output /tmp/silicon.png --tab-width 2 --pad-horiz 50 --pad-vert 60 --no-window-controls -l "
-      .. lib.buffer.current.get_filetype()
+        .. lib.buffer.current.get_filetype()
     local text = lib.buffer.current.get_selected_text()
     local context_text = lib.buffer.current.get_selected_text(context)
     local tmpfile = vim.fn.tempname()
@@ -233,8 +233,12 @@ local setup = function()
       else
         if type(action) == "function" then
           action()
-        else
-          cmd(action)
+        elseif type(action) == "string" then
+          if (action:sub(1, 1) == ":") then
+            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(action, true, true, true), "n", true)
+          else
+            cmd(action)
+          end
         end
       end
     end)

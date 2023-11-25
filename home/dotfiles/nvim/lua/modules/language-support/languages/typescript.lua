@@ -83,9 +83,16 @@ return lib.module.create({
             client.handlers["textDocument/definition"] = function(err, result, ...)
               local patched_result = {}
               if (vim.tbl_islist(result) or type(result) == "table") and #result > 1 then
+                local internal_entries = {}
+                local external_entries = {}
                 for _, v in ipairs(result) do
-                  if vim.fn.stridx(v.targetUri, "node_modules") == -1 then table.insert(patched_result, v) end
+                  if vim.fn.stridx(v.targetUri, "node_modules") == -1 then
+                    table.insert(internal_entries, v)
+                  else
+                    table.insert(external_entries, v)
+                  end
                 end
+                patched_result = vim.tbl_isempty(internal_entries) and external_entries or internal_entries
               else
                 patched_result = result
               end

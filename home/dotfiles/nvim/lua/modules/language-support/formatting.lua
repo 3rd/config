@@ -26,9 +26,9 @@ return lib.module.create({
       event = { "BufReadPre", "BufNewFile" },
       config = function()
         local conform = require("conform")
-
         local slow_format_filetypes = {}
-        conform.setup({
+
+        local config = {
           formatters_by_ft = {
             lua = { "stylua" },
             nix = { "nixfmt" },
@@ -59,25 +59,48 @@ return lib.module.create({
               env = { PRETTIERD_DEFAULT_CONFIG = paths.prettier_config },
             },
           },
-          format_on_save = function(bufnr)
-            if slow_format_filetypes[vim.bo[bufnr].filetype] then return end
-            local function on_format(err)
-              if err and err:match("timeout$") then slow_format_filetypes[vim.bo[bufnr].filetype] = true end
-            end
+        }
 
-            return {
-              timeout_ms = 2000,
-              lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
-            },
-              on_format
-          end,
-          format_after_save = function(bufnr)
-            if not slow_format_filetypes[vim.bo[bufnr].filetype] then return end
-            return {
-              lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
-            }
-          end,
-        })
+        local function filter_formatters(ft)
+          local formatters = config.formatters_by_ft[ft]
+          if not formatters then return nil end
+
+          local filtered = {}
+          for _, formatter in ipairs(formatters) do
+            -- $cwd/.noprettier disables prettier
+            if vim.fn.filereadable(lib.path.resolve(lib.path.cwd(), ".noprettier")) == 1 then
+              if formatter == "prettierd" then goto continue end
+            end
+            vim.list_extend(filtered, { formatter })
+            ::continue::
+          end
+          return filtered
+        end
+
+        config.format_on_save = function(bufnr)
+          if slow_format_filetypes[vim.bo[bufnr].filetype] then return end
+
+          local function on_format(err)
+            if err and err:match("timeout$") then slow_format_filetypes[vim.bo[bufnr].filetype] = true end
+          end
+
+          return {
+            timeout_ms = 2000,
+            lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
+            formatters = filter_formatters(vim.bo[bufnr].filetype),
+          },
+            on_format
+        end
+
+        config.format_after_save = function(bufnr)
+          if not slow_format_filetypes[vim.bo[bufnr].filetype] then return end
+          return {
+            lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
+            formatters = filter_formatters(vim.bo[bufnr].filetype),
+          }
+        end
+
+        conform.setup(config)
 
         vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
       end,

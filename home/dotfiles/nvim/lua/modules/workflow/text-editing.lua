@@ -1,20 +1,3 @@
-local setup_surround = function()
-  require("nvim-surround").setup({
-    keymaps = {
-      insert = "<C-g>s",
-      insert_line = "<C-g>S",
-      normal = "ys",
-      normal_cur = "yss",
-      normal_line = "yS",
-      normal_cur_line = "ySS",
-      visual = "S",
-      visual_line = "gS",
-      delete = "ds",
-      change = "cs",
-    },
-  })
-end
-
 return lib.module.create({
   name = "workflow/text-editing",
   plugins = {
@@ -29,11 +12,58 @@ return lib.module.create({
     {
       "kylechui/nvim-surround",
       event = "VeryLazy",
-      config = setup_surround,
+      opts = {
+        keymaps = {
+          insert = "<C-g>s",
+          insert_line = "<C-g>S",
+          normal = "ys",
+          normal_cur = "yss",
+          normal_line = "yS",
+          normal_cur_line = "ySS",
+          visual = "S",
+          visual_line = "gS",
+          delete = "ds",
+          change = "cs",
+        },
+      },
     },
     {
-      "johmsalas/text-case.nvim", -- :Subs
-      event = "VeryLazy",
+      "Wansmer/sibling-swap.nvim",
+      dependencies = { "nvim-treesitter" },
+      lazy = false,
+      config = function()
+        require("sibling-swap").setup({
+          allowed_separators = {
+            ",",
+            ";",
+            "and",
+            "or",
+            "&&",
+            "&",
+            "||",
+            "|",
+            "==",
+            "===",
+            "!=",
+            "!==",
+            "-",
+            "+",
+            ["<"] = ">",
+            ["<="] = ">=",
+            [">"] = "<",
+            [">="] = "<=",
+          },
+          keymaps = {
+            ["<a-l>"] = "swap_with_right",
+            ["<a-h>"] = "swap_with_left",
+          },
+          use_default_keymaps = true,
+          highlight_node_at_cursor = false,
+          ignore_injected_langs = false,
+          allow_interline_swaps = true,
+          interline_swaps_without_separator = false,
+        })
+      end,
     },
   },
 })

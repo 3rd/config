@@ -191,7 +191,7 @@ local setup_ufo = function()
   ufo.setup({
     open_fold_hl_timeout = 0,
     fold_virt_text_handler = virtual_text_handler,
-    provider_selector = function(bufnr, filetype, buftype)
+    provider_selector = function(_bufnr, filetype)
       if filetype == "syslang" then return { "treesitter" } end
       return ""
     end,
@@ -212,18 +212,6 @@ local setup_ufo = function()
   vim.keymap.set("n", "zM", close_all_folds, { desc = "Close all folds" })
 end
 
-local setup = function()
-  -- vim.keymap.set("n", "<tab>", "za")
-  -- vim.keymap.set("n", "<s-tab>", function()
-  --   local filetype = vim.bo.filetype
-  --   if filetype == "syslang" then
-  --     local is_open_fold_child = is_current_line_in_open_fold_and_is_not_first()
-  --     if is_open_fold_child then vim.api.nvim_exec2("normal! [z", {}) end
-  --   end
-  --   pcall(vim.api.nvim_exec2, "normal! zc", {})
-  -- end, { silent = true, noremap = true })
-end
-
 local setup_fold_cycle = function()
   require("fold-cycle").setup({
     open_if_max_closed = true,
@@ -234,13 +222,10 @@ local setup_fold_cycle = function()
   -- <tab> - open / cycle
   vim.keymap.set("n", "<tab>", function()
     require("fold-cycle").open()
-    -- https://github.com/lukas-reineke/indent-blankline.nvim/issues/449
-    -- vim.cmd("IndentBlanklineRefresh")
   end, { silent = true, desc = "Fold-cycle: open folds" })
 
   -- <s-tab> - collapse
   vim.keymap.set("n", "<s-tab>", function()
-    -- return require("fold-cycle").close()
     local filetype = vim.bo.filetype
     if filetype == "syslang" then
       local is_open_fold_child = is_current_line_in_open_fold_and_is_not_first()
@@ -248,15 +233,10 @@ local setup_fold_cycle = function()
     end
     pcall(vim.api.nvim_exec2, "normal! zc", {})
   end, { silent = true, noremap = true })
-
-  -- vim.keymap.set("n", "zC", function()
-  --   return require("fold-cycle").close_all()
-  -- end, { remap = true, silent = true, desc = "Fold-cycle: close all folds" })
 end
 
 return lib.module.create({
   name = "workflow/folds",
-  setup = setup,
   plugins = {
     {
       "kevinhwang91/nvim-ufo",
@@ -271,18 +251,5 @@ return lib.module.create({
       ft = { "syslang" },
       config = setup_fold_cycle,
     },
-  },
-  hooks = {
-    -- lsp = {
-    --   capabilities = function(capabilities)
-    --     return vim.tbl_deep_extend("force", capabilities or {}, {
-    --       textDocument = {
-    --         foldingRange = {
-    --           lineFoldingOnly = true,
-    --         },
-    --       },
-    --     })
-    --   end,
-    -- },
   },
 })
