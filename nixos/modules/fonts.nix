@@ -18,15 +18,15 @@
         style = "full";
       };
       defaultFonts = {
-        monospace = [ "Berkeley Mono" "Fira Code Nerd Font Mono" ];
-        sansSerif = [ "DejaVu Sans" "Noto Sans" "Fira Code Nerd Font Mono" ];
+        monospace = [ "Berkeley Mono" "FiraCode Nerd Font Mono" ];
+        sansSerif = [ "DejaVu Sans" "Noto Sans" "FiraCode Nerd Font Mono" ];
         serif = [
           "Linux Libertine"
           "DejaVu Serif"
           "Noto Serif"
-          "Fira Code Nerd Font Mono"
+          "FiraCode Nerd Font Mono"
         ];
-        emoji = [ "JoyPixels" "Noto Color Emoji" "Fira Code Nerd Font Mono" ];
+        emoji = [ "JoyPixels" "Noto Color Emoji" "FiraCode Nerd Font Mono" ];
       };
       localConf = ''
         <fontconfig>

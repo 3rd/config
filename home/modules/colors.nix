@@ -1,7 +1,7 @@
 {
   imports = [ ./options/colors.nix ];
   colors = {
-    # background = "#161618";
+    # background = "#1c1d22";
     background = "#1E1F27";
     # background = "#1e1f29";
     # background = "#21222c";

@@ -233,6 +233,9 @@
         type = "custom/script";
         exec = "/home/rabbit/.config/polybar/vpn.sh";
         interval = 1;
+        format-background = red-darker;
+        format-foreground = foreground;
+        format-padding = 2;
       };
       "module/task" = {
         type = "custom/script";
