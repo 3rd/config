@@ -3,22 +3,23 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(230, 15, 17),
+  background = hsl(230, 15, 10),
   foreground = hsl(230, 60, 80),
-  blue = hsl(200, 95, 60),
-  cyan = hsl(180, 70, 55),
-  green = hsl(90, 60, 60),
-  indigo = hsl(270, 100, 75),
+  blue = hsl(200, 85, 60),
+  cyan = hsl(180, 65, 55),
+  green = hsl(90, 40, 55),
+  indigo = hsl(270, 80, 75),
   magenta = hsl(320, 80, 70),
-  orange = hsl(15, 90, 65),
-  pink = hsl(320, 60, 70),
-  red = hsl(355, 60, 60),
-  yellow = hsl(46, 80, 60),
+  orange = hsl(20, 90, 62),
+  pink = hsl(310, 60, 70),
+  red = hsl(0, 80, 65),
+  yellow = hsl(38, 80, 60),
 }
 
 local variable = colors.foreground
-local property = variable.darken(12).desaturate(10)
-local keyword = hsl(270, 70, 75)
+local property = variable.darken(10).saturation(50)
+local keyword = colors.foreground.darken(20).desaturate(40)
+local control = colors.indigo
 
 colors.common = {
   -- lab
@@ -28,23 +29,24 @@ colors.common = {
   property = property,
   field = property,
   -- base
-  operator = colors.foreground.darken(30).desaturate(20),
+  operator = colors.foreground.darken(30).saturation(30),
   ["function"] = colors.blue,
   type = colors.cyan,
-  parameter = colors.orange,
+  parameter = colors.yellow.darken(10).desaturate(20),
   -- comment = colors.orange.desaturate(75).darken(35),
-  comment = colors.foreground.desaturate(60).darken(35),
+  comment = colors.foreground.desaturate(65).darken(35),
   delimiter = colors.foreground.darken(40).desaturate(65),
   boolean = colors.pink,
   number = colors.pink,
-  string = colors.green.desaturate(10).darken(20),
+  string = colors.green,
   -- control
-  conditional = keyword,
-  ["repeat"] = keyword,
-  special_keyword = keyword,
+  conditional = control,
+  ["repeat"] = control,
+  special_keyword = control,
   -- extra
-  builtin = colors.red,
-  macro = keyword,
+  builtin = colors.orange,
+  macro = keyword.lighten(40).saturate(70),
+  ret = colors.red,
   constructor = colors.blue.lighten(10).desaturate(10),
 }
 
@@ -106,10 +108,10 @@ colors.slang = {
   list_item = {
     -- item = colors.foreground.desaturate(20).darken(10),
     marker = colors.foreground.desaturate(80).darken(40),
-    label = colors.yellow.lighten(20).saturate(30), -- "#c881de",
+    label = colors.orange.lighten(20).saturate(30), -- "#c881de",
     label_marker = colors.common.comment,
   },
-  label = colors.yellow,
+  label = colors.orange,
 }
 
 colors.rainbow = {
@@ -123,7 +125,7 @@ colors.rainbow = {
 }
 
 colors.ui = {
-  surface0 = colors.background.lighten(10),
+  surface0 = colors.background.lighten(13),
   surface1 = colors.background.lighten(15),
   surface2 = colors.background.lighten(20),
   subtext0 = colors.foreground.darken(10),

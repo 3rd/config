@@ -90,7 +90,7 @@ local theme = lush(function(injected)
     Label({ fg = colors.common.keyword }),
     Keyword({ fg = colors.common.keyword }),
     SpecialKeyword({ fg = colors.common.special_keyword }),
-    Exception({ fg = colors.common.builtin }),
+    Exception({ fg = colors.common.ret }),
     Operator({ fg = colors.common.operator }),
     Function({ fg = colors.common["function"] }),
     Type({ fg = colors.common.type }),
@@ -146,7 +146,7 @@ local theme = lush(function(injected)
     DiagnosticInfo({ fg = colors.blue }),
     DiagnosticHint({ fg = colors.cyan }),
     DiagnosticVirtualTextError({ fg = colors.red }),
-    DiagnosticVirtualTextWarn({ fg = colors.orange.darken(40) }),
+    DiagnosticVirtualTextWarn({ fg = colors.orange }),
     DiagnosticVirtualTextInfo({ fg = colors.blue }),
     DiagnosticVirtualTextHint({ fg = colors.cyan }),
     DiagnosticUnderlineError({ bg = colors.red.darken(70).desaturate(80), gui = "none" }),
@@ -173,6 +173,7 @@ local theme = lush(function(injected)
     sym("@conditional")({ Conditional }),
     sym("@constant")({ Constant }),
     sym("@builtin")({ fg = colors.common.builtin }),
+    sym("@break")({ fg = colors.common.ret }),
     sym("@constant.builtin")({ sym("@boolean") }),
     sym("@constant.macro")({ Define }),
     sym("@constructor")({ Constructor }),
@@ -182,21 +183,21 @@ local theme = lush(function(injected)
     sym("@exception")({ Exception }),
     sym("@field")({ Field }),
     sym("@float")({ Float }),
-    sym("@function")({ Function }),
+    sym("@function")({ Type }),
     sym("@function.builtin")({ sym("@builtin") }),
     sym("@function.call")({ Function }),
     sym("@function.macro")({ Macro }),
     sym("@include")({ Include }),
     sym("@keyword")({ Keyword }),
-    sym("@keyword.function")({ Keyword }),
-    sym("@keyword.operator")({ Macro }),
-    sym("@keyword.return")({ sym("@builtin") }),
+    sym("@keyword.function")({ Keyword }), -- or SpecialKeyword
+    sym("@keyword.operator")({ SpecialKeyword }),
     sym("@keyword.coroutine")({ SpecialKeyword }),
+    sym("@keyword.return")({ sym("@break") }),
     sym("@label")({ Label }),
     sym("@macro")({ Macro }),
     sym("@method")({ Function }),
     sym("@method.call")({ Function }),
-    sym("@namespace")({ Function }),
+    sym("@namespace")({ Type }),
     sym("@number")({ Number }),
     sym("@operator")({ Operator }),
     sym("@parameter")({ Parameter }),
@@ -242,7 +243,7 @@ local theme = lush(function(injected)
     sym("@type.definition")({ Typedef }),
     sym("@type.qualifier")({ Type }),
     sym("@variable")({ Identifier }),
-    sym("@variable.builtin")({ sym("@boolean") }),
+    sym("@variable.builtin")({ sym("@builtin") }),
 
     -- semantic tokens
     -- https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
@@ -262,7 +263,7 @@ local theme = lush(function(injected)
     sym("@lsp.type.lifetime")({ fg = colors.pink }),
     sym("@lsp.type.macro")({ sym("@macro") }),
     sym("@lsp.type.method")({ sym("@method") }),
-    sym("@lsp.type.namespace")({ sym("@namespace") }),
+    sym("@lsp.type.namespace")({ sym("@constant") }),
     sym("@lsp.type.number")({ sym("@number") }),
     sym("@lsp.type.operator")({ sym("@operator") }),
     sym("@lsp.type.parameter")({ sym("@parameter") }),
@@ -275,12 +276,13 @@ local theme = lush(function(injected)
     sym("@lsp.type.variable")({ sym("@variable") }),
 
     sym("@lsp.mod.annotation")({ sym("@macro") }),
+    sym("@lsp.mod.constant")({ Constant }),
     sym("@lsp.mod.interpolation")({ sym("@string.special") }),
-    sym("@lsp.mod.static")({ gui = "italic" }),
-    sym("@lsp.mod.constant")({}),
     sym("@lsp.mod.readonly")({}),
+    sym("@lsp.mod.static")({ gui = "italic" }),
 
     sym("@lsp.typemod.deriveHelper.attribute")({ sym("@attribute") }),
+    sym("@lsp.typemod.function")({}),
     sym("@lsp.typemod.interface")({ sym("@type") }),
     sym("@lsp.typemod.property.declaration")({ sym("@field") }),
     sym("@lsp.typemod.string.constant")({}),
@@ -288,19 +290,19 @@ local theme = lush(function(injected)
     sym("@lsp.typemod.string.static")({}),
     sym("@lsp.typemod.type.readonly")({ sym("@type") }),
     sym("@lsp.typemod.typeParameter")({ sym("@type") }),
+    sym("@lsp.typemod.variable")({ Identifier }),
 
-    sym("@lsp.typemod.function")({}),
-
-    sym("@lsp.typemod.class.defaultLibrary")({ sym("@macro") }),
-    sym("@lsp.typemod.function.defaultLibrary")({ sym("@macro") }),
-    sym("@lsp.typemod.type.defaultLibrary")({ sym("@type") }),
-    sym("@lsp.typemod.variable.defaultLibrary")({ sym("@macro") }),
+    sym("@lsp.typemod.class.defaultLibrary")({ sym("@builtin") }),
+    sym("@lsp.typemod.function.defaultLibrary")({ sym("@builtin") }),
+    sym("@lsp.typemod.type.defaultLibrary")({ sym("@builtin") }),
+    sym("@lsp.typemod.variable.defaultLibrary")({ sym("@builtin") }),
 
     -- to move
     sym("@namespace")({ sym("@type") }),
 
     -- lua
     sym("@constructor.lua")({ Delimiter }),
+    sym("@namespace.builtin.lua")({ sym("@builtin") }),
 
     -- tsx
     sym("@constructor.tsx")({}),
@@ -465,6 +467,9 @@ local theme = lush(function(injected)
 
     -- local-highlight
     CWordHighlight({ bg = colors.ui.cword }),
+
+    -- highlight-undo
+    HighlightUndo({ bg = colors.orange.darken(50), fg = colors.orange }),
   }
 end)
 
