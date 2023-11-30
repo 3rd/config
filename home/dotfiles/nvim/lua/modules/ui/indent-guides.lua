@@ -9,11 +9,16 @@ return lib.module.create({
         local exclude_filetypes = require("hlchunk/utils/filetype").exclude_filetypes
 
         -- exclude
-        exclude_filetypes = vim.tbl_extend("force", exclude_filetypes, {
-          fzf = true,
-          tsplayground = true,
-          text = true,
-        })
+        local additional_excludes = {
+          "fzf",
+          "tsplayground",
+          "text",
+          "gitmessengerpopup",
+        }
+
+        for _, filetype in ipairs(additional_excludes) do
+          exclude_filetypes[filetype] = true
+        end
 
         local opts = {
           indent = {

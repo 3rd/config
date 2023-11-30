@@ -9,7 +9,7 @@ return {
     -- https://github.com/neovim/neovim/issues/14090#issuecomment-1113090354
     { "n", "<C-I>", "<C-I>" },
     -- buffer
-    { { "n", "i" }, "<C-s>", "<ESC>:w<CR>", "Save buffer" },
+    { { "n", "i" }, "<C-s>", "<ESC>:silent w<CR>", "Save buffer" },
     { "n", "<C-w>", "<ESC>:bd<CR>", "Close buffer" },
     -- text operations
     { "n", "Y", "y$", "Yank to end of line" },

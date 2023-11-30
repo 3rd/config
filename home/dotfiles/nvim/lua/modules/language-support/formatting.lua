@@ -67,8 +67,8 @@ return lib.module.create({
 
           local filtered = {}
           for _, formatter in ipairs(formatters) do
-            -- $cwd/.noprettier disables prettier
-            if vim.fn.filereadable(lib.path.resolve(lib.path.cwd(), ".noprettier")) == 1 then
+            -- $cwd/.noformat disables prettier
+            if vim.fn.filereadable(lib.path.resolve(lib.path.cwd(), ".noformat")) == 1 then
               if formatter == "prettierd" then goto continue end
             end
             vim.list_extend(filtered, { formatter })
