@@ -52,7 +52,7 @@ colors.common = {
 
 colors.slang = {
   document = {
-    title = colors.magenta.rotate(10).lighten(10),
+    title = colors.foreground.lighten(20).saturation(100),
     meta = colors.yellow,
     meta_field = colors.magenta,
     meta_field_key = colors.pink,
@@ -73,7 +73,7 @@ colors.slang = {
   },
   link = {
     internal = "#5BC0CD",
-    external = "#5db4e3",
+    external = colors.blue.darken(10).desaturate(20),
   },
   heading = {
     one = hsl("#9999FF"),
@@ -108,10 +108,10 @@ colors.slang = {
   list_item = {
     -- item = colors.foreground.desaturate(20).darken(10),
     marker = colors.foreground.desaturate(80).darken(40),
-    label = colors.orange.lighten(20).saturate(30), -- "#c881de",
-    label_marker = colors.common.comment,
+    label = colors.indigo.lighten(10).saturate(20), -- "#c881de",
+    label_marker = colors.common.comment.darken(30),
   },
-  label = colors.orange,
+  label = colors.foreground.darken(10).saturate(10),
 }
 
 colors.rainbow = {

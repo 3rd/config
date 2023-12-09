@@ -62,7 +62,7 @@ return {
       meta = "#EBAF47",
       meta_field = "#F075C7",
       meta_field_key = "#E085D1",
-      title = "#F183BA"
+      title = "#ADBBFF"
     },
     heading = {
       five = "#04D2CE",
@@ -72,14 +72,14 @@ return {
       three = "#E38FFF",
       two = "#BF8FFF"
     },
-    label = "#F58147",
+    label = "#8A99E5",
     link = {
-      external = "#5db4e3",
+      external = "#3AA4D9",
       internal = "#5BC0CD"
     },
     list_item = {
-      label = "#FA9B6B",
-      label_marker = "#6B739E",
+      label = "#C798F6",
+      label_marker = "#494F6F",
       marker = "#6C7189"
     },
     number = "#E085D1",

@@ -75,12 +75,14 @@ local theme = lush(function(injected)
     -- StatusLine   { }, -- Status line of current window
     -- StatusLineNC { }, -- Status lines of not-current windows. Note: If this is equal to "StatusLine" Vim will use "^^^" in the status line of the current window.
     -- VisualNOS    { }, -- Visual mode selection when vim is "Not Owning the Selection".
-    -- Winseparator { }, -- Separator between window splits. Inherts from |hl-VertSplit| by default, which it will replace eventually.
+    Winseparator({ VertSplit }), -- Separator between window splits. Inherts from |hl-VertSplit| by default, which it will replace eventually.
     -- WildMenu     { }, -- Current match in 'wildmenu' completion
     TabLine({ bg = colors.ui.surface1 }), -- Tab pages line, not active tab page label
     TabLineFill({ bg = colors.ui.surface0 }), -- Tab pages line, where there are no labels
     TabLineSel({ bg = colors.ui.surface2 }), -- Tab pages line, active tab page label
-    WarningMsg({}), -- Warning messages
+    WarningMsg({}),
+    WinBar({}),
+    WinBarNC({}),
 
     -- common
     Identifier({ fg = colors.common.identifier }),
@@ -438,8 +440,9 @@ local theme = lush(function(injected)
     sym("@slang.tag.context")({ fg = colors.slang.tag.context }),
     sym("@slang.tag.danger")({ bg = colors.slang.tag.danger.bg, fg = colors.slang.tag.danger.fg }),
     sym("@slang.tag.identifier")({ fg = colors.slang.tag.identifier }),
-    sym("@slang.link")({ fg = colors.slang.link.internal, gui = "italic, undercurl" }),
-    sym("@slang.external_link")({ fg = colors.slang.link.external, gui = "italic, undercurl" }),
+    sym("@slang.link")({ fg = colors.slang.link.internal, gui = "italic" }),
+    sym("@slang.external_link")({ fg = colors.slang.link.external, gui = "italic" }),
+    sym("@slang.internal_link")({ fg = colors.slang.link.internal, gui = "" }),
     sym("@slang.inline_code")({ fg = colors.slang.code.inline }),
     sym("@slang.code_block_start")({ fg = colors.slang.code.block.marker, gui = "italic" }),
     sym("@slang.code_block_language")({ fg = colors.slang.code.block.language, gui = "italic" }),
@@ -449,11 +452,10 @@ local theme = lush(function(injected)
     sym("@slang.label")({ fg = colors.slang.label }),
     sym("@slang.list_item")({ fg = colors.slang.list_item.item }),
     sym("@slang.list_item_marker")({ fg = colors.slang.list_item.marker }),
-    sym("@slang.list_item_label")({ fg = colors.slang.list_item.label, gui = "italic" }),
+    sym("@slang.list_item_label")({ fg = colors.slang.list_item.label }),
     sym("@slang.list_item_label_marker")({ fg = colors.slang.list_item.label_marker }),
     sym("@slang.image")({ fg = colors.slang.label }),
     sym("@text.literal.syslang")({ fg = colors.foreground }),
-    sym("@slang.internal_link")({ fg = colors.slang.link.internal, gui = "undercurl" }),
 
     -- headlines
     sym("Headline1")({ bg = colors.slang.heading.one.darken(40), gui = "bold" }),
