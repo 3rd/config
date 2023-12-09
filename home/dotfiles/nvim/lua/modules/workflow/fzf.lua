@@ -88,6 +88,7 @@ return lib.module.create({
   plugins = {
     {
       "ibhagwan/fzf-lua",
+      commit = "a1a2d0f42eaec400cc6918a8e898fc1f9c4dbc5f", -- issues introduced by https://github.com/ibhagwan/fzf-lua/commit/b3b05f9d438736bb1f88aa373476753ddf83f481
       event = "VeryLazy",
       dependencies = { "nvim-tree/nvim-web-devicons" },
       config = setup_fzf_lua,

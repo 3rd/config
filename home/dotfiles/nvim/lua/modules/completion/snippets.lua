@@ -3,6 +3,7 @@ return lib.module.create({
   plugins = {
     {
       "L3MON4D3/LuaSnip",
+      commit = "1e57afa005fcd7c8d8c31ec896cbaf9157320413",
       config = function()
         local luasnip = require("luasnip")
         luasnip.filetype_extend("all", { "_" })
