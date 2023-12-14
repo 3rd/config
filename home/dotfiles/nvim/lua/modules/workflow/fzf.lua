@@ -63,7 +63,7 @@ local setup_fzf_lua = function()
   lib.map.map("n", "<c-f>", function()
     local opts = vim.deepcopy(config)
     opts.cmd =
-      "rg --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
+      "rg --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --glob '!LICENSE' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
     opts.prompt = "> "
     opts.fzf_opts = {
       ["--info"] = "inline",
