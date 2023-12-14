@@ -57,19 +57,13 @@ local setup = function()
     end
   end)()
 
-  local aw_status = function()
-    local has_aw, _ = pcall(require, "aw_watcher")
-    if not has_aw then return "noaw" end
-    return require("aw_watcher").is_connected() and "aw" or "noaw"
-  end
-
   local sections = {
     lualine_a = { components.git_branch },
     lualine_b = { components.filename },
     lualine_c = { components.git_diff, components.diagnostics },
     lualine_x = {
       copilot_status,
-      aw_status,
+      -- aw_status,
     },
     lualine_y = { components.filetype },
     lualine_z = { components.location },

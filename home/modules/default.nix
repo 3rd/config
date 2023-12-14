@@ -8,7 +8,6 @@
     ./services/dunst.nix
     ./services/i3.nix
     ./services/picom.nix
-    ./services/activitywatch.nix
     ./services/syncthing.private.nix
 
     ./programs/bat.nix

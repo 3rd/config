@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -uf -o pipefail
-IFS=$'\n\t'
-
-systemctl --user stop activitywatch
-systemctl --user stop activitywatch-afk
-systemctl --user stop activitywatch-window
-
