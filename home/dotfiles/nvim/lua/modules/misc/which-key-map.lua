@@ -36,11 +36,26 @@ return lib.module.create({
         })
 
         wk.register({
-          ["<leader>a"] = { name = "+actions" },
-          ["<leader>e"] = { name = "+edit" },
-          ["<leader>d"] = { name = "+debugger" },
+          ["<leader>"] = {
+            a = { name = "+actions" },
+            b = { name = "+edit" },
+            c = { name = "+debugger" },
+            ["1"] = "which_key_ignore",
+            ["2"] = "which_key_ignore",
+            ["3"] = "which_key_ignore",
+            ["4"] = "which_key_ignore",
+            ["5"] = "which_key_ignore",
+            ["6"] = "which_key_ignore",
+            ["7"] = "which_key_ignore",
+            ["8"] = "which_key_ignore",
+            ["9"] = "which_key_ignore",
+            ["0"] = "which_key_ignore",
+          },
         })
+
+        require("modules/workflow/javelin").setup()
       end,
+      event = "VeryLazy",
     },
   },
 })
