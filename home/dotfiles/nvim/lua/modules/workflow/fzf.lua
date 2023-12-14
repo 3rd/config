@@ -74,7 +74,7 @@ local setup_fzf_lua = function()
 
   lib.map.map("n", "<leader>l", "<cmd>lua require('fzf-lua').blines()<CR>", "Find line in buffer")
   lib.map.map("n", "<leader>L", "<cmd>lua require('fzf-lua').lines()<CR>", "Find line in project")
-  lib.map.map("n", "<leader><leader>", "<cmd>lua require('fzf-lua').resume()<CR>", "Resume last fzf-lua command")
+  lib.map.map("n", "<leader>;", "<cmd>lua require('fzf-lua').resume()<CR>", "Resume last fzf-lua command")
 end
 
 -- local setup_spider = function()
