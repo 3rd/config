@@ -1,5 +1,5 @@
 return {
-  background = "#16171D",
+  background = "#23252F",
   blue = "#42B6F0",
   common = {
     boolean = "#E085D1",
@@ -8,8 +8,9 @@ return {
     conditional = "#BF8CF2",
     constant = "#E085D1",
     constructor = "#5DBBEA",
+    cword = "#484C61",
     delimiter = "#616994",
-    field = "#94A0DB",
+    field = "#95A2E4",
     ["function"] = "#42B6F0",
     identifier = "#ADB8EB",
     keyword = "#828DC4",
@@ -17,14 +18,14 @@ return {
     number = "#E085D1",
     operator = "#6D78B0",
     parameter = "#D59E3F",
-    property = "#94A0DB",
+    property = "#95A2E4",
     ["repeat"] = "#BF8CF2",
     ret = "#ED5E5E",
     special_keyword = "#BF8CF2",
     string = "#8CBA5E",
-    type = "#42D7D7"
+    type = "#3BCECE"
   },
-  cyan = "#42D7D7",
+  cyan = "#3BCECE",
   foreground = "#ADB8EB",
   green = "#8CBA5E",
   indigo = "#BF8CF2",
@@ -32,9 +33,15 @@ return {
   none = "NONE",
   orange = "#F58147",
   pink = "#E085D1",
+  plugins = {
+    indent_guides = {
+      chunk = "#9F387C",
+      indent = { "#343746" }
+    }
+  },
   rainbow = {
     blue = "#3C8FB9",
-    cyan = "#449C9C",
+    cyan = "#459292",
     green = "#708B55",
     orange = "#C4693B",
     red = "#BF4A4A",
@@ -50,10 +57,10 @@ return {
     bold = "#BEC6EF",
     code = {
       block = {
-        background = "#292C38",
+        background = "#343746",
         content = "#ADB8EB",
-        language = "#50556D",
-        marker = "#3D4052"
+        language = "#595E78",
+        marker = "#484C61"
       },
       inline = "#EF9162"
     },
@@ -62,7 +69,7 @@ return {
       meta = "#EBAF47",
       meta_field = "#F075C7",
       meta_field_key = "#E085D1",
-      title = "#ADBBFF"
+      title = "#A3E363"
     },
     heading = {
       five = "#04D2CE",
@@ -72,7 +79,7 @@ return {
       three = "#E38FFF",
       two = "#BF8FFF"
     },
-    label = "#8A99E5",
+    label = "#E48758",
     link = {
       external = "#3AA4D9",
       internal = "#5BC0CD"
@@ -97,9 +104,9 @@ return {
       positive = "#9BC53D"
     },
     task = {
-      active = "#42D7D7",
+      active = "#3BCECE",
       cancelled = "#fa4040",
-      default = "#6C7EDA",
+      default = "#ADB8EB",
       done = "#6B739E",
       schedule = "#7378a5",
       session = "#7378a5"
@@ -107,15 +114,46 @@ return {
     ticket = "#fa89f6"
   },
   ui = {
-    cword = "#3D4052",
-    green = "#8CBA5E",
-    red = "#ED5E5E",
-    subtext0 = "#8D9BE2",
-    subtext1 = "#6C7EDA",
-    surface0 = "#303241",
-    surface1 = "#343746",
-    surface2 = "#3D4052",
-    yellow = "#EBAF47"
+    breadcrumbs = {
+      normal = {
+        bg = "#2B2E3B",
+        fg = "#7D89CA"
+      },
+      separator = {
+        fg = "#6674B7"
+      }
+    },
+    line = {
+      current_line = {
+        bg = "#343746"
+      },
+      current_line_nr = {
+        bg = "#343746",
+        fg = "#8489A4"
+      },
+      current_line_sign = {
+        bg = "#343746",
+        fg = "#F58147"
+      },
+      line_nr = {
+        fg = "#484C61"
+      }
+    },
+    split = "#2B2E3B",
+    status = {
+      a = {
+        bg = "#3F4355",
+        fg = "#95A1DA"
+      },
+      b = {
+        bg = "#343746",
+        fg = "#8693D5"
+      },
+      c = {
+        bg = "#2B2E3B",
+        fg = "#7D89CA"
+      }
+    }
   },
   yellow = "#EBAF47"
 }

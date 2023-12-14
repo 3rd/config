@@ -9,14 +9,14 @@ local lush = require("lush")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    Normal({ fg = colors.foreground }), -- Normal text
+    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
     EndOfBuffer({ fg = colors.background }),
 
-    VertSplit({ fg = colors.background.lighten(10) }),
+    VertSplit({ fg = colors.ui.split }),
     FoldColumn({}),
     ColorColumn({}),
     Cursor({ bg = colors.foreground, fg = colors.background }),
@@ -44,11 +44,12 @@ local theme = lush(function(injected)
     TermCursor({}), -- Cursor in a focused terminal
     TermCursorNC({}), -- Cursor in an unfocused terminal
 
-    LineNr({ fg = colors.background.lighten(20) }),
     SignColumn({}),
-    CursorLine({ bg = colors.background.lighten(10) }),
-    CursorLineNr({ bg = colors.background.lighten(10), fg = colors.background.lighten(50) }),
-    CursorLineSign({ bg = colors.background.lighten(10), fg = colors.orange }),
+
+    LineNr(colors.ui.line.line_nr),
+    CursorLine(colors.ui.line.current_line),
+    CursorLineNr(colors.ui.line.current_line_nr),
+    CursorLineSign(colors.ui.line.current_line_sign),
 
     IncSearch({ bg = colors.yellow, fg = colors.background }),
     Search({ bg = colors.yellow.darken(20), fg = colors.background }),
@@ -77,9 +78,9 @@ local theme = lush(function(injected)
     -- VisualNOS    { }, -- Visual mode selection when vim is "Not Owning the Selection".
     Winseparator({ VertSplit }), -- Separator between window splits. Inherts from |hl-VertSplit| by default, which it will replace eventually.
     -- WildMenu     { }, -- Current match in 'wildmenu' completion
-    TabLine({ bg = colors.ui.surface1 }), -- Tab pages line, not active tab page label
-    TabLineFill({ bg = colors.ui.surface0 }), -- Tab pages line, where there are no labels
-    TabLineSel({ bg = colors.ui.surface2 }), -- Tab pages line, active tab page label
+    TabLine({ bg = colors.background }), -- Tab pages line, not active tab page label
+    TabLineFill({ bg = colors.background }), -- Tab pages line, where there are no labels
+    TabLineSel({ bg = colors.background }), -- Tab pages line, active tab page label
     WarningMsg({}),
     WinBar({}),
     WinBarNC({}),
@@ -468,7 +469,7 @@ local theme = lush(function(injected)
     sym("CodeBlock")({ bg = colors.slang.code.block.background }),
 
     -- local-highlight
-    CWordHighlight({ bg = colors.ui.cword }),
+    CWordHighlight({ bg = colors.common.cword }),
 
     -- highlight-undo
     HighlightUndo({ bg = colors.orange.darken(50), fg = colors.orange }),

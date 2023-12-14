@@ -1,4 +1,4 @@
-local colors = require("config/colors-hex").ui
+local colors = require("config/colors-hex")
 
 local barbecue_config = {
   create_autocmd = false,
@@ -16,8 +16,8 @@ local barbecue_config = {
     separator = "❯",
   },
   theme = {
-    normal = { bg = colors.surface0, fg = colors.subtext0 },
-    separator = { fg = colors.surface2 },
+    normal = colors.ui.breadcrumbs.normal,
+    separator = colors.ui.breadcrumbs.separator,
   },
 }
 

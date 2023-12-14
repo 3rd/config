@@ -14,7 +14,7 @@ return lib.module.create({
             copy = colors.yellow,
             delete = colors.red,
           },
-          line_opacity = 0.3,
+          line_opacity = 0.2,
           set_cursor = true,
           set_cursorline = true,
           set_number = true,

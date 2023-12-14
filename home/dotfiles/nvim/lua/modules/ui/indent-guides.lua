@@ -1,3 +1,5 @@
+local colors = require("config/colors-hex")
+
 return lib.module.create({
   name = "indent-guides",
   plugins = {
@@ -24,9 +26,7 @@ return lib.module.create({
           indent = {
             exclude_filetypes = exclude_filetypes,
             chars = { "│", "¦", "┆", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊" }, -- │
-            style = {
-              "#414453",
-            },
+            style = colors.plugins.indent_guides.indent,
           },
           chunk = {
             exclude_filetypes = exclude_filetypes,
@@ -37,7 +37,7 @@ return lib.module.create({
               left_bottom = "╰",
               right_arrow = "▶",
             },
-            style = "#a73389",
+            style = colors.plugins.indent_guides.chunk,
           },
           blank = { enable = false },
           line_num = { enable = false },

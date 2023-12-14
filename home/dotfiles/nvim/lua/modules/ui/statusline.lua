@@ -1,13 +1,13 @@
-local colors = require("config/colors-hex").ui
+local colors = require("config/colors-hex")
 
 local setup = function()
   local lualine = require("lualine")
 
   local theme = {
     normal = {
-      c = { bg = colors.surface0, fg = colors.subtext1 },
-      b = { bg = colors.surface1, fg = colors.subtext0 },
-      a = { bg = colors.surface2, fg = colors.subtext0 },
+      a = colors.ui.status.a,
+      b = colors.ui.status.b,
+      c = colors.ui.status.c,
     },
   }
 

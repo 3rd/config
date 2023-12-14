@@ -3,10 +3,10 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(230, 15, 10),
+  background = hsl(230, 15, 16),
   foreground = hsl(230, 60, 80),
   blue = hsl(200, 85, 60),
-  cyan = hsl(180, 65, 55),
+  cyan = hsl(180, 60, 52),
   green = hsl(90, 40, 55),
   indigo = hsl(270, 80, 75),
   magenta = hsl(320, 80, 70),
@@ -17,7 +17,7 @@ local colors = {
 }
 
 local variable = colors.foreground
-local property = variable.darken(10).saturation(50)
+local property = variable.darken(7).saturation(60)
 local keyword = colors.foreground.darken(20).desaturate(40)
 local control = colors.indigo
 
@@ -48,11 +48,12 @@ colors.common = {
   macro = keyword.lighten(40).saturate(70),
   ret = colors.red,
   constructor = colors.blue.lighten(10).desaturate(10),
+  cword = colors.background.lighten(20),
 }
 
 colors.slang = {
   document = {
-    title = colors.foreground.lighten(20).saturation(100),
+    title = colors.green.lighten(20).saturation(70),
     meta = colors.yellow,
     meta_field = colors.magenta,
     meta_field_key = colors.pink,
@@ -90,7 +91,7 @@ colors.slang = {
     fg = "#A9B9E5", -- #8797C2
   },
   task = {
-    default = colors.foreground.darken(20),
+    default = colors.foreground,
     active = colors.cyan,
     done = colors.common.comment,
     cancelled = "#fa4040",
@@ -111,7 +112,7 @@ colors.slang = {
     label = colors.indigo.lighten(10).saturate(20), -- "#c881de",
     label_marker = colors.common.comment.darken(30),
   },
-  label = colors.foreground.darken(10).saturate(10),
+  label = colors.orange.desaturate(20),
 }
 
 colors.rainbow = {
@@ -125,15 +126,29 @@ colors.rainbow = {
 }
 
 colors.ui = {
-  surface0 = colors.background.lighten(13),
-  surface1 = colors.background.lighten(15),
-  surface2 = colors.background.lighten(20),
-  subtext0 = colors.foreground.darken(10),
-  subtext1 = colors.foreground.darken(20),
-  yellow = colors.yellow,
-  green = colors.green,
-  red = colors.red,
-  cword = colors.background.lighten(20),
+  line = {
+    line_nr = { fg = colors.background.lighten(20) },
+    current_line = { bg = colors.background.lighten(10) },
+    current_line_nr = { bg = colors.background.lighten(10), fg = colors.background.lighten(50) },
+    current_line_sign = { bg = colors.background.lighten(10), fg = colors.orange },
+  },
+  split = colors.background.lighten(5),
+  status = {
+    a = { bg = colors.background.lighten(15), fg = colors.foreground.darken(10).desaturate(20) },
+    b = { bg = colors.background.lighten(10), fg = colors.foreground.darken(15).desaturate(20) },
+    c = { bg = colors.background.lighten(5), fg = colors.foreground.darken(20).desaturate(30) },
+  },
+  breadcrumbs = {
+    normal = { bg = colors.background.lighten(5), fg = colors.foreground.darken(20).desaturate(30) },
+    separator = { fg = colors.foreground.darken(30).desaturate(40) },
+  },
+}
+
+colors.plugins = {
+  indent_guides = {
+    indent = { colors.background.lighten(10) },
+    chunk = colors.magenta.darken(40).desaturate(40),
+  },
 }
 
 return colors
