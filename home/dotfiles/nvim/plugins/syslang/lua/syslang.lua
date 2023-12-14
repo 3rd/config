@@ -1,8 +1,6 @@
 local folding = require("syslang/folding")
 local ts_utils = require("nvim-treesitter.ts_utils")
 
-local task_was_just_completed_and_moved = false
-
 ---@param node TSNode
 ---@param type string
 local closest = function(node, type)
@@ -152,10 +150,6 @@ local transition_task_active_to_done = function(task_node)
 
   vim.cmd(string.format("%d,%dm%d", start_row + 1, end_row, target_start_row))
 
-  vim.schedule(function()
-    task_was_just_completed_and_moved = true
-  end)
-
   -- TODO: fix empty line inserted when at the end of the file and there's no trailing newline
   -- TODO: move cursor
   -- delayed_fold_close(target_start_row + 1)
@@ -185,14 +179,6 @@ local transition_task_done_to_default = function(task_node)
       end
     end
   end
-end
-
-local transition_task_active_to_default = function(task_node)
-  local marker_node = task_node:child(0)
-  if not marker_node then return end
-  local range = ts_utils.node_to_lsp_range(marker_node)
-  local edit = { range = range, newText = "[ ]" }
-  vim.lsp.util.apply_text_edits({ edit }, 0, "utf-8")
 end
 
 local task_types = {
@@ -236,15 +222,6 @@ local is_task_node = function(node)
   return false
 end
 
-local find_parent_task_node = function(node)
-  local parent = node:parent()
-  while parent do
-    if is_task_node(parent) then return parent end
-    parent = parent:parent()
-  end
-  return nil
-end
-
 local handle_toggle_task = function()
   local parser = vim.treesitter.get_parser()
   local root = parser:parse()[1]:root()
@@ -265,28 +242,6 @@ local handle_toggle_task = function()
 
     -- hacky but we're always on the task here
     if is_task_node(target) then
-      if task_was_just_completed_and_moved then
-        task_was_just_completed_and_moved = false
-
-        vim.cmd("undo")
-
-        local post_undo_position = vim.api.nvim_win_get_cursor(0)
-        local post_line_length = #vim.fn.getline(post_undo_position[1])
-
-        local new_root = vim.treesitter.get_parser():parse()[1]:root()
-        local node_at_range = new_root:named_descendant_for_range(
-          post_undo_position[1] - 1,
-          post_line_length - 1,
-          post_undo_position[1] - 1,
-          post_line_length - 1
-        )
-        local updated_target = is_task_node(node_at_range) and node_at_range or find_parent_task_node(node_at_range)
-        if not updated_target then error("updated_target is nil") end
-
-        transition_task_active_to_default(updated_target)
-        return
-      end
-
       if toggle_task(target) then return end
     end
 
@@ -492,16 +447,6 @@ local setup = function()
   vim.schedule(function()
     fold_tasks()
   end)
-
-  local group = vim.api.nvim_create_augroup("syslang:tasks", { clear = true })
-  local bufnr = vim.api.nvim_get_current_buf()
-  vim.api.nvim_create_autocmd({ "CursorMoved" }, {
-    group = group,
-    buffer = bufnr,
-    callback = function()
-      task_was_just_completed_and_moved = false
-    end,
-  })
 end
 
 return {
