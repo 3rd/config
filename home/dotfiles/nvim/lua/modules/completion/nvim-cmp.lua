@@ -197,7 +197,7 @@ local setup = function()
       ["<CR>"] = cmp.mapping.confirm({ select = false }),
       ["<Tab>"] = cmp.mapping(function(fallback)
         if cmp.visible() then
-          cmp.select_next_item({ behavior = cmp.SelectBehavior.Replace, select = false })
+          cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert, select = false })
         elseif luasnip.jumpable(1) then
           luasnip.jump(1)
         else
@@ -206,7 +206,7 @@ local setup = function()
       end, { "i", "s" }),
       ["<S-Tab>"] = cmp.mapping(function(fallback)
         if cmp.visible() then
-          cmp.select_prev_item({ behavior = cmp.SelectBehavior.Replace, select = false })
+          cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert, select = false })
         elseif luasnip.jumpable(-1) then
           luasnip.jump(-1)
         else
