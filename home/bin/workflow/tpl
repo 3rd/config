@@ -27,10 +27,11 @@ main() {
 
   # apply
   if [ -d "$destination" ]; then
-    cp -r "$source/*" "$destination"
+    cp -r "$source""/*" "$destination"
   else
     cp -r "$source" "$destination"
   fi
+  git init
 }
 
 main
