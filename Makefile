@@ -73,6 +73,7 @@ link: ## link configuration files
 	$(call linkdot,emacs,~/.emacs.d)
 	$(call linkdot,wezterm,~/.config/wezterm)
 	$(call linkdot,ranger,~/.config/ranger)
+	$(call linkdot,yazi,~/.config/yazi)
 	$(call print_mod_end)
 
 clean: ## clean

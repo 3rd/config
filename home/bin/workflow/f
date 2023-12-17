@@ -2,15 +2,15 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-export FZF_DEFAULT_OPTS="--ansi --preview-window 'right:60%' --preview 'bat --color=always --style=header,grid --line-range :300 {}'"
+# export FZF_DEFAULT_OPTS="--ansi --preview-window 'right:60%' --preview 'bat --color=always --style=header,grid --line-range :300 {}'"
+# main() {
+#   local file
+#   file=$(fd -tf . | fzf)
+#   if [[ -z "$file" ]]; then
+#     exit
+#   fi
+#   $EDITOR "$file"
+# }
+# main
 
-main() {
-  local file
-  file=$(fd -tf . | fzf)
-  if [[ -z "$file" ]]; then
-    exit
-  fi
-  $EDITOR "$file"
-}
-
-main
+yazi
