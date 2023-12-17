@@ -255,6 +255,7 @@ return lib.module.create({
     },
     {
       "lewis6991/gitsigns.nvim",
+      commit = "017c924e20e52096796fe8bb89b9718acb5a067c",
       event = { "BufReadPre", "BufNewFile" },
       dependencies = { "nvim-lua/plenary.nvim" },
       config = setup_git_signs,
@@ -273,6 +274,6 @@ return lib.module.create({
   },
   mappings = {
     { "n", "<leader>b", ":GitMessenger<cr>", { desc = "Blame line" } },
-    { "n", "<leader>g", ":DiffviewOpen<cr>", { desc = "Open diff view " } },
+    -- { "n", "<leader>g", ":DiffviewOpen<cr>", { desc = "Open diff view " } },
   },
 })

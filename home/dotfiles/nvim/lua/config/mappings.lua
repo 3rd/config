@@ -89,6 +89,20 @@ return {
   lsp = {
     { "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", "LSP: Show hover" },
     { "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", "LSP: Go to definition" },
+    {
+      "n",
+      "<leader>gd",
+      function()
+        vim.lsp.buf.definition({
+          on_list = function(options)
+            local item = options.items[1]
+            local cmd = "vsplit +" .. item.lnum .. " " .. item.filename .. "|" .. "normal " .. item.col .. "|"
+            vim.cmd(cmd)
+          end,
+        })
+      end,
+      "LSP: Go to definition (vsplit)",
+    },
     { "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", "LSP: Go to declaration" },
     { "n", "gr", "<cmd>lua require('fzf-lua').lsp_references()<CR>", "LSP: Go to references" },
     { "n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>", "LSP: Go to implementation" },
