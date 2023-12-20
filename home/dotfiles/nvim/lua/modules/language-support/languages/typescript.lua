@@ -11,6 +11,7 @@ return lib.module.create({
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
+      -- enabled = false,
       -- event = "VeryLazy",
       ft = filetypes,
       dependencies = {
