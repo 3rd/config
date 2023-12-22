@@ -92,7 +92,7 @@
       # font_size = lib.mkDefault "9.4";
 
       font_family = lib.mkDefault "Berkeley Mono";
-      font_size = lib.mkDefault "9.7";
+      font_size = lib.mkDefault "9.5";
       # font_size = lib.mkDefault "9.9";
       # font_size = lib.mkDefault "10.4";
       # font_size = lib.mkDefault "10.5";

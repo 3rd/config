@@ -139,6 +139,7 @@
     hexchat
     hsetroot
     htop
+    yazi
     hyperfine
     i7z
     iftop

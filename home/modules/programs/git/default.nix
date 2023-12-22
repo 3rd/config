@@ -74,11 +74,6 @@ in {
     };
   };
 
-  programs.fish.shellAbbrs = {
-    gl =
-      "git log --graph --pretty=format:'%Cred%h%Creset %s - %C(bold blue)%an%Creset %Cgreen(%cr)' --abbrev-commit";
-    gll = "git log --graph --abbrev-commit --decorate";
-  };
   programs.fish.shellAliases = {
     g = "git";
     ga = "git add";
@@ -99,5 +94,9 @@ in {
     gstandup = ''
       git log  --all --author="$(git config user.email)" --pretty=format:'%h %ad %s | %an' --date=short -62
     '';
+    gl =
+      "git log --graph --pretty=format:'%Cred%h%Creset %s - %C(bold blue)%an%Creset %Cgreen(%cr)' --abbrev-commit";
+    gll = "git log --graph --abbrev-commit --decorate";
   };
+  programs.fish.shellAbbrs = { };
 }
