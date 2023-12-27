@@ -9,8 +9,8 @@ local lush = require("lush")
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    -- Normal({ fg = colors.foreground }), -- Normal text
+    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -451,6 +451,7 @@ local theme = lush(function(injected)
     sym("@slang.code_block_content")({ fg = colors.slang.code.block.content }),
     sym("@slang.code_block_end")({ fg = colors.slang.code.block.marker, gui = "italic" }),
     sym("@slang.label")({ fg = colors.slang.label }),
+    sym("@slang.label_line")({ fg = colors.slang.label_line }),
     sym("@slang.list_item")({ fg = colors.slang.list_item.item }),
     sym("@slang.list_item_marker")({ fg = colors.slang.list_item.marker }),
     sym("@slang.list_item_label")({ fg = colors.slang.list_item.label }),

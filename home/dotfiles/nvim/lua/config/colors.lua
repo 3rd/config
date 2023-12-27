@@ -59,7 +59,7 @@ colors.slang = {
     meta_field_key = colors.pink,
   },
   bold = colors.foreground.lighten(20),
-  string = colors.orange.desaturate(40).darken(10),
+  string = colors.orange.desaturate(20),
   number = colors.common.number,
   ticket = "#fa89f6",
   datetime = "#FC824A",
@@ -112,7 +112,8 @@ colors.slang = {
     label = colors.indigo.lighten(10).saturate(20), -- "#c881de",
     label_marker = colors.common.comment.darken(30),
   },
-  label = colors.orange.desaturate(20),
+  label = colors.pink.darken(10).desaturate(20),
+  label_line = colors.cyan.desaturate(10),
 }
 
 colors.rainbow = {

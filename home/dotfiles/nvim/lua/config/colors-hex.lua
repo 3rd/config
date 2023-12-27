@@ -79,7 +79,8 @@ return {
       three = "#E38FFF",
       two = "#BF8FFF"
     },
-    label = "#E48758",
+    label = "#CE73BF",
+    label_line = "#43C7C7",
     link = {
       external = "#3AA4D9",
       internal = "#5BC0CD"
@@ -91,7 +92,7 @@ return {
     },
     number = "#E085D1",
     section = "#8797C2",
-    string = "#CB7B52",
+    string = "#E48758",
     tag = {
       context = "#EBAF47",
       danger = {
