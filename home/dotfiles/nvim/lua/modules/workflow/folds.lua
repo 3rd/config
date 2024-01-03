@@ -23,7 +23,7 @@ local setup_ufo = function()
     folded_info_prefix = "…  ",
     show_folded_line_count = false,
     chars = {
-      heading = "◉",
+      outline = "◉",
       section_collapsed = "▶",
       section_expanded = "▼",
       list_item = "•",
@@ -109,18 +109,18 @@ local setup_ufo = function()
 
       -- change highlight if all the children tasks are done
       local hlmap = {
-        ["@slang.heading_1.marker.syslang"] = "@slang.heading_done",
-        ["@slang.heading_1.text.syslang"] = "@slang.heading_done",
-        ["@slang.heading_2.marker.syslang"] = "@slang.heading_done",
-        ["@slang.heading_2.text.syslang"] = "@slang.heading_done",
-        ["@slang.heading_3.marker.syslang"] = "@slang.heading_done",
-        ["@slang.heading_3.text.syslang"] = "@slang.heading_done",
-        ["@slang.heading_4.marker.syslang"] = "@slang.heading_done",
-        ["@slang.heading_4.text.syslang"] = "@slang.heading_done",
-        ["@slang.heading_5.marker.syslang"] = "@slang.heading_done",
-        ["@slang.heading_5.text.syslang"] = "@slang.heading_done",
-        ["@slang.heading_6.marker.syslang"] = "@slang.heading_done",
-        ["@slang.heading_6.text.syslang"] = "@slang.heading_done",
+        ["@slang.outline_1.marker.syslang"] = "@slang.outline_done",
+        ["@slang.outline_1.text.syslang"] = "@slang.outline_done",
+        ["@slang.outline_2.marker.syslang"] = "@slang.outline_done",
+        ["@slang.outline_2.text.syslang"] = "@slang.outline_done",
+        ["@slang.outline_3.marker.syslang"] = "@slang.outline_done",
+        ["@slang.outline_3.text.syslang"] = "@slang.outline_done",
+        ["@slang.outline_4.marker.syslang"] = "@slang.outline_done",
+        ["@slang.outline_4.text.syslang"] = "@slang.outline_done",
+        ["@slang.outline_5.marker.syslang"] = "@slang.outline_done",
+        ["@slang.outline_5.text.syslang"] = "@slang.outline_done",
+        ["@slang.outline_6.marker.syslang"] = "@slang.outline_done",
+        ["@slang.outline_6.text.syslang"] = "@slang.outline_done",
       }
       if tasks_todo_count == 0 and tasks_done_count > 0 then
         for index, chunk in ipairs(virtualTextChunks) do

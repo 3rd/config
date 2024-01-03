@@ -23,12 +23,12 @@ local setup_options = function()
   vim.opt_local.cursorlineopt = "screenline"
   vim.opt_local.winbar = " "
   vim.opt_local.commentstring = "-- %s"
-  vim.opt_local.textwidth = 100
   vim.opt_local.breakindentopt = "list:-1"
   vim.opt_local.formatlistpat = [[ ^\s*(\d)\+\s* ]]
   vim.opt_local.formatoptions = "cqrt"
   vim.opt_local.cinwords = "*,-"
   vim.opt_local.smartindent = true
+  vim.opt_local.textwidth = 130
 end
 
 -- it takes a while for the fold info to be updated by ts on its own

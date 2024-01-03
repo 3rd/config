@@ -20,7 +20,7 @@ return lib.module.create({
       "n",
       "Build theme",
       function()
-        -- colors/theme.lua
+        -- colors/static.lua
         local shipwright = require("shipwright")
         local lush = require("shipwright.transform.lush")
         local patchwrite = require("shipwright.transform.patchwrite")
@@ -33,7 +33,7 @@ return lib.module.create({
         )
         -- config/colors-hex.lua
         log("Writing colors...")
-        local colors = require("config/colors")
+        local colors = require("config/theme").colors
         local function parse(part)
           local result = {}
           for key, value in pairs(part) do

@@ -39,15 +39,6 @@ return {
       indent = { "#343746" }
     }
   },
-  rainbow = {
-    blue = "#3C8FB9",
-    cyan = "#459292",
-    green = "#708B55",
-    orange = "#C4693B",
-    red = "#BF4A4A",
-    violet = "#C559A1",
-    yellow = "#B58A40"
-  },
   red = "#ED5E5E",
   slang = {
     banner = {
@@ -71,13 +62,32 @@ return {
       meta_field_key = "#E085D1",
       title = "#A3E363"
     },
-    heading = {
-      five = "#04D2CE",
-      four = "#FFC78F",
-      one = "#9999FF",
-      six = "#F0949D",
-      three = "#E38FFF",
-      two = "#BF8FFF"
+    headline = {
+      five = {
+        bg = "#46332F",
+        fg = "#FFAA99"
+      },
+      four = {
+        bg = "#462F37",
+        fg = "#FF99BB"
+      },
+      marker = "#7786CF",
+      one = {
+        bg = "#332F46",
+        fg = "#AA99FF"
+      },
+      six = {
+        bg = "#463F2F",
+        fg = "#FFDD99"
+      },
+      three = {
+        bg = "#462F42",
+        fg = "#FF99EE"
+      },
+      two = {
+        bg = "#3F2F46",
+        fg = "#DD99FF"
+      }
     },
     label = "#CE73BF",
     label_line = "#43C7C7",
@@ -91,6 +101,14 @@ return {
       marker = "#6C7189"
     },
     number = "#E085D1",
+    outline = {
+      five = "#04D2CE",
+      four = "#FFC78F",
+      one = "#9999FF",
+      six = "#F0949D",
+      three = "#E38FFF",
+      two = "#BF8FFF"
+    },
     section = "#8797C2",
     string = "#E48758",
     tag = {

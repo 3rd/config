@@ -1,21 +1,200 @@
-local colors = require("config/colors")
+-- local colors = require("config/colors")
 local lush = require("lush")
+local hsl = lush.hsl
 
 -- https://github.com/search?q=language%3Alua+%22%40text.strong%22&type=code
 -- https://github.com/RRethy/nvim-base16/blob/4f3aa29f49b38edb6db1c52cea57e64ce3de2373/lua/base16-colorscheme.lua#L383
 -- https://github.com/ray-x/nvim/blob/8147b4d90361782d43d8a841d09868ef17d0a4c8/lua/modules/ui/galaxy.lua#L425
 
+local colors = {
+  none = "NONE",
+  background = hsl(230, 15, 16),
+  foreground = hsl(230, 60, 80),
+  blue = hsl(200, 85, 60),
+  cyan = hsl(180, 60, 52),
+  green = hsl(90, 40, 55),
+  indigo = hsl(270, 80, 75),
+  magenta = hsl(320, 80, 70),
+  orange = hsl(20, 90, 62),
+  pink = hsl(310, 60, 70),
+  red = hsl(0, 80, 65),
+  yellow = hsl(38, 80, 60),
+}
+colors.plugins = {
+  indent_guides = {
+    indent = { colors.background.lighten(10) },
+    chunk = colors.magenta.darken(40).desaturate(40),
+  },
+}
+
+local variable = colors.foreground
+local property = variable.darken(7).saturation(60)
+local keyword = colors.foreground.darken(20).desaturate(40)
+local control = colors.indigo
+
+colors.common = {
+  -- lab
+  identifier = variable,
+  constant = colors.pink,
+  keyword = keyword,
+  property = property,
+  field = property,
+  -- base
+  operator = colors.foreground.darken(30).saturation(30),
+  ["function"] = colors.blue,
+  type = colors.cyan,
+  parameter = colors.yellow.darken(10).desaturate(20),
+  -- comment = colors.orange.desaturate(75).darken(35),
+  comment = colors.foreground.desaturate(65).darken(35),
+  delimiter = colors.foreground.darken(40).desaturate(65),
+  boolean = colors.pink,
+  number = colors.pink,
+  string = colors.green,
+  -- control
+  conditional = control,
+  ["repeat"] = control,
+  special_keyword = control,
+  -- extra
+  builtin = colors.orange,
+  macro = keyword.lighten(40).saturate(70),
+  ret = colors.red,
+  constructor = colors.blue.lighten(10).desaturate(10),
+  cword = colors.background.lighten(20),
+}
+colors.ui = {
+  line = {
+    line_nr = { fg = colors.background.lighten(20) },
+    current_line = { bg = colors.background.lighten(10) },
+    current_line_nr = { bg = colors.background.lighten(10), fg = colors.background.lighten(50) },
+    current_line_sign = { bg = colors.background.lighten(10), fg = colors.orange },
+  },
+  split = colors.background.lighten(5),
+  status = {
+    a = { bg = colors.background.lighten(15), fg = colors.foreground.darken(10).desaturate(20) },
+    b = { bg = colors.background.lighten(10), fg = colors.foreground.darken(15).desaturate(20) },
+    c = { bg = colors.background.lighten(5), fg = colors.foreground.darken(20).desaturate(30) },
+  },
+  breadcrumbs = {
+    normal = { bg = colors.background.lighten(5), fg = colors.foreground.darken(20).desaturate(30) },
+    separator = { fg = colors.foreground.darken(30).desaturate(40) },
+  },
+}
+colors.slang = {
+  document = {
+    title = colors.green.lighten(20).saturation(70),
+    meta = colors.yellow,
+    meta_field = colors.magenta,
+    meta_field_key = colors.pink,
+  },
+  bold = colors.foreground.lighten(20),
+  string = colors.orange.desaturate(20),
+  number = colors.common.number,
+  ticket = "#fa89f6",
+  datetime = "#FC824A",
+  code = {
+    inline = colors.orange.desaturate(10).lighten(10),
+    block = {
+      background = colors.background.lighten(10),
+      marker = colors.background.lighten(20),
+      language = colors.background.lighten(30),
+      content = colors.foreground,
+    },
+  },
+  link = {
+    internal = "#5BC0CD",
+    external = colors.blue.darken(10).desaturate(20),
+  },
+  outline = {
+    one = hsl("#9999FF"),
+    two = hsl("#C08FFF"),
+    three = hsl("#E38FFF"),
+    four = hsl("#FFC78F"),
+    five = hsl("#04D3D0"),
+    six = hsl("#f0969f"),
+  },
+  headline = {
+    marker = colors.foreground.darken(20).desaturate(20),
+    one = {
+      bg = colors.indigo.rotate(-20).darken(70).saturation(20),
+      fg = colors.indigo.rotate(-20).lighten(20).saturation(100),
+    },
+    two = {
+      bg = colors.indigo.rotate(10).darken(70).saturation(20),
+      fg = colors.indigo.rotate(10).lighten(20).saturation(100),
+    },
+    three = {
+      bg = colors.indigo.rotate(40).darken(70).saturation(20),
+      fg = colors.indigo.rotate(40).lighten(20).saturation(100),
+    },
+    four = {
+      bg = colors.indigo.rotate(70).darken(70).saturation(20),
+      fg = colors.indigo.rotate(70).lighten(20).saturation(100),
+    },
+    five = {
+      bg = colors.indigo.rotate(100).darken(70).saturation(20),
+      fg = colors.indigo.rotate(100).lighten(20).saturation(100),
+    },
+    six = {
+      bg = colors.indigo.rotate(130).darken(70).saturation(20),
+      fg = colors.indigo.rotate(130).lighten(20).saturation(100),
+    },
+  },
+  section = "#8797C2",
+  banner = {
+    -- bg = "#262C3",
+    bg = "#38425B",
+    fg = "#A9B9E5", -- #8797C2
+  },
+  task = {
+    default = colors.foreground,
+    active = colors.cyan,
+    done = colors.common.comment,
+    cancelled = "#fa4040",
+    session = "#7378a5",
+    schedule = "#7378a5",
+  },
+  tag = {
+    hash = "#5BC0EB",
+    positive = "#9BC53D",
+    negative = "#FA4224",
+    context = colors.yellow,
+    danger = { bg = "#C3423F", fg = "#ffffff" },
+    identifier = "#e38fff",
+  },
+  list_item = {
+    -- item = colors.foreground.desaturate(20).darken(10),
+    marker = colors.foreground.desaturate(80).darken(40),
+    label = colors.indigo.lighten(10).saturate(20), -- "#c881de",
+    label_marker = colors.common.comment.darken(30),
+  },
+  label = colors.pink.darken(10).desaturate(20),
+  label_line = colors.cyan.desaturate(10),
+}
+
 ---@diagnostic disable: undefined-global
 local theme = lush(function(injected)
   local sym = injected.sym
   return {
-    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    Normal({ fg = colors.foreground }), -- Normal text
+    -- base
+    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
     EndOfBuffer({ fg = colors.background }),
+    Visual({ bg = colors.background.lighten(20) }),
+    Conceal({ fg = colors.foreground.darken(10) }),
+    Folded({}),
+    Whitespace({ fg = colors.foreground.darken(40).desaturate(80) }),
+    SpecialKey({ Whitespace }),
+    Directory({ fg = colors.blue }),
+    ErrorMsg({ fg = colors.red.saturate(20) }),
+    TermCursor({}), -- Cursor in a focused terminal
+    TermCursorNC({}), -- Cursor in an unfocused terminal
+    Title({ fg = colors.magenta }),
+    MatchParen({ bg = colors.background.lighten(20) }),
 
+    -- ui
     VertSplit({ fg = colors.ui.split }),
     FoldColumn({}),
     ColorColumn({}),
@@ -23,46 +202,22 @@ local theme = lush(function(injected)
     lCursor({}),
     CursorIM({}),
     CursorColumn({}),
-
-    Visual({ bg = colors.background.lighten(20) }),
-    Conceal({ fg = colors.foreground.darken(10) }),
-    Folded({}),
-    Whitespace({ fg = colors.foreground.darken(40).desaturate(80) }),
-    SpecialKey({ Whitespace }),
-
-    Directory({ fg = colors.blue }),
-    ErrorMsg({ fg = colors.red.saturate(20) }),
-
-    DiffAdd({ fg = colors.green }),
-    DiffChange({ fg = colors.yellow }),
-    DiffDelete({ fg = colors.red }),
-    DiffText({ fg = colors.blue }),
-    diffAdded({ DiffAdd }),
-    diffRemoved({ DiffDelete }),
-    diffChanged({ DiffChange }),
-
-    TermCursor({}), -- Cursor in a focused terminal
-    TermCursorNC({}), -- Cursor in an unfocused terminal
-
     SignColumn({}),
-
     LineNr(colors.ui.line.line_nr),
     CursorLine(colors.ui.line.current_line),
     CursorLineNr(colors.ui.line.current_line_nr),
     CursorLineSign(colors.ui.line.current_line_sign),
-
-    IncSearch({ bg = colors.yellow, fg = colors.background }),
-    Search({ bg = colors.yellow.darken(20), fg = colors.background }),
-    Substitute({ Search }),
-
     Pmenu({ bg = colors.background.lighten(10), fg = colors.foreground }),
     PmenuSel({ bg = colors.blue, fg = colors.background }),
     PmenuSbar({ bg = colors.background.lighten(20) }),
     PmenuThumb({ bg = colors.background.lighten(40) }),
-
-    Title({ fg = colors.magenta }),
-    MatchParen({ bg = colors.background.lighten(20) }),
-
+    Winseparator({ VertSplit }), -- Separator between window splits. Inherts from |hl-VertSplit| by default, which it will replace eventually.
+    TabLine({ bg = colors.background }), -- Tab pages line, not active tab page label
+    TabLineFill({ bg = colors.background }), -- Tab pages line, where there are no labels
+    TabLineSel({ bg = colors.background }), -- Tab pages line, active tab page label
+    WarningMsg({}),
+    WinBar({}),
+    WinBarNC({}),
     -- ModeMsg      { }, -- 'showmode' message (e.g., "-- INSERT -- ")
     -- MsgArea      { }, -- Area for messages and cmdline
     -- MsgSeparator { }, -- Separator for scrolled messages, `msgsep` flag of 'display'
@@ -76,14 +231,12 @@ local theme = lush(function(injected)
     -- StatusLine   { }, -- Status line of current window
     -- StatusLineNC { }, -- Status lines of not-current windows. Note: If this is equal to "StatusLine" Vim will use "^^^" in the status line of the current window.
     -- VisualNOS    { }, -- Visual mode selection when vim is "Not Owning the Selection".
-    Winseparator({ VertSplit }), -- Separator between window splits. Inherts from |hl-VertSplit| by default, which it will replace eventually.
     -- WildMenu     { }, -- Current match in 'wildmenu' completion
-    TabLine({ bg = colors.background }), -- Tab pages line, not active tab page label
-    TabLineFill({ bg = colors.background }), -- Tab pages line, where there are no labels
-    TabLineSel({ bg = colors.background }), -- Tab pages line, active tab page label
-    WarningMsg({}),
-    WinBar({}),
-    WinBarNC({}),
+
+    -- search
+    IncSearch({ bg = colors.yellow, fg = colors.background }),
+    Search({ bg = colors.yellow.darken(20), fg = colors.background }),
+    Substitute({ Search }),
 
     -- common
     Identifier({ fg = colors.common.identifier }),
@@ -101,35 +254,27 @@ local theme = lush(function(injected)
     Constructor({ fg = colors.common.constructor }),
     Field({ fg = colors.common.field }),
     Property({ fg = colors.common.property }),
-    -- blue
     Constant({ fg = colors.common.constant }),
     Boolean({ fg = colors.common.boolean }),
     Number({ fg = colors.common.number }),
     Float({ Number }),
-    -- cyan
     StorageClass({ Type }),
     Structure({ Type }),
     Typedef({ Type }),
-    -- green
     String({ fg = colors.common.string }),
     Character({ fg = colors.green }),
-    -- red
     Debug({ fg = colors.red }),
     Error({ fg = colors.red }),
-    -- yellow
     Todo({ fg = colors.yellow, gui = "bold,italic" }),
-    -- magenta
     PreProc({ fg = colors.common.keyword }),
     Macro({ fg = colors.common.macro }),
     Parameter({ fg = colors.common.parameter }),
     Include({ SpecialKeyword }),
     Define({ SpecialKeyword }),
     PreCondit({ SpecialKeyword }),
-    -- orange
     Special({ fg = colors.orange }),
     SpecialChar({ Special }),
     Tag({ Special }),
-    -- extra
     Delimiter({ fg = colors.common.delimiter }),
     SpecialComment({ Comment }),
     Underlined({ gui = "undercurl" }),
@@ -143,7 +288,7 @@ local theme = lush(function(injected)
     LspCodeLensSeparator({ fg = colors.foreground.darken(40) }),
     LspSignatureActiveParameter({ fg = colors.blue }),
 
-    -- Diagnostics
+    -- diagnostics
     DiagnosticError({ fg = colors.red }),
     DiagnosticWarn({ fg = colors.orange }),
     DiagnosticInfo({ fg = colors.blue }),
@@ -165,6 +310,15 @@ local theme = lush(function(injected)
     DiagnosticSignWarn({ fg = colors.orange }),
     DiagnosticSignInfo({ fg = colors.blue }),
     DiagnosticSignHint({ fg = colors.cyan }),
+
+    -- diff
+    DiffAdd({ fg = colors.green }),
+    DiffChange({ fg = colors.yellow }),
+    DiffDelete({ fg = colors.red }),
+    DiffText({ fg = colors.blue }),
+    diffAdded({ DiffAdd }),
+    diffRemoved({ DiffDelete }),
+    diffChanged({ DiffChange }),
 
     -- Tree-sitter
     sym("@none")({ bg = "NONE", fg = "NONE" }),
@@ -277,13 +431,11 @@ local theme = lush(function(injected)
     sym("@lsp.type.typeAlias")({ sym("@type.definition") }),
     sym("@lsp.type.typeParameter")({ sym("@type") }),
     sym("@lsp.type.variable")({ sym("@variable") }),
-
     sym("@lsp.mod.annotation")({ sym("@macro") }),
     sym("@lsp.mod.constant")({ Constant }),
     sym("@lsp.mod.interpolation")({ sym("@string.special") }),
     sym("@lsp.mod.readonly")({}),
     sym("@lsp.mod.static")({ gui = "italic" }),
-
     sym("@lsp.typemod.deriveHelper.attribute")({ sym("@attribute") }),
     sym("@lsp.typemod.function")({}),
     sym("@lsp.typemod.interface")({ sym("@type") }),
@@ -294,14 +446,10 @@ local theme = lush(function(injected)
     sym("@lsp.typemod.type.readonly")({ sym("@type") }),
     sym("@lsp.typemod.typeParameter")({ sym("@type") }),
     sym("@lsp.typemod.variable")({ Identifier }),
-
     sym("@lsp.typemod.class.defaultLibrary")({ sym("@builtin") }),
     sym("@lsp.typemod.function.defaultLibrary")({ sym("@builtin") }),
     sym("@lsp.typemod.type.defaultLibrary")({ sym("@builtin") }),
     sym("@lsp.typemod.variable.defaultLibrary")({ sym("@builtin") }),
-
-    -- to move
-    sym("@namespace")({ sym("@type") }),
 
     -- lua
     sym("@constructor.lua")({ Delimiter }),
@@ -311,6 +459,9 @@ local theme = lush(function(injected)
     sym("@constructor.tsx")({}),
     sym("@tag.tsx")({ SpecialKeyword }),
     sym("@tag.attribute.tsx")({ sym("Special") }),
+
+    -- misc
+    sym("@namespace")({ sym("@type") }),
 
     -- nvim-cmp
     CmpItemAbbr({ fg = colors.foreground }),
@@ -348,14 +499,6 @@ local theme = lush(function(injected)
     CmpItemKindTypeParameter({ fg = colors.common.type }),
     CmpItemKindCopilot({ fg = colors.pink }),
 
-    -- indent-blankline
-    IndentBlanklineIndent1({ fg = colors.background.lighten(21).desaturate(20) }),
-    IndentBlanklineIndent2({ fg = colors.background.lighten(18).desaturate(20) }),
-    IndentBlanklineIndent3({ fg = colors.background.lighten(15).desaturate(20) }),
-    IndentBlanklineIndent4({ fg = colors.background.lighten(12).desaturate(20) }),
-    IndentBlanklineIndent5({ fg = colors.background.lighten(9).desaturate(20) }),
-    IndentBlanklineIndent6({ fg = colors.background.lighten(6).desaturate(20) }),
-
     -- nvim-tree
     NvimTreeNormal({ bg = colors.background.lighten(2) }),
     NvimTreeWinSeparator({
@@ -384,13 +527,13 @@ local theme = lush(function(injected)
     GitSignsDeletePreview({ link = "DiffDelete" }),
 
     -- ts-rainbow
-    RainbowRed({ fg = colors.rainbow.red }),
-    RainbowYellow({ fg = colors.rainbow.yellow }),
-    RainbowBlue({ fg = colors.rainbow.blue }),
-    RainbowOrange({ fg = colors.rainbow.orange }),
-    RainbowGreen({ fg = colors.rainbow.green }),
-    RainbowViolet({ fg = colors.rainbow.violet }),
-    RainbowCyan({ fg = colors.rainbow.cyan }),
+    RainbowRed({ fg = colors.red.darken(20).desaturate(40) }),
+    RainbowYellow({ fg = colors.yellow.darken(20).desaturate(40) }),
+    RainbowBlue({ fg = colors.blue.darken(20).desaturate(40) }),
+    RainbowOrange({ fg = colors.orange.darken(20).desaturate(40) }),
+    RainbowGreen({ fg = colors.green.darken(20).desaturate(40) }),
+    RainbowViolet({ fg = colors.magenta.darken(20).desaturate(40) }),
+    RainbowCyan({ fg = colors.cyan.darken(20).desaturate(40) }),
 
     -- syslang
     sym("@slang.error")({ bg = "#7a2633", fg = "#ffffff" }),
@@ -411,23 +554,41 @@ local theme = lush(function(injected)
     sym("@slang.daterange")({ fg = colors.slang.datetime }),
     sym("@slang.datetime")({ fg = colors.slang.datetime }),
     sym("@slang.datetimerange")({ fg = colors.slang.datetime }),
-    sym("@slang.heading_1.marker")({ fg = colors.slang.heading.one }),
-    sym("@slang.heading_1.text")({ fg = colors.slang.heading.one, gui = "bold" }),
-    sym("@slang.heading_2.marker")({ fg = colors.slang.heading.two }),
-    sym("@slang.heading_2.text")({ fg = colors.slang.heading.two, gui = "bold" }),
-    sym("@slang.heading_3.marker")({ fg = colors.slang.heading.three }),
-    sym("@slang.heading_3.text")({ fg = colors.slang.heading.three, gui = "bold" }),
-    sym("@slang.heading_4.marker")({ fg = colors.slang.heading.four }),
-    sym("@slang.heading_4.text")({ fg = colors.slang.heading.four, gui = "bold" }),
-    sym("@slang.heading_5.marker")({ fg = colors.slang.heading.five }),
-    sym("@slang.heading_5.text")({ fg = colors.slang.heading.five, gui = "bold" }),
-    sym("@slang.heading_6.marker")({ fg = colors.slang.heading.six }),
-    sym("@slang.heading_6.text")({ fg = colors.slang.heading.six, gui = "bold" }),
-    sym("@slang.heading_done")({ fg = colors.slang.task.done, gui = "bold" }),
+
+    sym("@slang.outline_1.marker")({ fg = colors.slang.outline.one }),
+    sym("@slang.outline_1.text")({ fg = colors.slang.outline.one, gui = "bold" }),
+    sym("@slang.outline_2.marker")({ fg = colors.slang.outline.two }),
+    sym("@slang.outline_2.text")({ fg = colors.slang.outline.two, gui = "bold" }),
+    sym("@slang.outline_3.marker")({ fg = colors.slang.outline.three }),
+    sym("@slang.outline_3.text")({ fg = colors.slang.outline.three, gui = "bold" }),
+    sym("@slang.outline_4.marker")({ fg = colors.slang.outline.four }),
+    sym("@slang.outline_4.text")({ fg = colors.slang.outline.four, gui = "bold" }),
+    sym("@slang.outline_5.marker")({ fg = colors.slang.outline.five }),
+    sym("@slang.outline_5.text")({ fg = colors.slang.outline.five, gui = "bold" }),
+    sym("@slang.outline_6.marker")({ fg = colors.slang.outline.six }),
+    sym("@slang.outline_6.text")({ fg = colors.slang.outline.six, gui = "bold" }),
+    sym("@slang.outline_done")({ fg = colors.slang.task.done, gui = "bold" }),
+
+    sym("@slang.heading_1.marker")({ fg = colors.slang.headline.marker }),
+    sym("@slang.heading_2.marker")({ fg = colors.slang.headline.marker }),
+    sym("@slang.heading_3.marker")({ fg = colors.slang.headline.marker }),
+    sym("@slang.heading_4.marker")({ fg = colors.slang.headline.marker }),
+    sym("@slang.heading_5.marker")({ fg = colors.slang.headline.marker }),
+    sym("@slang.heading_6.marker")({ fg = colors.slang.headline.marker }),
+
+    sym("@slang.heading_1.text")({ fg = colors.slang.headline.one.fg, gui = "bold" }),
+    sym("@slang.heading_2.text")({ fg = colors.slang.headline.two.fg, gui = "bold" }),
+    sym("@slang.heading_3.text")({ fg = colors.slang.headline.three.fg, gui = "bold" }),
+    sym("@slang.heading_4.text")({ fg = colors.slang.headline.four.fg, gui = "bold" }),
+    sym("@slang.heading_5.text")({ fg = colors.slang.headline.five.fg, gui = "bold" }),
+    sym("@slang.heading_6.text")({ fg = colors.slang.headline.six.fg, gui = "bold" }),
+
     sym("@slang.section")({ fg = colors.slang.section }),
     sym("@slang.banner")({
-      -- bg = colors.slang.banner.bg, fg = colors.slang.banner.fg
+      bg = colors.slang.banner.bg,
+      fg = colors.slang.banner.fg,
     }),
+
     sym("@slang.task_default")({}),
     sym("@slang.task_marker_default")({ fg = colors.slang.task.done }),
     sym("@slang.task_active")({ fg = colors.slang.task.active }),
@@ -460,12 +621,12 @@ local theme = lush(function(injected)
     sym("@text.literal.syslang")({ fg = colors.foreground }),
 
     -- headlines
-    sym("Headline1")({ bg = colors.slang.heading.one.darken(40), gui = "bold" }),
-    sym("Headline2")({ bg = colors.slang.heading.two.darken(40), gui = "bold" }),
-    sym("Headline3")({ bg = colors.slang.heading.three.darken(40), gui = "bold" }),
-    sym("Headline4")({ bg = colors.slang.heading.four.darken(40), gui = "bold" }),
-    sym("Headline5")({ bg = colors.slang.heading.five.darken(40), gui = "bold" }),
-    sym("Headline6")({ bg = colors.slang.heading.six.darken(40), gui = "bold" }),
+    sym("Headline1")({ bg = colors.slang.headline.one.bg }),
+    sym("Headline2")({ bg = colors.slang.headline.two.bg }),
+    sym("Headline3")({ bg = colors.slang.headline.three.bg }),
+    sym("Headline4")({ bg = colors.slang.headline.four.bg }),
+    sym("Headline5")({ bg = colors.slang.headline.five.bg }),
+    sym("Headline6")({ bg = colors.slang.headline.six.bg }),
     sym("Quote")({ fg = colors.slang.banner.bg, gui = "bold" }),
     sym("CodeBlock")({ bg = colors.slang.code.block.background }),
 
@@ -476,5 +637,8 @@ local theme = lush(function(injected)
     HighlightUndo({ bg = colors.orange.darken(50), fg = colors.orange }),
   }
 end)
+
+-- inject colors for shipwright
+lib.metatable.decorate_non_enumerable(theme, { colors = colors })
 
 return theme

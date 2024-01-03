@@ -49,12 +49,12 @@ local handle_navigate_to_symbol = function()
   local root = parser:parse()[1]:root()
 
   local kinds = {
-    "heading_1",
-    "heading_2",
-    "heading_3",
-    "heading_4",
-    "heading_5",
-    "heading_6",
+    "outline_1",
+    "outline_2",
+    "outline_3",
+    "outline_4",
+    "outline_5",
+    "outline_6",
   }
   local symbols = lib.ts.find_children(root, kinds, true)
 

@@ -37,4 +37,5 @@ _G.lib = {
   ts = require("lib/treesitter"),
   ui = require("lib/ui"),
   node = require("lib/node"),
+  metatable = require("lib/metatable"),
 }
