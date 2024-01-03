@@ -227,24 +227,14 @@ local setup_fold_cycle = function()
   -- <s-tab> - collapse
   vim.keymap.set("n", "<s-tab>", function()
     local filetype = vim.bo.filetype
+
+    -- slang: move to fold start
     if filetype == "syslang" then
       local is_open_fold_child = is_current_line_in_open_fold_and_is_not_first()
       if is_open_fold_child then vim.api.nvim_exec2("normal! [z", {}) end
     end
-    pcall(vim.api.nvim_exec2, "normal! zc", {})
 
-    -- close nested folds
-    -- if filetype == "syslang" then
-    -- local fold_start = vim.fn.foldclosed(".")
-    -- local fold_end = vim.fn.foldclosedend(".")
-    -- if fold_start ~= -1 and fold_end ~= -1 then
-    --   log("range", fold_start, fold_end)
-    --   local range = string.format("%d,%d", fold_start, fold_end)
-    --   local command = ("%snormal! zc"):format(range)
-    --   log("command", command)
-    --   vim.api.nvim_exec2(command, {})
-    -- end
-    -- end
+    require("fold-cycle").close_all()
   end, { silent = true, noremap = true })
 end
 
