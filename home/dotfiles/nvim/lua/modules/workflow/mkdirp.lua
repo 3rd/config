@@ -4,7 +4,7 @@ local setup = function()
     pattern = "*",
     callback = function(ctx)
       local dir = vim.fn.fnamemodify(ctx.file, ":p:h")
-      vim.fn.mkdir(dir, "p")
+      pcall(vim.fn.mkdir, dir, "p")
     end,
   })
 end
