@@ -2,7 +2,7 @@
 
 {
 
-  home.packages = with pkgs; [ electron ];
+  home.packages = with pkgs; [ electron quick-lint-js ];
 
   home = {
     sessionPath = [ "$HOME/.npm/global/bin" "$HOME/.pnpm" ];

@@ -176,6 +176,17 @@ local setup_lspconfig = function()
         },
       },
     },
+    quick_lint_js = {
+      cmd = { "quick-lint-js", "--lsp-server" },
+      filetypes = {
+        "javascript",
+        "javascriptreact",
+        "javascript.jsx",
+        "typescript",
+        "typescriptreact",
+        "typescript.tsx",
+      },
+    },
     eslint = {
       filetypes = {
         "javascript",
