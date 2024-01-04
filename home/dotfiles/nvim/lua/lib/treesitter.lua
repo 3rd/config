@@ -14,12 +14,6 @@ M.find_child = function(node, type, deep)
   return nil
 end
 
-local contains = function(table, element)
-  for _, value in ipairs(table) do
-    if value == element then return true end
-  end
-  return false
-end
 --- @param node TSNode
 --- @param type string | string[] | nil
 --- @param deep? boolean
@@ -28,7 +22,7 @@ M.find_children = function(node, type, deep)
   for i = 0, node:named_child_count() - 1 do
     local child = node:named_child(i)
     if child then
-      if type == nil or child:type() == type or (lib.is.table(type) and contains(type, child:type())) then
+      if type == nil or child:type() == type or (lib.is.table(type) and table.includes(type, child:type())) then
         table.insert(result, child)
       end
       if deep then
@@ -77,6 +71,13 @@ M.find_parent_at_line = function(type)
     current = current:parent()
   end
   return nil
+end
+
+---@param node TSNode
+---@param source string|number
+---@return string
+M.get_node_text = function(node, source)
+  return vim.treesitter.get_node_text(node, source or 0)
 end
 
 return M

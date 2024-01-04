@@ -57,7 +57,7 @@ return {
     },
     datetime = "#FC824A",
     document = {
-      meta = "#EBAF47",
+      meta = "#6B739E",
       meta_field = "#F075C7",
       meta_field_key = "#E085D1",
       title = "#A3E363"

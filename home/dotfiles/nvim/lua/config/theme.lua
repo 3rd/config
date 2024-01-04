@@ -82,7 +82,7 @@ colors.ui = {
 colors.slang = {
   document = {
     title = colors.green.lighten(20).saturation(70),
-    meta = colors.yellow,
+    meta = colors.common.comment,
     meta_field = colors.magenta,
     meta_field_key = colors.pink,
   },
@@ -216,8 +216,12 @@ local theme = lush(function(injected)
     TabLineFill({ bg = colors.background }), -- Tab pages line, where there are no labels
     TabLineSel({ bg = colors.background }), -- Tab pages line, active tab page label
     WarningMsg({}),
-    WinBar({}),
-    WinBarNC({}),
+    WinBar({
+      bg = colors.background.lighten(10).saturation(20),
+      fg = colors.cyan.saturation(60),
+      gui = "bold",
+    }),
+    WinBarNC({ WinBar }),
     -- ModeMsg      { }, -- 'showmode' message (e.g., "-- INSERT -- ")
     -- MsgArea      { }, -- Area for messages and cmdline
     -- MsgSeparator { }, -- Separator for scrolled messages, `msgsep` flag of 'display'

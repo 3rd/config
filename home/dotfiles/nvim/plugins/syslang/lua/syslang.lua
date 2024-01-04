@@ -1,17 +1,6 @@
 local folding = require("syslang/folding")
+local slib = require("syslang/lib")
 local ts_utils = require("nvim-treesitter.ts_utils")
-
----@param node TSNode
----@param type string
-local closest = function(node, type)
-  if node:type() == type then return node end
-  local parent = node:parent()
-  while parent do
-    if parent:type() == type then return parent end
-    parent = parent:parent()
-  end
-  return nil
-end
 
 local setup_options = function()
   vim.opt_local.foldlevel = 999
@@ -335,7 +324,7 @@ local handle_cr = function()
   end
 
   -- internal link
-  local internal_link = closest(node, "internal_link")
+  local internal_link = lib.ts.find_parent(node, "internal_link")
   if internal_link then
     local target = lib.ts.find_child(internal_link, "internal_link_target", true)
     if not target then return end
@@ -433,6 +422,14 @@ local function fold_tasks()
       vim.api.nvim_command("normal! zc")
     end
   end
+
+  -- also fold first line if we have meta
+  local meta = slib.get_document_meta()
+  if meta then
+    vim.api.nvim_win_set_cursor(0, { 1, 0 })
+    vim.api.nvim_command("normal! zc")
+  end
+
   vim.fn.winrestview(view)
 end
 
@@ -446,6 +443,30 @@ local setup = function()
 
   vim.schedule(function()
     fold_tasks()
+  end)
+
+  local title = slib.get_document_title()
+  vim.opt_local.winbar = title
+
+  -- TODO: top gutter attempt with extmarks
+  -- local bufnr = vim.api.nvim_get_current_buf()
+  -- local namespace = vim.api.nvim_create_namespace("syslang")
+  -- vim.api.nvim_buf_set_extmark(bufnr, namespace, 0, 0, {
+  --   -- end_row = 1,
+  --   virt_lines = { { { " " } }, { { " " } } },
+  --   -- virt_lines_above = true,
+  --   virt_text_pos = "inline",
+  --   right_gravity = false,
+  -- })
+
+  -- fallback for now: ensure there's a newline at the top of the file
+  vim.schedule(function()
+    local has_newline = vim.fn.getline(1) == ""
+    if not has_newline then
+      local view = vim.fn.winsaveview()
+      vim.api.nvim_buf_set_lines(0, 0, 0, false, { "" })
+      vim.fn.winrestview(view)
+    end
   end)
 end
 
