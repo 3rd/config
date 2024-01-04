@@ -30,7 +30,7 @@ local setup_tree = function()
       custom = {},
     },
     git = {
-      enable = true,
+      enable = false,
       ignore = false,
       timeout = 500,
     },

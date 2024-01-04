@@ -59,7 +59,7 @@ return {
   -- foldcolumn = "1",
   foldenable = true,
   foldlevel = 999,
-  foldlevelstart = -1,
+  foldlevelstart = 999,
   foldopen = "mark,percent,quickfix,search,tag,undo",
   -- foldmethod = "expr",
   -- foldexpr = "v:lua.vim.treesitter.foldexpr()", -- this fucks up tree-sitter folds

@@ -31,7 +31,7 @@ local setup_ufo = function()
       task_active = "➡",
       task_done = "",
       task_cancelled = "",
-      task_info = "☑",
+      task_info = "",
     },
   }
 
@@ -198,14 +198,21 @@ local setup_ufo = function()
   })
 
   local open_all_folds = function()
-    vim.opt_local.foldlevel = 999
+    -- vim.opt_local.foldlevel = 999
     ufo.openAllFolds()
   end
 
   local close_all_folds = function()
-    vim.opt_local.foldlevel = 999
-    -- ufo.closeAllFolds()
-    ufo.closeFoldsWith(0)
+    local view = vim.fn.winsaveview()
+    vim.opt_local.foldlevel = 0
+    vim.schedule(function()
+      vim.opt_local.foldlevel = 999
+      vim.schedule(function()
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        ufo.closeAllFolds()
+        vim.fn.winrestview(view)
+      end)
+    end)
   end
 
   vim.keymap.set("n", "zR", open_all_folds, { desc = "Open all folds" })
@@ -220,9 +227,12 @@ local setup_fold_cycle = function()
   })
 
   -- <tab> - open / cycle
-  vim.keymap.set("n", "<tab>", function()
-    require("fold-cycle").open()
-  end, { silent = true, desc = "Fold-cycle: open folds" })
+  vim.keymap.set(
+    "n",
+    "<tab>",
+    function() require("fold-cycle").open() end,
+    { silent = true, desc = "Fold-cycle: open folds" }
+  )
 
   -- <s-tab> - collapse
   vim.keymap.set("n", "<s-tab>", function()

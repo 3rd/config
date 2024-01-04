@@ -16,6 +16,8 @@ local setup = function()
 end
 
 local setup_lspconfig = function()
+  local root_pattern = require("lspconfig.util").root_pattern
+
   local overrides = {
     -- client.server_capabilities.documentFormattingProvider
     formatting = {
@@ -76,20 +78,22 @@ local setup_lspconfig = function()
       },
     },
     lua_ls = {
+      root_dir = root_pattern(".root", "init.lua", ".git"),
       settings = {
         Lua = {
-          runtime = { version = "LuaJIT" },
           completion = { callSnippet = "Replace" },
-          diagnostics = { globals = { "vim", "log", "throw" } },
+          -- runtime = { version = "LuaJIT" },
+          -- diagnostics = { globals = { "vim", "log", "throw" } },
           workspace = {
-            checkThirdParty = false,
-            library = {
-              [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-              [vim.fn.stdpath("config") .. "/lua"] = true,
-            },
+            -- checkThirdParty = false,
+            -- library = {
+            --   [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+            --   [vim.fn.stdpath("config") .. "/lua"] = true,
+            -- },
+            ignoreDir = { ".git", "node_modules", "linters" },
           },
-          telemetry = { enable = false },
-          hint = { enable = true },
+          -- telemetry = { enable = false },
+          -- hint = { enable = true },
         },
       },
       handlers = {
@@ -298,7 +302,6 @@ local setup_lspconfig = function()
   end
 
   -- setup servers
-  local root_pattern = require("lspconfig.util").root_pattern
   local default_root_dir = root_pattern(".root", ".git", "go.mod", "package.json") or vim.loop.cwd()
   for server_name, server_options in pairs(servers) do
     local opts = vim.tbl_deep_extend("force", server_options, {
@@ -324,6 +327,23 @@ return lib.module.create({
       dependencies = {
         "b0o/schemastore.nvim",
         { "antosha417/nvim-lsp-file-operations", opts = {} },
+        {
+          "folke/neodev.nvim",
+          opts = {
+            library = {
+              enabled = true,
+              runtime = true,
+              types = true,
+              -- plugins = false,
+              plugins = { "nvim-treesitter" },
+            },
+            setup_jsonls = true,
+            lspconfig = true,
+            -- much faster, but needs a recent built of lua-language-server
+            -- needs lua-language-server >= 3.6.0
+            pathStrict = true,
+          },
+        },
       },
       config = setup_lspconfig,
     },

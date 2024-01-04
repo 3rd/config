@@ -461,8 +461,8 @@ local setup = function()
 
   -- fallback for now: ensure there's a newline at the top of the file
   vim.schedule(function()
-    local has_newline = vim.fn.getline(1) == ""
-    if not has_newline then
+    local needs_newline = not (vim.fn.getline(1) == "" or string.match(vim.fn.getline(1), "^@meta"))
+    if needs_newline then
       local view = vim.fn.winsaveview()
       vim.api.nvim_buf_set_lines(0, 0, 0, false, { "" })
       vim.fn.winrestview(view)
