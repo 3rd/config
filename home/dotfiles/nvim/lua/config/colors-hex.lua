@@ -45,7 +45,6 @@ return {
       bg = "#38425B",
       fg = "#A9B9E5"
     },
-    bold = "#BEC6EF",
     code = {
       block = {
         background = "#343746",

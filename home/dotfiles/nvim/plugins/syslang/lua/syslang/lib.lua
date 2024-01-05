@@ -1,22 +1,30 @@
 local M = {}
 
-local capitalize_fallback_title = function(title)
-  local title_case = function(str)
-    return str
-      :gsub("(%a)([%w_']*)", function(first, rest)
-        return first:upper() .. rest:lower()
-      end)
-      :gsub("-", " ")
+local capitalize_special_cases = {
+  ["^project[-]"] = "Project: ",
+  ["^consume[-]"] = "Consume: ",
+}
+
+local function capitalize_fallback_title(title)
+  local replaced = false
+  for pattern, replacement in pairs(capitalize_special_cases) do
+    if title:find(pattern) then
+      title = title:gsub(pattern, replacement)
+      replaced = true
+      break
+    end
   end
 
-  -- Handle special cases
-  if title:match("^project%-") then
-    return "Project: " .. title_case(title:sub(9))
-  elseif title:match("^consume%-") then
-    return "Consume: " .. title_case(title:sub(9))
-  else
-    return title_case(title)
+  title = title:gsub("-", " ")
+
+  local words = {}
+  for word in title:gmatch("%S+") do
+    if not replaced then word = word:sub(1, 1):upper() .. word:sub(2) end
+    table.insert(words, word)
+    replaced = false
   end
+
+  return table.concat(words, " ")
 end
 
 M.get_root = function()
