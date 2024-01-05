@@ -44,6 +44,7 @@
     ./custom/private.nix
     ./custom/vault.nix
     ./custom/wiki.nix
+    ./custom/core.nix
 
   ];
 

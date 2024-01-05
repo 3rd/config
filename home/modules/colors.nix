@@ -3,7 +3,7 @@
   colors = {
     # background = "#1c1d22";
     # background = "#1E1F27";
-    background = "#21222B";
+    background = "#202128";
     # background = "#1e1f29";
     # background = "#21222c";
     foreground = "#BDC7EE";
@@ -17,8 +17,8 @@
     gray-medium = "#7378a5";
     gray-darkish = "#464A6C";
     gray-dark = "#444869";
-    gray-darker = "#343751";
-    gray-darkest = "#18192a";
+    gray-darker = "#37394d";
+    gray-darkest = "#272934";
     blue-lightest = "#9cdcfc";
     blue-lighter = "#6acbfb";
     blue-light = "#38b9fa";

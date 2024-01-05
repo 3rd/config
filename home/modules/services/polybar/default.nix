@@ -16,6 +16,10 @@
       executable = true;
       source = ./vpn.sh;
     };
+    ".config/polybar/core.sh" = {
+      executable = true;
+      source = ./core.sh;
+    };
   };
 
   services.polybar = {
@@ -36,16 +40,16 @@
         # fonts are indexed from 0 here are from 1 when referenced
         # ex. prop-font = 2 -> uses font-1
         # so stupid
-        font-0 = lib.mkDefault "Fira Sans Mono:size=12;3";
-        font-1 = lib.mkDefault "Symbols Nerd Font:size=12;2";
-        font-2 = lib.mkDefault "Symbols Nerd Font:size=12;2";
+        font-0 = lib.mkDefault "Fira Sans Mono:size=12;4";
+        font-1 = lib.mkDefault "Symbols Nerd Font:size=12;4";
+        font-2 = lib.mkDefault "Symbols Nerd Font:size=12;4";
       };
       "bar/top" = {
         "inherit" = "bar/common";
         modules-left = "i3";
         modules-center = "task";
         modules-right =
-          "vpn battery sep pulseaudio bluetooth cpu cpu_temp sep mem sep fs sep clock";
+          "vpn battery sep pulseaudio bluetooth core cpu cpu_temp sep mem sep fs sep clock";
         height = 24;
         fixed-center = true;
         tray-background = gray-darkest;
@@ -162,7 +166,7 @@
       "module/cpu" = {
         type = "internal/cpu";
         format-background = gray-darkest;
-        format-foreground = foreground;
+        format-foreground = orange-medium;
         format-prefix = "CPU ";
         format-prefix-foreground = gray-light;
         format-padding = 1;
@@ -175,13 +179,13 @@
         hwmon-path = "/sys/devices/platform/it87.2656/hwmon/hwmon2/temp1_input";
         label = "%temperature-c%";
         format-background = gray-darkest;
-        format-foreground = foreground;
+        format-foreground = orange-medium;
       };
       "module/mem" = {
         type = "internal/memory";
         format = "<label>";
         format-background = gray-darkest;
-        format-foreground = foreground;
+        format-foreground = orange-medium;
         format-prefix = "MEM ";
         format-prefix-foreground = gray-light;
         format-padding = 1;
@@ -226,14 +230,22 @@
         label = "%time%";
         interval = 1;
         format-background = gray-darkest;
-        format-foreground = foreground;
-        format-padding = 0;
+        format-foreground = orange-medium;
+        format-padding = 1;
       };
       "module/vpn" = {
         type = "custom/script";
         exec = "/home/rabbit/.config/polybar/vpn.sh";
         interval = 1;
         format-background = red-darker;
+        format-foreground = foreground;
+        format-padding = 2;
+      };
+      "module/core" = {
+        type = "custom/script";
+        exec = "/home/rabbit/.config/polybar/core.sh";
+        interval = 1;
+        format-background = gray-darkest;
         format-foreground = foreground;
         format-padding = 2;
       };
