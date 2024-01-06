@@ -187,7 +187,12 @@ local task_types = {
   { task = "task_cancelled", marker = "task_marker_cancelled", next_text = "[ ]" },
 }
 
-local function toggle_task(node)
+local function toggle_task(node, force_clear)
+  if force_clear then
+    -- replace "[.]" with [ ]
+    vim.api.nvim_exec2([[s/\v\[.\]/[ ]/]], { output = false })
+    return true
+  end
   for _, task_node_type in ipairs(task_types) do
     if node:type() == task_node_type.task then
       local marker_node = node:child(0)
@@ -211,7 +216,7 @@ local is_task_node = function(node)
   return false
 end
 
-local handle_toggle_task = function()
+local handle_toggle_task = function(force_clear)
   local parser = vim.treesitter.get_parser()
   local root = parser:parse()[1]:root()
 
@@ -231,7 +236,7 @@ local handle_toggle_task = function()
 
     -- hacky but we're always on the task here
     if is_task_node(target) then
-      if toggle_task(target) then return end
+      if toggle_task(target, force_clear) then return end
     end
 
     node = node:parent()
@@ -381,6 +386,7 @@ end
 
 local setup_mappings = function()
   vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true, noremap = true })
+  vim.keymap.set("n", "<c-c>", function() handle_toggle_task(true) end, { buffer = true, noremap = true })
   vim.keymap.set("n", "<leader>es", handle_set_schedule, { buffer = true, noremap = true })
   vim.keymap.set("n", "<cr>", handle_cr, { buffer = true, noremap = true })
   -- vim.keymap.set("n", ">", handle_indent, { buffer = true })
@@ -434,6 +440,7 @@ local function fold_tasks()
 end
 
 local setup = function()
+  if vim.bo.filetype ~= "syslang" then return end
   if vim.b.slang_loaded then return end
   vim.b.slang_loaded = true
 
@@ -441,9 +448,7 @@ local setup = function()
   setup_mappings()
   folding.setup()
 
-  vim.schedule(function()
-    fold_tasks()
-  end)
+  vim.schedule(function() fold_tasks() end)
 
   local title = slib.get_document_title()
   vim.opt_local.winbar = title
