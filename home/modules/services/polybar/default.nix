@@ -150,7 +150,7 @@
         format-charging = "<animation-charging> <label-charging>";
         format-charging-foreground = gray-medium;
         format-discharging = "<ramp-capacity> <label-discharging>";
-        format-discharging-foreground = orange-medium;
+        format-discharging-foreground = foreground;
         format-charging-padding = 2;
         format-discharging-padding = 2;
         format-padding = 1;
@@ -166,7 +166,7 @@
       "module/cpu" = {
         type = "internal/cpu";
         format-background = gray-darkest;
-        format-foreground = orange-medium;
+        format-foreground = foreground;
         format-prefix = "CPU ";
         format-prefix-foreground = gray-light;
         format-padding = 1;
@@ -179,13 +179,13 @@
         hwmon-path = "/sys/devices/platform/it87.2656/hwmon/hwmon2/temp1_input";
         label = "%temperature-c%";
         format-background = gray-darkest;
-        format-foreground = orange-medium;
+        format-foreground = foreground;
       };
       "module/mem" = {
         type = "internal/memory";
         format = "<label>";
         format-background = gray-darkest;
-        format-foreground = orange-medium;
+        format-foreground = foreground;
         format-prefix = "MEM ";
         format-prefix-foreground = gray-light;
         format-padding = 1;
@@ -230,7 +230,7 @@
         label = "%time%";
         interval = 1;
         format-background = gray-darkest;
-        format-foreground = orange-medium;
+        format-foreground = foreground;
         format-padding = 1;
       };
       "module/vpn" = {
