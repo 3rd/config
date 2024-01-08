@@ -7,17 +7,19 @@ local function get_view_file_path()
   return view_file_path
 end
 
-local reset_folds = function()
+local reset_folds = function(silent)
   local path = get_view_file_path()
   -- log(path)
   if lib.fs.exists(path) then
-    vim.cmd("normal! zR")
+    vim.cmd("normal! zX")
     os.remove(path)
     vim.cmd("silent! loadview")
-    vim.notify("View file has been nuked.", vim.log.levels.INFO, { title = "Reset view file" })
-    log(path)
+    if not silent then
+      vim.notify("View file has been nuked.", vim.log.levels.INFO, { title = "Reset view file" })
+      log(path)
+    end
   else
-    vim.api.nvim_err_writeln("Cannot find view file at: " .. path)
+    if not silent then vim.api.nvim_err_writeln("Cannot find view file at: " .. path) end
   end
 end
 
@@ -25,5 +27,8 @@ return lib.module.create({
   name = "workflow/reset-view",
   actions = {
     { "n", "Reset view & folds", reset_folds },
+  },
+  exports = {
+    reset_folds = function() reset_folds(true) end,
   },
 })

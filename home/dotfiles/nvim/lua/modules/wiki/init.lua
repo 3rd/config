@@ -8,14 +8,23 @@ local api = {
     local entries = string.split(lib.shell.exec(command), "\n")
     return entries
   end,
+  list_projects = function()
+    local command =
+      "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki ls | grep '^project-' | sed 's/^project-//g' | sort"
+    local entries = string.split(lib.shell.exec(command), "\n")
+    return entries
+  end,
 }
 
-local handle_select = function()
+local handle_navigate_file = function()
   local entries = api.list()
 
   local fzf = require("fzf")
   coroutine.wrap(function()
-    local win_options = { height = 10, relative = "win" }
+    local win_options = {
+      height = 10,
+      relative = "win",
+    }
     vim.cmd([[20 new]])
     local result =
       fzf.provided_win_fzf(entries, "--print-query --nth 1 --print-query --expect=ctrl-s,ctrl-v,ctrl-x", win_options)
@@ -38,7 +47,35 @@ local handle_select = function()
   end)()
 end
 
-local handle_search = function()
+local handle_navigate_project = function()
+  local entries = api.list_projects()
+
+  local fzf = require("fzf")
+  coroutine.wrap(function()
+    local win_options = { height = 10, relative = "win" }
+    vim.cmd([[20 new]])
+    local result =
+      fzf.provided_win_fzf(entries, "--print-query --nth 1 --print-query --expect=ctrl-s,ctrl-v,ctrl-x", win_options)
+    if not result then return end
+
+    local target = result[3]
+
+    local command = "e %s"
+    if result[2] == "ctrl-s" then
+      command = "sp %s"
+    elseif result[2] == "ctrl-v" then
+      command = "vs %s"
+    elseif result[2] == "ctrl-x" then
+      target = result[1]
+    end
+
+    local path = api.get("project-" .. target)
+    local vim_command = string.format(command, path)
+    vim.cmd(vim_command)
+  end)()
+end
+
+local handle_navigate_search = function()
   require("fzf-lua").grep_project({
     cwd = vim.env.HOME .. "/brain/wiki",
   })
@@ -83,9 +120,7 @@ local handle_navigate_to_symbol = function()
     local target = result[2]
     local row = string.split(target, ":")[1]
 
-    vim.schedule(function()
-      vim.api.nvim_win_set_cursor(0, { row + 0, 0 })
-    end)
+    vim.schedule(function() vim.api.nvim_win_set_cursor(0, { row + 0, 0 }) end)
   end)()
 end
 
@@ -156,7 +191,8 @@ return lib.module.create({
   name = "wiki",
   setup = setup,
   mappings = {
-    { "n", "<M-n>", handle_select },
-    { "n", "<M-m>", handle_search },
+    { "n", "<M-n>", handle_navigate_file },
+    { "n", "<M-m>", handle_navigate_search },
+    { "n", "<M-p>", handle_navigate_project },
   },
 })

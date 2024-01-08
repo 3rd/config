@@ -243,6 +243,7 @@ local handle_toggle_task = function(force_clear)
   end
 
   -- no task node found, create one
+  if force_clear then return end
   local view = vim.fn.winsaveview()
   vim.api.nvim_exec2("s/\\v\\zs\\S\\ze/[ ] \\0/g", { output = true }) -- .* -> [ ] \0
   vim.cmd("nohl")
@@ -448,10 +449,15 @@ local setup = function()
   setup_mappings()
   folding.setup()
 
-  vim.schedule(function() fold_tasks() end)
+  local view = vim.fn.winsaveview()
+  pcall(fold_tasks)
+  vim.fn.winrestview(view)
 
-  local title = slib.get_document_title()
-  vim.opt_local.winbar = title
+  vim.opt_local.winbar = slib.get_document_title()
+  vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+    buffer = 0,
+    callback = function() vim.opt_local.winbar = slib.get_document_title() end,
+  })
 
   -- TODO: top gutter attempt with extmarks
   -- local bufnr = vim.api.nvim_get_current_buf()

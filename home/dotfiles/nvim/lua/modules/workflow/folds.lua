@@ -203,16 +203,24 @@ local setup_ufo = function()
   end
 
   local close_all_folds = function()
-    local view = vim.fn.winsaveview()
-    vim.opt_local.foldlevel = 0
-    vim.schedule(function()
-      vim.opt_local.foldlevel = 999
-      vim.schedule(function()
-        vim.api.nvim_win_set_cursor(0, { 1, 0 })
-        ufo.closeAllFolds()
-        vim.fn.winrestview(view)
-      end)
-    end)
+    -- vim.schedule(function()
+    --   local timer = vim.loop.new_timer()
+    --   timer:start(
+    --     0,
+    --     10,
+    --     vim.schedule_wrap(function()
+    --       timer:stop()
+    --       for i = 10 .. 0, -1, -1 do
+    --         ufo.closeFoldsWith(i)
+    --       end
+    --     end)
+    --   )
+    -- end)
+    vim.cmd("UfoDisableFold")
+
+    require("modules/workflow/reset-view").exports.reset_folds(true)
+    require("fold-cycle").close_all()
+    ufo.closeAllFolds()
   end
 
   vim.keymap.set("n", "zR", open_all_folds, { desc = "Open all folds" })
