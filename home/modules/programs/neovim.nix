@@ -15,4 +15,6 @@
     extraLuaPackages = ps: [ ps.magick ];
     withNodeJs = true;
   };
+
+  home.packages = with pkgs; [ neovide ];
 }
