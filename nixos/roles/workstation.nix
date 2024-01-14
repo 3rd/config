@@ -159,6 +159,7 @@
     lshw
     lsof
     lua-language-server
+    trippy
     man-pages
     masterpdfeditor4
     microsoft-edge-dev
@@ -246,7 +247,7 @@
     terminal-typeracer
     timg
     tmux
-    tmuxp
+    stable.tmuxp
     tree
     tree-sitter
     ueberzugpp
@@ -282,6 +283,9 @@
     zip
     zoxide
     zx
+    arduino
+    arduino-ide
+    arduino-cli
   ];
 
   programs = {

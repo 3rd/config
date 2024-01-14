@@ -29,6 +29,7 @@ return lib.module.create({
         local slow_format_filetypes = {}
 
         local config = {
+          notify_on_error = false,
           formatters_by_ft = {
             lua = { "stylua" },
             nix = { "nixfmt" },
