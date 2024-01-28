@@ -29,7 +29,6 @@ return lib.module.create({
             "jsonls",
             "nil_ls",
             "prismals",
-            "rust_analyzer",
             "tailwindcss",
             "vimls",
             "vuels",

@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "dashboard",
+  enabled = false,
   plugins = {
     {
       "goolord/alpha-nvim",

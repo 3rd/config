@@ -15,10 +15,18 @@ const formatTime = (date: Date) => {
 };
 
 const isSameDay = (d1: Date, d2: Date) => {
-  return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+  return (
+    d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate()
+  );
 };
 
 export const toSchedule: RPCFunction<string> = ({ input }) => {
+  const numberValue = Number(input);
+  if (!Number.isNaN(numberValue)) {
+    const now = new Date();
+    return `${formatDate(now)} ${numberValue}:00`;
+  }
+
   const parsedResults = chrono.parse(input);
   if (parsedResults.length === 0) return null;
 
