@@ -7,5 +7,5 @@ export PATH="/run/current-system/sw/bin/:$PATH"
 #   exit
 # fi
 
-RESPONSE=$(curl -s http://localhost:1337/polybar || echo "%{F#d13048}")
+RESPONSE=$(curl -s http://localhost:9000/polybar/status || echo "%{F#d13048}")
 echo "$RESPONSE"

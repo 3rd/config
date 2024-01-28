@@ -1,8 +1,8 @@
 { config, pkgs, ... }:
 
 let
-  build_dir = "/home/rabbit/brain/core/daemon/dist";
-  command = "/bin/sh -c core-daemon";
+  build_dir = "/home/rabbit/brain/core/rewrite/daemon";
+  command = "/bin/sh -c 'go run . daemon start'";
 in {
   systemd.user.services.core = {
     Unit.Description = "Core Service";
