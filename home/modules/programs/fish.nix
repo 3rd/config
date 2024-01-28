@@ -20,7 +20,7 @@
       set -x BUN_INSTALL "$HOME/.bun"
       set -x PATH $BUN_INSTALL/bin $PATH
 
-      ulimit -n 99999
+      ulimit -n 999999
 
       # zoxide init fish | source
       # navi widget fish | source

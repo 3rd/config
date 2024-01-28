@@ -157,8 +157,9 @@ in {
       { url = "https://www.huy.rocks/rss.xml"; }
       { url = "https://www.hacklewayne.com/rss/index.xml"; }
       { url = "https://calendar.perfplanet.com/feed/"; }
+      { url = "https://eugeneyan.com/rss/"; }
       {
-        url = "https://eugeneyan.com/rss/";
+        url = "https://adventures.nodeland.dev/rss.xml";
       }
 
       # blogs: security

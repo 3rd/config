@@ -7,7 +7,7 @@
     enable = true;
     goPath = "go";
     goBin = "go/bin";
-    package = pkgs.go_1_20;
+    # package = pkgs.go_1_21;
   };
 
   home.sessionPath = [ "$HOME/go/bin" ];

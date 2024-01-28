@@ -199,6 +199,7 @@
     proximity-sort
     psmisc
     pup
+    graphviz
     qbittorrent
     quickemu
     ranger
@@ -249,6 +250,7 @@
     tmux
     stable.tmuxp
     tree
+    entr
     tree-sitter
     ueberzugpp
     unrar-wrapper
@@ -338,6 +340,24 @@
   systemd.network.wait-online.anyInterface = true;
   systemd.network.wait-online.ignoredInterfaces = [ ];
   systemd.enableEmergencyMode = false;
+
+  # https://github.com/NixOS/nixpkgs/issues/159964
+  # systemd.services."user@1000".serviceConfig.LimitNOFILE = "999999";
+  security.pam.loginLimits = [
+    {
+      domain = "*";
+      item = "nofile";
+      type = "-";
+      value = "999999";
+    }
+    {
+      domain = "*";
+      item = "memlock";
+      type = "-";
+      value = "999999";
+    }
+  ];
+  systemd.user.extraConfig = "DefaultLimitNOFILE=999999";
 
   # Stream Deck
   services.udev.extraRules = ''
