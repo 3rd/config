@@ -151,6 +151,8 @@ colors.slang = {
     cancelled = "#fa4040",
     session = "#7378a5",
     schedule = "#7378a5",
+    recurrence = "#7378a5",
+    completion = "#7378a5",
   },
   tag = {
     hash = "#5BC0EB",
@@ -599,6 +601,8 @@ local theme = lush(function(injected)
     sym("@slang.task_cancelled")({ fg = colors.slang.task.cancelled }),
     sym("@slang.task_session")({ fg = colors.slang.task.session }),
     sym("@slang.task_schedule")({ fg = colors.slang.task.schedule }),
+    sym("@slang.task_recurrence")({ fg = colors.slang.task.recurrence }),
+    sym("@slang.task_completion")({ fg = colors.slang.task.completion }),
     sym("@slang.tag.hash")({ fg = colors.slang.tag.hash }),
     sym("@slang.tag.positive")({ fg = colors.slang.tag.positive }),
     sym("@slang.tag.negative")({ fg = colors.slang.tag.negative }),

@@ -38,7 +38,12 @@ local config = {
   },
   highlight = {
     enable = true,
-    disable = function(_, buf)
+    disable = function(lang, buf)
+      -- bash injections, fucked again after https://github.com/neovim/neovim/issues/27078
+      for _, l in ipairs({ "bash" }) do
+        if lang == l then return true end
+      end
+
       local max_filesize = 1024 * 1024
       local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
       if ok and stats and stats.size > max_filesize then
@@ -143,6 +148,6 @@ return lib.module.create({
           filetype_exclude = { "qf" }, --keymaps will be unset in excluding filetypes
         })
       end,
-    }
+    },
   },
 })

@@ -7,3 +7,8 @@ vim.api.nvim_create_autocmd({ "VimLeave" }, {
     vim.cmd("sleep 10m") -- 10 ms that is, not minutes :joy:
   end,
 })
+
+-- crazy resize/cmdheight bug
+vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "WinScrolled" }, {
+  callback = function() vim.opt.cmdheight = 1 end,
+})

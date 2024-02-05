@@ -65,6 +65,7 @@
     TERMINAL = "kitty";
     BROWSER = "google-chrome-stable";
   };
+
   environment.systemPackages = with pkgs; [
     (import (fetchTarball "https://install.devenv.sh/latest")).default
     (luajit.withPackages (ps: with ps; [ luacheck moonscript luarocks magick ]))
@@ -138,6 +139,7 @@
     hdparm
     hexchat
     hsetroot
+    sqlite
     htop
     yazi
     hyperfine

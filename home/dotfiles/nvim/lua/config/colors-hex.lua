@@ -124,8 +124,10 @@ return {
     task = {
       active = "#3BCECE",
       cancelled = "#fa4040",
+      completion = "#7378a5",
       default = "#ADB8EB",
       done = "#6B739E",
+      recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
     },
