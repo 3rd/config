@@ -77,7 +77,8 @@ return lib.module.create({
     -- { "github/copilot.vim" },
     {
       "zbirenbaum/copilot.lua",
-      event = { "InsertEnter", "LspAttach" },
+      -- commit = "38a41d0d78f8823cc144c99784528b9a68bdd608",
+      event = { "InsertEnter" },
       config = function()
         require("copilot").setup(config)
         -- vim.cmd(":silent! Copilot disable")

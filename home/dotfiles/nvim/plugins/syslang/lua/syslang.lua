@@ -189,8 +189,11 @@ local task_types = {
 
 local function toggle_task(node, force_clear)
   if force_clear then
-    -- replace "[.]" with [ ]
-    vim.api.nvim_exec2([[s/\v\[.\]/[ ]/]], { output = false })
+    if node:type() == "task_default" then
+      vim.api.nvim_exec2([[s/\v\[.\]/[_]/]], { output = false })
+    else
+      vim.api.nvim_exec2([[s/\v\[.\]/[ ]/]], { output = false })
+    end
     return true
   end
   for _, task_node_type in ipairs(task_types) do
@@ -387,7 +390,9 @@ end
 
 local setup_mappings = function()
   vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true, noremap = true })
-  vim.keymap.set("n", "<c-c>", function() handle_toggle_task(true) end, { buffer = true, noremap = true })
+  vim.keymap.set("n", "<c-c>", function()
+    handle_toggle_task(true)
+  end, { buffer = true, noremap = true })
   vim.keymap.set("n", "<leader>es", handle_set_schedule, { buffer = true, noremap = true })
   vim.keymap.set("n", "<cr>", handle_cr, { buffer = true, noremap = true })
   -- vim.keymap.set("n", ">", handle_indent, { buffer = true })
@@ -456,7 +461,9 @@ local setup = function()
   vim.opt_local.winbar = slib.get_document_title()
   vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
     buffer = 0,
-    callback = function() vim.opt_local.winbar = slib.get_document_title() end,
+    callback = function()
+      vim.opt_local.winbar = slib.get_document_title()
+    end,
   })
 
   -- TODO: top gutter attempt with extmarks

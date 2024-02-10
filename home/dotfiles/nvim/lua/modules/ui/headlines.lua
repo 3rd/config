@@ -9,7 +9,7 @@ local shared_config = {
   quote_string = "┃",
   fat_headlines = false,
   fat_headline_upper_string = "▃",
-  fat_headline_lower_string = "🬂",
+  fat_headline_lower_string = "▔",
 }
 
 return lib.module.create({

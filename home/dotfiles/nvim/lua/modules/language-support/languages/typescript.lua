@@ -11,7 +11,7 @@ return lib.module.create({
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
-      -- enabled = false,
+      enabled = false,
       -- event = "VeryLazy",
       ft = filetypes,
       dependencies = {
@@ -149,6 +149,19 @@ return lib.module.create({
           go_to_definition = "<leader>dx", --default '<leader>dx'
         },
       },
+    },
+  },
+  hooks = {
+    lsp = {
+      on_attach_call = function(client, bufnr)
+        require("twoslash-queries").attach(client, bufnr)
+        lib.map.map(
+          "n",
+          "<leader>?",
+          ":TwoslashQueriesInspect<CR>",
+          { buffer = bufnr, desc = "Add type inspect comment" }
+        )
+      end,
     },
   },
 })

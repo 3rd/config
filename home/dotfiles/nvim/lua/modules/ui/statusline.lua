@@ -57,12 +57,23 @@ local setup = function()
     end
   end)()
 
+  local codeium_status = (function()
+    if not require("modules/completion/codeium").enabled then return "" end
+
+    return function()
+      local result = vim.api.nvim_call_function("codeium#GetStatusString", {})
+      local status = vim.trim(result)
+      return status
+    end
+  end)()
+
   local sections = {
     lualine_a = { components.git_branch },
     lualine_b = { components.filename },
     lualine_c = { components.git_diff, components.diagnostics },
     lualine_x = {
       copilot_status,
+      codeium_status,
       -- aw_status,
     },
     lualine_y = { components.filetype },

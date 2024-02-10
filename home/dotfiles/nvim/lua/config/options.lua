@@ -21,7 +21,8 @@ return {
   linebreak = true,
   updatetime = 0,
   laststatus = 3,
-  sidescrolloff = 4,
+  scrolloff = 8,
+  sidescrolloff = 8,
   -- history and persistence
   backup = false,
   backupdir = env.dirs.vim.backup,
@@ -43,7 +44,7 @@ return {
   -- text editing
   autoindent = true,
   backspace = [[indent,eol,start]],
-  formatoptions = "cqr", -- "cront",
+  formatoptions = "tcq1", -- "cront",
   joinspaces = false,
   textwidth = 999,
   -- completion
@@ -70,6 +71,7 @@ return {
   shiftround = true,
   shiftwidth = 2,
   tabstop = 2,
+  report = 500,
   -- visual
   showtabline = 1,
   cmdheight = 1,
