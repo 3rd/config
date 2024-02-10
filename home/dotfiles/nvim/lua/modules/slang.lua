@@ -42,8 +42,8 @@ return lib.module.create({
                   return
                 end
 
-                -- filenames
-                if filename == "Makefile" then return end
+                -- filenames (fixed with ft)
+                -- if filename == "Makefile" then return end
 
                 -- abort if not in ~/brain
                 -- if not path:find(lib.env.dirs.home .. "/brain") then return end

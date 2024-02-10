@@ -7,6 +7,11 @@ return lib.module.create({
       event = "VeryLazy",
       config = function()
         vim.g.codeium_disable_bindings = 1
+        vim.g.codeium_filetypes = {
+          dotenv = false,
+          markdown = false,
+          syslang = false,
+        }
 
         vim.keymap.set("i", "<c-l>", function()
           return vim.fn["codeium#Accept"]()
