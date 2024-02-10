@@ -190,8 +190,6 @@ local theme = lush(function(injected)
     SpecialKey({ Whitespace }),
     Directory({ fg = colors.blue }),
     ErrorMsg({ fg = colors.red.saturate(20) }),
-    TermCursor({}), -- Cursor in a focused terminal
-    TermCursorNC({}), -- Cursor in an unfocused terminal
     Title({ fg = colors.magenta }),
     MatchParen({ bg = colors.background.lighten(20) }),
 
@@ -200,6 +198,8 @@ local theme = lush(function(injected)
     FoldColumn({}),
     ColorColumn({}),
     Cursor({ bg = colors.foreground, fg = colors.background }),
+    TermCursor({ Cursor }),
+    TermCursorNC({ Cursor }),
     lCursor({}),
     CursorIM({}),
     CursorColumn({}),

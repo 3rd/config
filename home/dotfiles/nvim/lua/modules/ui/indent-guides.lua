@@ -16,6 +16,7 @@ return lib.module.create({
           "tsplayground",
           "text",
           "gitmessengerpopup",
+          "bufferize",
         }
 
         for _, filetype in ipairs(additional_excludes) do

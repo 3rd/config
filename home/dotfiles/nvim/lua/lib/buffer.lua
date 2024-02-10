@@ -12,13 +12,13 @@ end
 ---@param bufnr number
 ---@param name string
 local get_option = function(bufnr, name)
-  return vim.api.nvim_buf_get_option(bufnr, name)
+  return vim.api.nvim_get_option_value(name, { buf = bufnr })
 end
 
 ---@param bufnr number
 ---@param name string
 local set_option = function(bufnr, name, value)
-  vim.api.nvim_buf_set_option(bufnr, name, value)
+  vim.api.nvim_set_option_value(name, value, { buf = bufnr })
 end
 
 ---@param bufnr number
@@ -60,6 +60,11 @@ local get_selected_text = function(bufnr, context)
   local lines = vim.api.nvim_buf_get_lines(bufnr, first, last, false)
   local text = vim.fn.join(lines, "\n")
   return text
+end
+
+local has_treesitter_highlighting = function(bufnr)
+  if vim.fn.bufnr(bufnr) == -1 then return false end
+  return vim.treesitter.highlighter.active[bufnr] ~= nil
 end
 
 local current_get_bufnr = function()
@@ -127,6 +132,7 @@ return {
   get_text = get_text,
   set_text = set_text,
   get_selected_text = get_selected_text,
+  has_treesitter_highlighting = has_treesitter_highlighting,
   current = {
     get_name = apply(get_name, 0),
     set_name = apply(set_name, 0),

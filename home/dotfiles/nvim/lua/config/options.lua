@@ -14,7 +14,7 @@ return {
   termguicolors = true,
   timeout = true,
   timeoutlen = 300,
-  title = false,
+  title = true,
   ttimeout = false,
   visualbell = true,
   wrap = false,
@@ -22,18 +22,26 @@ return {
   updatetime = 0,
   laststatus = 3,
   scrolloff = 8,
-  sidescrolloff = 8,
+  sidescrolloff = 16,
+
   -- history and persistence
   backup = false,
   backupdir = env.dirs.vim.backup,
   history = 10000,
   swapfile = false,
-
   undodir = env.dirs.vim.undo,
   viewdir = env.dirs.vim.view,
   undofile = true,
   undolevels = 10000,
   writebackup = false,
+  shada = {
+    "!",
+    "'1000",
+    "<100",
+    "s100",
+    "h",
+  },
+
   -- sessions
   viewoptions = "cursor,folds",
   -- windows
@@ -44,7 +52,7 @@ return {
   -- text editing
   autoindent = true,
   backspace = [[indent,eol,start]],
-  formatoptions = "tcq1", -- "cront",
+  formatoptions = "tcqjn12", -- "cront",
   joinspaces = false,
   textwidth = 999,
   -- completion

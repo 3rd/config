@@ -101,7 +101,7 @@ local handle_close = function()
   end
 
   if not is_open_in_other_windows then
-    vim.cmd(string.format("bwipeout! %d", current_bufnr))
+    vim.cmd(string.format("silent! bwipeout! %d", current_bufnr))
     return
   end
 end

@@ -11,8 +11,7 @@ return lib.module.create({
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
-      enabled = false,
-      -- event = "VeryLazy",
+      -- enabled = false,
       ft = filetypes,
       dependencies = {
         "nvim-lua/plenary.nvim",
@@ -20,7 +19,7 @@ return lib.module.create({
         "williamboman/mason.nvim",
       },
       config = function()
-        -- local api = require("typescript-tools.api")
+        local api = require("typescript-tools.api")
         -- local mason_registry = require("mason-registry")
         -- local tsserver_path = mason_registry.get_package("typescript-language-server"):get_install_path()
 
@@ -32,13 +31,12 @@ return lib.module.create({
             expose_as_code_action = { "organize_imports", "remove_unused" },
             tsserver_max_memory = 8096, -- 4096 | "auto"
             -- complete_function_calls = false,
-            -- handlers = {
-            --   ["textDocument/publishDiagnostics"] = api.filter_diagnostics(
-            --     -- Ignore 'This may be converted to an async function' diagnostics.
-            --     -- { 80006 }
-            --     {}
-            --   ),
-            -- },
+            handlers = {
+              ["textDocument/publishDiagnostics"] = api.filter_diagnostics({
+                80006, -- This may be converted to an async function...
+                80001, -- File is a CommonJS module; it may be converted to an ES module...
+              }),
+            },
             -- tsserver_plugins = { "styled-components" }, -- npm i -g typescript-styled-plugin
             tsserver_file_preferences = {
               -- allowIncompleteCompletions = true,

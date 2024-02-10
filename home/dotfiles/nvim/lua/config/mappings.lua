@@ -41,6 +41,8 @@ return {
       end,
       "Previous search result",
     },
+    -- https://github.com/davidosomething/dotfiles/blob/be22db1fc97d49516f52cef5c2306528e0bf6028/nvim/lua/dko/mappings.lua#L171
+    { "n", "*", "m`<Cmd>keepjumps normal! *``<CR>", "Search word under cursor" },
     { "v", "/", [[<esc>/\%V]], "Search in selection" },
     -- wrap
     { "n", "j", "gj", "Move down" },
