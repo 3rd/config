@@ -31,6 +31,7 @@ main() {
   else
     cp -r "$source" "$destination"
   fi
+  cd "$destination"
   git init
 }
 
