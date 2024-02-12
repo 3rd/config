@@ -1,3 +1,5 @@
+local enable_slang_meta = false
+
 local get_upper_fold_level = function()
   local winview = vim.fn.winsaveview()
   local foldlevel = -1
@@ -176,10 +178,37 @@ local setup_ufo = function()
       end
 
       -- slang tasks
-      local meta = get_range_meta(start_line, end_line)
-      local tasks_todo_count = meta.default_tasks + meta.active_tasks
-      local tasks_done_count = meta.done_tasks
-      local tasks_total_count = meta.default_tasks + meta.active_tasks + meta.done_tasks
+      local meta = nil
+      local tasks_todo_count = 0
+      local tasks_done_count = 0
+      local tasks_total_count = 0
+
+      if enable_slang_meta then
+        meta = get_range_meta(start_line, end_line)
+        tasks_todo_count = meta.default_tasks + meta.active_tasks
+        tasks_done_count = meta.done_tasks
+        tasks_total_count = meta.default_tasks + meta.active_tasks + meta.done_tasks
+      else
+        local normal_task_count = 0
+        local active_task_count = 0
+        local completed_task_count = 0
+        local folded_lines = vim.api.nvim_buf_get_lines(0, start_line, end_line, true)
+
+        for _, current_line in ipairs(folded_lines) do
+          local text = string.trim(current_line)
+          if string.starts_with(text, "[ ]") then
+            normal_task_count = normal_task_count + 1
+          elseif string.starts_with(text, "[x]") then
+            completed_task_count = completed_task_count + 1
+          elseif string.starts_with(text, "[-]") then
+            active_task_count = active_task_count + 1
+          end
+        end
+
+        tasks_todo_count = normal_task_count + active_task_count
+        tasks_done_count = completed_task_count
+        tasks_total_count = normal_task_count + active_task_count + completed_task_count
+      end
 
       -- change highlight if all the children tasks are done
       local hlmap = {
@@ -214,7 +243,7 @@ local setup_ufo = function()
       end
 
       -- meta
-      if meta.total_time > 0 then
+      if meta and meta.total_time > 0 then
         local format_time = function(seconds)
           local hours = math.floor(seconds / 3600)
           local minutes = math.floor((seconds % 3600) / 60)
@@ -280,7 +309,7 @@ local setup_ufo = function()
   ufo.setup({
     open_fold_hl_timeout = 0,
     fold_virt_text_handler = virtual_text_handler,
-    provider_selector = function(_bufnr, filetype)
+    provider_selector = function(_, filetype)
       if filetype == "syslang" then return { "treesitter" } end
       return ""
     end,
@@ -324,12 +353,9 @@ local setup_fold_cycle = function()
   })
 
   -- <tab> - open / cycle
-  vim.keymap.set(
-    "n",
-    "<tab>",
-    function() require("fold-cycle").open() end,
-    { silent = true, desc = "Fold-cycle: open folds" }
-  )
+  vim.keymap.set("n", "<tab>", function()
+    require("fold-cycle").open()
+  end, { silent = true, desc = "Fold-cycle: open folds" })
 
   -- <s-tab> - collapse
   vim.keymap.set("n", "<s-tab>", function()
