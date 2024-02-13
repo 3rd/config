@@ -9,7 +9,7 @@ end
 
 local setup_markdown_preview = function()
   vim.g.mkdp_filetypes = { "markdown" }
-  vim.g.mkdp_browser = "google-chrome-stable"
+  vim.g.mkdp_browser = "vivaldi"
   vim.g.mkdp_echo_preview_url = 1
 end
 

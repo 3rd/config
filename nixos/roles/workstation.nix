@@ -63,13 +63,14 @@
   # packages
   environment.variables = {
     TERMINAL = "kitty";
-    BROWSER = "google-chrome-stable";
+    BROWSER = "vivaldi";
   };
 
   environment.systemPackages = with pkgs; [
     (import (fetchTarball "https://install.devenv.sh/latest")).default
     (luajit.withPackages (ps: with ps; [ luacheck moonscript luarocks magick ]))
     (python3.withPackages (ps: with ps; [ neovim pynvim ]))
+    poetry
     nodePackages.pnpm
 
     age
@@ -150,7 +151,6 @@
     inferno
     inxi
     iotop
-    jadx
     jdk17
     jless
     jq
@@ -182,7 +182,6 @@
     nodejs_latest
     nvtop-amd
     obs-studio
-    openai
     openssl
     openvpn
     p7zip
@@ -266,6 +265,12 @@
     virt-manager
     vulkan-tools
     w3m
+    (vivaldi.override {
+      proprietaryCodecs = true;
+      enableWidevine = false;
+    })
+    vivaldi-ffmpeg-codecs
+    widevine-cdm
     wget
     which
     whois

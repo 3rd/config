@@ -23,7 +23,7 @@
         }/bin/dbus-update-activation-environment --systemd --all
       '';
     };
-    layout = "us";
+    xkb.layout = "us";
     libinput = {
       enable = true;
       mouse.accelProfile = "flat";

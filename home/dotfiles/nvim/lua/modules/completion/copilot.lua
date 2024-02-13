@@ -32,12 +32,13 @@ local config = {
     help = false,
     markdown = false,
     syslang = false,
-    sh = function()
-      local basename = vim.fs.basename(vim.api.nvim_buf_get_name(0))
-      if not basename then return true end
-      if string.match(basename, "^%.env.*") then return false end
-      return true
-    end,
+    dotenv = false,
+    -- sh = function()
+    --   local basename = vim.fs.basename(vim.api.nvim_buf_get_name(0))
+    --   if not basename then return true end
+    --   if string.match(basename, "^%.env.*") then return false end
+    --   return true
+    -- end,
   },
   -- https://github.com/zbirenbaum/copilot.lua/blob/master/SettingsOpts.md
   server_opts_overrides = {
