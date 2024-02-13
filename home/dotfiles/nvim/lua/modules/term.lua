@@ -10,6 +10,6 @@ return lib.module.create({
     vim.api.nvim_command("autocmd TermEnter * setlocal signcolumn=no")
 
     -- binds
-    vim.keymap.set("t", "<c-x>", "<C-\\><C-n>")
+    vim.keymap.set("t", "<c-s-c>", "<C-\\><C-n>")
   end,
 })
