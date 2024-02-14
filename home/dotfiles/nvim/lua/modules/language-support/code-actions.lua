@@ -59,8 +59,8 @@ return lib.module.create({
             },
           },
           mappings = {
-            refactor_inline = "<leader>ae",
-            refactor_extract = "<leader>ai",
+            refactor_inline = "<leader>ai",
+            refactor_extract = "<leader>ae",
             actions = {
               ["typescript-tools"] = {
                 -- waiting to inline function - https://github.com/Microsoft/TypeScript/issues/27070
