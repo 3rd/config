@@ -216,8 +216,7 @@ in {
         for_window [class="^.*"] border pixel 2
 
         bindcode ${modifier}+110 exec ${pkgs.pcmanfm}/bin/pcmanfm
-        bindcode ${modifier}+118 exec ulimit -n 999999 && ${pkgs.vivaldi}/bin/vivaldi --disable-backgrounding-occluded-windows
-        bindcode ${modifier}+Shift+118 exec ulimit -n 999999 && ${pkgs.google-chrome}/bin/google-chrome-stable --disable-backgrounding-occluded-windows
+        bindcode ${modifier}+118 exec ulimit -n 999999 && ${pkgs.google-chrome}/bin/google-chrome-stable --disable-backgrounding-occluded-windows
 
         # workspaces
         workspace "1: ◨ ${workspaces.one}" output ${mon1}

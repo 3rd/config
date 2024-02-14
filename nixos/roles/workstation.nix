@@ -63,7 +63,7 @@
   # packages
   environment.variables = {
     TERMINAL = "kitty";
-    BROWSER = "vivaldi";
+    BROWSER = "google-chrome-stable";
   };
 
   environment.systemPackages = with pkgs; [
@@ -265,11 +265,11 @@
     virt-manager
     vulkan-tools
     w3m
-    (vivaldi.override {
-      proprietaryCodecs = true;
-      enableWidevine = false;
-    })
-    vivaldi-ffmpeg-codecs
+    # (vivaldi.override {
+    #   proprietaryCodecs = true;
+    #   enableWidevine = false;
+    # })
+    # vivaldi-ffmpeg-codecs
     widevine-cdm
     wget
     which

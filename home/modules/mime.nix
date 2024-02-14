@@ -1,5 +1,5 @@
 let
-  chrome = "vivaldi-stable.desktop";
+  chrome = "google-chrome-stable.desktop";
   zathura = "org.pwmt.zathura.desktop";
 in {
   xdg.mimeApps = {
