@@ -1,5 +1,5 @@
 let
-  chrome = "google-chrome-stable.desktop";
+  chrome = "google-chrome.desktop";
   zathura = "org.pwmt.zathura.desktop";
 in {
   xdg.mimeApps = {

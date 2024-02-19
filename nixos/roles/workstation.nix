@@ -265,10 +265,10 @@
     virt-manager
     vulkan-tools
     w3m
-    # (vivaldi.override {
-    #   proprietaryCodecs = true;
-    #   enableWidevine = false;
-    # })
+    (vivaldi.override {
+      proprietaryCodecs = true;
+      enableWidevine = false;
+    })
     # vivaldi-ffmpeg-codecs
     widevine-cdm
     wget
