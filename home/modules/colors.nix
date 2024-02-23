@@ -3,10 +3,10 @@
   colors = {
     # background = "#1c1d22";
     # background = "#1E1F27";
-    background = "#202128";
+    background = "#1F1C26";
     # background = "#1e1f29";
     # background = "#21222c";
-    foreground = "#BDC7EE";
+    foreground = "#E3DFEA";
     cursor = "#f2b90d";
     selection-background = "#303233";
     selection-foreground = "#cacecd";

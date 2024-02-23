@@ -8,16 +8,16 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(230, 15, 16),
-  foreground = hsl(230, 60, 80),
+  background = hsl(260, 15, 14),
+  foreground = hsl(260, 25, 80),
   blue = hsl(200, 85, 60),
   cyan = hsl(180, 60, 52),
-  green = hsl(90, 40, 55),
+  green = hsl(150, 65, 50),
   indigo = hsl(270, 80, 75),
   magenta = hsl(320, 80, 70),
   orange = hsl(20, 90, 62),
   pink = hsl(310, 60, 70),
-  red = hsl(0, 80, 65),
+  red = hsl(0, 90, 70),
   yellow = hsl(38, 80, 60),
 }
 colors.plugins = {
@@ -28,9 +28,10 @@ colors.plugins = {
 }
 
 local variable = colors.foreground
-local property = variable.darken(7).saturation(60)
-local keyword = colors.foreground.darken(20).desaturate(40)
+local property = colors.foreground.darken(12).saturation(20)
+local keyword = colors.foreground.darken(25).saturation(15)
 local control = colors.indigo
+local operator = colors.foreground.darken(30).saturation(15)
 
 colors.common = {
   -- lab
@@ -40,15 +41,15 @@ colors.common = {
   property = property,
   field = property,
   -- base
-  operator = colors.foreground.darken(30).saturation(30),
+  operator = operator,
   ["function"] = colors.blue,
   type = colors.cyan,
   parameter = colors.yellow.darken(10).desaturate(20),
   -- comment = colors.orange.desaturate(75).darken(35),
-  comment = colors.foreground.desaturate(65).darken(35),
+  comment = colors.foreground.desaturate(30).darken(40),
   delimiter = colors.foreground.darken(40).desaturate(65),
-  boolean = colors.pink,
-  number = colors.pink,
+  boolean = colors.red,
+  number = colors.red,
   string = colors.green,
   -- control
   conditional = control,
@@ -177,8 +178,8 @@ local theme = lush(function(injected)
   local sym = injected.sym
   return {
     -- base
-    -- Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
-    Normal({ fg = colors.foreground }), -- Normal text
+    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({}),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
@@ -459,6 +460,7 @@ local theme = lush(function(injected)
     -- lua
     sym("@constructor.lua")({ Delimiter }),
     sym("@namespace.builtin.lua")({ sym("@builtin") }),
+    sym("@keyword.function.lua")({ sym("@function") }),
 
     -- tsx
     sym("@constructor.tsx")({}),
