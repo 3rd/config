@@ -1,17 +1,17 @@
 return {
   background = "#221E29",
-  blue = "#42B6F0",
+  blue = "#51C2FB",
   common = {
     boolean = "#F76E6E",
-    builtin = "#F58147",
+    builtin = "#F78045",
     comment = "#736490",
     conditional = "#BF8CF2",
     constant = "#E085D1",
-    constructor = "#5DBBEA",
+    constructor = "#6CC7F4",
     cword = "#4B435B",
     delimiter = "#776F85",
     field = "#ADA3C2",
-    ["function"] = "#42B6F0",
+    ["function"] = "#51C2FB",
     identifier = "#C8BFD9",
     keyword = "#948AA8",
     macro = "#B394F0",
@@ -22,16 +22,16 @@ return {
     ["repeat"] = "#BF8CF2",
     ret = "#F76E6E",
     special_keyword = "#BF8CF2",
-    string = "#2DD280",
+    string = "#40BF55",
     type = "#3BCECE"
   },
   cyan = "#3BCECE",
   foreground = "#C8BFD9",
-  green = "#2DD280",
+  green = "#40BF55",
   indigo = "#BF8CF2",
   magenta = "#F075C7",
   none = "NONE",
-  orange = "#F58147",
+  orange = "#F78045",
   pink = "#E085D1",
   plugins = {
     indent_guides = {
@@ -52,14 +52,14 @@ return {
         language = "#615775",
         marker = "#4B435B"
       },
-      inline = "#EF9162"
+      inline = "#F09060"
     },
     datetime = "#FC824A",
     document = {
       meta = "#736490",
       meta_field = "#F075C7",
       meta_field_key = "#E085D1",
-      title = "#52E099"
+      title = "#52E069"
     },
     headline = {
       five = {
@@ -91,7 +91,7 @@ return {
     label = "#CE73BF",
     label_line = "#43C7C7",
     link = {
-      external = "#3AA4D9",
+      external = "#47B1E6",
       internal = "#5BC0CD"
     },
     list_item = {
@@ -109,7 +109,7 @@ return {
       two = "#BF8FFF"
     },
     section = "#8797C2",
-    string = "#E48758",
+    string = "#E68656",
     tag = {
       context = "#EBAF47",
       danger = {
@@ -153,7 +153,7 @@ return {
       },
       current_line_sign = {
         bg = "#383243",
-        fg = "#F58147"
+        fg = "#F78045"
       },
       line_nr = {
         fg = "#4B435B"
