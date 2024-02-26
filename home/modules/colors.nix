@@ -11,14 +11,14 @@
     selection-background = "#303233";
     selection-foreground = "#cacecd";
 
-    gray-lightest = "#BDC7EE";
-    gray-lighter = "#B8C0E0";
-    gray-light = "#9296b9";
+    gray-lightest = "#D1C9E2";
+    gray-lighter = "#C6BDDB";
+    gray-light = "#9B8BC0";
     gray-medium = "#7378a5";
-    gray-darkish = "#464A6C";
-    gray-dark = "#444869";
-    gray-darker = "#37394d";
-    gray-darkest = "#272934";
+    gray-darkish = "#534969";
+    gray-dark = "#504766";
+    gray-darker = "#3D364E";
+    gray-darkest = "#2B2734";
     blue-lightest = "#9cdcfc";
     blue-lighter = "#6acbfb";
     blue-light = "#38b9fa";
@@ -76,8 +76,8 @@
     yellow-darker = "#916f08";
     yellow-darkest = "#614a05";
 
-    color0 = "#393e48";
-    color8 = "#4f5564";
+    color0 = "#3D364E";
+    color8 = "#504766";
     color1 = "#c2290a";
     color9 = "#f2330d";
     color2 = "#66b814";
@@ -90,7 +90,7 @@
     color13 = "#eb9efa";
     color6 = "#0ac2c2";
     color14 = "#0df2f2";
-    color7 = "#BDC7EE";
-    color15 = "#e3e5e8";
+    color7 = "#D1C9E2";
+    color15 = "#E3DFEA";
   };
 }
