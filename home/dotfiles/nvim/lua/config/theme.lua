@@ -8,17 +8,17 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(260, 15, 14),
-  foreground = hsl(260, 25, 80),
-  blue = hsl(200, 95, 65),
+  background = hsl(260, 12, 14),
+  foreground = hsl(260, 12, 70),
+  blue = hsl(200, 70, 60),
   cyan = hsl(180, 60, 52),
-  green = hsl(130, 50, 50),
-  indigo = hsl(270, 80, 75),
+  green = hsl(110, 50, 50),
+  indigo = hsl(290, 45, 65),
   magenta = hsl(320, 80, 70),
   orange = hsl(20, 92, 62),
   pink = hsl(310, 60, 70),
-  red = hsl(0, 90, 70),
-  yellow = hsl(38, 80, 60),
+  red = hsl(0, 65, 60),
+  yellow = hsl(38, 65, 60),
 }
 colors.plugins = {
   indent_guides = {
@@ -28,26 +28,28 @@ colors.plugins = {
 }
 
 local variable = colors.foreground
-local property = colors.foreground.darken(12).saturation(20)
-local keyword = colors.foreground.darken(25).saturation(15)
-local control = colors.indigo
-local operator = colors.foreground.darken(30).saturation(15)
+local property = colors.foreground.saturation(20)
+local field = colors.orange.saturation(70)
+local keyword = colors.indigo
+local control = colors.indigo.lighten(20).saturate(20)
+local operator = colors.foreground
+local delimiter = colors.foreground
 
 colors.common = {
   -- lab
   identifier = variable,
-  constant = colors.pink,
+  constant = colors.yellow,
   keyword = keyword,
   property = property,
-  field = property,
+  field = field,
   -- base
   operator = operator,
   ["function"] = colors.blue,
   type = colors.cyan,
-  parameter = colors.yellow.darken(10).desaturate(20),
+  parameter = colors.orange.darken(5).desaturate(35),
   -- comment = colors.orange.desaturate(75).darken(35),
   comment = colors.foreground.desaturate(30).darken(40),
-  delimiter = colors.foreground.darken(40).desaturate(65),
+  delimiter = delimiter,
   boolean = colors.red,
   number = colors.red,
   string = colors.green,
@@ -56,7 +58,7 @@ colors.common = {
   ["repeat"] = control,
   special_keyword = control,
   -- extra
-  builtin = colors.orange,
+  builtin = colors.yellow,
   macro = keyword.lighten(40).saturate(70),
   ret = colors.red,
   constructor = colors.blue.lighten(10).desaturate(10),
@@ -278,7 +280,7 @@ local theme = lush(function(injected)
     Include({ SpecialKeyword }),
     Define({ SpecialKeyword }),
     PreCondit({ SpecialKeyword }),
-    Special({ fg = colors.orange }),
+    Special({ fg = colors.orange.desaturate(20) }),
     SpecialChar({ Special }),
     Tag({ Special }),
     Delimiter({ fg = colors.common.delimiter }),
@@ -416,7 +418,7 @@ local theme = lush(function(injected)
     sym("@lsp.type.character")({ sym("@character") }),
     sym("@lsp.type.class")({ sym("@constructor") }),
     sym("@lsp.type.decorator")({ sym("@parameter") }),
-    sym("@lsp.type.enum")({ sym("@type") }),
+    sym("@lsp.type.enum")({ sym("@constant") }),
     sym("@lsp.type.enumMember")({ sym("@constant") }),
     sym("@lsp.type.event")({ fg = colors.orange }),
     sym("@lsp.type.float")({ sym("@float") }),
@@ -445,6 +447,7 @@ local theme = lush(function(injected)
     sym("@lsp.mod.static")({ gui = "italic" }),
     sym("@lsp.typemod.deriveHelper.attribute")({ sym("@attribute") }),
     sym("@lsp.typemod.function")({}),
+    sym("@lsp.typemod.function.declaration")({ Identifier }),
     sym("@lsp.typemod.interface")({ sym("@type") }),
     sym("@lsp.typemod.property.declaration")({ sym("@field") }),
     sym("@lsp.typemod.string.constant")({}),
@@ -461,7 +464,8 @@ local theme = lush(function(injected)
     -- lua
     sym("@constructor.lua")({ Delimiter }),
     sym("@namespace.builtin.lua")({ sym("@builtin") }),
-    sym("@keyword.function.lua")({ sym("@function") }),
+    sym("@keyword.function.lua")({ Keyword }),
+    sym("@keyword.conditional.lua")({ sym("@conditional") }),
 
     -- tsx
     sym("@constructor.tsx")({}),
