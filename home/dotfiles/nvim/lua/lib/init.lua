@@ -38,4 +38,5 @@ _G.lib = {
   ui = require("lib/ui"),
   node = require("lib/node"),
   metatable = require("lib/metatable"),
+  uv = require("lib/uv"),
 }
