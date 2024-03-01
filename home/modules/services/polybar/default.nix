@@ -20,7 +20,13 @@
       executable = true;
       source = ./core.sh;
     };
+    ".config/polybar/bci.sh" = {
+      executable = true;
+      source = ./bci.sh;
+    };
   };
+
+  # home.packages = with pkgs; [ ];
 
   services.polybar = {
     enable = true;
@@ -49,7 +55,7 @@
         modules-left = "i3";
         modules-center = "task";
         modules-right =
-          "vpn battery sep pulseaudio bluetooth core cpu cpu_temp sep mem sep fs sep clock";
+          "bci vpn battery sep pulseaudio bluetooth core cpu cpu_temp sep mem sep fs sep clock";
         height = 24;
         fixed-center = true;
         tray-background = gray-darkest;
@@ -257,6 +263,14 @@
         format-foreground = foreground;
         format-padding = 2;
         interval = 1;
+      };
+      "module/bci" = {
+        type = "custom/script";
+        exec = "/home/rabbit/.config/polybar/bci.sh";
+        interval = 1;
+        format-background = gray-darker;
+        format-foreground = gray-light;
+        format-padding = 2;
       };
     };
   };
