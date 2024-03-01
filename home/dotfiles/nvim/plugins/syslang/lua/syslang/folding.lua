@@ -9,7 +9,7 @@ local setup = function()
       vim.cmd("silent! loadview")
     end,
   })
-  vim.api.nvim_create_autocmd({ "BufWinLeave" }, {
+  vim.api.nvim_create_autocmd({ "BufWinLeave", "BufWritePost" }, {
     group = group,
     buffer = bufnr,
     callback = function()
