@@ -4,21 +4,21 @@ return {
   common = {
     boolean = "#DB5757",
     builtin = "#DBAB57",
-    comment = "#686374",
+    comment = "#6D6779",
     conditional = "#D290E0",
     constant = "#DBAB57",
     constructor = "#69B6DD",
     cword = "#4C4659",
-    delimiter = "#AFA9BC",
+    delimiter = "#BAB5C5",
     field = "#E2875A",
     ["function"] = "#52B1E0",
-    identifier = "#AFA9BC",
+    identifier = "#BAB5C5",
     keyword = "#C17ECE",
     macro = "#E79CF6",
     number = "#DB5757",
-    operator = "#AFA9BC",
+    operator = "#BAB5C5",
     parameter = "#D58258",
-    property = "#ADA3C2",
+    property = "#B8AFCA",
     ["repeat"] = "#D290E0",
     ret = "#DB5757",
     special_keyword = "#D290E0",
@@ -26,7 +26,7 @@ return {
     type = "#3BCECE"
   },
   cyan = "#3BCECE",
-  foreground = "#AFA9BC",
+  foreground = "#BAB5C5",
   green = "#55BF40",
   indigo = "#C17ECE",
   magenta = "#F075C7",
@@ -48,7 +48,7 @@ return {
     code = {
       block = {
         background = "#383442",
-        content = "#AFA9BC",
+        content = "#BAB5C5",
         language = "#625A72",
         marker = "#4C4659"
       },
@@ -56,7 +56,7 @@ return {
     },
     datetime = "#FC824A",
     document = {
-      meta = "#686374",
+      meta = "#6D6779",
       meta_field = "#F075C7",
       meta_field_key = "#E085D1",
       title = "#69E052"
@@ -70,7 +70,7 @@ return {
         bg = "#3D2929",
         fg = "#FF7070"
       },
-      marker = "#8B849A",
+      marker = "#938CA1",
       one = {
         bg = "#33293D",
         fg = "#B870FF"
@@ -96,8 +96,8 @@ return {
     },
     list_item = {
       label = "#CD84DC",
-      label_marker = "#484450",
-      marker = "#6A696D"
+      label_marker = "#4D4955",
+      marker = "#6F6E72"
     },
     number = "#DB5757",
     outline = {
@@ -125,8 +125,8 @@ return {
       active = "#3BCECE",
       cancelled = "#fa4040",
       completion = "#7378a5",
-      default = "#AFA9BC",
-      done = "#686374",
+      default = "#BAB5C5",
+      done = "#6D6779",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
@@ -137,10 +137,10 @@ return {
     breadcrumbs = {
       normal = {
         bg = "#2C2833",
-        fg = "#8C8698"
+        fg = "#948E9F"
       },
       separator = {
-        fg = "#7A7486"
+        fg = "#827C8D"
       }
     },
     line = {
@@ -163,15 +163,15 @@ return {
     status = {
       a = {
         bg = "#423D4D",
-        fg = "#9E97AA"
+        fg = "#A8A2B3"
       },
       b = {
         bg = "#383442",
-        fg = "#968FA3"
+        fg = "#9E97AA"
       },
       c = {
         bg = "#2C2833",
-        fg = "#8C8698"
+        fg = "#948E9F"
       }
     }
   },
