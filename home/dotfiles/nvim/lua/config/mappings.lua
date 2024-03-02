@@ -113,7 +113,17 @@ return {
     -- { { "n", "v" }, "<leader>ac", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP: Code action" },
     { "n", "<leader>er", "<cmd>lua vim.lsp.buf.rename()<cr>", "LSP: Rename symbol" },
     { "n", "<leader>r", "<cmd>lua require('fzf-lua').lsp_document_symbols()<CR>", "LSP: Show document symbols" },
-    { "n", "<leader>R", "<cmd>lua require('fzf-lua').lsp_live_workspace_symbols()<CR>", "LSP: Show workspace symbols" },
+    {
+      "n",
+      "<leader>R",
+      function()
+        require("fzf-lua").lsp_live_workspace_symbols({
+          async = false,
+          file_ignore_patterns = { "node_modules" },
+        })
+      end,
+      "LSP: Show workspace symbols",
+    },
     { "n", "gp", "<cmd>lua vim.diagnostic.goto_next()<cr>", "LSP: Go to next diagnostic" },
     { "n", "gP", "<cmd>lua vim.diagnostic.goto_prev()<cr>", "LSP: Go to previous diagnostic" },
     { "n", "<leader>i", "<cmd>lua vim.lsp.inlay_hint(0, nil)<cr>", "LSP: Toggle inlay hints" },

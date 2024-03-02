@@ -11,12 +11,13 @@ return lib.module.create({
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
-      -- enabled = false,
+      enabled = false,
       ft = filetypes,
       dependencies = {
         "nvim-lua/plenary.nvim",
         "neovim/nvim-lspconfig",
         "williamboman/mason.nvim",
+        "dmmulroy/ts-error-translator.nvim",
       },
       config = function()
         local api = require("typescript-tools.api")
@@ -26,18 +27,16 @@ return lib.module.create({
         require("typescript-tools").setup({
           settings = {
             -- tsserver_path = tsserver_path .. "/node_modules/typescript/lib/tsserver.js",
+            -- tsserver_plugins = { "styled-components" }, -- npm i -g typescript-styled-plugin
             separate_diagnostic_server = true,
             publish_diagnostic_on = "insert_leave",
             expose_as_code_action = { "organize_imports", "remove_unused" },
             tsserver_max_memory = 8096, -- 4096 | "auto"
-            -- complete_function_calls = false,
-            handlers = {
-              ["textDocument/publishDiagnostics"] = api.filter_diagnostics({
-                80006, -- This may be converted to an async function...
-                80001, -- File is a CommonJS module; it may be converted to an ES module...
-              }),
+            jsx_close_tag = {
+              enable = true,
+              filetypes = { "javascriptreact", "typescriptreact" },
             },
-            -- tsserver_plugins = { "styled-components" }, -- npm i -g typescript-styled-plugin
+            complete_function_calls = false,
             tsserver_file_preferences = {
               -- allowIncompleteCompletions = true,
               -- allowRenameOfImportPath = true,
@@ -79,6 +78,7 @@ return lib.module.create({
           on_attach = function(client, bufnr)
             client.server_capabilities.documentFormattingProvider = false
             client.server_capabilities.documentRangeFormattingProvider = false
+
             client.handlers["textDocument/definition"] = function(err, result, ...)
               local patched_result = {}
               local target_path_line_map = {}
@@ -111,13 +111,21 @@ return lib.module.create({
               vim.lsp.handlers["textDocument/definition"](err, patched_result, ...)
             end
 
-            require("twoslash-queries").attach(client, bufnr)
-            lib.map.map(
-              "n",
-              "<leader>?",
-              ":TwoslashQueriesInspect<CR>",
-              { buffer = bufnr, desc = "Add type inspect comment" }
-            )
+            client.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+              require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
+              local filtered = api.filter_diagnostics({
+                80006, -- This may be converted to an async function...
+                80001, -- File is a CommonJS module; it may be converted to an ES module...
+              })(err, result, ctx, config)
+              return filtered
+            end
+            -- require("twoslash-queries").attach(client, bufnr)
+            -- lib.map.map(
+            --   "n",
+            --   "<leader>?",
+            --   ":TwoslashQueriesInspect<CR>",
+            --   { buffer = bufnr, desc = "Add type inspect comment" }
+            -- )
           end,
         })
 
@@ -137,21 +145,28 @@ return lib.module.create({
         multi_line = true,
       },
     },
-    {
-      "OlegGulevskyy/better-ts-errors.nvim",
-      dependencies = { "MunifTanjim/nui.nvim" },
-      ft = filetypes,
-      config = {
-        keymaps = {
-          toggle = "<leader>dd", -- default '<leader>dd'
-          go_to_definition = "<leader>dx", --default '<leader>dx'
-        },
-      },
-    },
+    -- {
+    --   "OlegGulevskyy/better-ts-errors.nvim",
+    --   dependencies = { "MunifTanjim/nui.nvim" },
+    --   ft = filetypes,
+    --   config = {
+    --     keymaps = {
+    --       toggle = "<leader>dd", -- default '<leader>dd'
+    --       go_to_definition = "<leader>dx", --default '<leader>dx'
+    --     },
+    --   },
+    -- },
   },
   hooks = {
     lsp = {
       on_attach_call = function(client, bufnr)
+        local twoslash_clients = {
+          "tsserver",
+          "vtsls",
+          "typescript_tools",
+        }
+        if not vim.tbl_contains(twoslash_clients, client.name) then return end
+
         require("twoslash-queries").attach(client, bufnr)
         lib.map.map(
           "n",

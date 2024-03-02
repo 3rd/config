@@ -127,65 +127,69 @@ local setup_lspconfig = function()
     --     end,
     --   },
     -- },
-    -- vtsls = {
-    --   -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
-    --   settings = {
-    --     javascript = {
-    --       format = { enable = false },
-    --       preferences = {
-    --         useAliasesForRenames = true,
-    --       },
-    --       inlayHints = {
-    --         parameterNames = { enabled = "literals" },
-    --         parameterTypes = { enabled = true },
-    --         variableTypes = { enabled = true },
-    --         propertyDeclarationTypes = { enabled = true },
-    --         functionLikeReturnTypes = { enabled = true },
-    --         enumMemberValues = { enabled = true },
-    --       },
-    --       updateImportsOnFileMove = {
-    --         enabled = "always",
-    --       },
-    --     },
-    --     typescript = {
-    --       format = { enable = false },
-    --       tsserver = {
-    --         maxTsServerMemory = 4000,
-    --         -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
-    --       },
-    --       preferences = {
-    --         includePackageJsonAutoImports = "off",
-    --         useAliasesForRenames = true,
-    --       },
-    --       inlayHints = {
-    --         parameterNames = { enabled = "literals" },
-    --         parameterTypes = { enabled = true },
-    --         variableTypes = { enabled = true },
-    --         propertyDeclarationTypes = { enabled = true },
-    --         functionLikeReturnTypes = { enabled = true },
-    --         enumMemberValues = { enabled = true },
-    --       },
-    --       updateImportsOnFileMove = {
-    --         enabled = "always",
-    --       },
-    --     },
-    --     vtsls = {
-    --       experimental = {
-    --         completion = {
-    --           enableServerSideFuzzyMatch = true,
-    --           entriesLimit = 150,
-    --         },
-    --       },
-    --     },
-    --   },
-    --   handlers = {
-    --     -- always go to the first definition
-    --     ["textDocument/definition"] = function(err, result, ...)
-    --       if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
-    --       vim.lsp.handlers["textDocument/definition"](err, result, ...)
-    --     end,
-    --   },
-    -- },
+    vtsls = {
+      -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
+      settings = {
+        javascript = {
+          format = { enable = false },
+          preferences = {
+            useAliasesForRenames = true,
+          },
+          inlayHints = {
+            parameterNames = { enabled = "literals" },
+            parameterTypes = { enabled = true },
+            variableTypes = { enabled = true },
+            propertyDeclarationTypes = { enabled = true },
+            functionLikeReturnTypes = { enabled = true },
+            enumMemberValues = { enabled = true },
+          },
+          updateImportsOnFileMove = {
+            enabled = "always",
+          },
+        },
+        typescript = {
+          format = { enable = false },
+          tsserver = {
+            maxTsServerMemory = 4000,
+            -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
+          },
+          preferences = {
+            includePackageJsonAutoImports = "off",
+            useAliasesForRenames = true,
+          },
+          inlayHints = {
+            parameterNames = { enabled = "literals" },
+            parameterTypes = { enabled = true },
+            variableTypes = { enabled = true },
+            propertyDeclarationTypes = { enabled = true },
+            functionLikeReturnTypes = { enabled = true },
+            enumMemberValues = { enabled = true },
+          },
+          updateImportsOnFileMove = {
+            enabled = "always",
+          },
+        },
+        vtsls = {
+          experimental = {
+            completion = {
+              enableServerSideFuzzyMatch = true,
+              entriesLimit = 150,
+            },
+          },
+        },
+      },
+      handlers = {
+        -- always go to the first definition
+        ["textDocument/definition"] = function(err, result, ...)
+          if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
+          vim.lsp.handlers["textDocument/definition"](err, result, ...)
+        end,
+        ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+          require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
+          vim.lsp.handlers["textDocument/publishDiagnostics"](err, result, ctx, config)
+        end,
+      },
+    },
     vuels = {
       init_options = {
         config = {
@@ -348,6 +352,7 @@ return lib.module.create({
       event = { "BufReadPre", "BufNewFile" },
       dependencies = {
         "b0o/schemastore.nvim",
+        "dmmulroy/ts-error-translator.nvim",
         { "antosha417/nvim-lsp-file-operations", opts = {} },
         {
           "folke/neodev.nvim",
@@ -356,13 +361,10 @@ return lib.module.create({
               enabled = true,
               runtime = true,
               types = true,
-              -- plugins = false,
               plugins = { "nvim-treesitter" },
             },
             setup_jsonls = true,
             lspconfig = true,
-            -- much faster, but needs a recent built of lua-language-server
-            -- needs lua-language-server >= 3.6.0
             pathStrict = true,
           },
         },
