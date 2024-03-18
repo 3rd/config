@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-set -uf -o pipefail
-IFS=$'\n\t'
-
-play -t sl -r48000 -c2 -n synth -1 pinknoise .1 80

@@ -4,7 +4,7 @@
     "target": {
       "args": [
         "--expr",
-        "(import <nixpkgs/nixos> { configuration = ./machines/spaceship/configuration.nix; }).options"
+        "(import <nixpkgs/nixos> { configuration = ./hosts/spaceship/configuration.nix; }).options"
       ],
       "installable": ""
     }

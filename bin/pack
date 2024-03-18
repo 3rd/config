@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+case $1 in
+  *.tar.xz) tar cJvf "$1" "$2" ;;
+  *.tar.bz2) tar cjvf "$1" "$2" ;;
+  *.tar.gz) tar czvf "$1" "$2" ;;
+  *.tar) tar cpvf "$1" "$2" ;;
+  *.gz) gzip -c -9 -n "$2" >"$1" ;;
+  *.zip) zip -r "$1" "$2" ;;
+  *.7z) 7z a "$1" "$2" ;;
+  *) echo "Error: Cannot determine packing method for '$1'." ;;
+esac
+

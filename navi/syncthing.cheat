@@ -1,0 +1,4 @@
+% syncthing
+
+# Reset index database
+curl -X POST -H "X-API-Key: <api_key>" "http://localhost:8384/rest/system/reset?folder=<folder>"

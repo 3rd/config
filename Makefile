@@ -1,5 +1,6 @@
 SHELL     = /usr/bin/env bash
 UNAME     = $(shell uname -s | tr A-Z a-z)
+USERNAME  = $(shell whoami)
 HOSTNAME  = $(shell hostname)
 USER_HOME = ${HOME}
 SOURCE    = $(realpath $(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
@@ -32,43 +33,42 @@ define link
 	@ln -fns $(SRC) $(2)
 endef
 define linkdot
-	$(eval SRC=$(SOURCE)/home/dotfiles/$(strip $(1)))
+	$(eval SRC=$(SOURCE)/dotfiles/$(strip $(1)))
 	$(eval LOG="${RED}linkdot${RESET} ${MAGENTA}$(strip $(1))${RESET} -> ${YELLOW}$(strip $(2)${RESET})")
 	$(call print_mod,"$(LOG)")
 	@ln -fns $(SRC) $(2)
 endef
 
 .DEFAULT_GOAL = help
-.PHONY: setup nix home home-build home-generations link clean swap help
-
-setup: ## setup machine
-	@./setup/setup-machine.sh "$(HOSTNAME)"
+.PHONY: nix home check update clean swap help
 
 nix: ## apply nixos configuration
-	@sudo nix-channel --update
-	@sudo nixos-rebuild switch --upgrade
-	@sudo /run/current-system/bin/switch-to-configuration boot
-
-nix-offline: ## apply nixos configuration (offline)
-	@sudo nixos-rebuild switch --option substitute false
+	@./scripts/flakey.sh --nix
 
 home: ## apply home-manager configuration
-	@nix-channel --update
-	@home-manager switch
-home-build: ## build home-manager configuration to ./result
-	@home-manager build
-home-generations: ## list home-manager generations
-	@home-manager generations
+	@./scripts/flakey.sh --home
 
-link: ## link configuration files
-	@echo " 🔥 Linking configuration for ${YELLOW}☯ $(HOSTNAME)${RESET} ${MAGENTA}($(UNAME))${RESET}"
+update: ## update flake.lock
+	@./scripts/flakey.sh --update
+
+check: ## check
+	@nix run github:DeterminateSystems/flake-checker
+
+clean: ## clean
+	@nix-store --gc --print-roots
+	@nix-collect-garbage -d
+	@sudo nix-collect-garbage -d
+	@sudo nix-store --optimise
+
+link: ## link dotfiles
+	@echo " 🔥 Linking dotfiles for ${YELLOW}☯ $(HOSTNAME)${RESET} ${MAGENTA}($(UNAME))${RESET}"
 	$(call print_mod_start,Link)
-	$(call link,home/bin,~/.config/bin)
+	$(call link,bin,~/.config/bin)
 	@mkdir -p ~/.local/share/fonts
-	$(call link,home/fonts,~/.local/share/fonts/custom)
-	$(call link,home/ssh,~/.ssh)
+	$(call link,assets/fonts,~/.local/share/fonts/custom)
+	$(call link,ssh,~/.ssh)
 	@mkdir -p ~/.config/tmux
-	$(call link,home/modules/programs/tmux/tmux.conf,~/.config/tmux/tmux.conf)
+	$(call link,home-manager/programs/tmux/tmux.conf,~/.config/tmux/tmux.conf)
 	$(call linkdot,nvim,~/.config/nvim)
 	$(call linkdot,emacs,~/.emacs.d)
 	$(call linkdot,wezterm,~/.config/wezterm)
@@ -76,13 +76,8 @@ link: ## link configuration files
 	$(call linkdot,yazi,~/.config/yazi)
 	$(call print_mod_end)
 
-clean: ## clean
-	@nix-store --gc --print-roots
-	@sudo nix-collect-garbage --delete-older-than 30d
-	@sudo nix-store --optimise
-
 swap: ## swap
-	@./setup/swap.sh
+	@./scripts/swap.sh
 
 help: ## help
 	@grep -E '^[a-zA-Z_0-9%-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "${BLUE}%-20s${RESET} %s\n", $$1, $$2}'

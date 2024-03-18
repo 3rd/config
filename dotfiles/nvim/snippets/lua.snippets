@@ -1,0 +1,36 @@
+snippet #!
+	#!/usr/bin/env lua
+	$1
+
+snippet for
+	for ${1:i}=${2:1},${3:10} do
+		${0:print(i)}
+	end
+
+snippet forp
+	for ${1:i},${2:v} in pairs(${3:table_name}) do
+		${0:-- body}
+	end
+
+snippet fori
+	for ${1:i},${2:v} in ipairs(${3:table_name}) do
+		${0:-- body}
+	end
+	
+snippet styluaignore "stylua ignore"
+	-- stylua: ignore
+
+snippet class
+	local ${1:Name} = {}
+	$1.__index = $1
+
+	function $1.new(${2:args})
+		local self = setmetatable({
+			$0
+		}, $1)
+		return self
+	end
+
+	function $1:method(arg)
+		print(self.field, arg)
+	end

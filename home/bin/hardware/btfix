@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -uf -o pipefail
-IFS=$'\n\t'
-
-# https://unix.stackexchange.com/questions/314373/permanently-disable-built-in-bluetooth-and-use-usb
-HCI=$(hcitool dev | grep 'B8:9A:2A:BD:68:47' | cut -f2)
-INDEX=$(rfkill list | grep "$HCI" | cut -d: -f1)
-
-rfkill block "$INDEX"

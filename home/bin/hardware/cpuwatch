@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-IFS=$'\n\t'
-
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
-  watch -n.1 grep \"cpu MHz\" /proc/cpuinfo
-fi

@@ -1,13 +1,12 @@
-.alt-git
-.alt-gitignore
+# public
+
 .st*
+.git-alt
+.gitignore-alt
+
+assets
+hosts
+ssh
+workspaces
+
 *private*
-*syncthing*
-home/fonts
-home/ssh
-home/wallpaper*
-home/workspaces
-machines
-.git-broken
-home/dotfiles/nvim/plugins/image.nvim
-rewrite

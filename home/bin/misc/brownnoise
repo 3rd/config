@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-set -uf -o pipefail
-IFS=$'\n\t'
-
-play -n -n --combine merge synth brownnoise band -n 528 963 vol -15dB treble -40 reverb 20
