@@ -2,7 +2,7 @@ local resolve = require("lib/path").resolve
 local escape = require("lib/shell").escape
 
 local file_exists = function(path)
-  return vim.fn.isdirectory(resolve(path)) == 0
+  return vim.fn.filereadable(resolve(path)) == 1
 end
 
 local file_is_readable = function(path)

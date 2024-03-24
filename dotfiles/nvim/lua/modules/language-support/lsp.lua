@@ -271,6 +271,18 @@ local setup_lspconfig = function()
     tailwindcss = {},
   }
 
+  if lib.fs.file.exists("sgconfig.yml") then
+    local configs = require("lspconfig.configs")
+    configs.ast_grep = {
+      default_config = {
+        cmd = { "ast-grep", "lsp" },
+        single_file_support = false,
+        root_dir = root_pattern("sgconfig.yml"),
+      },
+    }
+    servers.ast_grep = {}
+  end
+
   -- tweaks
   require("lspconfig.ui.windows").default_options.border = "rounded"
 
