@@ -6,6 +6,5 @@
     ./private.nix
     ./vault.nix
     ./wiki.nix
-    ./core.nix
   ];
 }

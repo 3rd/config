@@ -3,10 +3,15 @@
 with pkgs; {
   home.packages = [
     #
-    ffmpeg
+    ffmpeg-full
     mpv
     pitivi
     qimgv
-  ] ++ (if (system == "x86_64-linux") then [ davinci-resolve ] else [ ]);
+  ] ++ (if (system == "x86_64-linux") then
+    [
+      # davinci-resolve
+    ]
+  else
+    [ ]);
 }
 

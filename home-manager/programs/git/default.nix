@@ -38,7 +38,7 @@ in {
       '';
     };
     delta = {
-      enable = true;
+      enable = false;
       options = {
         navigate = true;
         line-numbers = true;
@@ -46,6 +46,10 @@ in {
         features = "decorations";
         whitespace-error-style = "22 reverse";
       };
+    };
+    difftastic = {
+      enable = true;
+      background = "dark";
     };
     extraConfig = {
       init.defaultBranch = "master";

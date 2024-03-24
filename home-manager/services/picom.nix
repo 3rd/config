@@ -1,9 +1,9 @@
-{ config, ... }:
+{ lib, config, ... }:
 
 {
   services.picom = {
     enable = true;
-    backend = "glx";
+    backend = lib.mkDefault "glx";
     vSync = true;
     settings = {
       shadow-radius = 12;

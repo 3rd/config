@@ -15,6 +15,7 @@ let
   };
 in {
   imports = [
+    ./common.nix
     ../colors.nix
     ../xresources.nix
     ../services/polybar
@@ -40,12 +41,6 @@ in {
   ];
 
   home.packages = with pkgs; [ lock i3lock scrot xss-lock feh ];
-
-  home.pointerCursor = {
-    name = "Vanilla-DMZ";
-    package = pkgs.vanilla-dmz;
-    size = lib.mkDefault 32;
-  };
 
   xsession = {
     enable = true;

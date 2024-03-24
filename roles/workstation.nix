@@ -9,6 +9,7 @@
     ../modules/virtualisation.nix
     ../modules/syncthing.private.nix
     ../modules/tailscale.private.nix
+    ../modules/security.private.nix
   ];
 
   environment.systemPackages = with pkgs; [
@@ -17,17 +18,22 @@
     moreutils
     openssl
     wget
+    whois
     vim
     git
     gnumake
     usbutils
     pciutils
     libnotify
+    acpi
+    unzip
+    zip
     #
     ripgrep
     fzf
     fd
     bluez
+    appimage-run
   ];
   environment.variables.EDITOR = "vim";
 
@@ -58,4 +64,6 @@
   # misc
   programs.dconf.enable = true;
   programs.nm-applet.enable = true;
+
+  programs.nix-ld.enable = true;
 }

@@ -1,4 +1,4 @@
-{ config, pkgs, options, ... }:
+{ lib, config, pkgs, options, ... }:
 
 {
   # nix
@@ -32,6 +32,11 @@
       in {
         stable = import <nixos-stable> { inherit (config.nixpkgs) config; };
       };
+  };
+
+  boot.tmp = {
+    useTmpfs = lib.mkDefault true;
+    cleanOnBoot = lib.mkDefault (!config.boot.tmp.useTmpfs);
   };
 
   fileSystems."/" = { options = [ "noatime" "nodiratime" "discard" ]; };
@@ -68,6 +73,8 @@
   };
 
   # security
+  security.protectKernelImage = true;
+  security.rtkit.enable = true;
   security.sudo = {
     enable = true;
     wheelNeedsPassword = true;
