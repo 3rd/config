@@ -19,7 +19,8 @@ return lib.module.create({
           "snippets",
           "text",
           "tsplayground",
-          "conf"
+          "conf",
+          "gitcommit",
         }
 
         for _, filetype in ipairs(additional_excludes) do

@@ -11,7 +11,7 @@ return lib.module.create({
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
-      enabled = false,
+      -- enabled = false,
       ft = filetypes,
       dependencies = {
         "nvim-lua/plenary.nvim",
@@ -21,12 +21,9 @@ return lib.module.create({
       },
       config = function()
         local api = require("typescript-tools.api")
-        -- local mason_registry = require("mason-registry")
-        -- local tsserver_path = mason_registry.get_package("typescript-language-server"):get_install_path()
 
         require("typescript-tools").setup({
           settings = {
-            -- tsserver_path = tsserver_path .. "/node_modules/typescript/lib/tsserver.js",
             -- tsserver_plugins = { "styled-components" }, -- npm i -g typescript-styled-plugin
             separate_diagnostic_server = true,
             publish_diagnostic_on = "insert_leave",
@@ -119,13 +116,6 @@ return lib.module.create({
               })(err, result, ctx, config)
               return filtered
             end
-            -- require("twoslash-queries").attach(client, bufnr)
-            -- lib.map.map(
-            --   "n",
-            --   "<leader>?",
-            --   ":TwoslashQueriesInspect<CR>",
-            --   { buffer = bufnr, desc = "Add type inspect comment" }
-            -- )
           end,
         })
 
