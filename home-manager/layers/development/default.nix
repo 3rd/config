@@ -8,6 +8,5 @@
     ./nodejs.nix
     ./rust.nix
     ./c.nix
-    ./tools.nix
   ];
 }

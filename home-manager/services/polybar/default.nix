@@ -158,9 +158,9 @@
       "module/cpu" = {
         type = "internal/cpu";
         format-background = gray-darkest;
-        format-foreground = foreground;
-        format-prefix = "CPU ";
-        format-prefix-foreground = gray-light;
+        format-foreground = gray-light;
+        format-prefix = " ";
+        format-prefix-foreground = gray-lighter;
         format-padding = 1;
         interval = 1;
         label = "%percentage:2%%";
@@ -171,15 +171,15 @@
         hwmon-path = "/sys/devices/platform/it87.2656/hwmon/hwmon2/temp1_input";
         label = "%temperature-c%";
         format-background = gray-darkest;
-        format-foreground = foreground;
+        format-foreground = gray-light;
       };
       "module/mem" = {
         type = "internal/memory";
         format = "<label>";
         format-background = gray-darkest;
-        format-foreground = foreground;
-        format-prefix = "MEM ";
-        format-prefix-foreground = gray-light;
+        format-foreground = gray-light;
+        format-prefix = "󰍛 ";
+        format-prefix-foreground = gray-lighter;
         format-padding = 1;
         interval = 1;
         label = "%percentage_used:2%%";

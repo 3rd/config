@@ -28,13 +28,18 @@ in {
       lock = super.writeScriptBin "lock" ''
         #!${pkgs.bash}/bin/bash
 
-        IMAGE=/tmp/i3lock.png
-        BLURTYPE="0x6" # 2.90s
-        ${pkgs.scrot}/bin/scrot "$IMAGE"
-
+        # IMAGE=/tmp/i3lock.png
+        # BLURTYPE="0x6" # 2.90s
+        # ${pkgs.scrot}/bin/scrot "$IMAGE"
         # ${pkgs.imagemagick}/bin/convert $IMAGE -blur $BLURTYPE $IMAGE
-        ${pkgs.i3lock}/bin/i3lock -i $IMAGE
-        ${pkgs.coreutils}/bin/rm $IMAGE
+        # ${pkgs.i3lock}/bin/i3lock -i $IMAGE
+        # ${pkgs.coreutils}/bin/rm $IMAGE
+        # ${pkgs.i3}/bin/i3 mode default
+
+        IMAGE=/home/rabbit/brain/config/dotfiles/lock.png
+        SIZE=$(xdpyinfo | grep dimensions | sed -r 's/^[^0-9]*([0-9]+x[0-9]+).*$/\1/' | head -n1)
+        ${pkgs.imagemagick}/bin/convert -resize "$SIZE^" -extent "$SIZE" -gravity center "$IMAGE" /tmp/lock.png
+        ${pkgs.i3lock}/bin/i3lock -i /tmp/lock.png
         ${pkgs.i3}/bin/i3 mode default
       '';
     })

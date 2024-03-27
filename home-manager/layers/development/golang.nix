@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  home.packages = with pkgs; [ gopls golangci-lint ];
+  home.packages = with pkgs; [ gotools golangci-lint ];
 
   programs.go = {
     enable = true;

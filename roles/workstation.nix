@@ -4,6 +4,7 @@
   imports = [
     ../modules/base.nix
     ../modules/audio.nix
+    ../modules/bluetooth.nix
     ../modules/xorg.nix
     ../modules/fonts.nix
     ../modules/virtualisation.nix
@@ -28,6 +29,8 @@
     acpi
     unzip
     zip
+    glib
+    graphviz
     #
     ripgrep
     fzf
@@ -47,23 +50,21 @@
     };
   };
 
-  services = {
-    avahi.enable = true;
-    dbus.enable = true;
-    flatpak.enable = true;
-    fstrim.enable = true;
-    fwupd.enable = true;
-    timesyncd.enable = lib.mkDefault true;
-    udisks2.enable = true;
-    gnome.gnome-keyring.enable = true;
-    atd.enable = true;
-    udev.packages = [ pkgs.android-udev-rules ];
-    gvfs.enable = true; # MTP
-  };
+  services.avahi.enable = true;
+  services.dbus.enable = true;
+  services.flatpak.enable = true;
+  services.fstrim.enable = true;
+  services.fwupd.enable = true;
+  services.timesyncd.enable = lib.mkDefault true;
+  services.udisks2.enable = true;
+  services.gnome.gnome-keyring.enable = true;
+  services.atd.enable = true;
+  services.udev.packages = [ pkgs.android-udev-rules ];
+  services.gvfs.enable = true; # MTP
 
   # misc
   programs.dconf.enable = true;
   programs.nm-applet.enable = true;
-
   programs.nix-ld.enable = true;
+  programs.light.enable = true;
 }

@@ -8,7 +8,7 @@ in {
       # text
       "text/plain" = "nvim.desktop";
       # mail
-      "x-scheme-handler/mailto" = "org.gnome.Evolution.desktop";
+      "x-scheme-handler/mailto" = "";
       # telegram
       "x-scheme-handler/tg" = "telegramdesktop.desktop";
       # media
