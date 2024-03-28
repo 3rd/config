@@ -10,14 +10,14 @@ local colors = {
   none = "NONE",
   background = hsl(250, 12, 15),
   foreground = hsl(260, 12, 74),
-  blue = hsl(200, 70, 60),
-  cyan = hsl(180, 60, 52),
-  green = hsl(130, 70, 60),
-  indigo = hsl(290, 50, 65),
-  magenta = hsl(320, 80, 70),
-  orange = hsl(20, 92, 62),
-  pink = hsl(310, 60, 70),
-  red = hsl(0, 100, 70),
+  blue = hsl(200, 90, 65),
+  cyan = hsl(180, 55, 55),
+  green = hsl(115, 55, 60),
+  indigo = hsl(270, 50, 72),
+  magenta = hsl(315, 80, 73),
+  orange = hsl(25, 90, 62),
+  pink = hsl(315, 70, 75),
+  red = hsl(355, 90, 66),
   yellow = hsl(38, 85, 60),
 }
 colors.plugins = {
@@ -33,7 +33,7 @@ local field = colors.orange.saturation(70)
 local keyword = colors.indigo
 local control = colors.indigo.lighten(20).saturate(20)
 local operator = colors.foreground
-local delimiter = colors.foreground.darken(10).desaturate(20)
+local delimiter = colors.foreground.darken(20).desaturate(30)
 
 colors.common = {
   -- lab
@@ -56,7 +56,7 @@ colors.common = {
   -- control
   conditional = control,
   ["repeat"] = control,
-  special_keyword = control.saturate(30).darken(10),
+  special_keyword = control.rotate(10).saturate(10).darken(10),
   -- extra
   builtin = colors.yellow,
   macro = keyword.lighten(40).saturate(70),
@@ -539,13 +539,13 @@ local theme = lush(function(injected)
     GitSignsDeletePreview({ link = "DiffDelete" }),
 
     -- ts-rainbow
-    RainbowRed({ fg = colors.red.desaturate(25).darken(20) }),
-    RainbowYellow({ fg = colors.yellow.desaturate(25).darken(20) }),
-    RainbowBlue({ fg = colors.blue.desaturate(25).darken(20) }),
-    RainbowOrange({ fg = colors.orange.desaturate(25).darken(20).darken(20) }),
-    RainbowGreen({ fg = colors.green.rotate(50).desaturate(25) }),
-    RainbowViolet({ fg = colors.magenta.desaturate(25).darken(20) }),
-    RainbowCyan({ fg = colors.cyan.desaturate(25).darken(20) }),
+    RainbowRed({ fg = colors.red.desaturate(50).darken(10) }),
+    RainbowYellow({ fg = colors.yellow.desaturate(60).darken(10) }),
+    RainbowBlue({ fg = colors.blue.rotate(20).desaturate(20).lighten(10) }),
+    RainbowOrange({ fg = colors.orange.desaturate(20).darken(10) }),
+    RainbowGreen({ fg = colors.green.rotate(35).desaturate(50).darken(10) }),
+    RainbowViolet({ fg = colors.magenta.desaturate(40).darken(10) }),
+    RainbowCyan({ fg = colors.cyan.desaturate(20).darken(10) }),
 
     -- syslang
     sym("@slang.error")({ bg = "#7a2633", fg = "#ffffff" }),
