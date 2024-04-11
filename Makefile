@@ -56,6 +56,12 @@ check: ## check
 
 clean: ## clean
 	@nix-store --gc --print-roots
+	@nix-collect-garbage --delete-older-than 14d
+	@sudo nix-collect-garbage --delete-older-than 14d
+	@sudo nix-store --optimise
+
+cclean: ## clean (immediate)
+	@nix-store --gc --print-roots
 	@nix-collect-garbage -d
 	@sudo nix-collect-garbage -d
 	@sudo nix-store --optimise

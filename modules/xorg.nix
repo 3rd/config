@@ -5,6 +5,7 @@
     #
     libinput
     xclip
+    xsel
     wmctrl
     xdotool
     xfce.tumbler

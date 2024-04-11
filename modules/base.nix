@@ -100,6 +100,12 @@
       type = "-";
       value = "999999";
     }
+    {
+      domain = "@users";
+      item = "rtprio";
+      type = "-";
+      value = 1;
+    }
   ];
   systemd.user.extraConfig = "DefaultLimitNOFILE=999999";
 }
