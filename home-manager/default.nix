@@ -6,7 +6,6 @@
     ./layers/password-management.nix
     ./layers/communication.nix
     ./layers/file-management.nix
-    ./layers/pentesting.nix
     ./layers/media.nix
     ./programs/git
     ./programs/tmux
@@ -23,7 +22,7 @@
     ./programs/zoxide.nix
     ./services/syncthing.private.nix
     ./misc/remarkable.nix
-    ./misc/obsidian.nix
+    # ./misc/obsidian.nix
     ./gtk.nix
     ./utilities.nix
   ];
