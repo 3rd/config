@@ -109,7 +109,7 @@ return {
       two = "#BF8FFF"
     },
     section = "#8797C2",
-    string = "#E49258",
+    string = "#6AD161",
     tag = {
       context = "#F0B042",
       danger = {

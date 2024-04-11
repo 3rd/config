@@ -34,6 +34,7 @@ return lib.module.create({
             style = colors.plugins.indent_guides.indent,
           },
           chunk = {
+            notify = false,
             exclude_filetypes = exclude_filetypes,
             chars = {
               horizontal_line = "╴",
@@ -45,7 +46,7 @@ return lib.module.create({
             style = colors.plugins.indent_guides.chunk,
           },
           blank = { enable = false },
-          line_num = { enable = false },
+          line_num = { enable = true },
         }
 
         require("hlchunk").setup(opts)

@@ -89,7 +89,7 @@ colors.slang = {
     meta_field = colors.magenta,
     meta_field_key = colors.pink,
   },
-  string = colors.orange.desaturate(20),
+  string = colors.green,
   number = colors.common.number,
   ticket = "#fa89f6",
   datetime = "#FC824A",
