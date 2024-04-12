@@ -60,7 +60,16 @@
   services.gnome.gnome-keyring.enable = true;
   services.atd.enable = true;
   services.udev.packages = [ pkgs.android-udev-rules ];
-  services.gvfs.enable = true; # MTP
+  services.gvfs.enable = true; # trash, MTP
+
+  services.logind.killUserProcesses = false;
+
+  # power
+  services.upower.enable = true;
+  powerManagement = {
+    enable = true;
+    powertop.enable = true;
+  };
 
   # misc
   programs.dconf.enable = true;

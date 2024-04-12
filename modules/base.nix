@@ -6,14 +6,19 @@
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       sandbox = true;
-      substituters =
-        [ "https://nix-community.cachix.org" "https://cache.nixos.org" ];
+      substituters = [
+        "https://nix-community.cachix.org"
+        "https://cache.nixos.org/"
+        "https://arm.cachix.org/"
+      ];
       trusted-public-keys = [
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        "arm.cachix.org-1:5BZ2kjoL1q6nWhlnrbAl+G7ThY7+HaBRD9PZzqZkbnM="
       ];
       auto-optimise-store = true;
-      trusted-users = [ "root" "rabbit" ];
-      max-jobs = 32;
+      trusted-users = [ "root" "@wheel" ];
+      allowed-users = [ "@wheel" ];
     };
     gc = {
       automatic = true;
@@ -24,6 +29,11 @@
       automatic = true;
       dates = [ "weekly" ];
     };
+    extraOptions = ''
+      builders-use-substitutes = true
+      keep-derivations = true
+      keep-outputs = true
+    '';
   };
   nixpkgs.config = {
     allowUnfree = true;
