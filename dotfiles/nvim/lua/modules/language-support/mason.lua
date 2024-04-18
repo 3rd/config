@@ -39,7 +39,7 @@ return lib.module.create({
         })
 
         mason_tool_installer.setup({
-          ensure_installed = {
+          ensure_installed = vim.tbl_extend("force", {
             -- linters (+host: clangd, statix)
             "alex",
             "cpplint",
@@ -47,7 +47,7 @@ return lib.module.create({
             "fixjson",
             "prettierd",
             "rustywind",
-          },
+          }, require("jit").arch ~= "arm64" and { "selene" } or {}),
         })
       end,
     },

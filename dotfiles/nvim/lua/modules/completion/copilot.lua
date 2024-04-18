@@ -68,7 +68,7 @@ local config = {
       },
     },
   },
-  copilot_node_command = "/run/current-system/sw/bin/node",
+  -- copilot_node_command = "/run/current-system/sw/bin/node",
 }
 
 return lib.module.create({

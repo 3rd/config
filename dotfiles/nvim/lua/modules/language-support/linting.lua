@@ -11,11 +11,20 @@ return lib.module.create({
       config = function()
         local lint = require("lint")
 
+        lint.linters.selene.args = {
+          "--display-style",
+          "json",
+          "--config",
+          lib.path.resolve(lib.env.dirs.vim.config, "linters/selene.toml"),
+          "-",
+        }
+
         lint.linters_by_ft = {
           nix = { "nix", "statix" },
           cpp = { "cppcheck" },
           markdown = { "alex" },
           sh = { "shellcheck" },
+          lua = vim.tbl_extend("force", {}, require("jit").arch ~= "arm64" and { "selene" } or {}),
         }
 
         local group = vim.api.nvim_create_augroup("lint", { clear = true })

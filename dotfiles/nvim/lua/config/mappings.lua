@@ -121,8 +121,9 @@ return {
       "<leader>R",
       function()
         require("fzf-lua").lsp_live_workspace_symbols({
-          async = false,
+          -- async = false,
           file_ignore_patterns = { "node_modules" },
+          no_header_i = true,
         })
       end,
       "LSP: Show workspace symbols",

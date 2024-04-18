@@ -3,4 +3,5 @@ plugins/image.nvim
 plugins/image2.nvim
 plugins/nyancat.nvim
 plugins/time-tracker.nvim
+time-tracker.json
 test
