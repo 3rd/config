@@ -7,7 +7,7 @@
 -- inferno-flamegraph profile.log > flame.svg
 -- https://blast.hk/moonloader/luajit/ext_profiler.html
 local profiler_start = function()
-  require("plenary.profile.p").start("-50,i1,s,m0,G,p,F,l", "profile.log")
+  require("plenary.profile.p").start("100,i1,s,m0,G,p,f,l", "profile.log")
   vim.notify("Profiler started", vim.log.levels.INFO, { title = "Profiler" })
   vim.cmd([[
     command! ProfilerStop lua require("modules.profiler").exports.stop()

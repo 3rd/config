@@ -87,7 +87,7 @@ return lib.module.create({
               group = au_inlay_hints,
               buffer = bufnr,
               callback = function()
-                vim.lsp.inlay_hint.enable(bufnr, true)
+                vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
               end,
             })
 
@@ -95,12 +95,12 @@ return lib.module.create({
               group = au_inlay_hints,
               buffer = bufnr,
               callback = function()
-                vim.lsp.inlay_hint.enable(bufnr, false)
+                vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
               end,
             })
 
             local mode = vim.api.nvim_get_mode().mode
-            vim.lsp.inlay_hint.enable(bufnr, mode == "n" or mode == "v")
+            vim.lsp.inlay_hint.enable(mode == "n" or mode == "v", { bufnr = bufnr })
           end
         end
 

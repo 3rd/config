@@ -7,6 +7,9 @@ local setup_tree = function()
     open_on_tab = false,
     hijack_cursor = true,
     update_cwd = false,
+    notify = {
+      threshold = vim.log.levels.WARN,
+    },
     diagnostics = {
       enable = false,
       icons = {
@@ -35,7 +38,7 @@ local setup_tree = function()
       timeout = 500,
     },
     view = {
-      width = 40,
+      width = 30,
       side = "left",
       number = false,
       relativenumber = false,

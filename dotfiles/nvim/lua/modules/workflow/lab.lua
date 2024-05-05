@@ -14,7 +14,7 @@ return lib.module.create({
         })
       end,
       keys = {
-        { "<F12>", ":Lab code run<CR>", desc = "Run code" },
+        { "<F9>", ":Lab code run<CR>", desc = "Run code" },
       },
     },
   },

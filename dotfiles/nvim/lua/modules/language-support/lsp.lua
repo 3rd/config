@@ -21,12 +21,12 @@ local setup = function()
   vim.lsp.handlers[methods.textDocument_inlayHint] = function(err, result, ctx, config)
     local client = vim.lsp.get_client_by_id(ctx.client_id)
     if client and client.name == "typescript-tools" then
-      result = vim.iter.map(function(hint)
+      result = vim.iter(result):map(function(hint)
         local label = hint.label ---@type string
         if label:len() >= inlay_hint_max_len then label = label:sub(1, inlay_hint_max_len - 1) .. "…" end
         hint.label = label
         return hint
-      end, result)
+      end)
     end
     inlay_hint_handler(err, result, ctx, config)
   end

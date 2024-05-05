@@ -16,7 +16,6 @@ local setup_options = function()
   vim.opt_local.formatlistpat = [[ ^\s*(\d)\+\s* ]]
   vim.opt_local.formatoptions = "cqrt"
   vim.opt_local.cinwords = "*,-"
-  vim.opt_local.smartindent = true
   vim.opt_local.textwidth = 130
 end
 
@@ -350,8 +349,7 @@ local handle_cr = function()
     target_text = string.gsub(target_text, "%s+", "-")
     target_text = string.lower(target_text)
 
-    local command =
-      string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
+    local command = string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
     local path = lib.shell.exec(command)
     vim.cmd(string.format("e %s", vim.fn.fnameescape(path)))
 
@@ -378,8 +376,7 @@ local handle_cr = function()
     target_text = string.gsub(target_text, "%s+", "-")
     target_text = string.lower(target_text)
 
-    local command =
-      string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
+    local command = string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
     local path = lib.shell.exec(command)
     vim.cmd(string.format("e %s", vim.fn.fnameescape(path)))
 

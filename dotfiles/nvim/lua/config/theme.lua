@@ -8,7 +8,7 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(250, 13, 14),
+  background = hsl(250, 13, 15),
   foreground = hsl(250, 20, 80),
   blue = hsl(210, 85, 72),
   cyan = hsl(180, 50, 50),
@@ -39,7 +39,7 @@ local field = property
 local constant = colors.red.saturation(60)
 local comment = colors.foreground.saturation(12).darken(50)
 local builtin = colors.magenta.saturation(60)
-local special = colors.indigo.saturation(80).lighten(20)
+local special = colors.indigo.saturation(80).lighten(25)
 
 colors.common = {
   -- lab

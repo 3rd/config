@@ -1,5 +1,5 @@
 return {
-  background = "#211F28",
+  background = "#23212B",
   blue = "#7BB8F4",
   common = {
     boolean = "#DC7474",
@@ -8,7 +8,7 @@ return {
     conditional = "#9D95C6",
     constant = "#DC7474",
     constructor = "#40BFBF",
-    cword = "#484559",
+    cword = "#4B475C",
     delimiter = "#928FA3",
     field = "#AEA9C6",
     ["function"] = "#7BB8F4",
@@ -21,8 +21,8 @@ return {
     property = "#AEA9C6",
     ["repeat"] = "#9D95C6",
     ret = "#EE6363",
-    special = "#A191F3",
-    special_keyword = "#A191F3",
+    special = "#A99AF4",
+    special_keyword = "#A99AF4",
     string = "#8AC66C",
     type = "#40BFBF"
   },
@@ -37,7 +37,7 @@ return {
   plugins = {
     indent_guides = {
       chunk = "#9F3885",
-      indent = { "#363342" }
+      indent = { "#383545" }
     }
   },
   red = "#EE6363",
@@ -48,10 +48,10 @@ return {
     },
     code = {
       block = {
-        background = "#363342",
+        background = "#383545",
         content = "#C5C2D6",
-        language = "#5D5973",
-        marker = "#484559"
+        language = "#5F5B76",
+        marker = "#4B475C"
       },
       inline = "#E9A677"
     },
@@ -137,7 +137,7 @@ return {
   ui = {
     breadcrumbs = {
       normal = {
-        bg = "#2A2834",
+        bg = "#2C2A37",
         fg = "#9B96B0"
       },
       separator = {
@@ -146,32 +146,32 @@ return {
     },
     line = {
       current_line = {
-        bg = "#363342"
+        bg = "#383545"
       },
       current_line_nr = {
-        bg = "#363342",
-        fg = "#8883A0"
+        bg = "#383545",
+        fg = "#8B86A2"
       },
       current_line_sign = {
-        bg = "#363342",
+        bg = "#383545",
         fg = "#ED9A5E"
       },
       line_nr = {
-        fg = "#484559"
+        fg = "#4B475C"
       }
     },
-    split = "#2A2834",
+    split = "#2C2A37",
     status = {
       a = {
-        bg = "#3F3C4E",
+        bg = "#413E51",
         fg = "#B0ACC3"
       },
       b = {
-        bg = "#363342",
+        bg = "#383545",
         fg = "#A5A0BA"
       },
       c = {
-        bg = "#2A2834",
+        bg = "#2C2A37",
         fg = "#9B96B0"
       }
     }
