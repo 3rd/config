@@ -60,7 +60,18 @@
       extraConfig = "noarp";
     };
     useDHCP = false;
-    networkmanager.enable = true;
+    networkmanager = {
+      enable = true;
+      plugins = lib.mkForce (with pkgs; [
+        networkmanager-openvpn
+        networkmanager-l2tp
+        # networkmanager-fortisslvpn
+        # networkmanager-iodine
+        # networkmanager-openconnect
+        # networkmanager-vpnc
+        # networkmanager-sstp
+      ]);
+    };
     firewall = {
       enable = true;
       allowedTCPPorts = [ ];

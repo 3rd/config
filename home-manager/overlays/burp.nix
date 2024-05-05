@@ -1,16 +1,16 @@
 self:
-{ xorg, stdenv, lib, fetchurl, jre, runtimeShell, makeDesktopItem, alsa-lib, nss
-, nspr, cairo, cups, mesa, pango, glib, atk, at-spi2-atk, at-spi2-core, dbus
-, expat, libdrm, libxkbcommon, ... }: {
+{ pkgs, xorg, stdenv, lib, fetchurl, jre, runtimeShell, makeDesktopItem
+, alsa-lib, nss, nspr, cairo, cups, mesa, pango, glib, atk, at-spi2-atk
+, at-spi2-core, dbus, expat, libdrm, libxkbcommon, ... }: {
   burppro = let
-    version = "2024.1.1.5";
+    version = "2024.3.1.3";
     product = "pro";
     executableName = "burpsuite";
     jar = fetchurl {
       name = "burpsuite.jar";
       url =
         "https://portswigger.net/Burp/Releases/Download?product=${product}&version=${version}&type=Jar";
-      sha256 = "sha256-AGiawpgNJi6lQZGAoVmSmKrZkfRWzXPzEzaU2BICyiY=";
+      sha256 = "sha256-k0Nahw/ba0qo490y6sAa3g6CBpB7ou7zRpYifbIruko=";
     };
     launcher = ''
       #!${runtimeShell}

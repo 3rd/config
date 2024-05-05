@@ -2,6 +2,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# export ESLINT_USE_FLAT_CONFIG=false
+
 LINTED=0
 
 if [ -f "go.mod" ]; then
@@ -17,6 +19,7 @@ if [ -f "package.json" ]; then
   fi
   echo "Linting $TARGET"
   ~/brain/core/linter/eslint/node_modules/eslint/bin/eslint.js -c ~/.config/nvim/linters/eslint/dist/main.js --no-eslintrc "$TARGET"
+  # ~/brain/core/linter/eslint/node_modules/eslint/bin/eslint.js -c ~/.config/nvim/linters/eslint/dist/main.js --no-eslintrc "$TARGET"
   LINTED=1
 fi
 

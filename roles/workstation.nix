@@ -13,30 +13,44 @@
     ../modules/security.private.nix
   ];
 
+  boot.kernel.sysctl = {
+    "fs.inotify.max_queued_events" = 32768;
+    "fs.inotify.max_user_instances" = 8192;
+    "fs.inotify.max_user_watches" = 524288;
+  };
+
   environment.systemPackages = with pkgs; [
     # core
+    acpi
     coreutils
+    git
+    glib
+    gnumake
+    graphviz
+    inotify-tools
+    libnotify
     moreutils
     openssl
+    openvpn
+    pciutils
+    unzip
+    usbutils
+    vim
     wget
     whois
-    vim
-    git
-    gnumake
-    usbutils
-    pciutils
-    libnotify
-    acpi
-    unzip
     zip
-    glib
-    graphviz
     #
-    ripgrep
-    fzf
-    fd
-    bluez
     appimage-run
+    bluez
+    fd
+    fzf
+    ripgrep
+    # fhs
+    (pkgs.buildFHSUserEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
+      name = "fhs";
+      profile = "export FHS=1";
+      runScript = "fish";
+    }))
   ];
   environment.variables.EDITOR = "vim";
 
@@ -65,15 +79,15 @@
   services.logind.killUserProcesses = false;
 
   # power
-  services.upower.enable = true;
-  powerManagement = {
-    enable = true;
-    powertop.enable = true;
-  };
+  # services.upower.enable = true;
+  # powerManagement = {
+  #   enable = true;
+  #   powertop.enable = true;
+  # };
 
   # misc
   programs.dconf.enable = true;
   programs.nm-applet.enable = true;
-  programs.nix-ld.enable = true;
+  # programs.nix-ld.enable = true;
   programs.light.enable = true;
 }

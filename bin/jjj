@@ -9,8 +9,8 @@ OFFSET=5
 echo "Using ${DEVICE}"
 
 while true; do
-  sleep 10
   evemu-event "$DEVICE" --type EV_REL --code REL_X --value "$OFFSET" --sync
   evemu-event "$DEVICE" --type EV_REL --code REL_X --value "-$OFFSET" --sync
   echo -n "#"
+  sleep 10
 done

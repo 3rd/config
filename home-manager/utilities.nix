@@ -33,6 +33,8 @@
       usbutils
       virt-manager
       dig
+      tree-sitter
+      inferno
 
       # system
       htop
@@ -84,6 +86,15 @@
     serve = "miniserve";
     calc = "eva";
     cp = "xcp";
+  };
+
+  xdg.desktopEntries = {
+    httpie = {
+      name = "httpie";
+      genericName = "HTTPie";
+      exec = "appimage-run /home/rabbit/apps/HTTPie-2024.1.2.AppImage";
+      terminal = false;
+    };
   };
 }
 

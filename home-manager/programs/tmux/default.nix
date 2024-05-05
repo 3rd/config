@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-stable, ... }:
 
 let
   scripts = {
@@ -11,6 +11,6 @@ in {
   # programs.tmux = { enable = true; };
   # xdg.configFile."tmux/tmux.conf".source = ./tmux.conf;
 
-  home.packages = with pkgs; [ tmux tmuxp scripts.tmux-workspace ];
+  home.packages = with pkgs; [ tmux pkgs-stable.tmuxp scripts.tmux-workspace ];
   programs.fish.shellAliases = { t = "tmux-workspace"; };
 }

@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    # nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
     hardware.url = "github:nixos/nixos-hardware";
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -19,9 +19,7 @@
     };
   };
 
-  outputs = { self, nixpkgs
-    # , nixpkgs-stable
-    , home-manager, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-stable, home-manager, ... }@inputs:
     let
       inherit (self) outputs;
       systems = [ "aarch64-linux" "x86_64-linux" ];
@@ -56,10 +54,10 @@
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
           extraSpecialArgs = {
             inherit inputs outputs;
-            # pkgs-stable = import nixpkgs {
-            #   system = "x86_64-linux";
-            #   config = { allowUnfree = true; };
-            # };
+            pkgs-stable = import nixpkgs-stable {
+              system = "x86_64-linux";
+              config = { allowUnfree = true; };
+            };
           };
           modules = [
             { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }
@@ -72,10 +70,10 @@
           pkgs = nixpkgs.legacyPackages.aarch64-linux;
           extraSpecialArgs = {
             inherit inputs outputs;
-            # pkgs-stable = import nixpkgs {
-            #   system = "aarch64-linux";
-            #   config = { allowUnfree = true; };
-            # };
+            pkgs-stable = import nixpkgs-stable {
+              system = "aarch64-linux";
+              config = { allowUnfree = true; };
+            };
           };
           modules = [
             { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }
@@ -88,10 +86,10 @@
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
           extraSpecialArgs = {
             inherit inputs outputs;
-            # pkgs-stable = import nixpkgs {
-            #   system = "x86_64-linux";
-            #   config = { allowUnfree = true; };
-            # };
+            pkgs-stable = import nixpkgs-stable {
+              system = "x86_64-linux";
+              config = { allowUnfree = true; };
+            };
           };
           modules = [
             { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }

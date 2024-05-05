@@ -62,7 +62,7 @@
         body = ''
           begin
             set -l IFS
-            set output (/home/rabbit/brain/projects/tools/git-work/work $argv);
+            set output (/home/rabbit/brain/projects/git-work/work $argv);
           end
           switch $output
             case "*-> *"
@@ -91,6 +91,8 @@
       "@bin" = "cd ~/brain/config/bin";
       "@core" = "cd ~/brain/core";
       "@work" = "cd ~/brain/work";
+      "@docs" = "cd ~/brain/storage/documents";
+      "@r" = "cd ~/brain/projects/REWORK";
       # custom utils
       w = "work";
       # wiki

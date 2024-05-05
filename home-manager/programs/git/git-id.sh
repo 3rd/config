@@ -13,6 +13,10 @@ identity_switch() {
     git config user.name "$(git config "user.$identity.name")"
     git config user.email "$(git config "user.$identity.email")"
     git config user.signingkey "$(git config "user.$identity.signingkey")"
+    git config committer.name "$(git config "user.$identity.name")"
+    git config committer.email "$(git config "user.$identity.email")"
+    git config author.name "$(git config "user.$identity.name")"
+    git config author.email "$(git config "user.$identity.email")"
   fi
   identity_show
 }

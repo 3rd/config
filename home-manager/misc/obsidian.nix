@@ -1,5 +1,5 @@
-{ inputs, pkgs-stable, ... }:
+{ inputs, pkgs, pkgs-stable, ... }:
 
 {
-  home.packages = [ pkgs-stable.obsidian ];
+  home.packages = [ pkgs.obsidian ];
 }

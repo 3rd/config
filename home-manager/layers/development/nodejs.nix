@@ -8,6 +8,7 @@
     nodePackages.pnpm
     electron
     quick-lint-js
+    bun
   ];
 
   home = {

@@ -22,7 +22,6 @@
     ./programs/zoxide.nix
     ./services/syncthing.private.nix
     ./misc/remarkable.nix
-    # ./misc/obsidian.nix
     ./gtk.nix
     ./utilities.nix
   ];

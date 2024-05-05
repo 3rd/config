@@ -19,10 +19,10 @@ git reset --soft HEAD~<number_of_commits>
 git branch -a --contains "<commit>"
 
 # Delete local branch
-git branch -d "<local_branch>"
+git branch -d <local_branch>
 
 # Delete remote branch
-git push origin --delete "<remote_branch>"
+git push origin --delete <remote_branch>
 
 # Remove file from git history (filter-branch tree-filter)
 git filter-branch --tree-filter 'rm -f <path_to_file>' HEAD

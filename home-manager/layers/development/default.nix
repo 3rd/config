@@ -8,5 +8,6 @@
     ./nodejs.nix
     ./rust.nix
     ./c.nix
+    ./python.nix
   ];
 }
