@@ -17,7 +17,7 @@
       inactive-dim = 0.0;
 
       focus-exclude = [
-        "class_g = 'Cairo-clock'"
+        #
         "class_g ?= 'rofi'"
         "class_g ?= 'slop'"
         "class_g ?= 'Steam'"
@@ -86,7 +86,7 @@
     opacityRules = [ "0:_NET_WM_STATE@:32a *= '_NET_WM_STATE_HIDDEN'" ];
     shadow = false;
     shadowExclude = [
-      "bounding_shaped && !rounded_corners"
+      # "bounding_shaped && !rounded_corners"
       "window_type *= 'menu'"
       "window_type *= 'dropdown_menu'"
       "window_type *= 'popup_menu'"

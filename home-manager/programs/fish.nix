@@ -86,12 +86,14 @@
       "@b" = "cd ~/brain";
       "@c" = "cd ~/brain/config";
       "@w" = "cd ~/brain/wiki";
-      "@p" = "cd ~/brain/projects";
       "@l" = "cd ~/lab";
+      "@p" = "cd ~/brain/projects";
+      "@t" = "cd ~/toolkit";
       "@bin" = "cd ~/brain/config/bin";
       "@core" = "cd ~/brain/core";
       "@work" = "cd ~/brain/work";
       "@docs" = "cd ~/brain/storage/documents";
+      "@tpl" = "cd ~/brain/projects/templates";
       "@r" = "cd ~/brain/projects/REWORK";
       # custom utils
       w = "work";

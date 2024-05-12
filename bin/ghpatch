@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+IFS=$'\n\t'
+
+if [[ $# -ne 1 ]]; then
+  echo "usage: ghpatch <pr-url>"
+  exit 1
+fi
+
+PATCH_URL="$1"
+if [[ ! "${PATCH_URL: -4}" == ".patch" ]]; then
+  PATCH_URL="${PATCH_URL}.patch"
+fi
+
+echo "Fetching patch: ${PATCH_URL}"
+curl -s -L "$PATCH_URL" | patch -p1

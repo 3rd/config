@@ -20,16 +20,16 @@
     xserver = {
       enable = true;
       xkb.layout = "us";
-      libinput = {
-        enable = true;
-        mouse.accelProfile = "flat";
-        touchpad = {
-          disableWhileTyping = true;
-          tapping = false;
-          additionalOptions = ''
-            Option "PalmDetection" "on"
-          '';
-        };
+    };
+    libinput = {
+      enable = true;
+      mouse.accelProfile = "flat";
+      touchpad = {
+        disableWhileTyping = true;
+        tapping = false;
+        additionalOptions = ''
+          Option "PalmDetection" "on"
+        '';
       };
     };
   };

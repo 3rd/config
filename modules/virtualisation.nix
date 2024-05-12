@@ -10,7 +10,7 @@
 
   virtualisation.docker = {
     enable = true;
-    package = pkgs.stable.docker;
+    # package = pkgs.stable.docker;
     autoPrune.enable = true;
   };
   virtualisation.oci-containers.backend = "docker";
