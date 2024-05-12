@@ -1,12 +1,12 @@
 return lib.module.create({
   name = "completion/codeium",
-  -- enabled = false,
+  enabled = false,
   plugins = {
     {
       "Exafunction/codeium.vim",
       event = "VeryLazy",
       config = function()
-        vim.g.codeium_enabled = false
+        vim.g.codeium_enabled = true
         vim.g.codeium_filetypes = {
           dotenv = false,
           markdown = false,
@@ -30,5 +30,10 @@ return lib.module.create({
         end, { expr = true, silent = true })
       end,
     },
+  },
+  actions = {
+    { "n", "Codeium: Enable", ":CodeiumEnable<CR>" },
+    { "n", "Codeium: Disable", ":CodeiumDisable<CR>" },
+    { "n", "Codeium: Chat", ":call codeium#Chat()<CR>" },
   },
 })

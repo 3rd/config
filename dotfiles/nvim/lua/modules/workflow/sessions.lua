@@ -8,8 +8,14 @@ local setup_auto_session = function()
     auto_session_enable_last_session = false,
     auto_session_root_dir = lib.env.dirs.vim.sessions .. "/",
     auto_session_suppress_dirs = { "~/", "~/Downloads", "~/Desktop" },
+    silent_restore = true,
     cwd_change_handling = {
       restore_upcoming_session = false,
+    },
+    post_restore_cmds = {
+      function()
+        vim.api.nvim_exec2("edit", {})
+      end,
     },
     pre_save_cmds = {
       -- close floating windows
@@ -76,7 +82,7 @@ return lib.module.create({
   plugins = {
     {
       "rmagatti/auto-session",
-      event = "VimEnter",
+      lazy = false,
       config = setup_auto_session,
     },
     -- { "olimorris/persisted.nvim" },

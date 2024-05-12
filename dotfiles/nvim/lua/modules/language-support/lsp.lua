@@ -35,6 +35,15 @@ end
 local setup_lspconfig = function()
   local root_pattern = require("lspconfig.util").root_pattern
 
+  local load_luarc = function()
+    local root = root_pattern(".luarc.json")(lib.path.cwd())
+    if not root then return {} end
+    local luarc_path = lib.path.resolve(root, ".luarc.json")
+    if not lib.fs.file.is_readable(luarc_path) then return {} end
+    local luarc = lib.fs.file.read(luarc_path)
+    return vim.fn.json_decode(luarc)
+  end
+
   local overrides = {
     -- client.server_capabilities.documentFormattingProvider
     formatting = {
@@ -96,21 +105,21 @@ local setup_lspconfig = function()
     lua_ls = {
       root_dir = root_pattern(".root", "init.lua", ".git"),
       settings = {
-        Lua = {
+        Lua = vim.tbl_deep_extend("keep", load_luarc(), {
           completion = { callSnippet = "Replace" },
-          -- runtime = { version = "LuaJIT" },
-          -- diagnostics = { globals = { "vim", "log", "throw" } },
+          runtime = { version = "LuaJIT" },
           workspace = {
             -- checkThirdParty = false,
-            -- library = {
-            --   [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-            --   [vim.fn.stdpath("config") .. "/lua"] = true,
-            -- },
+            library = {
+              [".luarc.json"] = true,
+              --   [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+              --   [vim.fn.stdpath("config") .. "/lua"] = true,
+            },
             ignoreDir = { ".git", "node_modules", "linters" },
           },
-          -- telemetry = { enable = false },
-          -- hint = { enable = true },
-        },
+          hint = { enable = true },
+          telemetry = { enable = false },
+        }),
       },
       handlers = {
         -- always go to the first definition
@@ -377,7 +386,7 @@ return lib.module.create({
   plugins = {
     {
       "neovim/nvim-lspconfig",
-      event = { "BufReadPre", "BufNewFile" },
+      event = { "BufRead" },
       dependencies = {
         "b0o/schemastore.nvim",
         "dmmulroy/ts-error-translator.nvim",
@@ -399,13 +408,60 @@ return lib.module.create({
       },
       config = setup_lspconfig,
     },
+    -- {
+    --   "j-hui/fidget.nvim",
+    --   tag = "legacy",
+    --   event = "VeryLazy",
+    --   opts = {
+    --     window = { blend = 0 },
+    --   },
+    -- },
     {
-      "j-hui/fidget.nvim",
-      tag = "legacy",
-      event = "VeryLazy",
-      opts = {
-        window = { blend = 0 },
-      },
+      "linrongbin16/lsp-progress.nvim",
+      config = function()
+        require("lsp-progress").setup({
+          client_format = function(client_name, spinner, series_messages)
+            if #series_messages == 0 then return nil end
+            return {
+              name = client_name,
+              body = spinner .. " " .. table.concat(series_messages, ", "),
+            }
+          end,
+          format = function(client_messages)
+            --- @param name string
+            --- @param msg string?
+            --- @return string
+            local function stringify(name, msg)
+              return msg and string.format("%s %s", name, msg) or name
+            end
+
+            local sign = "" -- nf-fa-gear \uf013
+            local lsp_clients = vim.lsp.get_active_clients()
+            local messages_map = {}
+            for _, climsg in ipairs(client_messages) do
+              messages_map[climsg.name] = climsg.body
+            end
+
+            if #lsp_clients > 0 then
+              table.sort(lsp_clients, function(a, b)
+                return a.name < b.name
+              end)
+              local builder = {}
+              for _, cli in ipairs(lsp_clients) do
+                if type(cli) == "table" and type(cli.name) == "string" and string.len(cli.name) > 0 then
+                  if messages_map[cli.name] then
+                    table.insert(builder, stringify(cli.name, messages_map[cli.name]))
+                  else
+                    table.insert(builder, stringify(cli.name))
+                  end
+                end
+              end
+              if #builder > 0 then return sign .. " " .. table.concat(builder, ", ") end
+            end
+            return ""
+          end,
+        })
+      end,
     },
   },
 })

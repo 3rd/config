@@ -6,7 +6,7 @@ return lib.module.create({
   plugins = {
     {
       "mfussenegger/nvim-lint",
-      event = { "BufReadPre", "BufNewFile" },
+      event = "VeryLazy",
       dependencies = { "williamboman/mason.nvim" },
       config = function()
         local lint = require("lint")

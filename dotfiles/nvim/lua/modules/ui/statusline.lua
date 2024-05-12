@@ -30,6 +30,16 @@ local setup = function()
     },
   }
 
+  local lsp_progress = function()
+    return require("lsp-progress").progress()
+  end
+  vim.api.nvim_create_augroup("lualine_augroup", { clear = true })
+  vim.api.nvim_create_autocmd("User", {
+    group = "lualine_augroup",
+    pattern = "LspProgressStatusUpdated",
+    callback = require("lualine").refresh,
+  })
+
   local copilot_status = (function()
     if not require("modules/completion/copilot").enabled then return "" end
 
@@ -70,7 +80,7 @@ local setup = function()
   local sections = {
     lualine_a = { components.git_branch },
     lualine_b = { components.filename },
-    lualine_c = { components.git_diff, components.diagnostics },
+    lualine_c = { components.git_diff, components.diagnostics, lsp_progress },
     lualine_x = {
       copilot_status,
       codeium_status,
