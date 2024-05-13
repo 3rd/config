@@ -109,6 +109,7 @@ end
 
 return lib.module.create({
   name = "workflow/file-management",
+  hosts = "*",
   plugins = {
     {
       "nvim-tree/nvim-tree.lua",

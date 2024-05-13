@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "workflows/search",
+  hosts = "*",
   plugins = {
     -- cword highlight
     {

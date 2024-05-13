@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "theme",
+  hosts = "*",
   setup = function()
     vim.cmd([[colorscheme static]])
   end,

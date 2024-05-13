@@ -1,6 +1,7 @@
 return lib.module.create({
   name = "workflow/bullets",
   -- enabled = false,
+  hosts = "*",
   plugins = {
     {
       "hupfdule/bullets.vim",

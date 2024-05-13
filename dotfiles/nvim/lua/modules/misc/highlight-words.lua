@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "misc/highlight-words",
+  hosts = "*",
   plugins = {
     {
       "dvoytik/hi-my-words.nvim",

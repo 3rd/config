@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "language-support/mason",
+  hosts = "*",
   plugins = {
     {
       "williamboman/mason.nvim",

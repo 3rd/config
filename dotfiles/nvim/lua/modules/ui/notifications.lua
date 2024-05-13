@@ -23,6 +23,7 @@ end
 
 return lib.module.create({
   name = "ui/notifications",
+  hosts = "*",
   plugins = {
     {
       "rcarriga/nvim-notify",

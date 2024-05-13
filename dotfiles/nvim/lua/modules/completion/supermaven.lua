@@ -1,6 +1,7 @@
 return lib.module.create({
   name = "completion/supermaven",
   enabled = false,
+  hosts = { "spaceship", "macbook" },
   plugins = {
     {
       -- "supermaven-inc/supermaven-nvim",

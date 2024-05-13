@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "workflow/history",
+  hosts = { "spaceship", "macbook" },
   plugins = {
     {
       "tzachar/highlight-undo.nvim",

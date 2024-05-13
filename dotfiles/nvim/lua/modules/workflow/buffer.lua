@@ -108,6 +108,7 @@ end
 
 return lib.module.create({
   name = "workflow/buffer",
+  hosts = "*",
   setup = setup,
   mappings = {
     { "n", "<bs>", handle_alternate, "Switch to alternate buffer" },

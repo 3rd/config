@@ -24,6 +24,7 @@ local barbecue_config = {
 return lib.module.create({
   name = "language-support/breadcrumbs",
   -- enabled = false,
+  hosts = "*",
   hooks = {
     lsp = {
       on_attach_call = function(client, bufnr)

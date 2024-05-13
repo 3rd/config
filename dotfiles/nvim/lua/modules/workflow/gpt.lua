@@ -105,15 +105,6 @@ local gpt_fetch = function(payload)
   end
 end
 
----@param payload GPTOptions
----@return string | { name: string, arguments: string }
-local gpt_fetch_func = function(payload)
-  local response = gpt_fetch(payload)
-  if type(response) == "string" then return response end
-  local arguments = vim.fn.json_decode(response.arguments)
-  return { name = response.name, arguments = arguments }
-end
-
 ---@param messages GPTMessage[]
 ---@param options? GPTOptions
 local gpt_chat = function(messages, options)
@@ -490,13 +481,7 @@ end
 
 return lib.module.create({
   name = "gpt",
-  plugins = {
-    -- {
-    --   "james1236/backseat.nvim",
-    --   event = "VeryLazy",
-    --   opts = { openai_api_key = API_KEY, openai_model_id = "gpt-3.5-turbo", split_threshold = 100, },
-    -- },
-  },
+  hosts = "*",
   actions = {
     {
       "n",

@@ -3,6 +3,7 @@ local null_ls = require("null-ls")
 -- TODO: rework hooks based on this signature
 return lib.module.create({
   name = "language-support/languages/nix",
+  hosts = "*",
   hooks = {
     treesitter = {
       "nix",

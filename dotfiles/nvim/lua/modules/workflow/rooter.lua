@@ -28,5 +28,6 @@ end
 
 return lib.module.create({
   name = "workflow/rooter",
+  hosts = "*",
   setup = setup,
 })

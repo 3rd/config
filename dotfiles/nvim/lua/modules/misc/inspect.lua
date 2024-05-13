@@ -10,6 +10,7 @@ end
 
 return lib.module.create({
   name = "misc/inspect",
+  hosts = "*",
   mappings = {
     { "n", "<F10>", inspect },
   },

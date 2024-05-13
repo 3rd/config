@@ -1,13 +1,25 @@
 local cmd = vim.cmd
-local exec = function(command) vim.api.nvim_exec2(command, { output = true }) end
+local exec = function(command)
+  vim.api.nvim_exec2(command, { output = true })
+end
 
 local actions = {
   -- dev
-  lazy = function() exec([[Lazy]]) end,
-  lazy_sync = function() exec([[Lazy sync]]) end,
-  lazy_profile = function() exec([[Lazy profile]]) end,
-  debug_scripts = function() cmd([[scriptnames]]) end,
-  debug_binds = function() cmd([[verbose map]]) end,
+  lazy = function()
+    exec([[Lazy]])
+  end,
+  lazy_sync = function()
+    exec([[Lazy sync]])
+  end,
+  lazy_profile = function()
+    exec([[Lazy profile]])
+  end,
+  debug_scripts = function()
+    cmd([[scriptnames]])
+  end,
+  debug_binds = function()
+    cmd([[verbose map]])
+  end,
   -- snippets
   snippets_edit = function()
     local snippets_dir = lib.path.resolve(lib.env.dirs.config .. "/snippets")
@@ -16,14 +28,28 @@ local actions = {
     cmd("edit " .. snippet_file)
   end,
   -- fs
-  file_new = function() exec([[ call feedkeys(":e %:h\<tab>", "tn") ]]) end,
-  file_rename = function() exec([[ call feedkeys(":Move %\<tab>", "tn") ]]) end,
-  file_delete = function() exec([[Delete!]]) end,
+  file_new = function()
+    exec([[ call feedkeys(":e %:h\<tab>", "tn") ]])
+  end,
+  file_rename = function()
+    exec([[ call feedkeys(":Move %\<tab>", "tn") ]])
+  end,
+  file_delete = function()
+    exec([[Delete!]])
+  end,
   -- sort
-  lines_sort = function() exec([[%sort]]) end,
-  lines_sort_desc = function() exec([[%sort!]]) end,
-  visual_sort = function() cmd([[exe '''<,''>sort']]) end,
-  visual_sort_desc = function() cmd([[exe '''<,''>sort!']]) end,
+  lines_sort = function()
+    exec([[%sort]])
+  end,
+  lines_sort_desc = function()
+    exec([[%sort!]])
+  end,
+  visual_sort = function()
+    cmd([[exe '''<,''>sort']])
+  end,
+  visual_sort_desc = function()
+    cmd([[exe '''<,''>sort!']])
+  end,
   -- silicon
   silicon_normal = function()
     local options = "--output /tmp/silicon.png --tab-width 2 --pad-horiz 50 --pad-vert 60 --no-window-controls -l "
@@ -86,7 +112,9 @@ local actions = {
       require("notify")("Failed to create gist:\n" .. output, "error")
     end
   end,
-  ts_playground = function() cmd(":TSPlaygroundToggle") end,
+  ts_playground = function()
+    cmd(":TSPlaygroundToggle")
+  end,
   -- toggle show whitespace
   toggle_whitespace = function()
     local default_listchars = require("config/options").listchars or {}
@@ -109,7 +137,9 @@ local actions = {
       vim.opt.list = true
     end
   end,
-  refactor = function() require("refactoring").select_refactor() end,
+  refactor = function()
+    require("refactoring").select_refactor()
+  end,
   -- -- hex
   -- toggle_hex = function()
   --   cmd(":Hexmode")
@@ -224,7 +254,9 @@ local setup = function()
         local options = {
           height = 10,
           relative = "editor",
-          window_on_create = function() vim.cmd([[setlocal nonumber]]) end,
+          window_on_create = function()
+            vim.cmd([[setlocal nonumber]])
+          end,
         }
         vim.cmd([[20 new]])
         local result = fzf.provided_win_fzf(source, "", options)
@@ -239,6 +271,7 @@ end
 
 return lib.module.create({
   name = "workflow/command-menu",
+  hosts = "*",
   setup = setup,
   mappings = {
     {

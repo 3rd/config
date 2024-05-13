@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "term",
+  hosts = "*",
   setup = function()
     -- options
     vim.g.terminal_scrollback_buffer_size = 100000

@@ -125,6 +125,7 @@ end
 
 return lib.module.create({
   name = "language-support/tree-sitter",
+  hosts = "*",
   plugins = {
     {
       "nvim-treesitter/nvim-treesitter",

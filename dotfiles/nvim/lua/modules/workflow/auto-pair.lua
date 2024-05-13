@@ -23,6 +23,7 @@ end
 
 return lib.module.create({
   enabled = false,
+  hosts = { "spaceship", "macbook" },
   name = "workflow/auto-pair",
   plugins = {
     {

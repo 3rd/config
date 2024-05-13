@@ -12,6 +12,9 @@ local setup = function()
     },
   })
 
+  vim.keymap.set({ "n", "v" }, "<leader>if", function()
+    refactoring.refactor("Inline Function")
+  end, { noremap = true, silent = true, expr = false, desc = "Inline function" })
   -- vim.keymap.set(
   --   { "n", "v" },
   --   "<leader>ar",
@@ -30,9 +33,6 @@ local setup = function()
   --   ":Refactor extract_var ",
   --   { noremap = true, silent = true, expr = false, desc = "Extract variable" }
   -- )
-  vim.keymap.set({ "n", "v" }, "<leader>if", function()
-    refactoring.refactor("Inline Function")
-  end, { noremap = true, silent = true, expr = false, desc = "Inline function" })
   -- vim.keymap.set(
   --   { "n", "v" },
   --   "<leader>iv",
@@ -56,6 +56,7 @@ end
 
 return lib.module.create({
   name = "language-support/refactoring",
+  hosts = "*",
   plugins = {
     {
       "ThePrimeagen/refactoring.nvim",

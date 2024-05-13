@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "treesj",
+  hosts = "*",
   plugins = {
     {
       "Wansmer/treesj",
@@ -17,6 +18,13 @@ return lib.module.create({
     },
   },
   mappings = {
-    { "n", "J", function() require("treesj").toggle() end, "Toggle join" },
+    {
+      "n",
+      "J",
+      function()
+        require("treesj").toggle()
+      end,
+      "Toggle join",
+    },
   },
 })

@@ -3,6 +3,7 @@
 
 return lib.module.create({
   name = "language-support/linting",
+  hosts = "*",
   plugins = {
     {
       "mfussenegger/nvim-lint",

@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "ui/window-maximize",
+  hosts = "*",
   plugins = {
     {
       "declancm/maximize.nvim",

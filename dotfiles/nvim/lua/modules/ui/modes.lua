@@ -2,6 +2,7 @@ local colors = require("config/colors-hex")
 
 return lib.module.create({
   name = "ui/modes",
+  hosts = "*",
   plugins = {
     {
       "mvllow/modes.nvim",

@@ -15,8 +15,9 @@ local setup_peepsight = function()
 end
 
 return lib.module.create({
-  -- enabled = false,
+  enabled = false,
   name = "workflow/focus",
+  hosts = { "spaceship", "macbook" },
   plugins = {
     {
       "nvim-focus/focus.nvim",

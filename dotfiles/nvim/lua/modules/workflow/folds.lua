@@ -396,6 +396,7 @@ end
 
 return lib.module.create({
   name = "workflow/folds",
+  hosts = "*",
   setup = setup,
   plugins = {
     {

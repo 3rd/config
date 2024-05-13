@@ -247,6 +247,7 @@ end
 
 return lib.module.create({
   name = "workflow/git",
+  hosts = "*",
   plugins = {
     {
       "rhysd/git-messenger.vim",

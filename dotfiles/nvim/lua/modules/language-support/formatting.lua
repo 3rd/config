@@ -20,6 +20,7 @@ local fts_with_lsp_formatting = {
 
 return lib.module.create({
   name = "language-support/formatting",
+  hosts = "*",
   plugins = {
     {
       "stevearc/conform.nvim",

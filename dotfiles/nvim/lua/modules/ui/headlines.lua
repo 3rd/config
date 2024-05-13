@@ -15,6 +15,7 @@ local shared_config = {
 return lib.module.create({
   name = "headlines",
   -- enabled = false,
+  hosts = "*",
   plugins = {
     {
       "lukas-reineke/headlines.nvim",

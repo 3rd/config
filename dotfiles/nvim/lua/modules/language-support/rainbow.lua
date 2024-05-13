@@ -1,6 +1,7 @@
 return lib.module.create({
   name = "misc/rainbow",
   -- enabled = false,
+  hosts = "*",
   plugins = {
     {
       "HiPhish/rainbow-delimiters.nvim",

@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "completion/snippets",
+  hosts = "*",
   plugins = {
     {
       "L3MON4D3/LuaSnip",

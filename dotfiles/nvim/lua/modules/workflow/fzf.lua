@@ -85,6 +85,7 @@ end
 
 return lib.module.create({
   name = "workflow/fzf",
+  hosts = "*",
   plugins = {
     {
       "ibhagwan/fzf-lua",

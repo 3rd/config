@@ -12,11 +12,10 @@ local is = require("lib/is")
 ---@field null table<any>|nil
 ---@field mason string[]|nil
 
----@alias MappingMode "n"|"i"|"v"|"x"|"!"|""
-
 ---@class Module
 ---@field name string
 ---@field enabled boolean|nil
+---@field hosts string[] | "*"
 ---@field debug boolean|nil
 ---@field plugins LazyPluginSpec[]|nil
 ---@field setup function|nil
@@ -28,6 +27,7 @@ local Module = {
   __is_module = true,
   name = "",
   enabled = true,
+  hosts = {},
   debug = true,
   plugins = {},
   setup = nil,
@@ -44,6 +44,7 @@ function Module:new(props)
 
   local instance = setmetatable({
     enabled = props.enabled == nil and self.enabled or props.enabled,
+    hosts = props.hosts or self.hosts,
     debug = props.debug == nil and self.debug or props.debug,
     name = props.name or self.name,
     plugins = props.plugins or self.plugins,
@@ -69,6 +70,8 @@ local get_modules = function(opts)
   local modules_dir = string.format("%s/modules", lua_dir)
   local paths = vim.split(vim.fn.glob(string.format("%s/**/*.lua", modules_dir)), "\n", {})
 
+  local hostname = vim.loop.os_gethostname()
+
   if is.table(opts.exclude) then
     for _, exclude in ipairs(opts.exclude) do
       paths = vim.tbl_filter(function(path)
@@ -84,7 +87,14 @@ local get_modules = function(opts)
     if is.no.empty(path) then
       local ok, module = pcall(require, path)
       ---@cast module Module
-      if ok and type(module) == "table" and module.__is_module then table.insert(result, module) end
+      local is_module = ok and type(module) == "table" and module.__is_module
+      local is_valid_module_for_host = is_module
+        and (
+          module.hosts == "*"
+          ---@diagnostic disable-next-line: param-type-mismatch
+          or (type(module.hosts) == "table" and vim.tbl_contains(module.hosts, hostname))
+        )
+      if is_valid_module_for_host then table.insert(result, module) end
     end
   end
   return result

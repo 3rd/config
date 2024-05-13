@@ -120,7 +120,9 @@ local handle_navigate_to_symbol = function()
     local target = result[2]
     local row = string.split(target, ":")[1]
 
-    vim.schedule(function() vim.api.nvim_win_set_cursor(0, { row + 0, 0 }) end)
+    vim.schedule(function()
+      vim.api.nvim_win_set_cursor(0, { row + 0, 0 })
+    end)
   end)()
 end
 
@@ -189,6 +191,7 @@ end
 
 return lib.module.create({
   name = "wiki",
+  hosts = "*",
   setup = setup,
   mappings = {
     { "n", "<M-n>", handle_navigate_file },

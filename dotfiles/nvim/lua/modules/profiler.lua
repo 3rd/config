@@ -22,6 +22,7 @@ end
 
 return lib.module.create({
   name = "profiler",
+  hosts = "*",
   plugins = {
     { "nvim-lua/plenary.nvim" },
   },

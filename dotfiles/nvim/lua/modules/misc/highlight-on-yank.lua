@@ -10,5 +10,6 @@ end
 
 return lib.module.create({
   name = "misc/highlight-on-yank",
+  hosts = "*",
   setup = setup,
 })

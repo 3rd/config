@@ -1,5 +1,7 @@
 return lib.module.create({
   name = "workflow/flash",
+  enabled = false,
+  hosts = "*",
   plugins = {
     {
       "folke/flash.nvim",

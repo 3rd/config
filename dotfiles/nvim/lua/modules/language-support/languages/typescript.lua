@@ -6,8 +6,9 @@ local filetypes = {
 }
 
 return lib.module.create({
-  -- enabled = false,
   name = "language-support/languages/typescript",
+  -- enabled = false,
+  hosts = "*",
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
@@ -177,17 +178,6 @@ return lib.module.create({
         multi_line = true,
       },
     },
-    -- {
-    --   "OlegGulevskyy/better-ts-errors.nvim",
-    --   dependencies = { "MunifTanjim/nui.nvim" },
-    --   ft = filetypes,
-    --   config = {
-    --     keymaps = {
-    --       toggle = "<leader>dd", -- default '<leader>dd'
-    --       go_to_definition = "<leader>dx", --default '<leader>dx'
-    --     },
-    --   },
-    -- },
   },
   hooks = {
     lsp = {
@@ -200,7 +190,12 @@ return lib.module.create({
         if not vim.tbl_contains(twoslash_clients, client.name) then return end
 
         require("twoslash-queries").attach(client, bufnr)
-        lib.map.map("n", "<leader>?", ":TwoslashQueriesInspect<CR>", { buffer = bufnr, desc = "Add type inspect comment" })
+        lib.map.map(
+          "n",
+          "<leader>?",
+          ":TwoslashQueriesInspect<CR>",
+          { buffer = bufnr, desc = "Add type inspect comment" }
+        )
       end,
     },
   },

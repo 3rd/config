@@ -107,8 +107,9 @@ local setup = function()
 end
 
 return lib.module.create({
-  -- enabled = false,
   name = "ui/statusline",
+  -- enabled = false,
+  hosts = "*",
   plugins = {
     {
       "nvim-lualine/lualine.nvim",

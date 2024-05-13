@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "workflow/tmux",
+  hosts = "*",
   plugins = {
     {
       "aserowy/tmux.nvim",

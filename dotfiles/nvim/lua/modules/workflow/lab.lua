@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "lab",
+  hosts = { "spaceship", "macbook" },
   -- enabled = false,
   plugins = {
     {

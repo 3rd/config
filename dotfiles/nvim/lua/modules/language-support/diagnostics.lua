@@ -19,5 +19,6 @@ end
 
 return lib.module.create({
   name = "language-support/diagnostics",
+  hosts = "*",
   setup = setup,
 })

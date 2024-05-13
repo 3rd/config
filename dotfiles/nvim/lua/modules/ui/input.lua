@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "ui/input",
+  hosts = "*",
   plugins = {
     {
       "stevearc/dressing.nvim",

@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "undotree",
+  hosts = "*",
   plugins = {
     {
       "mbbill/undotree",

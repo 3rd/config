@@ -9,6 +9,7 @@ end
 
 return lib.module.create({
   name = "code-action",
+  hosts = "*",
   plugins = {
     {
       "luckasRanarison/clear-action.nvim",

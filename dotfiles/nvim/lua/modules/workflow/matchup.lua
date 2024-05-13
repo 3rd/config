@@ -22,17 +22,13 @@ end
 
 return lib.module.create({
   name = "workflow/matchup",
-  enabled = false, -- kills performance even on a stupidly beefy machine
+  enabled = false,
+  hosts = { "spaceship", "macbook" },
   plugins = {
     {
       "andymass/vim-matchup",
       event = "VeryLazy",
       config = setup,
     },
-    -- {
-    --   "utilyre/sentiment.nvim",
-    --   event = "VeryLazy",
-    --   config = setup_sentiment,
-    -- },
   },
 })

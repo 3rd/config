@@ -42,6 +42,7 @@ end
 
 return lib.module.create({
   name = "workflow/yank-location",
+  hosts = "*",
   mappings = {
     { { "n", "v" }, "<leader>y", handle_yank, { desc = "Yank location" } },
   },

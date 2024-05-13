@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "workflow/text-editing",
+  hosts = "*",
   plugins = {
     {
       "christoomey/vim-sort-motion", -- gs

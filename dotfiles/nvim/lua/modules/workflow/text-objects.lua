@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "text-objects",
+  hosts = "*",
   plugins = {
     {
       "wellle/targets.vim",

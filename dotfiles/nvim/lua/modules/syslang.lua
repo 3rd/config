@@ -1,6 +1,7 @@
 return lib.module.create({
   name = "syslang",
   -- enabled = false,
+  hosts = "*",
   plugins = {
     {
       dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "syslang"),

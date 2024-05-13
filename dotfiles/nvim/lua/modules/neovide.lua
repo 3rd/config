@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "neovide",
+  hosts = { "spaceship" },
   setup = function()
     if not vim.g.neovide then return end
 

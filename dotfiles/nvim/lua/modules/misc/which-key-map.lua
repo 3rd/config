@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "misc/which-key-map",
+  hosts = "*",
   plugins = {
     {
       "folke/which-key.nvim",
@@ -53,9 +54,9 @@ return lib.module.create({
           },
         })
 
+        -- workaround, which-key breaks number mappings
         require("modules/workflow/javelin").setup()
       end,
-      event = "VeryLazy",
     },
   },
 })

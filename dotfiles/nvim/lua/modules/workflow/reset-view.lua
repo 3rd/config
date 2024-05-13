@@ -25,10 +25,13 @@ end
 
 return lib.module.create({
   name = "workflow/reset-view",
+  hosts = "*",
   actions = {
     { "n", "Reset view & folds", reset_folds },
   },
   exports = {
-    reset_folds = function() reset_folds(true) end,
+    reset_folds = function()
+      reset_folds(true)
+    end,
   },
 })

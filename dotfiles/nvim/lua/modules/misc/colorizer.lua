@@ -21,6 +21,7 @@ end
 
 return lib.module.create({
   name = "misc/colorizer",
+  hosts = "*",
   plugins = {
     {
       "NvChad/nvim-colorizer.lua",

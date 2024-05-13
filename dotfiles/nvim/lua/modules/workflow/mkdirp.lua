@@ -11,5 +11,6 @@ end
 
 return lib.module.create({
   name = "workflow/mkdirp",
+  hosts = "*",
   setup = setup,
 })
