@@ -3,11 +3,6 @@
 {
   gtk = {
     enable = true;
-    # font = {
-    #   package = pkgs.open-sans;
-    #   name = "Open Sans";
-    #   size = 12;
-    # };
     iconTheme = {
       name = "Arc";
       package = pkgs.arc-icon-theme;

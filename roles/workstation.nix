@@ -8,9 +8,6 @@
     ../modules/xorg.nix
     ../modules/fonts.nix
     ../modules/virtualisation.nix
-    ../modules/syncthing.private.nix
-    ../modules/tailscale.private.nix
-    ../modules/security.private.nix
   ];
 
   boot.kernel.sysctl = {
@@ -20,9 +17,12 @@
   };
 
   environment.systemPackages = with pkgs; [
-    # core
     acpi
+    appimage-run
+    bluez
     coreutils
+    fd
+    fzf
     git
     glib
     gnumake
@@ -31,21 +31,14 @@
     libnotify
     moreutils
     openssl
-    openvpn
     pciutils
+    ripgrep
     unzip
     usbutils
     vim
     wget
     whois
     zip
-    #
-    appimage-run
-    bluez
-    fd
-    fzf
-    ripgrep
-    # fhs
     (pkgs.buildFHSUserEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
       name = "fhs";
       profile = "export FHS=1";
@@ -54,7 +47,6 @@
   ];
   environment.variables.EDITOR = "vim";
 
-  # xdg
   xdg = {
     portal = {
       enable = true;
@@ -63,6 +55,10 @@
       config.common.default = "gtk";
     };
   };
+
+  programs.dconf.enable = true;
+  programs.nm-applet.enable = true;
+  programs.light.enable = true;
 
   services.avahi.enable = true;
   services.dbus.enable = true;
@@ -75,19 +71,6 @@
   services.atd.enable = true;
   services.udev.packages = [ pkgs.android-udev-rules ];
   services.gvfs.enable = true; # trash, MTP
+  services.logind.killUserProcesses = true;
 
-  services.logind.killUserProcesses = false;
-
-  # power
-  # services.upower.enable = true;
-  # powerManagement = {
-  #   enable = true;
-  #   powertop.enable = true;
-  # };
-
-  # misc
-  programs.dconf.enable = true;
-  programs.nm-applet.enable = true;
-  # programs.nix-ld.enable = true;
-  programs.light.enable = true;
 }

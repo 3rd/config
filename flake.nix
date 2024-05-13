@@ -61,7 +61,7 @@
           };
           modules = [
             { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }
-            ./home-manager
+            ./home-manager/roles/battlestation.nix
             ./hosts/spaceship/home.nix
             disableHomeManagerNews
           ];
@@ -77,7 +77,7 @@
           };
           modules = [
             { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }
-            ./home-manager
+            ./home-manager/roles/battlestation.nix
             ./hosts/macbook/home.nix
             disableHomeManagerNews
           ];
@@ -93,7 +93,7 @@
           };
           modules = [
             { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }
-            ./home-manager
+            ./home-manager/roles/workstation.nix
             ./hosts/workstation/home.nix
             disableHomeManagerNews
           ];

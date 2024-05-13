@@ -14,9 +14,9 @@ return lib.module.create({
             clear_suggestion = "<C-]>",
           },
           ignore_filetypes = {
-            dotenv = false,
-            syslang = false,
-            markdown = false,
+            dotenv = true,
+            syslang = true,
+            -- markdown = true,
           },
           color = {
             suggestion_color = "#ffffff",

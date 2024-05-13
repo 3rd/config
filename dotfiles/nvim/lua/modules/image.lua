@@ -6,7 +6,7 @@ return lib.module.create({
       "3rd/image.nvim",
       -- "benlubas/image.nvim",
       -- branch = "test",
-      dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "image.nvim"),
+      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "image.nvim"),
       -- lazy = false,
       ft = { "markdown", "norg", "syslang", "vimwiki" },
       opts = {

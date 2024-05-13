@@ -6,4 +6,3 @@ plugins/time-tracker.nvim
 plugins/testing.nvim
 plugins/supermaven-nvim
 time-tracker.json
-test

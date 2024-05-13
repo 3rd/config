@@ -52,7 +52,7 @@
     };
 
     packages = with pkgs; [
-      corefonts
+      # corefonts
       dejavu_fonts
       fira
       fira-code

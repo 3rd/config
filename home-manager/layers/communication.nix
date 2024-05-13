@@ -1,10 +1,5 @@
 { pkgs, ... }:
 
 {
-  home.packages = with pkgs; [
-    #
-    tdesktop
-    armcord
-    ferdium
-  ];
+  home.packages = with pkgs; [ tdesktop ];
 }

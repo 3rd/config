@@ -9,5 +9,6 @@
     ./rust.nix
     ./c.nix
     ./python.nix
+    ./clojure.nix
   ];
 }

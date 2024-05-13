@@ -152,7 +152,6 @@ in {
           "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
           "${modifier}+shift+Return" = ''
             exec ulimit -n 999999 && /bin/sh -c "$BROWSER --disable-backgrounding-occluded-windows"'';
-          # "F4" = "exec ${pkgs.kitty}/bin/kitty";;
           "${modifier}+p" = "exec ${pkgs.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs.flameshot}/bin/flameshot gui";
           "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
@@ -206,8 +205,6 @@ in {
             always = true;
             command =
               "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/assets/wallpaper";
-            # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill --no-fehbg --randomize ~/brain/config/assets/wallpapers";
-            # ''--no-startup-id ${pkgs.hsetroot}/bin/hsetroot -solid "${config.colors.gray-darker}"'';
           }
         ];
       };

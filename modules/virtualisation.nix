@@ -8,21 +8,22 @@
     distrobox
   ];
 
-  virtualisation.docker = {
-    enable = true;
-    # package = pkgs.stable.docker;
-    autoPrune.enable = true;
+  virtualisation = {
+    oci-containers.backend = "docker";
+    docker = {
+      enable = true;
+      autoPrune.enable = true;
+      # package = pkgs.stable.docker;
+    };
+    libvirtd = {
+      enable = true;
+      qemu.package = pkgs.qemu_kvm;
+    };
+    # virtualisation.podman = {
+    #   enable = true;
+    #   dockerCompat = true;
+    #   defaultNetwork.settings = { dns_enabled = true; };
+    # };
   };
-  virtualisation.oci-containers.backend = "docker";
 
-  # virtualisation.podman = {
-  #   enable = true;
-  #   dockerCompat = true;
-  #   defaultNetwork.settings = { dns_enabled = true; };
-  # };
-
-  virtualisation.libvirtd = {
-    enable = true;
-    qemu.package = pkgs.qemu_kvm;
-  };
 }

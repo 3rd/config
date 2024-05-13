@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+BLACKLIST=(
+  "_archive"
+  "_old"
+)
+
 pushd() {
   command pushd "$@" >/dev/null || exit
 }
@@ -19,20 +24,24 @@ is_valid_git_repo() {
 
 display_uncommitted_changes() {
   repo_path=$1
-  echo "Repository: $repo_path"
 
   if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+    echo "Repository: $repo_path"
     echo "Uncommitted changes:"
     git status --short
-  else
-    echo "No uncommitted changes"
+    echo "------------------------"
   fi
-
-  echo "------------------------"
 }
 
 fd -t d -u -a ".git\$" | while read -r git_dir; do
   repo_path=$(dirname "$git_dir")
+
+  for blacklisted in "${BLACKLIST[@]}"; do
+    if [[ $repo_path == *"$blacklisted"* ]]; then
+      continue
+    fi
+  done
+
   pushd "$repo_path" || exit
 
   is_valid_git_repo "$repo_path"

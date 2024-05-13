@@ -7,7 +7,7 @@ local shared_config = {
   doubledash_string = "=",
   quote_highlight = "Quote",
   quote_string = "┃",
-  fat_headlines = true,
+  fat_headlines = false,
   fat_headline_upper_string = "▃",
   fat_headline_lower_string = "🬂",
 }
@@ -18,13 +18,16 @@ return lib.module.create({
   plugins = {
     {
       "lukas-reineke/headlines.nvim",
-      ft = { "syslang", "markdown" },
+      ft = {
+        "syslang",
+        -- "markdown",
+      },
       dependencies = "nvim-treesitter/nvim-treesitter",
       config = function()
         local headlines = require("headlines")
 
         headlines.setup({
-          markdown = shared_config,
+          -- markdown = shared_config,
           syslang = vim.tbl_extend("force", shared_config, {
             bullet_highlights = {},
             query = vim.treesitter.query.parse(
