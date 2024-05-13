@@ -1,0 +1,36 @@
+id: react-memo-no-simple-expression
+snapshots:
+  useMemo(() => a - b + 12, [a, b]);:
+    labels:
+    - source: () => a - b + 12
+      style: primary
+      start: 8
+      end: 24
+  useMemo(() => a === 2, [a]);:
+    labels:
+    - source: () => a === 2
+      style: primary
+      start: 8
+      end: 21
+  useMemo(() => a === b, [a, b]);:
+    labels:
+    - source: () => a === b
+      style: primary
+      start: 8
+      end: 21
+  useMemo(() => a === test(b), [a]);:
+    labels:
+    - source: () => a === test(b)
+      style: primary
+      start: 8
+      end: 27
+  useMemo(() => { return a === b; }, [a, b]);:
+    labels:
+    - source: return a === b;
+      style: primary
+      start: 16
+      end: 31
+    - source: '{ return a === b; }'
+      style: secondary
+      start: 14
+      end: 33

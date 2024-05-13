@@ -1,0 +1,15 @@
+id: ts-array-no-useless-spread
+message: Useless array spread before non-mutating method
+severity: error
+language: TypeScript
+rule:
+  pattern: "[...$TARGET].$METHOD($$$)"
+constraints:
+  TARGET:
+    not:
+      has:
+        kind: identifier
+        regex: Array
+  METHOD:
+    regex: at|concat|entries|every|filter|find|findIndex|findLast|findLastIndex|flat|flatMap|forEach|includes|indexOf|join|keys|lastIndexOf|map|reduce|reduceRight|slice|some|toLocaleString|toReversed|toSorted|toSpliced|toString|values|with
+

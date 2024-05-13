@@ -1,0 +1,32 @@
+id: react-usememo-no-simple-expression
+message: Simple expression in useMemo
+severity: error
+language: Tsx
+rule:
+  any:
+    - pattern: useMemo(() => { return $EXPR }, $DEPS)
+    - pattern: useMemo(() => $EXPR, $DEPS)
+  # not:
+  #   has:
+  #     regex: "\\?\\."
+constraints:
+  EXPR:
+    any:
+      - kind: binary_expression
+      - kind: unary_expression
+      - kind: number
+      - kind: string
+      - kind: "null"
+      - kind: undefined
+      - kind: "true"
+      - kind: "false"
+      - kind: identifier
+    not:
+      has:
+        stopBy: end
+        any:
+          - kind: call_expression
+          - kind: new_expression
+  DEPS:
+    not:
+      regex: "\\[\\]"

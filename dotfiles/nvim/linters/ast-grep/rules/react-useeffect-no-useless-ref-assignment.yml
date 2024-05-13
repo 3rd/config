@@ -1,0 +1,26 @@
+id: react-useeffect-no-useless-ref-assignment
+message: Useless ref assignment in useEffect
+severity: error
+language: Tsx
+rule:
+  inside:
+    kind: call_expression
+    has:
+      kind: identifier
+      regex: useEffect
+    stopBy: end
+  all:
+    - any:
+        - pattern: $REF.current = $VALUE
+        - pattern: $REF.current.$$$ = $VALUE
+    - not:
+        inside:
+          kind: arrow_function
+          stopBy: end
+          has:
+            stopBy: end
+            kind: expression_statement
+            not:
+              any:
+                - pattern: $REF.current = $VALUE;
+                - pattern: $REF.current.$$$ = $VALUE;

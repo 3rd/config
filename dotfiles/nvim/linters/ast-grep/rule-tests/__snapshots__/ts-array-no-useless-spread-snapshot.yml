@@ -1,0 +1,182 @@
+id: ts-array-no-useless-spread
+snapshots:
+  const a = [...b].at():
+    labels:
+    - source: '[...b].at()'
+      style: primary
+      start: 10
+      end: 21
+  const a = [...b].concat():
+    labels:
+    - source: '[...b].concat()'
+      style: primary
+      start: 10
+      end: 25
+  const a = [...b].entries():
+    labels:
+    - source: '[...b].entries()'
+      style: primary
+      start: 10
+      end: 26
+  const a = [...b].every():
+    labels:
+    - source: '[...b].every()'
+      style: primary
+      start: 10
+      end: 24
+  const a = [...b].filter():
+    labels:
+    - source: '[...b].filter()'
+      style: primary
+      start: 10
+      end: 25
+  const a = [...b].find():
+    labels:
+    - source: '[...b].find()'
+      style: primary
+      start: 10
+      end: 23
+  const a = [...b].findIndex():
+    labels:
+    - source: '[...b].findIndex()'
+      style: primary
+      start: 10
+      end: 28
+  const a = [...b].findLast():
+    labels:
+    - source: '[...b].findLast()'
+      style: primary
+      start: 10
+      end: 27
+  const a = [...b].findLastIndex():
+    labels:
+    - source: '[...b].findLastIndex()'
+      style: primary
+      start: 10
+      end: 32
+  const a = [...b].flat():
+    labels:
+    - source: '[...b].flat()'
+      style: primary
+      start: 10
+      end: 23
+  const a = [...b].flatMap():
+    labels:
+    - source: '[...b].flatMap()'
+      style: primary
+      start: 10
+      end: 26
+  const a = [...b].forEach():
+    labels:
+    - source: '[...b].forEach()'
+      style: primary
+      start: 10
+      end: 26
+  const a = [...b].includes():
+    labels:
+    - source: '[...b].includes()'
+      style: primary
+      start: 10
+      end: 27
+  const a = [...b].indexOf():
+    labels:
+    - source: '[...b].indexOf()'
+      style: primary
+      start: 10
+      end: 26
+  const a = [...b].join("\n"):
+    labels:
+    - source: '[...b].join("\n")'
+      style: primary
+      start: 10
+      end: 27
+  const a = [...b].join():
+    labels:
+    - source: '[...b].join()'
+      style: primary
+      start: 10
+      end: 23
+  const a = [...b].keys():
+    labels:
+    - source: '[...b].keys()'
+      style: primary
+      start: 10
+      end: 23
+  const a = [...b].map():
+    labels:
+    - source: '[...b].map()'
+      style: primary
+      start: 10
+      end: 22
+  const a = [...b].map(item => item + 1):
+    labels:
+    - source: '[...b].map(item => item + 1)'
+      style: primary
+      start: 10
+      end: 38
+  const a = [...b].reduce():
+    labels:
+    - source: '[...b].reduce()'
+      style: primary
+      start: 10
+      end: 25
+  const a = [...b].reduceRight():
+    labels:
+    - source: '[...b].reduceRight()'
+      style: primary
+      start: 10
+      end: 30
+  const a = [...b].slice():
+    labels:
+    - source: '[...b].slice()'
+      style: primary
+      start: 10
+      end: 24
+  const a = [...b].some():
+    labels:
+    - source: '[...b].some()'
+      style: primary
+      start: 10
+      end: 23
+  const a = [...b].toLocaleString():
+    labels:
+    - source: '[...b].toLocaleString()'
+      style: primary
+      start: 10
+      end: 33
+  const a = [...b].toReversed():
+    labels:
+    - source: '[...b].toReversed()'
+      style: primary
+      start: 10
+      end: 29
+  const a = [...b].toSorted():
+    labels:
+    - source: '[...b].toSorted()'
+      style: primary
+      start: 10
+      end: 27
+  const a = [...b].toSpliced():
+    labels:
+    - source: '[...b].toSpliced()'
+      style: primary
+      start: 10
+      end: 28
+  const a = [...b].toString():
+    labels:
+    - source: '[...b].toString()'
+      style: primary
+      start: 10
+      end: 27
+  const a = [...b].values():
+    labels:
+    - source: '[...b].values()'
+      style: primary
+      start: 10
+      end: 25
+  const a = [...b].with():
+    labels:
+    - source: '[...b].with()'
+      style: primary
+      start: 10
+      end: 23

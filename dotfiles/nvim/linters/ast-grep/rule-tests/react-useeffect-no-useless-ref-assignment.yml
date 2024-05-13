@@ -1,0 +1,36 @@
+id: react-useeffect-no-useless-ref-assignment
+valid:
+  - |
+    useEffect(() => {
+      console.log($VALUE)
+    }, [])
+  - |
+    useEffect(() => {
+      couldBeASideEffect();
+      ref.current = value;
+      ref.current = value;
+    }, [])
+    - useEffect(() => {
+      couldBeASideEffect();
+      ref.current.x = value;
+      ref.current.x = value;
+    }, [])
+invalid:
+  - |
+    useEffect(() => {
+      ref.current = value;
+    }, [value])
+  - |
+    useEffect(() => {
+      ref.current = value;
+      ref.current = value;
+    }, [value])
+  - |
+    useEffect(() => {
+      ref.current.x = value;
+    }, [value])
+  - |
+    useEffect(() => {
+      ref.current.x = value;
+      ref.current.x = value;
+    }, [value])

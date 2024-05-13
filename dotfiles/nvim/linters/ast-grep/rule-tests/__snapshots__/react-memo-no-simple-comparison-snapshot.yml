@@ -1,0 +1,72 @@
+id: react-memo-no-simple-comparison
+snapshots:
+  useMemo(() => a - b + 12, [a, b]);:
+    labels:
+    - source: () => a - b + 12
+      style: primary
+      start: 8
+      end: 24
+    - source: useMemo
+      style: secondary
+      start: 0
+      end: 7
+    - source: useMemo(() => a - b + 12, [a, b])
+      style: secondary
+      start: 0
+      end: 33
+  useMemo(() => a === 2, [a]);:
+    labels:
+    - source: () => a === 2
+      style: primary
+      start: 8
+      end: 21
+    - source: useMemo
+      style: secondary
+      start: 0
+      end: 7
+    - source: useMemo(() => a === 2, [a])
+      style: secondary
+      start: 0
+      end: 27
+  useMemo(() => a === b, [a, b]);:
+    labels:
+    - source: () => a === b
+      style: primary
+      start: 8
+      end: 21
+    - source: useMemo
+      style: secondary
+      start: 0
+      end: 7
+    - source: useMemo(() => a === b, [a, b])
+      style: secondary
+      start: 0
+      end: 30
+  useMemo(() => a === test(b), [a]);:
+    labels:
+    - source: () => a === test(b)
+      style: primary
+      start: 8
+      end: 27
+    - source: useMemo
+      style: secondary
+      start: 0
+      end: 7
+    - source: useMemo(() => a === test(b), [a])
+      style: secondary
+      start: 0
+      end: 33
+  useMemo(() => { return a === b; }, [a, b]);:
+    labels:
+    - source: () => { return a === b; }
+      style: primary
+      start: 8
+      end: 33
+    - source: useMemo
+      style: secondary
+      start: 0
+      end: 7
+    - source: useMemo(() => { return a === b; }, [a, b])
+      style: secondary
+      start: 0
+      end: 42

@@ -1,0 +1,86 @@
+id: react-no-useless-effect-ref-assign
+snapshots:
+  ? |
+    useEffect(() => {
+      ref.current = value;
+      ref.current = value;
+    }, [value])
+  : labels:
+    - source: ref.current = value
+      style: primary
+      start: 20
+      end: 39
+    - source: useEffect
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        useEffect(() => {
+          ref.current = value;
+          ref.current = value;
+        }, [value])
+      style: secondary
+      start: 0
+      end: 75
+  ? |
+    useEffect(() => {
+      ref.current = value;
+    }, [value])
+  : labels:
+    - source: ref.current = value
+      style: primary
+      start: 20
+      end: 39
+    - source: useEffect
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        useEffect(() => {
+          ref.current = value;
+        }, [value])
+      style: secondary
+      start: 0
+      end: 52
+  ? |
+    useEffect(() => {
+      ref.current.x = value;
+      ref.current.x = value;
+    }, [value])
+  : labels:
+    - source: ref.current.x = value
+      style: primary
+      start: 20
+      end: 41
+    - source: useEffect
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        useEffect(() => {
+          ref.current.x = value;
+          ref.current.x = value;
+        }, [value])
+      style: secondary
+      start: 0
+      end: 79
+  ? |
+    useEffect(() => {
+      ref.current.x = value;
+    }, [value])
+  : labels:
+    - source: ref.current.x = value
+      style: primary
+      start: 20
+      end: 41
+    - source: useEffect
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        useEffect(() => {
+          ref.current.x = value;
+        }, [value])
+      style: secondary
+      start: 0
+      end: 54

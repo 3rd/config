@@ -1,0 +1,14 @@
+id: react-usememo-no-simple-expression
+valid:
+  - useMemo(() => compute(a), [a]);
+  - |
+    useMemo(() => {
+      console.log("check");
+      return a === b;
+    }, [a, b]);
+  - useMemo(() => a === test(b), [a]);
+invalid:
+  - useMemo(() => a === b, [a, b]);
+  - useMemo(() => a === 2, [a]);
+  - useMemo(() => a - b + 12, [a, b]);
+  - useMemo(() => { return a === b; }, [a, b]);

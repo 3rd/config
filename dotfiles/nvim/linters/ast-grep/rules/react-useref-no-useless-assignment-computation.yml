@@ -1,0 +1,10 @@
+id: react-useref-no-useless-assignment-computation
+message: The function that computes the initial value of this ref executes on every render.
+severity: error
+language: Tsx
+rule:
+  pattern: useRef($EXPR)
+constraints:
+  EXPR:
+    kind: call_expression
+

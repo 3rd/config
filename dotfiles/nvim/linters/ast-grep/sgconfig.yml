@@ -1,0 +1,6 @@
+ruleDirs:
+  - /home/rabbit/.config/nvim/linters/ast-grep/rules
+testConfigs:
+  - testDir: /home/rabbit/.config/nvim/linters/ast-grep/rule-tests
+utilDirs:
+  - /home/rabbit/.config/nvim/linters/ast-grep/utils

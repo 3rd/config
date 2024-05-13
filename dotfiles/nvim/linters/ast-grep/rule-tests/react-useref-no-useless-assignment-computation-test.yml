@@ -1,0 +1,8 @@
+id: react-useref-no-useless-assignment-computation
+valid:
+  - useRef(value)
+  - useRef(() => 1)
+  - "useRef({ value: 1 })"
+invalid:
+  - useRef(compute())
+  - useRef(compute(value))

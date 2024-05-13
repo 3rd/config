@@ -1,0 +1,41 @@
+id: ts-array-no-useless-spread
+valid:
+  - const a = [...b];
+  - const a = [...b].copyWithin();
+  - const a = [...b].fill()
+  - const a = [...b].pop()
+  - const a = [...b].push()
+  - const a = [...b].reverse()
+  - const a = [...b].shift()
+  - const a = [...b].sort();
+  - const a = [...b].splice();
+  - const a = [...b].unshift();
+invalid:
+  - const a = [...b].at()
+  - const a = [...b].concat()
+  - const a = [...b].entries()
+  - const a = [...b].every()
+  - const a = [...b].filter()
+  - const a = [...b].find()
+  - const a = [...b].findIndex()
+  - const a = [...b].findLast()
+  - const a = [...b].findLastIndex()
+  - const a = [...b].flat()
+  - const a = [...b].flatMap()
+  - const a = [...b].forEach()
+  - const a = [...b].includes()
+  - const a = [...b].indexOf()
+  - const a = [...b].join("\n")
+  - const a = [...b].keys()
+  - const a = [...b].map(item => item + 1)
+  - const a = [...b].reduce()
+  - const a = [...b].reduceRight()
+  - const a = [...b].slice()
+  - const a = [...b].some()
+  - const a = [...b].toLocaleString()
+  - const a = [...b].toReversed()
+  - const a = [...b].toSorted()
+  - const a = [...b].toSpliced()
+  - const a = [...b].toString()
+  - const a = [...b].values()
+  - const a = [...b].with()

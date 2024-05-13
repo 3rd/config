@@ -1,0 +1,39 @@
+id: react-prop-object-always-recreated
+valid:
+  - |
+    const Component = () => {
+      return <Button prop={var} />
+    }
+  - |
+    const Component = () => {
+      return <Button prop={123} />
+    }
+  - |
+    const Component = () => {
+      return <Button prop="hello" />
+    }
+  - |
+    const Component = () => {
+      return <Button prop={fn(x)} />
+    }
+  - |
+    const Component = () => {
+      return <button prop={{ value: 1 }} />
+    }
+  - |
+    const Component = () => {
+      return <button prop={[ 1 ]}></button>
+    }
+invalid:
+  - |
+    const Component = () => {
+      return <Button prop={{ value: 1 }} />
+    }
+  - |
+    const Component = () => {
+      return <Button prop={{ value: 1 }}></Button>
+    }
+  - |
+    const Component = () => {
+      return <Button prop={[ 1 ]} />
+    }

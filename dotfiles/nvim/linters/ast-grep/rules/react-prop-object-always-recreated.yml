@@ -1,0 +1,25 @@
+id: react-prop-object-always-recreated
+message: Avoid recreating object/array literals as JSX props
+severity: warning
+language: Tsx
+ignores:
+  - "./**/*.test.tsx"
+  - "./**/*.spec.tsx"
+rule:
+  kind: jsx_expression
+  inside:
+    stopBy: end
+    any:
+      - kind: jsx_self_closing_element
+        has:
+          kind: identifier
+          regex: ^[A-Z]
+      - kind: jsx_opening_element
+        has:
+          kind: identifier
+          regex: ^[A-Z]
+  has:
+    any:
+      - kind: object
+      - kind: array
+
