@@ -8,6 +8,7 @@
     ../modules/xorg.nix
     ../modules/fonts.nix
     ../modules/virtualisation.nix
+    ../modules/ld.nix
   ];
 
   boot.kernel.sysctl = {
@@ -60,7 +61,6 @@
   programs.nm-applet.enable = true;
   programs.light.enable = true;
 
-  services.avahi.enable = true;
   services.dbus.enable = true;
   services.flatpak.enable = true;
   services.fstrim.enable = true;
