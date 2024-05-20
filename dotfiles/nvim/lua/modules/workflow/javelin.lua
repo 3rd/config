@@ -82,7 +82,7 @@ local setup = function()
     end, {
       noremap = true,
       silent = true,
-      desc = string.format("Bookmark %s", i),
+      desc = string.format("Set bookmark %s", i),
     })
   end
 

@@ -5,7 +5,6 @@
   home.packages = with pkgs; [
     #
     nodejs_latest
-    nodePackages.pnpm
     electron
     quick-lint-js
     bun

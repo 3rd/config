@@ -120,7 +120,7 @@ return {
       "n",
       "<leader>R",
       function()
-        require("fzf-lua").lsp_live_workspace_symbols({
+        require("fzf-lua").lsp_workspace_symbols({
           -- async = false,
           file_ignore_patterns = { "node_modules" },
           no_header_i = true,

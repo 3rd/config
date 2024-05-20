@@ -3,55 +3,20 @@ return lib.module.create({
   hosts = "*",
   plugins = {
     {
-      "aserowy/tmux.nvim",
-      event = "VeryLazy",
-      opts = {
-        copy_sync = {
-          enable = false,
-          ignore_buffers = { empty = false },
-          redirect_to_clipboard = false,
-          register_offset = 0,
-          sync_clipboard = true,
-          sync_registers = true,
-          sync_deletes = true,
-          sync_unnamed = true,
-        },
-        navigation = {
-          cycle_navigation = true,
-          enable_default_keybindings = true,
-          persist_zoom = false,
-        },
-        resize = {
-          enable_default_keybindings = false,
-          resize_step_x = 4,
-          resize_step_y = 4,
-        },
+      "christoomey/vim-tmux-navigator",
+      cmd = {
+        "TmuxNavigateLeft",
+        "TmuxNavigateDown",
+        "TmuxNavigateUp",
+        "TmuxNavigateRight",
+        "TmuxNavigatePrevious",
       },
       keys = {
-        {
-          "<M-Left>",
-          function()
-            require("tmux").resize_left()
-          end,
-        },
-        {
-          "<M-Right>",
-          function()
-            require("tmux").resize_right()
-          end,
-        },
-        {
-          "<M-Up>",
-          function()
-            require("tmux").resize_top()
-          end,
-        },
-        {
-          "<M-Down>",
-          function()
-            require("tmux").resize_bottom()
-          end,
-        },
+        { "<c-h>", "<cmd><C-U>TmuxNavigateLeft<cr>" },
+        { "<c-j>", "<cmd><C-U>TmuxNavigateDown<cr>" },
+        { "<c-k>", "<cmd><C-U>TmuxNavigateUp<cr>" },
+        { "<c-l>", "<cmd><C-U>TmuxNavigateRight<cr>" },
+        { "<c-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>" },
       },
     },
   },

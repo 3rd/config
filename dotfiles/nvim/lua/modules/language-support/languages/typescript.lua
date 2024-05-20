@@ -12,7 +12,7 @@ return lib.module.create({
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
-      -- enabled = false,
+      enabled = false,
       ft = filetypes,
       dependencies = {
         "nvim-lua/plenary.nvim",
@@ -116,12 +116,12 @@ return lib.module.create({
             separate_diagnostic_server = true,
             publish_diagnostic_on = "insert_leave",
             expose_as_code_action = { "organize_imports", "remove_unused" },
-            tsserver_max_memory = 8096, -- 4096 | "auto"
+            tsserver_max_memory = "auto",
             jsx_close_tag = {
               enable = true,
               filetypes = { "javascriptreact", "typescriptreact" },
             },
-            complete_function_calls = false,
+            complete_function_calls = true,
             tsserver_file_preferences = {
               -- allowIncompleteCompletions = true,
               -- allowRenameOfImportPath = true,
