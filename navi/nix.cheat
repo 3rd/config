@@ -13,6 +13,9 @@ nix why-depends /run/current-system <system_package>
 nix-du --root /run/current-system/sw -s <max_size> -O2 | dot -Tsvg > nixstoregraph.svg
 xdg-open nixstoregraph.svg
 
+# repair /nix/store
+sudo nix-store --verify --check-contents --repair
+
 $ system_package: nix path-info -r /run/current-system
 $ user_package_name: nix-env -q | awk '{gsub(/-[0-9]+.*/, ""); print}'
 $ max_size: echo 100MB --- --fzf-overrides '--no-select-1'

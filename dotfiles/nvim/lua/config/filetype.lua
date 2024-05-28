@@ -8,6 +8,7 @@ return {
     astro = "astro",
     env = "dotenv",
     mdx = "markdown",
+    dsl = "dsl",
   },
   pattern = {
     ["%.env%.[%w_.-]+"] = "dotenv",

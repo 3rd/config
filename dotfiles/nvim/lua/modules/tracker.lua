@@ -1,6 +1,6 @@
 return lib.module.create({
   name = "tracker",
-  -- enabled = false,
+  enabled = false,
   hosts = { "spaceship", "macbook" },
   plugins = {
     {

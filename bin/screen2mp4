@@ -12,7 +12,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   read -r -p "Record audio? [y/N] " audio
   case $audio in
     [Yy]*)
-      source=$(pactl list sources short | grep bluez | awk '{print $1}')
+      source=$(pactl list sources short | grep bluez | rg -v input | awk '{print $1}')
       audio=(-f pulse -ac 2 -i "$source")
       audio_conv=(-c:a aac)
       ;;
@@ -65,4 +65,3 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
     esac
   done
 fi
-
