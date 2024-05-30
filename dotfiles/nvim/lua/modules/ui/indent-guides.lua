@@ -30,11 +30,13 @@ return lib.module.create({
 
         local opts = {
           indent = {
+            enable = true,
             exclude_filetypes = exclude_filetypes,
             chars = { "│", "¦", "┆", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊" }, -- │
             style = colors.plugins.indent_guides.indent,
           },
           chunk = {
+            enable = true,
             notify = false,
             exclude_filetypes = exclude_filetypes,
             chars = {
@@ -47,7 +49,7 @@ return lib.module.create({
             style = colors.plugins.indent_guides.chunk,
           },
           blank = { enable = false },
-          line_num = { enable = true },
+          line_num = { enable = false },
         }
 
         require("hlchunk").setup(opts)

@@ -248,7 +248,10 @@ local setup_lspconfig = function()
           disableRuleComment = { enable = true, location = "separateLine" },
           showDocumentation = { enable = true },
         },
-        -- experimental = { useFlatConfig = true },
+        useFlatConfig = false,
+        experimental = {
+          useFlatConfig = nil,
+        },
         nodePath = lib.path.resolve_config("linters/eslint/node_modules"),
         onIgnoredFiles = "off",
         options = {

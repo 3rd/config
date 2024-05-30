@@ -60,7 +60,10 @@
             };
           };
           modules = [
-            { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }
+            {
+              nixpkgs.overlays =
+                [ inputs.neovim-nightly-overlay.overlays.default ];
+            }
             ./home-manager/roles/battlestation.nix
             ./hosts/spaceship/home.nix
             disableHomeManagerNews
@@ -76,7 +79,10 @@
             };
           };
           modules = [
-            { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }
+            {
+              nixpkgs.overlays =
+                [ inputs.neovim-nightly-overlay.overlays.default ];
+            }
             ./home-manager/roles/battlestation.nix
             ./hosts/macbook/home.nix
             disableHomeManagerNews
@@ -92,7 +98,10 @@
             };
           };
           modules = [
-            { nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlay ]; }
+            {
+              nixpkgs.overlays =
+                [ inputs.neovim-nightly-overlay.overlays.default ];
+            }
             ./home-manager/roles/workstation.nix
             ./hosts/workstation/home.nix
             disableHomeManagerNews
