@@ -94,7 +94,6 @@
   };
 
   # security
-  security.protectKernelImage = true;
   security.rtkit.enable = true;
   security.sudo = {
     enable = true;

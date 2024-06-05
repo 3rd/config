@@ -4,5 +4,5 @@ plugins/image2.nvim
 plugins/nyancat.nvim
 plugins/time-tracker.nvim
 plugins/testing.nvim
-plugins/supermaven-nvim
+plugins/sqlite.nvim
 time-tracker.json

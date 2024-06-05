@@ -1,7 +1,8 @@
 { config, pkgs, ... }:
 
 {
-  nixpkgs.config.joypixels.acceptLicense = true;
+  # https://github.com/NixOS/nixpkgs/pull/305975
+  # nixpkgs.config.joypixels.acceptLicense = true;
   fonts = {
     fontDir.enable = true;
     fontconfig = {
@@ -26,7 +27,11 @@
           "Noto Serif"
           "FiraCode Nerd Font Mono"
         ];
-        emoji = [ "JoyPixels" "Noto Color Emoji" "FiraCode Nerd Font Mono" ];
+        emoji = [
+          # "JoyPixels"
+          "Noto Color Emoji"
+          "FiraCode Nerd Font Mono"
+        ];
       };
       localConf = ''
         <fontconfig>
@@ -61,7 +66,7 @@
       inconsolata
       inter
       jetbrains-mono
-      joypixels
+      # joypixels
       manrope
       noto-fonts
       noto-fonts-emoji

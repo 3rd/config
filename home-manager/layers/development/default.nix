@@ -2,13 +2,15 @@
   imports = [
     #
     ./bash.nix
+    ./c.nix
+    ./clojure.nix
     ./golang.nix
+    ./java.nix
     ./lua.nix
+    ./misc.nix
     ./nix.nix
     ./nodejs.nix
-    ./rust.nix
-    ./c.nix
     ./python.nix
-    ./clojure.nix
+    ./rust.nix
   ];
 }
