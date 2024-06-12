@@ -6,6 +6,5 @@
     postman
     duckdb
     dbeaver-bin
-    jetbrains.goland
   ];
 }

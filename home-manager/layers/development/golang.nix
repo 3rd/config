@@ -1,7 +1,18 @@
 { pkgs, ... }:
 
 {
-  home.packages = with pkgs; [ gotools golangci-lint ];
+  home.packages = with pkgs;
+    [
+      #
+      gotools
+      golangci-lint
+    ] ++ (if (system == "x86_64-linux") then
+      [
+        #
+        jetbrains.goland
+      ]
+    else
+      [ ]);
 
   programs.go = {
     enable = true;

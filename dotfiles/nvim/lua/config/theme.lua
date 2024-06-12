@@ -426,7 +426,7 @@ local theme = lush(function(injected)
     sym("@lsp.type.character")({ sym("@character") }),
     sym("@lsp.type.class")({ sym("@constructor") }),
     sym("@lsp.type.decorator")({ sym("@parameter") }),
-    sym("@lsp.type.enum")({ sym("@constant") }),
+    sym("@lsp.type.enum")({ sym("@type") }),
     sym("@lsp.type.enumMember")({ sym("@constant") }),
     sym("@lsp.type.event")({ fg = colors.orange }),
     sym("@lsp.type.float")({ sym("@float") }),

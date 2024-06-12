@@ -47,6 +47,8 @@ return lib.module.create({
               right_arrow = "▶",
             },
             style = colors.plugins.indent_guides.chunk,
+            duration = 0,
+            delay = 0,
           },
           blank = { enable = false },
           line_num = { enable = false },
