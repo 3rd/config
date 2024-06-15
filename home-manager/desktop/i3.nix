@@ -149,7 +149,7 @@ in {
           "${modifier}+r" = "mode resize";
           "${modifier}+x" = "mode power";
           # launchers
-          "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
+          "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty -1";
           "${modifier}+shift+Return" = ''
             exec ulimit -n 999999 && /bin/sh -c "$BROWSER --disable-backgrounding-occluded-windows"'';
           "${modifier}+p" = "exec ${pkgs.copyq}/bin/copyq show";

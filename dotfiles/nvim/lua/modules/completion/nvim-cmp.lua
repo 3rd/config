@@ -10,7 +10,7 @@ local cmp_sources = {
       return true
     end,
   },
-  { name = "nvim_lua" },
+  { name = "lazydev", group_index = 0 },
   {
     name = "treesitter",
     entry_filter = function(entry)
@@ -275,7 +275,13 @@ return lib.module.create({
         "ray-x/cmp-treesitter",
         "saadparwaiz1/cmp_luasnip",
         "nvim-web-devicons",
-        { "abecodes/tabout.nvim", opts = { ignore_beginning = false, completion = false } },
+        {
+          "abecodes/tabout.nvim",
+          opts = {
+            ignore_beginning = false,
+            completion = false,
+          },
+        },
       },
       config = setup,
     },

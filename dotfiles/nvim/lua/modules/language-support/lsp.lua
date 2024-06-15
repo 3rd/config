@@ -107,13 +107,17 @@ local setup_lspconfig = function()
       settings = {
         Lua = vim.tbl_deep_extend("keep", load_luarc(), {
           completion = { callSnippet = "Replace" },
-          runtime = { version = "LuaJIT" },
+          runtime = {
+            version = "LuaJIT",
+            path = { "?.lua", "?/init.lua" },
+            pathStrict = true,
+          },
           workspace = {
-            -- checkThirdParty = false,
+            checkThirdParty = false,
             library = {
               [".luarc.json"] = true,
+              [vim.fn.stdpath("config") .. "/lua"] = true,
               --   [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-              --   [vim.fn.stdpath("config") .. "/lua"] = true,
             },
             ignoreDir = { ".git", "node_modules", "linters" },
           },
@@ -210,7 +214,9 @@ local setup_lspconfig = function()
           vim.lsp.handlers["textDocument/definition"](err, result, ...)
         end,
         ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
-          require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
+          if ctx.client_id == "vtsls" then
+            require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
+          end
           vim.lsp.handlers["textDocument/publishDiagnostics"](err, result, ctx, config)
         end,
       },
@@ -385,17 +391,13 @@ return lib.module.create({
         "dmmulroy/ts-error-translator.nvim",
         { "antosha417/nvim-lsp-file-operations", opts = {} },
         {
-          "folke/neodev.nvim",
+          "folke/lazydev.nvim",
+          ft = "lua",
+          -- dependencies = { "Bilal2453/luvit-meta", lazy = true },
           opts = {
             library = {
-              enabled = true,
-              runtime = true,
-              types = true,
-              plugins = { "nvim-treesitter" },
+              -- { path = "luvit-meta/library", words = { "vim%.uv" } },
             },
-            setup_jsonls = true,
-            lspconfig = true,
-            pathStrict = true,
           },
         },
       },
