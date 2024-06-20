@@ -391,13 +391,18 @@ return lib.module.create({
         "dmmulroy/ts-error-translator.nvim",
         { "antosha417/nvim-lsp-file-operations", opts = {} },
         {
-          "folke/lazydev.nvim",
+          "folke/neodev.nvim",
           ft = "lua",
-          -- dependencies = { "Bilal2453/luvit-meta", lazy = true },
           opts = {
             library = {
-              -- { path = "luvit-meta/library", words = { "vim%.uv" } },
+              enabled = true,
+              runtime = true,
+              types = true,
+              plugins = { "nvim-treesitter" },
             },
+            setup_jsonls = true,
+            lspconfig = true,
+            pathStrict = true,
           },
         },
       },

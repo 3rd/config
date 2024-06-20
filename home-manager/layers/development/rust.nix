@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  home.packages = with pkgs; [ cargo rustc ];
+  home.packages = with pkgs; [ rustup ];
 
   home.sessionPath = [ "$HOME/.cargo/bin" ];
 
