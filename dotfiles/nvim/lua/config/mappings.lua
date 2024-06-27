@@ -124,6 +124,7 @@ return {
           -- async = false,
           file_ignore_patterns = { "node_modules" },
           no_header_i = true,
+          previewer = "builtin",
         })
       end,
       "LSP: Show workspace symbols",

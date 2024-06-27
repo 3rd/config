@@ -12,7 +12,7 @@ return lib.module.create({
   plugins = {
     {
       "pmizio/typescript-tools.nvim",
-      enabled = false,
+      -- enabled = false,
       ft = filetypes,
       dependencies = {
         "nvim-lua/plenary.nvim",

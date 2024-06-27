@@ -13,7 +13,7 @@ return lib.module.create({
   plugins = {
     {
       "luckasRanarison/clear-action.nvim",
-      event = "LspAttach",
+      -- event = "LspAttach",
       lazy = false,
       init = function()
         vim.api.nvim_create_autocmd("FileType", {
@@ -26,7 +26,7 @@ return lib.module.create({
       config = function()
         local clear_action = require("clear-action")
         clear_action.setup({
-          silent = true,
+          silent = false,
           signs = {
             enable = true,
             combine = true,

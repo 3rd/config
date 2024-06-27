@@ -176,7 +176,7 @@ local setup = function()
 
         local icon = kind_icons[vim_item.kind] or "§"
         vim_item.abbr = icon .. " " .. vim_item.abbr
-        vim_item.abbr_hl_group = "CmpItemKind" .. vim_item.kind
+        if vim_item.kind then vim_item.abbr_hl_group = "CmpItemKind" .. vim_item.kind end
         vim_item.kind = ""
 
         return vim_item
