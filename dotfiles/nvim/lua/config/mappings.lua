@@ -79,7 +79,11 @@ return {
     { "n", "<c-j>", "<c-w>j", "Focus down" },
     { "n", "<c-k>", "<c-w>k", "Focus up" },
     { "n", "<c-l>", "<c-w>l", "Focus right" },
-    -- { "n", "<bs>", "<c-^>", "Switch to alternate buffer" },
+    -- window management
+    { "n", "<down>", ":resize +2<cr>", "Resize window down" },
+    { "n", "<up>", ":resize -2<cr>", "Resize window up" },
+    { "n", "<left>", ":vertical resize -2<cr>", "Resize window left" },
+    { "n", "<right>", ":vertical resize +2<cr>", "Resize window right" },
     -- comments
     { "n", "<c-_>", "gcc", { remap = true, desc = "Toggle comment" } },
     { "v", "<c-_>", "gc", { remap = true, desc = "Toggle comment" } },
@@ -88,6 +92,12 @@ return {
     -- diagnostics
     { "n", "gp", "<cmd>lua vim.diagnostic.goto_next()<cr>", "LSP: Go to next diagnostic" },
     { "n", "gP", "<cmd>lua vim.diagnostic.goto_prev()<cr>", "LSP: Go to previous diagnostic" },
+    -- undo
+    { "i", ",", ",<c-g>U" },
+    { "i", ".", ".<c-g>U" },
+    { "i", ";", ";<c-g>U" },
+    { "i", "!", "!<c-g>U" },
+    { "i", "?", "?<c-g>U" },
     -- misc
     { "n", "Q", "@q", "Run @q macro" },
   },

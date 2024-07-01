@@ -28,7 +28,9 @@
     glib
     gnumake
     graphviz
+    imhex
     inotify-tools
+    libfaketime
     libnotify
     moreutils
     openssl

@@ -5,7 +5,7 @@ return lib.module.create({
     {
       "mbbill/undotree",
       keys = {
-        { "U", ":UndotreeToggle<CR>:UndotreeFocus<cr>", desc = "Undo tree" },
+        { "<leader>u", ":UndotreeToggle<CR>:UndotreeFocus<cr>", desc = "Undo tree" },
       },
     },
   },
