@@ -2,6 +2,10 @@ local setup_fzf_lua = function()
   local fzf = require("fzf-lua")
 
   local config = {
+    defaults = {
+      formatter = { "path.filename_first", 2 },
+      multiline = 1,
+    },
     fzf_opts = { ["--layout"] = "default" },
     rg_opts = { ["--column"] = "" },
     winopts = {
