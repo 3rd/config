@@ -74,5 +74,5 @@
   services.udev.packages = [ pkgs.android-udev-rules ];
   services.gvfs.enable = true; # trash, MTP
   services.logind.killUserProcesses = true;
-
+  services.devmon.enable = true;
 }
