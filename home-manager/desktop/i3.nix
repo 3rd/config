@@ -19,7 +19,7 @@ in {
     ../colors.nix
     ../xresources.nix
     ../services/polybar
-    ../services/dunst.nix
+    # ../services/dunst.nix
     ../services/picom.nix
   ];
 
@@ -225,6 +225,7 @@ in {
 
         bindcode ${modifier}+110 exec ${pkgs.pcmanfm}/bin/pcmanfm
         bindcode ${modifier}+118 exec ulimit -n 999999 && /bin/sh -c "$BROWSER --disable-backgrounding-occluded-windows"
+        bindcode ${modifier}+115 exec ulimit -n 999999 && /bin/sh -c "$BROWSER --disable-backgrounding-occluded-windows"
 
         # workspaces
         workspace "1: ◨ ${workspaces.one}" output ${mon1}

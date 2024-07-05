@@ -1,10 +1,24 @@
 { config, pkgs, options, ... }:
 
 {
+
+  environment.systemPackages = with pkgs; [ bluetuith ];
   hardware.bluetooth = {
     enable = true;
     package = pkgs.bluez;
-    settings = { General = { Enable = "Source,Sink,Media,Socket"; }; };
+    powerOnBoot = true;
+    settings = {
+      General = {
+        Enable = "Source,Sink,Media,Socket";
+        Disable = "Headset";
+        ControllerMode = "dual";
+        FastConnectable = "true";
+        Experimental = "true";
+        KernelExperimental = "true";
+      };
+      Policy = { AutoEnable = "true"; };
+      LE = { EnableAdvMonInterleaveScan = 1; };
+    };
   };
   services.blueman.enable = true;
 

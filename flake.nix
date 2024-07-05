@@ -22,9 +22,11 @@
       url = "github:nix-community/browser-previews";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    wired.url = "github:Toqozz/wired-notify";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-stable, home-manager, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-stable, home-manager, wired, ... }@inputs:
     let
       inherit (self) outputs;
       systems = [ "aarch64-linux" "x86_64-linux" ];
@@ -55,12 +57,16 @@
       };
 
       homeConfigurations = {
-        "rabbit@spaceship" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        "rabbit@spaceship" = let system = "x86_64-linux";
+        in home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ wired.overlays.default ];
+          };
           extraSpecialArgs = {
             inherit inputs outputs;
             pkgs-stable = import nixpkgs-stable {
-              system = "x86_64-linux";
+              inherit system;
               config = { allowUnfree = true; };
             };
           };
@@ -72,14 +78,26 @@
             ./home-manager/roles/battlestation.nix
             ./hosts/spaceship/home.nix
             disableHomeManagerNews
+
+            wired.homeManagerModules.default
+            (_: {
+              services.wired = {
+                enable = true;
+                # config = ./wired.ron;
+              };
+            })
           ];
         };
-        "rabbit@macbook" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.aarch64-linux;
+        "rabbit@macbook" = let system = "aarch64-linux";
+        in home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ wired.overlays.default ];
+          };
           extraSpecialArgs = {
             inherit inputs outputs;
             pkgs-stable = import nixpkgs-stable {
-              system = "aarch64-linux";
+              inherit system;
               config = { allowUnfree = true; };
             };
           };
@@ -89,16 +107,28 @@
                 [ inputs.neovim-nightly-overlay.overlays.default ];
             }
             ./home-manager/roles/battlestation.nix
-            ./hosts/macbook/home.nix
+            ./hosts/spaceship/home.nix
             disableHomeManagerNews
+
+            wired.homeManagerModules.default
+            (_: {
+              services.wired = {
+                enable = true;
+                # config = ./wired.ron;
+              };
+            })
           ];
         };
-        "rabbit@workstation" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        "rabbit@workstation" = let system = "x86_64-linux";
+        in home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ wired.overlays.default ];
+          };
           extraSpecialArgs = {
             inherit inputs outputs;
             pkgs-stable = import nixpkgs-stable {
-              system = "x86_64-linux";
+              inherit system;
               config = { allowUnfree = true; };
             };
           };
@@ -108,8 +138,16 @@
                 [ inputs.neovim-nightly-overlay.overlays.default ];
             }
             ./home-manager/roles/workstation.nix
-            ./hosts/workstation/home.nix
+            ./hosts/spaceship/home.nix
             disableHomeManagerNews
+
+            wired.homeManagerModules.default
+            (_: {
+              services.wired = {
+                enable = true;
+                # config = ./wired.ron;
+              };
+            })
           ];
         };
       };

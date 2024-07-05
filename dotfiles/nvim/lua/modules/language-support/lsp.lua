@@ -272,7 +272,6 @@ local setup_lspconfig = function()
         workingDirectory = { mode = "auto" },
       },
     },
-    prismals = {},
     jsonls = {
       init_options = {
         provideFormatter = false,

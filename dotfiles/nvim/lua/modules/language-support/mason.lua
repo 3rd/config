@@ -28,8 +28,6 @@ return lib.module.create({
             "gopls",
             "html",
             "jsonls",
-            "nil_ls",
-            "prismals",
             "tailwindcss",
             "vimls",
             "vuels",

@@ -42,6 +42,8 @@
     wget
     whois
     zip
+    s-tui
+    memtester
     (pkgs.buildFHSUserEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
       name = "fhs";
       profile = "export FHS=1";
@@ -71,7 +73,6 @@
   services.udisks2.enable = true;
   services.gnome.gnome-keyring.enable = true;
   services.atd.enable = true;
-  services.udev.packages = [ pkgs.android-udev-rules ];
   services.gvfs.enable = true; # trash, MTP
   services.logind.killUserProcesses = true;
   services.devmon.enable = true;

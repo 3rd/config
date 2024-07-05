@@ -13,7 +13,25 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    wireplumber.enable = true;
-    jack.enable = true;
+    wireplumber = {
+      enable = true;
+      extraConfig = {
+        "monitor.bluez.properties" = {
+          "bluez5.enable-sbc-xq" = true;
+          "bluez5.enable-msbc" = true;
+          "bluez5.enable-hw-volume" = true;
+          "bluez5.roles" = [
+            # "hsp_hs"
+            # "hsp_ag"
+            "hfp_hf"
+            "hfp_ag"
+          ];
+          "bluez5.auto-connect" = [ "hfp_hf" "hsp_hs" "a2dp_sink" ];
+          "bluez5.profile" = "a2dp-sink";
+          "bluez5.autoswitch-profile" = false;
+        };
+      };
+    };
+    # jack.enable = true;
   };
 }
