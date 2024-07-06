@@ -273,7 +273,7 @@ in {
 
   xsession.profileExtra = ''
     systemctl --user import-environment
-    eval $(${pkgs.gnome.gnome-keyring}/bin/gnome-keyring-daemon --start --components=secrets,ssh,pkcs11)
+    eval $(${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --start --components=secrets,ssh,pkcs11)
     export SSH_AUTH_SOCK
   '';
 

@@ -65,12 +65,12 @@
     copyq
     qimgv
     scrcpy
-    gnome.eog
-    gnome.file-roller
-    gnome.gnome-disk-utility
-    gnome.gnome-font-viewer
-    gnome.gucharmap
-    gnome.gnome-system-monitor
+    eog
+    file-roller
+    gnome-disk-utility
+    gnome-font-viewer
+    gucharmap
+    gnome-system-monitor
     zathura
   ];
 

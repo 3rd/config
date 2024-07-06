@@ -1,6 +1,6 @@
 { pkgs, ... }:
 
 {
-  home.packages = with pkgs; [ statix nixfmt ];
+  home.packages = with pkgs; [ statix nixfmt-classic ];
 }
 
