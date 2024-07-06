@@ -5,6 +5,6 @@
     #
     lua-language-server
     stylua
-    (luajit.withPackages (ps: with ps; [ luacheck moonscript luarocks magick ]))
+    (lua5_1.withPackages (ps: with ps; [ luacheck moonscript luarocks ]))
   ];
 }
