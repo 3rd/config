@@ -107,7 +107,7 @@
                 [ inputs.neovim-nightly-overlay.overlays.default ];
             }
             ./home-manager/roles/battlestation.nix
-            ./hosts/spaceship/home.nix
+            ./hosts/macbook/home.nix
             disableHomeManagerNews
 
             wired.homeManagerModules.default
@@ -138,7 +138,7 @@
                 [ inputs.neovim-nightly-overlay.overlays.default ];
             }
             ./home-manager/roles/workstation.nix
-            ./hosts/spaceship/home.nix
+            ./hosts/workstation/home.nix
             disableHomeManagerNews
 
             wired.homeManagerModules.default
