@@ -39,7 +39,7 @@
     '';
     config = with config.colors; {
       "bar/common" = {
-        inherit background;
+        background = gray-darkest;
         font-0 = lib.mkDefault "Fira Sans Mono:size=12;3";
         font-1 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-2 = lib.mkDefault "Symbols Nerd Font:size=12;3";

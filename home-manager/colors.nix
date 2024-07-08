@@ -3,22 +3,23 @@
   colors = {
     # background = "#1c1d22";
     # background = "#1E1F27";
-    background = "#1F1C26";
     # background = "#1e1f29";
     # background = "#21222c";
-    foreground = "#E3DFEA";
+    background = "#211F28";
+    foreground = "#C8C8D0";
     cursor = "#f2b90d";
     selection-background = "#303233";
     selection-foreground = "#cacecd";
 
-    gray-lightest = "#D1C9E2";
-    gray-lighter = "#C6BDDB";
-    gray-light = "#9B8BC0";
-    gray-medium = "#7378a5";
-    gray-darkish = "#534969";
-    gray-dark = "#504766";
-    gray-darker = "#3D364E";
-    gray-darkest = "#2B2734";
+    gray-lightest = "#BBBBC4";
+    gray-lighter = "#9494A2";
+    gray-light = "#80808E";
+    gray-medium = "#646471";
+    gray-darkish = "#3C3C49";
+    gray-dark = "#363D44";
+    gray-darker = "#242B32";
+    gray-darkest = "#1F262E";
+
     blue-lightest = "#9cdcfc";
     blue-lighter = "#6acbfb";
     blue-light = "#38b9fa";
@@ -26,6 +27,7 @@
     blue-dark = "#0586c7";
     blue-darker = "#046595";
     blue-darkest = "#034363";
+
     cyan-lightest = "#9efafa";
     cyan-lighter = "#6ef7f7";
     cyan-light = "#3df5f5";
@@ -33,6 +35,7 @@
     cyan-dark = "#0ac2c2";
     cyan-darker = "#089191";
     cyan-darkest = "#056161";
+
     green-lightest = "#ccf5a3";
     green-lighter = "#b3f075";
     green-light = "#99eb47";
@@ -40,6 +43,7 @@
     green-dark = "#66b814";
     green-darker = "#4d8a0f";
     green-darkest = "#335c0a";
+
     indigo-lightest = "#9e9efa";
     indigo-lighter = "#6e6ef7";
     indigo-light = "#3d3df5";
@@ -47,6 +51,7 @@
     indigo-dark = "#0a0ac2";
     indigo-darker = "#080891";
     indigo-darkest = "#050561";
+
     magenta-lightest = "#eb9efa";
     magenta-lighter = "#e06ef7";
     magenta-light = "#d63df5";
@@ -54,6 +59,7 @@
     magenta-dark = "#a30ac2";
     magenta-darker = "#7a0891";
     magenta-darkest = "#520561";
+
     orange-lightest = "#fac49e";
     orange-lighter = "#f7a76e";
     orange-light = "#ff974d";
@@ -61,6 +67,7 @@
     orange-dark = "#c2570a";
     orange-darker = "#914108";
     orange-darkest = "#612b05";
+
     red-lightest = "#faad9e";
     red-lighter = "#f67055";
     red-light = "#f55c3d";
@@ -68,6 +75,7 @@
     red-dark = "#c2290a";
     red-darker = "#911f08";
     red-darkest = "#611405";
+
     yellow-lightest = "#fae39e";
     yellow-lighter = "#f7d56e";
     yellow-light = "#f5c73d";
