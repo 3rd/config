@@ -82,7 +82,8 @@
       mkdir = "mkdir -pv";
       vd = "vidir";
       vdd = "find | vidir -";
-      rgh = "rg --no-ignore --no-ignore-vcs --no-ignore-parent";
+      rgh = "rg -uu";
+      fdh = "fd -uu";
       # bookmarks
       "@b" = "cd ~/brain";
       "@c" = "cd ~/brain/config";
