@@ -245,7 +245,7 @@
         type = "custom/script";
         exec =
           "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki /home/rabbit/.config/polybar/task.sh";
-        format-background = magenta-darker;
+        format-background = gray-darkish;
         format-foreground = foreground;
         format-padding = 2;
         interval = 1;

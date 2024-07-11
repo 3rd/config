@@ -118,7 +118,7 @@ return lib.module.create({
             expose_as_code_action = { "organize_imports", "remove_unused" },
             tsserver_max_memory = "auto",
             jsx_close_tag = {
-              enable = true,
+              enable = false,
               filetypes = { "javascriptreact", "typescriptreact" },
             },
             complete_function_calls = true,

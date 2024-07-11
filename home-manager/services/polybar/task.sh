@@ -12,5 +12,9 @@ export PATH="/run/current-system/sw/bin/:$PATH"
 #   exit
 # fi
 
-RESPONSE=$(curl -s http://localhost:9000/polybar/task || echo "%{F#d13048}")
+RESPONSE=$(curl -s http://localhost:9000/polybar/task)
+
+if [ "$RESPONSE" == "" ]; then
+  RESPONSE="%{F#9494A2}  EVERY SECOND COUNTS"
+fi
 echo "$RESPONSE"

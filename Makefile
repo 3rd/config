@@ -80,6 +80,7 @@ link: ## link dotfiles
 	$(call linkdot,wezterm,~/.config/wezterm)
 	$(call linkdot,ranger,~/.config/ranger)
 	$(call linkdot,yazi,~/.config/yazi)
+	$(call linkdot,wired,~/.config/wired)
 	$(call print_mod_end)
 
 swap: ## swap

@@ -9,15 +9,12 @@
     powerOnBoot = true;
     settings = {
       General = {
-        Enable = "Source,Sink,Media,Socket";
-        Disable = "Headset";
-        ControllerMode = "dual";
-        FastConnectable = "true";
-        Experimental = "true";
-        KernelExperimental = "true";
+        ControllerMode = "bredr";
+        FastConnectable = true;
+        Experimental = true;
+        KernelExperimental = true;
       };
-      Policy = { AutoEnable = "true"; };
-      LE = { EnableAdvMonInterleaveScan = 1; };
+      # LE = { EnableAdvMonInterleaveScan = 1; };
     };
   };
   services.blueman.enable = true;
