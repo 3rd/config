@@ -4,6 +4,7 @@ return lib.module.create({
   plugins = {
     {
       "folke/which-key.nvim",
+      commit = "af4ded85542d40e190014c732fa051bdbf88be3d",
       event = "VeryLazy",
       config = function()
         local wk = require("which-key")
