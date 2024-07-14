@@ -5,20 +5,20 @@
     # background = "#1E1F27";
     # background = "#1e1f29";
     # background = "#21222c";
-    background = "#211F28";
-    foreground = "#C8C8D0";
+    background = "#23212B";
+    foreground = "#C5C2D6";
     cursor = "#f2b90d";
     selection-background = "#303233";
     selection-foreground = "#cacecd";
 
-    gray-lightest = "#BBBBC4";
-    gray-lighter = "#9494A2";
-    gray-light = "#80808E";
-    gray-medium = "#646471";
-    gray-darkish = "#3C3C49";
-    gray-dark = "#363D44";
-    gray-darker = "#242B32";
-    gray-darkest = "#1F262E";
+    gray-lightest = "#B0ACC3";
+    gray-lighter = "#A5A0BA";
+    gray-light = "#9B96B0";
+    gray-medium = "#5F5B76";
+    gray-darkish = "#4B475C";
+    gray-dark = "#413E51";
+    gray-darker = "#383545";
+    gray-darkest = "#2C2A37";
 
     blue-lightest = "#9cdcfc";
     blue-lighter = "#6acbfb";
