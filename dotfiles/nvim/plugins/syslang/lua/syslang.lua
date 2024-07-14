@@ -349,7 +349,8 @@ local handle_cr = function()
     target_text = string.gsub(target_text, "%s+", "-")
     target_text = string.lower(target_text)
 
-    local command = string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
+    local command =
+      string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
     local path = lib.shell.exec(command)
     vim.cmd(string.format("e %s", vim.fn.fnameescape(path)))
 
@@ -376,7 +377,8 @@ local handle_cr = function()
     target_text = string.gsub(target_text, "%s+", "-")
     target_text = string.lower(target_text)
 
-    local command = string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
+    local command =
+      string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
     local path = lib.shell.exec(command)
     vim.cmd(string.format("e %s", vim.fn.fnameescape(path)))
 
@@ -481,14 +483,14 @@ local setup = function()
   -- })
 
   -- fallback for now: ensure there's a newline at the top of the file
-  vim.schedule(function()
-    local needs_newline = not (vim.fn.getline(1) == "" or string.match(vim.fn.getline(1), "^@meta"))
-    if needs_newline then
-      local view = vim.fn.winsaveview()
-      vim.api.nvim_buf_set_lines(0, 0, 0, false, { "" })
-      vim.fn.winrestview(view)
-    end
-  end)
+  -- vim.schedule(function()
+  --   local needs_newline = not (vim.fn.getline(1) == "" or string.match(vim.fn.getline(1), "^@meta"))
+  --   if needs_newline then
+  --     local view = vim.fn.winsaveview()
+  --     vim.api.nvim_buf_set_lines(0, 0, 0, false, { "" })
+  --     vim.fn.winrestview(view)
+  --   end
+  -- end)
 end
 
 return {
