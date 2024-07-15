@@ -3,8 +3,6 @@
 {
   environment.systemPackages = with pkgs; [ pulseaudioFull pavucontrol ];
 
-  sound.enable = true;
-
   # https://github.com/NixOS/nixpkgs/issues/102547
   # https://nixos.wiki/wiki/PipeWire - https://github.com/NixOS/nixpkgs/issues/220967
   security.rtkit.enable = lib.mkDefault true;

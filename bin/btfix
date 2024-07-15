@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+IFS=$'\n\t'
+
+sudo hciconfig hci0 down
+sudo rmmod btusb
+sudo modprobe btusb
+sudo hciconfig hci0 up
+sleep 1
+bluetoothctl power on

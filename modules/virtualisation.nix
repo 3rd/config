@@ -3,7 +3,6 @@
 {
   environment.systemPackages = with pkgs; [
     #
-    docker-compose
     lazydocker
     distrobox
   ];

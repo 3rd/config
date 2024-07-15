@@ -96,7 +96,8 @@
       "@work" = "cd ~/brain/work";
       "@docs" = "cd ~/brain/storage/documents";
       "@tpl" = "cd ~/brain/projects/templates";
-      "@r" = "cd ~/brain/projects/REWORK";
+      "@s" = "cd ~/sync";
+      "@bb" = "cd ~/sync/brain";
       # custom utils
       w = "work";
       # wiki
