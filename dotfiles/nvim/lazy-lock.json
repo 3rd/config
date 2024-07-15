@@ -2,7 +2,7 @@
   "Comment.nvim": { "branch": "master", "commit": "e30b7f2008e52442154b66f7c519bfd2f1e32acb" },
   "LuaSnip": { "branch": "master", "commit": "1e57afa005fcd7c8d8c31ec896cbaf9157320413" },
   "ascii-blocks.nvim": { "branch": "main", "commit": "a8a7d99fc52df30d7c4e7664818542fd44839d97" },
-  "auto-session": { "branch": "main", "commit": "4b0728715e674ad9c18f1519127dcaed59f9981b" },
+  "auto-session": { "branch": "main", "commit": "2102c228854a2d74fbf35374aa86feac3f538da1" },
   "barbecue.nvim": { "branch": "main", "commit": "d38a2a023dfb1073dd0e8fee0c9be08855d3688f" },
   "bufferize.vim": { "branch": "main", "commit": "ec7c4445a97f19e5784a6fb6ad3c3d4a8ff505ac" },
   "bullets.vim": { "branch": "master", "commit": "fdcc2d1abe3213eee182a513dbb69b5cc2be2216" },

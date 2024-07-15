@@ -64,6 +64,7 @@ return lib.module.create({
   plugins = {
     {
       "rmagatti/auto-session",
+      commit = "2102c228854a2d74fbf35374aa86feac3f538da1",
       lazy = false,
       config = setup_auto_session,
     },
