@@ -10,6 +10,7 @@
   "arrowParens": "always",
   "useTabs": false,
   "plugins": ["prettier-plugin-astro"],
+  "experimentalTernaries": true,
   "overrides": [
     {
       "files": "*.astro",

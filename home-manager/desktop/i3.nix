@@ -155,6 +155,8 @@ in {
           "${modifier}+p" = "exec ${pkgs.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs.flameshot}/bin/flameshot gui";
           "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
+          "ctrl+${alt}+space" =
+            "exec ${pkgs.rofi}/bin/rofi -show window -dpi 120";
         };
         floating = {
           inherit modifier;

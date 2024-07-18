@@ -16,5 +16,7 @@ RESPONSE=$(curl -s http://localhost:9000/polybar/task)
 
 if [ "$RESPONSE" == "" ]; then
   RESPONSE="%{F#9494A2}  EVERY SECOND COUNTS"
+else
+  RESPONSE="%{F#f97e48}  $RESPONSE"
 fi
 echo "$RESPONSE"
