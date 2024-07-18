@@ -1,0 +1,5 @@
+% golang
+
+# link a relative package
+go mod edit -replace <module>=<path>
+
