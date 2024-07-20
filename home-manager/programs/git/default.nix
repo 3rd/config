@@ -16,7 +16,6 @@ in {
   home.packages = with pkgs; [
     blackbox
     commit-formatter
-    git-backup
     git-crecord
     git-sizer
     gitstats

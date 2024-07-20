@@ -105,7 +105,7 @@ local setup_treesitter = function()
   parser_config.syslang = {
     install_info = {
       url = "~/brain/core/syslang/tree-sitter-syslang",
-      files = { "src/parser.c", "src/scanner.cc" },
+      files = { "src/parser.c", "src/scanner.c" },
       generate_requires_npm = false,
       requires_generate_from_grammar = true,
     },
