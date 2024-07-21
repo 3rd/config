@@ -20,6 +20,7 @@ local setup_fzf_lua = function()
         vim.api.nvim_buf_set_keymap(0, "t", "<C-j>", "<Down>", { silent = true })
         vim.api.nvim_buf_set_keymap(0, "t", "<C-k>", "<Up>", { silent = true })
       end,
+      backdrop = 100,
     },
     previewers = {
       bat = {

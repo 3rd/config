@@ -49,7 +49,7 @@
         modules-left = "i3";
         modules-center = "task";
         modules-right =
-          "bci vpn battery sep pulseaudio bluetooth core cpu cpu_temp sep mem sep fs sep clock";
+          "bci vpn battery sep pulseaudio bluetooth cpu cpu_temp sep mem sep fs sep clock";
         height = 28;
         fixed-center = true;
         tray-background = gray-darkest;
@@ -233,14 +233,14 @@
         format-foreground = foreground;
         format-padding = 2;
       };
-      "module/core" = {
-        type = "custom/script";
-        exec = "/home/rabbit/.config/polybar/core.sh";
-        interval = 1;
-        format-background = gray-darkest;
-        format-foreground = foreground;
-        format-padding = 2;
-      };
+      # "module/core" = {
+      #   type = "custom/script";
+      #   exec = "/home/rabbit/.config/polybar/core.sh";
+      #   interval = 1;
+      #   format-background = gray-darkest;
+      #   format-foreground = foreground;
+      #   format-padding = 2;
+      # };
       "module/task" = {
         type = "custom/script";
         exec =
@@ -248,7 +248,7 @@
         format-background = gray-dark;
         format-foreground = foreground;
         format-padding = 2;
-        interval = 1;
+        interval = 30;
       };
       "module/bci" = {
         type = "custom/script";
