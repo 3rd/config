@@ -1,6 +1,6 @@
 local config = {
   enabled = false,
-  autostart = true,
+  autostart = false,
   opts = {
     keymaps = {
       accept_suggestion = "<C-l>",
@@ -8,20 +8,20 @@ local config = {
     },
     ignore_filetypes = {
       dotenv = true,
-      syslang = true,
-      markdown = true,
-      help = true,
       gitcommit = true,
       gitrebase = true,
       gitstatus = true,
-      yaml = true,
-      toml = true,
+      help = true,
       json = true,
+      markdown = true,
+      syslang = true,
       text = true,
+      toml = true,
+      yaml = true,
     },
     color = {
-      suggestion_color = "#ffffff",
       cterm = 244, -- "#ffffff",
+      suggestion_color = "#ffffff",
     },
   },
 }

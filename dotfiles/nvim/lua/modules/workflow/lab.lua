@@ -1,7 +1,7 @@
 return lib.module.create({
   name = "lab",
   hosts = { "spaceship", "macbook" },
-  -- enabled = false,
+  enabled = false,
   plugins = {
     {
       "0x100101/lab.nvim",

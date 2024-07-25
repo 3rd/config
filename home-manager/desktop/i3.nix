@@ -110,6 +110,7 @@ in {
         keybindings = {
           # core
           "${modifier}+shift+r" = "restart";
+          "XF86Tools" = "restart";
           "${modifier}+q" = "kill";
           "${modifier}+f" = "fullscreen toggle";
           "${modifier}+v" = "split h";

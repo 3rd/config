@@ -248,7 +248,7 @@
         format-background = gray-dark;
         format-foreground = foreground;
         format-padding = 2;
-        interval = 30;
+        interval = 10;
       };
       "module/bci" = {
         type = "custom/script";

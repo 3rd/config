@@ -12,11 +12,6 @@ local setup_auto_session = function()
     cwd_change_handling = {
       restore_upcoming_session = false,
     },
-    post_restore_cmds = {
-      function()
-        vim.api.nvim_exec2("edit", {})
-      end,
-    },
     pre_save_cmds = {
       -- close floating windows
       function()
@@ -39,7 +34,7 @@ local setup_auto_session = function()
     },
   })
 
-  vim.o.sessionoptions = "buffers,tabpages,winsize,winpos,terminal"
+  vim.o.sessionoptions = "buffers,tabpages,winsize,winpos,terminal,localoptions"
 end
 
 local toggle_session = function()
