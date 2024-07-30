@@ -7,19 +7,20 @@ local function get_view_file_path()
   return view_file_path
 end
 
-local reset_folds = function(silent)
+local reset_folds = function(internal)
   local path = get_view_file_path()
   -- log(path)
   if lib.fs.exists(path) then
     vim.cmd("normal! zX")
     os.remove(path)
     vim.cmd("silent! loadview")
-    if not silent then
+    if not internal then
       vim.notify("View file has been nuked.", vim.log.levels.INFO, { title = "Reset view file" })
       log(path)
+      vim.cmd("noa q")
     end
   else
-    if not silent then vim.api.nvim_err_writeln("Cannot find view file at: " .. path) end
+    if not internal then vim.api.nvim_err_writeln("Cannot find view file at: " .. path) end
   end
 end
 
