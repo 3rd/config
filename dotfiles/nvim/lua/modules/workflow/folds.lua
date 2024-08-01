@@ -341,6 +341,24 @@ local setup_ufo = function()
     ufo.closeAllFolds()
   end
 
+  -- https://github.com/kevinhwang91/nvim-ufo/blob/main/doc/example.lua#L113
+  vim.api.nvim_create_autocmd({ "BufWinEnter", "BufWritePost", "TextChanged" }, {
+    callback = function()
+      local ft = vim.bo.filetype
+      if ft ~= "syslang" then return end
+      require("async")(function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        if not require("ufo").hasAttached(bufnr) then return end
+        -- require("ufo").attach(bufnr)
+        local ok, ranges = pcall(await, require("ufo").getFolds(bufnr, "treesitter"))
+        if ok and ranges then
+          ok = require("ufo").applyFolds(bufnr, ranges)
+          -- if ok then require("ufo").closeAllFolds() end
+        end
+      end)
+    end,
+  })
+
   vim.keymap.set("n", "zR", open_all_folds, { desc = "Open all folds" })
   vim.keymap.set("n", "zM", close_all_folds, { desc = "Close all folds" })
 end

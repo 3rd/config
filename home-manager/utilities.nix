@@ -46,7 +46,6 @@
     evemu
     ncdu
     gparted
-    nix-du
     brightnessctl
     dmidecode
     lsof

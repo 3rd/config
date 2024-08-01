@@ -43,8 +43,8 @@ return lib.module.create({
                   return
                 end
 
-                -- filenames (fixed with ft)
-                -- if filename == "Makefile" then return end
+                -- abort if filename matches [A-Z][a-z]*file
+                if filename:match("^[A-Z][a-z]*file$") then return end
 
                 -- abort if not in ~/brain
                 -- if not path:find(lib.env.dirs.home .. "/brain") then return end
