@@ -93,6 +93,11 @@ local setup_lspconfig = function()
     clangd = {
       filetypes = { "cc", "c", "cpp", "objc", "objcpp", "cuda", "proto" },
     },
+    csharp_ls = {
+      init_options = {
+        AutomaticWorkspaceInit = true,
+      },
+    },
     rust_analyzer = {
       settings = {
         ["rust-analyzer"] = {

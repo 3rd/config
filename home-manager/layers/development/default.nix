@@ -4,6 +4,7 @@
     ./bash.nix
     ./c.nix
     ./clojure.nix
+    ./dotnet.nix
     ./golang.nix
     ./java.nix
     ./lua.nix

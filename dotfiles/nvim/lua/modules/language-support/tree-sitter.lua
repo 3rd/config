@@ -5,7 +5,7 @@ local config = {
     "c",
     "cpp",
     "css",
-    "css",
+    "c_sharp",
     "dockerfile",
     "fish",
     "go",

@@ -1,6 +1,7 @@
 local handle_code_action = function()
   vim.lsp.buf.code_action({
     filter = function(action)
+      if not action.kind then return true end
       if vim.startswith(action.kind, "refactor") then return false end
       return true
     end,
