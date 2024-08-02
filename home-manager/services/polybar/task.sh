@@ -2,21 +2,8 @@
 export PATH="/run/current-system/sw/bin/:$PATH"
 
 TASK=$(/home/rabbit/go/bin/core task current -e)
+RESULT="%{F#9494A2}  EVERY SECOND COUNTS"
 if [ "$TASK" != "" ]; then
-  printf " %s " "$TASK"
+  RESULT="%{F#f97e48}  $TASK"
 fi
-echo ""
-
-# ACTION="$1"
-# if [[ $ACTION = "right" ]]; then
-#   exit
-# fi
-
-# RESPONSE=$(curl -s http://localhost:9000/polybar/task)
-#
-# if [ "$RESPONSE" == "" ]; then
-#   RESPONSE="%{F#9494A2}  EVERY SECOND COUNTS"
-# else
-#   RESPONSE="%{F#f97e48}  $RESPONSE"
-# fi
-# echo "$RESPONSE"
+echo "$RESULT"

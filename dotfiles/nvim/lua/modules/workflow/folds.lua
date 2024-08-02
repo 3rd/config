@@ -350,7 +350,8 @@ local setup_ufo = function()
         local bufnr = vim.api.nvim_get_current_buf()
         if not require("ufo").hasAttached(bufnr) then return end
         -- require("ufo").attach(bufnr)
-        local ok, ranges = pcall(await, require("ufo").getFolds(bufnr, "treesitter"))
+        local _, getfolds = pcall(require("ufo").getFolds, bufnr, "treesitter")
+        local ok, ranges = pcall(await, getfolds)
         if ok and ranges then
           ok = require("ufo").applyFolds(bufnr, ranges)
           -- if ok then require("ufo").closeAllFolds() end
