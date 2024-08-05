@@ -353,7 +353,7 @@ local setup_ufo = function()
         local _, getfolds = pcall(require("ufo").getFolds, bufnr, "treesitter")
         local ok, ranges = pcall(await, getfolds)
         if ok and ranges then
-          ok = require("ufo").applyFolds(bufnr, ranges)
+          ok = pcall(require("ufo").applyFolds, bufnr, ranges)
           -- if ok then require("ufo").closeAllFolds() end
         end
       end)

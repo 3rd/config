@@ -117,7 +117,7 @@ in {
           "${modifier}+s" = "split v";
           "${modifier}+Tab" = "workspace back_and_forth";
           "${modifier}+o" = "floating toggle";
-          "${modifier}+shift+o" = "floating toggle; sticky toggle";
+          "${modifier}+shift+o" = "sticky toggle";
           "${modifier}+h" = "focus left";
           "${modifier}+j" = "focus down";
           "${modifier}+k" = "focus up";
