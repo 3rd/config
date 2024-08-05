@@ -15,6 +15,7 @@
     ../programs/fzf.nix
     ../programs/kitty.nix
     ../programs/navi.nix
+    ../programs/zathura.nix
     ../programs/neovim.nix
     ../programs/rofi.nix
     ../programs/starship.nix

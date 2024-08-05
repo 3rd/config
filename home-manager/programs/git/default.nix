@@ -95,6 +95,7 @@ in {
     push = "git push";
     rebase = "git rebase";
     merge = "git merge";
+    stash = "git stash";
     gl =
       "git log --graph --pretty=format:'%Cred%h%Creset %s - %C(bold blue)%an%Creset %Cgreen(%cr)' --abbrev-commit";
     gll = "git log --graph --abbrev-commit --decorate";

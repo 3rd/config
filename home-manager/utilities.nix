@@ -70,7 +70,6 @@
     gnome-font-viewer
     gucharmap
     gnome-system-monitor
-    zathura
   ];
 
   programs.fish.shellAliases = {
