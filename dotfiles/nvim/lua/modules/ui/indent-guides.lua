@@ -5,8 +5,10 @@ return lib.module.create({
   hosts = "*",
   plugins = {
     {
-      "shellRaining/hlchunk.nvim",
-      event = "VeryLazy",
+      -- "shellRaining/hlchunk.nvim",
+      "3rd/hlchunk.nvim",
+      event = "CursorHold",
+      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "hlchunk.nvim"),
       -- https://github.com/shellRaining/hlchunk.nvim/blob/main/docs/en/indent.md
       config = function()
         local exclude_filetypes = require("hlchunk/utils/filetype").exclude_filetypes

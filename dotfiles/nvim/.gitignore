@@ -5,4 +5,5 @@ plugins/nyancat.nvim
 plugins/time-tracker.nvim
 plugins/testing.nvim
 plugins/sqlite.nvim
+plugins/hlchunk.nvim
 time-tracker.json
