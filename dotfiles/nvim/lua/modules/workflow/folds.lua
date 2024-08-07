@@ -1,4 +1,4 @@
-local enable_slang_meta = false
+local enable_slang_meta = true
 
 local get_upper_fold_level = function()
   local winview = vim.fn.winsaveview()
@@ -134,7 +134,7 @@ local setup_ufo = function()
           local start_time = vim.fn.strptime("%Y.%m.%d %H:%M", start_str)
           local end_time = vim.fn.strptime("%Y.%m.%d %H:%M", end_str)
           local duration = end_time - start_time
-          if duration == 0 then duration = 30 * 60 end
+          -- if duration == 0 then duration = 30 * 60 end
           total_time = total_time + duration
         end
 
@@ -313,11 +313,18 @@ local setup_ufo = function()
       if filetype == "syslang" then return { "treesitter" } end
       return ""
     end,
+    close_fold_kinds_for_ft = {
+      syslang = { "task_done" },
+    },
   })
 
   local open_all_folds = function()
     -- vim.opt_local.foldlevel = 999
-    ufo.openAllFolds()
+    local c = require("ufo.config")
+    log(c)
+    require("ufo.action").openFoldsExceptKinds(
+      c.close_fold_kinds_for_ft[vim.bo.ft] or c.close_fold_kinds_for_ft.default
+    )
   end
 
   local close_all_folds = function()
@@ -419,7 +426,9 @@ return lib.module.create({
   setup = setup,
   plugins = {
     {
-      "kevinhwang91/nvim-ufo",
+      -- "kevinhwang91/nvim-ufo",
+      "3rd/nvim-ufo",
+      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "nvim-ufo"),
       ft = "syslang",
       dependencies = { "nvim-treesitter", "kevinhwang91/promise-async" },
       config = setup_ufo,
