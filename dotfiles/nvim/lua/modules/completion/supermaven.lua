@@ -13,7 +13,6 @@ local config = {
       gitstatus = true,
       help = true,
       json = true,
-      markdown = true,
       syslang = true,
       text = true,
       toml = true,

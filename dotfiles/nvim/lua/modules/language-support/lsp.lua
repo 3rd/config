@@ -402,7 +402,11 @@ return lib.module.create({
               enabled = true,
               runtime = true,
               types = true,
-              plugins = { "nvim-treesitter" },
+              plugins = {
+                "nvim-treesitter",
+                "testing.nvim",
+                "sqlite.nvim",
+              },
             },
             setup_jsonls = true,
             lspconfig = true,

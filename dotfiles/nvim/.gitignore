@@ -1,4 +1,7 @@
 sandbox
+*.log
+*.db
+
 plugins/image.nvim
 plugins/image2.nvim
 plugins/nyancat.nvim
@@ -6,4 +9,6 @@ plugins/time-tracker.nvim
 plugins/testing.nvim
 plugins/sqlite.nvim
 plugins/hlchunk.nvim
+plugins/nvim-ufo
+plugins/diagram.nvim
 time-tracker.json

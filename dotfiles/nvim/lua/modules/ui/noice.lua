@@ -1,6 +1,8 @@
 local setup_noice = function()
   require("noice").setup({
-    cmdline = { enabled = false },
+    cmdline = {
+      enabled = false,
+    },
     messages = { enabled = false },
     popupmenu = { enabled = false },
     notify = { enabled = false },
