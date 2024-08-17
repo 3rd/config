@@ -314,7 +314,7 @@ local setup_ufo = function()
       return ""
     end,
     close_fold_kinds_for_ft = {
-      syslang = { "task_done", "section" },
+      syslang = { "document_meta", "task_done", "section" },
     },
   })
 

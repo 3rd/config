@@ -65,7 +65,6 @@ local plugins = table.join(
     { dir = "tslib", lazy = false },
     { dir = "testing.nvim" },
     { dir = "sqlite.nvim" },
-    { dir = "diagram.nvim", lazy = false, opts = {} },
   }, function(item)
     item.dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", item.dir)
     return item

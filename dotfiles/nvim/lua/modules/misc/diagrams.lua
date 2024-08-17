@@ -34,6 +34,20 @@ return lib.module.create({
   plugins = {
     { "jbyuki/venn.nvim", cmd = { "VBox" } },
     { "superhawk610/ascii-blocks.nvim", cmd = { "AsciiBlockify" } },
+    {
+      "3rd/diagram.nvim",
+      event = "VeryLazy",
+      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "diagram.nvim"),
+      opts = {
+        renderer_options = {
+          mermaid = {
+            background = "transparent",
+            theme = "dark",
+          },
+        },
+        -- conceal_enable = true,
+      },
+    },
   },
   actions = {
     { "n", "Diagrams: ASCII Blockify", "AsciiBlockify" },
