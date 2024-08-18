@@ -51,19 +51,4 @@ function string.lines(s)
   return vim.split(s, "\n")
 end
 
--- http://lua-users.org/wiki/StringIndexing
-getmetatable("").__index = function(s, i)
-  if type(i) == "number" then
-    return string.sub(s, i + 1, i + 1)
-  else
-    return string[i]
-  end
-end
-getmetatable("").__call = function(s, i, j)
-  local len = #s
-  local start = i < 0 and len + i + 1 or i + 1
-  local finish = j < 0 and len + j + 1 or j + 1
-  return string.sub(s, start, finish)
-end
-
 return string

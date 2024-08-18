@@ -68,7 +68,7 @@ local handle_navigate_project = function()
       target = result[1]
     end
 
-    local path = api.get("project-" .. target)
+    local path = api.get(target)
     local vim_command = string.format(command, path)
     vim.cmd(vim_command)
   end)()
