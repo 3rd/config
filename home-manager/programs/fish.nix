@@ -97,6 +97,7 @@
       "@docs" = "cd ~/brain/storage/documents";
       "@tpl" = "cd ~/brain/projects/templates";
       "@s" = "cd ~/sync";
+      "@trash" = "cd ~/.local/share/Trash/files";
       "@bb" = "cd ~/sync/brain";
       # custom utils
       w = "work";

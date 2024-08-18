@@ -68,6 +68,7 @@
       gnome-disk-utility
       gnome-font-viewer
       gucharmap
+      libqalculate
       gnome-system-monitor
     ] ++ [
       #
@@ -78,7 +79,7 @@
   programs.fish.shellAliases = {
     http = "xh";
     serve = "miniserve";
-    calc = "eva";
+    calc = "qalc";
     cp = "xcp";
   };
 
