@@ -657,6 +657,9 @@ local theme = lush(function(injected)
 
     -- highlight-undo
     HighlightUndo({ bg = colors.orange.darken(50), fg = colors.orange }),
+
+    -- leap
+    LeapLabelPrimary({ bg = colors.orange.darken(50), fg = colors.orange.lighten(20) }),
   }
 end)
 
