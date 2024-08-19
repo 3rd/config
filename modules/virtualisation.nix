@@ -11,7 +11,9 @@
     oci-containers.backend = "docker";
     docker = {
       enable = true;
-      autoPrune.enable = true;
+      enableOnBoot = true;
+      # new docker shitfest
+      package = pkgs.docker_25;
       # package = pkgs.stable.docker;
     };
     libvirtd = {
