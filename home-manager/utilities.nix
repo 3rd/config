@@ -34,6 +34,8 @@
       dig
       tree-sitter
       inferno
+      plantuml
+      duf
 
       # system
       htop
