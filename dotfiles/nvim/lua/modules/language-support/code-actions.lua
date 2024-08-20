@@ -37,7 +37,9 @@ return lib.module.create({
             label_fmt = function(actions)
               local refactor_actions = {}
               for _, action in ipairs(actions) do
-                if vim.startswith(action.kind, "refactor") then table.insert(refactor_actions, action) end
+                if action.kind ~= nil then
+                  if vim.startswith(action.kind, "refactor") then table.insert(refactor_actions, action) end
+                end
               end
               if #refactor_actions > 0 then return "⭍" .. #refactor_actions end
               return ""
