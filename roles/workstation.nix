@@ -76,4 +76,5 @@
   services.gvfs.enable = true; # trash, MTP
   services.logind.killUserProcesses = true;
   services.devmon.enable = true;
+  services.irqbalance.enable = true;
 }

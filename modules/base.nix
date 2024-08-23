@@ -23,7 +23,7 @@
     gc = {
       automatic = true;
       dates = "weekly";
-      options = "--delete-older-than 14d";
+      options = "--delete-older-than 30d";
     };
     optimise = {
       automatic = true;
@@ -44,10 +44,14 @@
       };
   };
 
+  boot.loader.grub.configurationLimit = 50;
+  boot.initrd.systemd.enable = true;
+
   boot.tmp = {
     useTmpfs = lib.mkDefault true;
     cleanOnBoot = lib.mkDefault (!config.boot.tmp.useTmpfs);
   };
+  systemd.services.nix-daemon = { environment.TMPDIR = "/var/tmp"; };
 
   fileSystems."/" = { options = [ "noatime" "nodiratime" "discard" ]; };
 
@@ -71,6 +75,7 @@
         # networkmanager-vpnc
         # networkmanager-sstp
       ]);
+      wifi.backend = "iwd";
     };
     firewall = {
       enable = true;

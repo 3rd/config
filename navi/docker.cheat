@@ -22,7 +22,7 @@ docker kill <container_id>
 docker rm -f $(docker ps -aq)
 
 # Open a shell inside a docker container
-docker exec -it <container_id> bash
+docker exec -it <container_id> sh
 
 # Print and watch docker container logs
 docker logs <container_id> -f

@@ -20,6 +20,7 @@
     xserver = {
       enable = true;
       xkb.layout = "us";
+      synaptics.enable = false;
     };
     libinput = {
       enable = true;
