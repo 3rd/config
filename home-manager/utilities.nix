@@ -36,6 +36,7 @@
       inferno
       plantuml
       duf
+      d2
 
       # system
       htop
@@ -63,7 +64,6 @@
       gparted
       flameshot
       copyq
-      qimgv
       scrcpy
       eog
       file-roller

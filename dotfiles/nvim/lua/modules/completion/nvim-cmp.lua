@@ -237,14 +237,14 @@ local setup = function()
     style = { winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder" },
     experimental = { ghost_text = true },
     sorting = {
-      priority_weight = 2,
+      priority_weight = 1,
       comparators = {
-        cmp.config.compare.score,
         -- proximity
         function(a, b)
           if require("cmp_buffer"):compare_locality(a, b) then return true end
           return false
         end,
+        cmp.config.compare.score,
         cmp.config.compare.locality,
         cmp.config.compare.offset,
         cmp.config.compare.order,

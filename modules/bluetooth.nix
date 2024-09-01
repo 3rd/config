@@ -9,12 +9,13 @@
     powerOnBoot = true;
     settings = {
       General = {
+        Enable = "Source,Sink,Media,Socket";
         ControllerMode = "bredr";
         FastConnectable = true;
         Experimental = true;
         KernelExperimental = true;
       };
-      # LE = { EnableAdvMonInterleaveScan = 1; };
+      LE = { EnableAdvMonInterleaveScan = 1; };
     };
   };
   services.blueman.enable = true;

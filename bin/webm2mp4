@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+IFS=$'\n\t'
+
+convert_file() {
+  file="$1"
+  if [[ "$file" == *.webm ]]; then
+    filename="${file%.*}"
+    if [ -f "$file" ]; then
+      if ffmpeg -hwaccel cuda -i "$file" -c:v hevc_nvenc -preset lossless -c:a copy "${filename}.mp4" -nostdin -loglevel error; then
+        echo "$file"
+      else
+        echo "Error: Failed to convert $file" >&2
+      fi
+    else
+      echo "Error: File not found: $file" >&2
+    fi
+  fi
+}
+
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <file1.webm> [file2.webm] ... or $0 *" >&2
+  exit 1
+fi
+
+for file in "$@"; do
+  convert_file "$file"
+done

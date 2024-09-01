@@ -81,6 +81,9 @@
 
             wired.homeManagerModules.default
             (_: {
+              home.packages = [
+                #
+              ];
               services.wired = {
                 enable = true;
                 # config = ./wired.ron;

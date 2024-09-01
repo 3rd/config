@@ -426,8 +426,8 @@ return lib.module.create({
   setup = setup,
   plugins = {
     {
-      -- "kevinhwang91/nvim-ufo",
-      "3rd/nvim-ufo",
+      "kevinhwang91/nvim-ufo",
+      -- "3rd/nvim-ufo",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "nvim-ufo"),
       ft = "syslang",
       dependencies = { "nvim-treesitter", "kevinhwang91/promise-async" },

@@ -31,14 +31,14 @@ local variable = colors.foreground
 local keyword = colors.foreground.darken(25).saturation(12)
 local operator = keyword
 local delimiter = hsl(250, 10, 60)
-local control = keyword.lighten(20).saturate(20)
+local control = keyword.lighten(20).saturation(20)
 
 local parameter = colors.red.rotate(35).saturation(68)
 local property = colors.foreground.darken(10).saturation(20)
 local field = property
-local constant = colors.red.saturation(60)
+local constant = colors.red.saturation(60).lighten(10)
 local comment = colors.foreground.saturation(12).darken(50)
-local builtin = colors.magenta.saturation(60)
+local builtin = colors.red.saturation(60)
 local special = colors.indigo.saturation(80).lighten(25)
 
 colors.common = {
@@ -66,7 +66,7 @@ colors.common = {
   -- extra
   builtin = builtin,
   macro = keyword.lighten(40).saturate(70),
-  ret = colors.red.saturation(80),
+  ret = colors.red.saturation(65),
   constructor = colors.cyan,
   cword = colors.background.lighten(20),
 }
