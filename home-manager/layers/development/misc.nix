@@ -5,6 +5,5 @@
     #
     postman
     duckdb
-    dbeaver-bin
   ];
 }

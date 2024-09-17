@@ -47,7 +47,7 @@ home_switch() {
   echo "Building home-manager config"
   copy_relevant_files_to_tmpdir
   cd "$TMPDIR"
-  home-manager --flake .#"$USERNAME"@"$HOSTNAME" switch
+  home-manager --flake .#"$USERNAME"@"$HOSTNAME" switch --show-trace
 }
 
 help() {

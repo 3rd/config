@@ -37,6 +37,7 @@
       plantuml
       duf
       d2
+      delta
 
       # system
       htop

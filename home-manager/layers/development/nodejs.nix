@@ -7,7 +7,6 @@
     nodejs_latest
     electron
     quick-lint-js
-    bun
   ];
 
   home = {
