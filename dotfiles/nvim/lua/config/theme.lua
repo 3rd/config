@@ -548,7 +548,7 @@ local theme = lush(function(injected)
 
     -- ts-rainbow
     RainbowRed({ fg = colors.red.desaturate(50).darken(10) }),
-    RainbowYellow({ fg = colors.yellow.desaturate(60).darken(10) }),
+    RainbowYellow({ fg = colors.pink.desaturate(30).darken(10) }),
     RainbowBlue({ fg = colors.blue.rotate(20).desaturate(20).lighten(10) }),
     RainbowOrange({ fg = colors.orange.desaturate(20).darken(10) }),
     RainbowGreen({ fg = colors.green.rotate(35).desaturate(50).darken(10) }),

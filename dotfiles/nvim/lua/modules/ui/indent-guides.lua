@@ -34,6 +34,7 @@ return lib.module.create({
         local opts = {
           indent = {
             enable = true,
+            use_treesitter = true,
             exclude_filetypes = exclude_filetypes,
             chars = { "│", "¦", "┆", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊" }, -- │
             style = colors.plugins.indent_guides.indent,
