@@ -37,7 +37,7 @@ return lib.module.create({
     {
       "3rd/diagram.nvim",
       event = "VeryLazy",
-      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "diagram.nvim"),
+      dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "diagram.nvim"),
       opts = {
         renderer_options = {
           mermaid = {

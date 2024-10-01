@@ -1,5 +1,5 @@
 return lib.module.create({
-  name = "syslang",
+  name = "core/syslang",
   -- enabled = false,
   hosts = "*",
   plugins = {

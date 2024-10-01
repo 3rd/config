@@ -64,6 +64,7 @@ return {
   inccommand = "split",
   magic = true,
   smartcase = true,
+  grepprg = [[rg --glob "!.git" --no-heading --vimgrep --follow $*]],
   -- folds
   -- foldcolumn = "1",
   foldenable = true,

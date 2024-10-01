@@ -1,5 +1,5 @@
 return lib.module.create({
-  name = "bufferize",
+  name = "misc/bufferize",
   hosts = { "spaceship", "macbook" },
   plugins = {
     {

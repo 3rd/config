@@ -1,5 +1,5 @@
 return lib.module.create({
-  name = "undotree",
+  name = "workflow/undotree",
   hosts = "*",
   plugins = {
     {

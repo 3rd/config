@@ -1,7 +1,7 @@
 local setup = function()
   -- vim.diagnostic
   vim.diagnostic.config({
-    float = { source = "always" },
+    float = { source = true },
     severity_sort = true,
     signs = true,
     underline = true,

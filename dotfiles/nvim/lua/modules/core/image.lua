@@ -1,5 +1,5 @@
 return lib.module.create({
-  name = "image",
+  name = "core/image",
   -- enabled = false,
   hosts = { "spaceship", "macbook" },
   plugins = {
@@ -12,7 +12,8 @@ return lib.module.create({
         tmux_show_only_in_active_window = true,
         integrations = {
           markdown = {
-            only_render_image_at_cursor = true,
+            clear_in_insert_mode = false,
+            only_render_image_at_cursor = false,
             only_render_image_at_cursor_mode = "popup",
           },
         },

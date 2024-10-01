@@ -1,4 +1,4 @@
-local handle_yank = function()
+local handle_smart_yank = function()
   local file_path = vim.fn.expand("%:p")
   local start_line, end_line
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, true, true), "n", true)
@@ -40,10 +40,17 @@ local handle_yank = function()
   end
 end
 
+local handle_path_yank = function()
+  local file_path = vim.fn.expand("%:p")
+  vim.fn.setreg("+", file_path)
+  vim.notify("Yanked: " .. file_path)
+end
+
 return lib.module.create({
   name = "workflow/yank-location",
   hosts = "*",
   mappings = {
-    { { "n", "v" }, "<leader>y", handle_yank, { desc = "Yank location" } },
+    { { "n", "v" }, "<leader>y", handle_smart_yank, { desc = "Yank location (smart)" } },
+    { { "n", "v" }, "<leader>Y", handle_path_yank, { desc = "Yank location (path)" } },
   },
 })

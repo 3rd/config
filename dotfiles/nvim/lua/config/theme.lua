@@ -8,7 +8,7 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(250, 13, 15),
+  background = hsl(250, 13, 16),
   foreground = hsl(250, 20, 80),
   blue = hsl(210, 85, 72),
   cyan = hsl(180, 50, 50),
@@ -174,8 +174,8 @@ colors.slang = {
   list_item = {
     -- item = colors.foreground.desaturate(20).darken(10),
     marker = colors.foreground.desaturate(80).darken(40),
-    label = colors.indigo.lighten(10).saturate(20), -- "#c881de",
-    label_marker = colors.common.comment.darken(30),
+    label = colors.indigo.lighten(15).saturate(20), -- "#c881de",
+    label_marker = colors.common.comment,
   },
   label = colors.pink.darken(10).desaturate(20),
   label_line = colors.cyan.desaturate(10),

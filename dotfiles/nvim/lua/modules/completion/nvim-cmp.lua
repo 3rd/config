@@ -264,7 +264,6 @@ return lib.module.create({
   plugins = {
     {
       "hrsh7th/nvim-cmp",
-      -- "yioneko/nvim-cmp",
       event = { "InsertEnter" },
       dependencies = {
         "hrsh7th/cmp-buffer",

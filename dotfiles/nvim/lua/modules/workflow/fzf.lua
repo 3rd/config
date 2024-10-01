@@ -81,12 +81,6 @@ local setup_fzf_lua = function()
   lib.map.map("n", "<leader>;", "<cmd>lua require('fzf-lua').resume()<CR>", "Resume last fzf-lua command")
 end
 
--- local setup_spider = function()
---   require("spider").setup({
---     skipInsignificantPunctuation = false,
---   })
--- end
-
 return lib.module.create({
   name = "workflow/fzf",
   hosts = "*",

@@ -27,7 +27,7 @@ local handle_code_action = function()
 end
 
 return lib.module.create({
-  name = "code-action",
+  name = "language-support/code-action",
   hosts = "*",
   plugins = {
     {

@@ -31,9 +31,12 @@ return lib.module.create({
     {
       "Wansmer/sibling-swap.nvim",
       dependencies = { "nvim-treesitter" },
-      lazy = false,
       config = function()
         require("sibling-swap").setup({
+          keymaps = {
+            ["<a-l>"] = "swap_with_right",
+            ["<a-h>"] = "swap_with_left",
+          },
           allowed_separators = {
             ",",
             ";",
@@ -54,10 +57,6 @@ return lib.module.create({
             [">"] = "<",
             [">="] = "<=",
           },
-          keymaps = {
-            ["<a-l>"] = "swap_with_right",
-            ["<a-h>"] = "swap_with_left",
-          },
           use_default_keymaps = false,
           highlight_node_at_cursor = false,
           ignore_injected_langs = false,
@@ -72,6 +71,7 @@ return lib.module.create({
           require("sibling-swap").swap_with_left()
         end, { desc = "Swap with left" })
       end,
+      lazy = false,
     },
   },
 })

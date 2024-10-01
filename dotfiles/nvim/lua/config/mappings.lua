@@ -106,7 +106,7 @@ return {
     { "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", "LSP: Go to definition" },
     {
       "n",
-      "<leader>gd",
+      "gvd",
       function()
         vim.lsp.buf.definition({
           on_list = function(options)
@@ -139,7 +139,6 @@ return {
       end,
       "LSP: Show workspace symbols",
     },
-    { "n", "<leader>i", "<cmd>lua vim.lsp.inlay_hint(0, nil)<cr>", "LSP: Toggle inlay hints" },
   },
 }
 

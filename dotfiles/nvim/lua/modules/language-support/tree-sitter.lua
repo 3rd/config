@@ -155,17 +155,5 @@ return lib.module.create({
         })
       end,
     },
-    {
-      "briangwaltney/paren-hint.nvim",
-      event = { "BufReadPre", "BufNewFile" },
-      dependencies = {
-        "nvim-treesitter/nvim-treesitter",
-      },
-      config = function()
-        require("paren-hint").setup({
-          include_paren = true,
-        })
-      end,
-    },
   },
 })

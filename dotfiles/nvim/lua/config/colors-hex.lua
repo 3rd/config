@@ -1,5 +1,5 @@
 return {
-  background = "#23212B",
+  background = "#25232E",
   blue = "#7BB8F4",
   common = {
     boolean = "#DF8181",
@@ -8,7 +8,7 @@ return {
     conditional = "#A39DBE",
     constant = "#DF8181",
     constructor = "#40BFBF",
-    cword = "#4B475C",
+    cword = "#4D495F",
     delimiter = "#928FA3",
     field = "#AEA9C6",
     ["function"] = "#7BB8F4",
@@ -51,7 +51,7 @@ return {
         background = "#383545",
         content = "#C5C2D6",
         language = "#5F5B76",
-        marker = "#4B475C"
+        marker = "#4D495F"
       },
       inline = "#E9A677"
     },
@@ -96,8 +96,8 @@ return {
       internal = "#5BC0CD"
     },
     list_item = {
-      label = "#9B8BE9",
-      label_marker = "#423F50",
+      label = "#A294EB",
+      label_marker = "#5E5A72",
       marker = "#77767F"
     },
     number = "#DF8181",
@@ -137,7 +137,7 @@ return {
   ui = {
     breadcrumbs = {
       normal = {
-        bg = "#2C2A37",
+        bg = "#2F2C3A",
         fg = "#9B96B0"
       },
       separator = {
@@ -157,13 +157,13 @@ return {
         fg = "#ED9A5E"
       },
       line_nr = {
-        fg = "#4B475C"
+        fg = "#4D495F"
       }
     },
-    split = "#2C2A37",
+    split = "#2F2C3A",
     status = {
       a = {
-        bg = "#413E51",
+        bg = "#444054",
         fg = "#B0ACC3"
       },
       b = {
@@ -171,7 +171,7 @@ return {
         fg = "#A5A0BA"
       },
       c = {
-        bg = "#2C2A37",
+        bg = "#2F2C3A",
         fg = "#9B96B0"
       }
     }
