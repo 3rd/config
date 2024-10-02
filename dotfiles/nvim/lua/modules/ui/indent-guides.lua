@@ -43,6 +43,7 @@ return lib.module.create({
             enable = true,
             notify = false,
             exclude_filetypes = exclude_filetypes,
+            use_treesitter = true,
             chars = {
               horizontal_line = "╴",
               vertical_line = "│",
@@ -52,7 +53,7 @@ return lib.module.create({
             },
             style = colors.plugins.indent_guides.chunk,
             duration = 0,
-            delay = 10,
+            delay = 0,
           },
           blank = { enable = false },
           line_num = { enable = false },

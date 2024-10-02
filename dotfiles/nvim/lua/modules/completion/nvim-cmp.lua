@@ -1,8 +1,16 @@
+-- thanks https://github.com/hrsh7th/nvim-cmp/issues/1797#issue-2079222950
+local function fast_cmp_visible(cmp)
+  if not (cmp.core.view and cmp.core.view.custom_entries_view) then return false end
+  return cmp.core.view.custom_entries_view:visible()
+end
+
 local cmp_sources = {
-  { name = "nvim_lsp_signature_help" },
-  { name = "luasnip" },
+  { name = "luasnip", keyword_length = 1 },
+  { name = "path", keyword_length = 1 },
   {
     name = "nvim_lsp",
+    keyword_length = 1,
+    max_item_count = 150,
     entry_filter = function(entry)
       local banned_kinds = { "Text" }
       local kind = require("cmp.types").lsp.CompletionItemKind[entry:get_kind()]
@@ -10,35 +18,20 @@ local cmp_sources = {
       return true
     end,
   },
-  { name = "lazydev", group_index = 0 },
-  {
-    name = "treesitter",
-    entry_filter = function(entry)
-      local banned_kinds = { "Error", "Comment" }
-      local kind = require("cmp.types").lsp.CompletionItemKind[entry:get_kind()]
-      if vim.tbl_contains(banned_kinds, kind) then return false end
-      return true
-    end,
-  },
-  { name = "path", keyword_length = 1 },
-  {
-    name = "buffer",
-    option = {
-      get_bufnrs = function()
-        local bufs = {}
-        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-          local byte_size = vim.api.nvim_buf_get_offset(buf, vim.api.nvim_buf_line_count(buf))
-          if byte_size <= 1024 * 1024 then -- 1MB
-            table.insert(bufs, buf)
-          end
-        end
-        return bufs
-      end,
-    },
-    entry_filter = function()
-      return false
-    end,
-  },
+  -- {
+  --   name = "treesitter",
+  --   keyword_length = 1,
+  --   group_index = 1,
+  --   entry_filter = function(entry)
+  --     local banned_kinds = { "Error", "Comment" }
+  --     local kind = require("cmp.types").lsp.CompletionItemKind[entry:get_kind()]
+  --     if vim.tbl_contains(banned_kinds, kind) then return false end
+  --     return true
+  --   end,
+  -- },
+  -- { name = "buffer", keyword_length = 1, group_index = 1 },
+  { name = "lazydev", group_index = 1 },
+  -- { name = "nvim_lsp_signature_help" },
 }
 
 -- disable treesitter source for syslang buffers
@@ -65,10 +58,13 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- better context - ty ditsuke
 local get_lsp_completion_context = function(completion, source)
-  local ok, source_name = pcall(function()
-    return source.source.client.config.name
-  end)
-  if not ok then return nil end
+  local source_name = (
+    source.source
+    and source.source.client
+    and source.source.client.config
+    and source.source.client.config.name
+  ) or nil
+  if not source_name then return nil end
   if source_name == "tsserver" then
     return completion.detail
   elseif source_name == "vtsls" then
@@ -126,11 +122,11 @@ local setup = function()
   end
 
   local config = {
-    enabled = function()
-      -- disable completion in comments
-      local context = require("cmp.config.context")
-      return not context.in_treesitter_capture("comment") and not context.in_syntax_group("Comment")
-    end,
+    -- enabled = function()
+    --   -- disable completion in comments
+    --   local context = require("cmp.config.context")
+    --   return not context.in_treesitter_capture("comment") and not context.in_syntax_group("Comment")
+    -- end,
     auto_select = false,
     formatting = {
       format = function(entry, vim_item)
@@ -182,6 +178,10 @@ local setup = function()
         return vim_item
       end,
     },
+    -- matching = {
+    --   disallow_fuzzy_matching = true,
+    --   disallow_fullfuzzy_matching = true,
+    -- },
     completion = {
       keyword_length = 1,
       max_item_count = 150,
@@ -196,7 +196,7 @@ local setup = function()
     mapping = {
       ["<CR>"] = cmp.mapping.confirm({ select = false }),
       ["<Tab>"] = cmp.mapping(function(fallback)
-        if cmp.visible() then
+        if fast_cmp_visible(cmp) then
           cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert, select = false })
         elseif luasnip.jumpable(1) then
           luasnip.jump(1)
@@ -205,7 +205,7 @@ local setup = function()
         end
       end, { "i", "s" }),
       ["<S-Tab>"] = cmp.mapping(function(fallback)
-        if cmp.visible() then
+        if fast_cmp_visible(cmp) then
           cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert, select = false })
         elseif luasnip.jumpable(-1) then
           luasnip.jump(-1)
@@ -236,14 +236,14 @@ local setup = function()
     },
     style = { winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder" },
     experimental = { ghost_text = true },
+    performance = {
+      throttle = 0,
+      debounce = 0,
+      fetching_timeout = 500,
+    },
     sorting = {
       priority_weight = 1,
       comparators = {
-        -- proximity
-        function(a, b)
-          if require("cmp_buffer"):compare_locality(a, b) then return true end
-          return false
-        end,
         cmp.config.compare.score,
         cmp.config.compare.locality,
         cmp.config.compare.offset,
@@ -263,7 +263,9 @@ return lib.module.create({
   hosts = "*",
   plugins = {
     {
-      "hrsh7th/nvim-cmp",
+      -- "hrsh7th/nvim-cmp",
+      "yioneko/nvim-cmp",
+      branch = "perf-up",
       event = { "InsertEnter" },
       dependencies = {
         "hrsh7th/cmp-buffer",
@@ -271,7 +273,7 @@ return lib.module.create({
         "hrsh7th/cmp-nvim-lsp-signature-help",
         "hrsh7th/cmp-nvim-lua",
         "hrsh7th/cmp-path",
-        "ray-x/cmp-treesitter",
+        -- "ray-x/cmp-treesitter",
         "saadparwaiz1/cmp_luasnip",
         "nvim-web-devicons",
         {
@@ -290,15 +292,21 @@ return lib.module.create({
       capabilities = function(capabilities)
         return vim.tbl_deep_extend("force", capabilities or {}, require("cmp_nvim_lsp").default_capabilities())
       end,
-      on_attach_call = function()
-        -- disable the tree-sitter source when a language server is attached
-        local ok, cmp = pcall(require, "cmp")
-        if not ok then return end
-        local filtered_sources = {}
-        for _, source in ipairs(cmp_sources) do
-          if source.name ~= "treesitter" then table.insert(filtered_sources, source) end
+      on_attach_call = function(client)
+        -- change trigger chars for tailwind
+        if client.name == "tailwindcss" then
+          client.server_capabilities.completionProvider.triggerCharacters =
+            { '"', "'", "`", ".", "(", "[", "!", "/", ":" }
         end
-        cmp.setup.buffer({ sources = filtered_sources })
+
+        -- disable the tree-sitter source when a language server is attached
+        -- local ok, cmp = pcall(require, "cmp")
+        -- if not ok then return end
+        -- local filtered_sources = {}
+        -- for _, source in ipairs(cmp_sources) do
+        --   if source.name ~= "treesitter" then table.insert(filtered_sources, source) end
+        -- end
+        -- cmp.setup.buffer({ sources = filtered_sources })
       end,
     },
   },

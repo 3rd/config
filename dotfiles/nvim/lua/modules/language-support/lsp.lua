@@ -394,27 +394,29 @@ return lib.module.create({
         "b0o/schemastore.nvim",
         "dmmulroy/ts-error-translator.nvim",
         { "antosha417/nvim-lsp-file-operations", opts = {} },
-        {
-          "folke/neodev.nvim",
-          ft = "lua",
-          opts = {
-            library = {
-              enabled = true,
-              runtime = true,
-              types = true,
-              plugins = {
-                "nvim-treesitter",
-                "testing.nvim",
-                "sqlite.nvim",
-              },
-            },
-            setup_jsonls = true,
-            lspconfig = true,
-            pathStrict = true,
-          },
-        },
       },
       config = setup_lspconfig,
+    },
+
+    {
+      "folke/neodev.nvim",
+      ft = "lua",
+      dependencies = { "neovim/nvim-lspconfig" },
+      opts = {
+        library = {
+          enabled = true,
+          runtime = true,
+          types = true,
+          plugins = {
+            "nvim-treesitter",
+            "testing.nvim",
+            "sqlite.nvim",
+          },
+        },
+        setup_jsonls = true,
+        lspconfig = true,
+        pathStrict = true,
+      },
     },
     {
       "j-hui/fidget.nvim",

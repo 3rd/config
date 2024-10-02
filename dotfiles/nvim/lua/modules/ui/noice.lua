@@ -50,7 +50,7 @@ end
 
 return lib.module.create({
   name = "ui/noice",
-  -- enabled = false,
+  enabled = false,
   hosts = "*",
   plugins = {
     {

@@ -36,7 +36,7 @@ return lib.module.create({
     { "superhawk610/ascii-blocks.nvim", cmd = { "AsciiBlockify" } },
     {
       "3rd/diagram.nvim",
-      event = "VeryLazy",
+      ft = { "markdown", "syslang" },
       dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "diagram.nvim"),
       opts = {
         renderer_options = {
