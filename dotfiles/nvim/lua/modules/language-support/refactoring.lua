@@ -15,12 +15,12 @@ local setup = function()
   vim.keymap.set({ "n", "v" }, "<leader>if", function()
     refactoring.refactor("Inline Function")
   end, { noremap = true, silent = true, expr = false, desc = "Inline function" })
-  vim.keymap.set(
-    { "n", "v" },
-    "<leader>ar",
-    ":lua require('refactoring').select_refactor()<cr>",
-    { noremap = true, silent = true, expr = false, desc = "Refactor" }
-  )
+  -- vim.keymap.set(
+  --   { "n", "v" },
+  --   "<leader>ar",
+  --   ":lua require('refactoring').select_refactor()<cr>",
+  --   { noremap = true, silent = true, expr = false, desc = "Refactor" }
+  -- )
   vim.keymap.set(
     { "n", "v" },
     "<leader>ef",
