@@ -76,8 +76,9 @@ in {
           ${pkgs.meld}/bin/meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"'';
       };
       # blame = { ignoreRevsFile = ".git-blame-ignore-revs"; };
-      pull = { rebase = false; };
+      pull = { rebase = true; };
       push = { default = "simple"; };
+      rebase = { autoStash = true; };
     };
   };
 
