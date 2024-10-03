@@ -10,6 +10,7 @@ local paths = {
 local web_formatters = {
   "prettierd",
   "rustywind",
+  "oxlint",
 }
 local fts_with_lsp_formatting = {
   "typescript",
@@ -59,6 +60,34 @@ return lib.module.create({
             },
             prettierd = {
               env = { PRETTIERD_DEFAULT_CONFIG = paths.prettier_config },
+            },
+            oxlint = {
+              command = "oxlint",
+              args = {
+                "--config",
+                lib.path.resolve(lib.env.dirs.vim.config, "linters/oxlint.json"),
+                "--fix",
+                "--format",
+                "unix",
+                "--jest-plugin",
+                "--vitest-plugin",
+                "--jsx-a11y-plugin",
+                "--nextjs-plugin",
+                "--react-perf-plugin",
+                "--promise-plugin",
+                "--node-plugin",
+                "--security-plugin",
+                "$FILENAME",
+              },
+              stdin = false,
+              cwd = require("conform.util").root_file({ ".editorconfig", "package.json" }),
+              require_cwd = true,
+              tmpfile_format = ".conform.$RANDOM.$FILENAME",
+              -- condition = function(self, ctx)
+              --   return vim.fs.basename(ctx.filename) ~= "README.md"
+              -- end,
+              exit_codes = { 0, 1 },
+              inherit = true,
             },
           },
         }

@@ -31,7 +31,7 @@ local cmp_sources = {
   -- },
   -- { name = "buffer", keyword_length = 1, group_index = 1 },
   { name = "lazydev", group_index = 1 },
-  -- { name = "nvim_lsp_signature_help" },
+  { name = "nvim_lsp_signature_help" },
 }
 
 -- disable treesitter source for syslang buffers
@@ -276,13 +276,13 @@ return lib.module.create({
         -- "ray-x/cmp-treesitter",
         "saadparwaiz1/cmp_luasnip",
         "nvim-web-devicons",
-        {
-          "abecodes/tabout.nvim",
-          opts = {
-            ignore_beginning = false,
-            completion = false,
-          },
-        },
+        -- {
+        --   "abecodes/tabout.nvim",
+        --   opts = {
+        --     ignore_beginning = false,
+        --     completion = false,
+        --   },
+        -- },
       },
       config = setup,
     },

@@ -71,38 +71,40 @@ return lib.module.create({
             vim.lsp.handlers["textDocument/definition"](err, patched_result, ...)
           end
 
-          client.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+          client.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(function(err, result, ctx, config)
             require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
             local filtered = api.filter_diagnostics({
               80006, -- This may be converted to an async function...
               80001, -- File is a CommonJS module; it may be converted to an ES module...
             })(err, result, ctx, config)
             return filtered
-          end
+          end, {
+            update_in_insert = false,
+          })
 
           -- inlay hints
-          if client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
-            local au_inlay_hints = vim.api.nvim_create_augroup("ts_inlay_hints", { clear = false })
-
-            vim.api.nvim_create_autocmd({ "InsertLeave" }, {
-              group = au_inlay_hints,
-              buffer = bufnr,
-              callback = function()
-                vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-              end,
-            })
-
-            vim.api.nvim_create_autocmd({ "InsertEnter" }, {
-              group = au_inlay_hints,
-              buffer = bufnr,
-              callback = function()
-                vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
-              end,
-            })
-
-            local mode = vim.api.nvim_get_mode().mode
-            vim.lsp.inlay_hint.enable(mode == "n" or mode == "v", { bufnr = bufnr })
-          end
+          -- if client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+          --   local au_inlay_hints = vim.api.nvim_create_augroup("ts_inlay_hints", { clear = false })
+          --
+          --   vim.api.nvim_create_autocmd({ "InsertLeave" }, {
+          --     group = au_inlay_hints,
+          --     buffer = bufnr,
+          --     callback = function()
+          --       vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+          --     end,
+          --   })
+          --
+          --   vim.api.nvim_create_autocmd({ "InsertEnter" }, {
+          --     group = au_inlay_hints,
+          --     buffer = bufnr,
+          --     callback = function()
+          --       vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
+          --     end,
+          --   })
+          --
+          --   local mode = vim.api.nvim_get_mode().mode
+          --   vim.lsp.inlay_hint.enable(mode == "n" or mode == "v", { bufnr = bufnr })
+          -- end
         end
 
         -- hook.lsp.on_attach
@@ -121,7 +123,7 @@ return lib.module.create({
               enable = false,
               filetypes = { "javascriptreact", "typescriptreact" },
             },
-            complete_function_calls = true,
+            complete_function_calls = false,
             tsserver_file_preferences = {
               -- allowIncompleteCompletions = true,
               -- allowRenameOfImportPath = true,

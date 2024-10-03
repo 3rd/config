@@ -10,26 +10,30 @@ local setup = function()
     return orig_util_open_floating_preview(contents, syntax, opts, ...)
   end
 
+  vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
+    update_in_insert = false,
+  })
+
   -- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
   --   border = "rounded",
   -- })
 
   -- ty https://github.com/MariaSolOs/dotfiles/blob/fedora/.config/nvim/lua/lsp.lua#L278
-  local methods = vim.lsp.protocol.Methods
-  local inlay_hint_handler = vim.lsp.handlers[methods.textDocument_inlayHint]
-  local inlay_hint_max_len = 40
-  vim.lsp.handlers[methods.textDocument_inlayHint] = function(err, result, ctx, config)
-    local client = vim.lsp.get_client_by_id(ctx.client_id)
-    if client and client.name == "typescript-tools" then
-      result = vim.iter(result):map(function(hint)
-        local label = hint.label ---@type string
-        if label:len() >= inlay_hint_max_len then label = label:sub(1, inlay_hint_max_len - 1) .. "…" end
-        hint.label = label
-        return hint
-      end)
-    end
-    inlay_hint_handler(err, result, ctx, config)
-  end
+  -- local methods = vim.lsp.protocol.Methods
+  -- local inlay_hint_handler = vim.lsp.handlers[methods.textDocument_inlayHint]
+  -- local inlay_hint_max_len = 40
+  -- vim.lsp.handlers[methods.textDocument_inlayHint] = function(err, result, ctx, config)
+  --   local client = vim.lsp.get_client_by_id(ctx.client_id)
+  --   if client and client.name == "typescript-tools" then
+  --     result = vim.iter(result):map(function(hint)
+  --       local label = hint.label ---@type string
+  --       if label:len() >= inlay_hint_max_len then label = label:sub(1, inlay_hint_max_len - 1) .. "…" end
+  --       hint.label = label
+  --       return hint
+  --     end)
+  --   end
+  --   inlay_hint_handler(err, result, ctx, config)
+  -- end
 end
 
 local setup_lspconfig = function()

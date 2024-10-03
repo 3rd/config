@@ -7,7 +7,7 @@ return lib.module.create({
       event = "VeryLazy",
       config = function()
         require("nvim-highlight-colors").setup({
-          -- render = "virtual",
+          render = "virtual",
           enable_tailwind = false,
           -- exclude_buftypes = {
           --   "prompt",
