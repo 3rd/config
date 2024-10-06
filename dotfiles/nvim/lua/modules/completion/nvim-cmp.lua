@@ -9,7 +9,6 @@ local cmp_sources = {
   { name = "path", keyword_length = 1 },
   {
     name = "nvim_lsp",
-    keyword_length = 1,
     max_item_count = 150,
     entry_filter = function(entry)
       local banned_kinds = { "Text" }
@@ -30,7 +29,7 @@ local cmp_sources = {
   --   end,
   -- },
   -- { name = "buffer", keyword_length = 1, group_index = 1 },
-  { name = "lazydev", group_index = 1 },
+  { name = "lazydev", group_index = 0 },
   { name = "nvim_lsp_signature_help" },
 }
 
@@ -237,7 +236,7 @@ local setup = function()
     style = { winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder" },
     experimental = { ghost_text = true },
     performance = {
-      throttle = 0,
+      throttle = 10,
       debounce = 0,
       fetching_timeout = 500,
     },
@@ -264,8 +263,9 @@ return lib.module.create({
   plugins = {
     {
       -- "hrsh7th/nvim-cmp",
-      "yioneko/nvim-cmp",
-      branch = "perf-up",
+      -- "yioneko/nvim-cmp",
+      -- branch = "perf-up",
+      "iguanacucumber/magazine.nvim",
       event = { "InsertEnter" },
       dependencies = {
         "hrsh7th/cmp-buffer",

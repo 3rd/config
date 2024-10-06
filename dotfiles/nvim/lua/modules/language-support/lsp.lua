@@ -118,19 +118,26 @@ local setup_lspconfig = function()
           completion = { callSnippet = "Replace" },
           runtime = {
             version = "LuaJIT",
-            path = { "?.lua", "?/init.lua" },
+            path = vim.split(package.path, ";"),
             pathStrict = true,
           },
+          diagnostics = {
+            unusedLocalExclude = { "_*" },
+            globals = { "vim", "describe", "it", "before_each", "after_each" },
+            disable = { "missing-fields", "unused-local" },
+          },
           workspace = {
-            checkThirdParty = false,
             library = {
-              [".luarc.json"] = true,
+              -- [".luarc.json"] = true,
+              [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+              [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
               [vim.fn.stdpath("config") .. "/lua"] = true,
-              --   [vim.fn.expand("$VIMRUNTIME/lua")] = true,
             },
             ignoreDir = { ".git", "node_modules", "linters" },
+            checkThirdParty = "Ask",
           },
           hint = { enable = true },
+          semantic = { keyword = true },
           telemetry = { enable = false },
         }),
       },
@@ -402,26 +409,37 @@ return lib.module.create({
       config = setup_lspconfig,
     },
 
+    -- {
+    --   "folke/neodev.nvim",
+    --   ft = "lua",
+    --   dependencies = { "neovim/nvim-lspconfig" },
+    --   opts = {
+    --     library = {
+    --       enabled = true,
+    --       runtime = true,
+    --       types = true,
+    --       plugins = {
+    --         "nvim-treesitter",
+    --         "testing.nvim",
+    --         "sqlite.nvim",
+    --       },
+    --     },
+    --     setup_jsonls = true,
+    --     lspconfig = true,
+    --     pathStrict = true,
+    --   },
+    -- },
     {
-      "folke/neodev.nvim",
-      ft = "lua",
-      dependencies = { "neovim/nvim-lspconfig" },
+      "folke/lazydev.nvim",
+      ft = "lua", -- only load on lua files
       opts = {
         library = {
-          enabled = true,
-          runtime = true,
-          types = true,
-          plugins = {
-            "nvim-treesitter",
-            "testing.nvim",
-            "sqlite.nvim",
-          },
+          "lazy.nvim",
+          { path = "luvit-meta/library", words = { "vim%.uv" } },
         },
-        setup_jsonls = true,
-        lspconfig = true,
-        pathStrict = true,
       },
     },
+    { "Bilal2453/luvit-meta", lazy = true }, -- optional `vim.uv` typings
     {
       "j-hui/fidget.nvim",
       tag = "legacy",
