@@ -1,31 +1,3 @@
--- local handle_code_action = function()
---   require("fzf-lua").lsp_code_actions({
---     filter = function(action)
---       if vim.startswith(action.kind, "refactor") then return false end
---       return true
---     end,
---   })
--- end
---
--- local handle_refactor_action = function()
---   require("fzf-lua").lsp_code_actions({
---     filter = function(action)
---       if vim.startswith(action.kind, "refactor") then return true end
---       return false
---     end,
---   })
--- end
-
-local handle_code_action = function()
-  vim.lsp.buf.code_action({
-    filter = function(action)
-      if not action.kind then return true end
-      if vim.startswith(action.kind, "refactor") then return false end
-      return true
-    end,
-  })
-end
-
 return lib.module.create({
   name = "language-support/code-action",
   hosts = "*",
@@ -81,8 +53,8 @@ return lib.module.create({
             },
           },
           mappings = {
-            refactor_inline = "<leader>ai",
-            refactor_extract = "<leader>ae",
+            refactor_inline = { "<leader>ai", "Inline" },
+            refactor_extract = { "<leader>ae", "Extract" },
             actions = {
               ["typescript-tools"] = {
                 -- waiting to inline function - https://github.com/Microsoft/TypeScript/issues/27070
@@ -103,10 +75,16 @@ return lib.module.create({
             end,
           })
         end, { desc = "LSP: Refactor" })
+
+        lib.map.map({ "n", "v" }, "<leader>ac", function()
+          clear_action.code_action({
+            filter = function(action)
+              if vim.startswith(action.kind, "refactor") then return false end
+              return true
+            end,
+          })
+        end, { desc = "LSP: Code action" })
       end,
     },
-  },
-  mappings = {
-    { { "n", "v" }, "<leader>ac", handle_code_action, { desc = "LSP: Code action" } },
   },
 })
