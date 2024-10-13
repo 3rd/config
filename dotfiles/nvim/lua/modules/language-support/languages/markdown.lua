@@ -23,8 +23,8 @@ return lib.module.create({
         overrides = {
           buftype = {
             nofile = {
-              -- render_modes = { "n", "c", "i" },
-              render_modes = {},
+              render_modes = { "n", "c", "i" },
+              -- render_modes = {},
               debounce = 5,
               code = {
                 left_pad = 0,

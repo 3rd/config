@@ -1,9 +1,12 @@
 return lib.module.create({
   name = "completion/blink",
   hosts = "*",
+  enabled = false,
   plugins = {
     {
-      "saghen/blink.cmp",
+      "Saghen/blink.cmp",
+      -- "3rd/blink.cmp",
+      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
       lazy = false, -- lazy loading handled internally
       -- optional: provides snippets for the snippet source
       dependencies = "rafamadriz/friendly-snippets",
@@ -47,7 +50,7 @@ return lib.module.create({
           },
 
           signature_help = {
-            enabled = true,
+            enabled = false,
             blocked_trigger_characters = {},
             blocked_retrigger_characters = {},
             show_on_insert_on_trigger_character = true,
@@ -106,18 +109,29 @@ return lib.module.create({
           },
         },
 
+        fuzzy = {
+          use_frecency = true,
+          use_proximity = true,
+          max_items = 200,
+          sorts = { "label", "kind", "score" },
+          prebuiltBinaries = {
+            download = false,
+            forceVersion = nil,
+          },
+        },
+
         keymap = {
-          show = "<C-Space>",
+          show = "<C-space>",
           hide = "<C-e>",
           accept = "<CR>",
           select_next = { "<Down>", "<C-n>", "<Tab>" },
           select_prev = { "<Up>", "<C-p>", "<S-Tab>" },
-          show_documentation = "<nop>",
-          hide_documentation = "<nop>",
+          -- show_documentation = "",
+          -- hide_documentation = "",
           scroll_documentation_up = "<C-d>",
           scroll_documentation_down = "<C-u>",
-          snippet_forward = "<nop>",
-          snippet_backward = "<nop>",
+          -- snippet_forward = "",
+          -- snippet_backward = "",
         },
         windows = {
           autocomplete = {
@@ -125,7 +139,7 @@ return lib.module.create({
             max_height = 10,
             border = "",
             -- winhighlight = "Normal:BlinkCmpMenu,FloatBorder:BlinkCmpMenuBorder,CursorLine:BlinkCmpMenuSelection,Search:None",
-            scrolloff = 2,
+            scrolloff = 0,
             direction_priority = { "s", "n" },
             selection = "auto_insert",
             -- selection = "manual",
@@ -137,7 +151,7 @@ return lib.module.create({
             },
           },
           documentation = {
-            min_width = 10,
+            min_width = 15,
             max_width = 60,
             max_height = 20,
             border = "rounded",

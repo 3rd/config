@@ -8,16 +8,16 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(250, 13, 16),
-  foreground = hsl(250, 20, 80),
-  blue = hsl(210, 85, 72),
+  background = hsl(255, 11, 15),
+  foreground = hsl(255, 20, 80),
+  blue = hsl(210, 95, 75),
   cyan = hsl(180, 50, 50),
-  green = hsl(100, 44, 60),
+  green = hsl(140, 55, 62),
   indigo = hsl(250, 60, 70),
   magenta = hsl(315, 80, 70),
   orange = hsl(25, 80, 65),
   pink = hsl(315, 70, 75),
-  red = hsl(0, 80, 66),
+  red = hsl(0, 80, 65),
   yellow = hsl(40, 90, 80),
 }
 colors.plugins = {
@@ -28,16 +28,16 @@ colors.plugins = {
 }
 
 local variable = colors.foreground
-local keyword = colors.foreground.darken(25).saturation(12)
-local operator = keyword
-local delimiter = hsl(250, 10, 60)
+local keyword = colors.foreground.darken(20).desaturate(20)
+local operator = colors.foreground.darken(25).desaturate(40)
+local delimiter = colors.foreground.darken(40).desaturate(40)
 local control = keyword.lighten(20).saturation(20)
 
 local parameter = colors.red.rotate(35).saturation(68)
-local property = colors.foreground.darken(10).saturation(20)
+local property = colors.foreground.darken(10).desaturate(10)
 local field = property
-local constant = colors.red.saturation(60).lighten(10)
-local comment = colors.foreground.saturation(12).darken(50)
+local constant = colors.red.lighten(20).saturation(80)
+local comment = colors.foreground.darken(40).desaturate(40)
 local builtin = colors.red.saturation(60)
 local special = colors.indigo.saturation(80).lighten(25)
 
@@ -433,7 +433,7 @@ local theme = lush(function(injected)
     sym("@lsp.type.function")({}),
     sym("@lsp.type.identifier")({ Identifier }),
     sym("@lsp.type.interface")({ sym("@type") }),
-    sym("@lsp.type.keyword")({ sym("@keyword") }),
+    sym("@lsp.type.keyword")({}),
     sym("@lsp.type.lifetime")({ fg = colors.pink }),
     sym("@lsp.type.macro")({ sym("@macro") }),
     sym("@lsp.type.method")({ sym("@method") }),

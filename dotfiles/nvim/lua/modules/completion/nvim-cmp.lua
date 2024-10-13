@@ -219,8 +219,9 @@ local setup = function()
     sources = cmp.config.sources(cmp_sources),
     window = {
       completion = {
-        border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
-        winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder",
+        -- border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
+        border = nil,
+        -- winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder",
         scrollbar = "║",
         autocomplete = {
           require("cmp.types").cmp.TriggerEvent.InsertEnter,
@@ -229,11 +230,11 @@ local setup = function()
       },
       documentation = {
         border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
-        winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder",
+        -- winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder",
         scrollbar = "║",
       },
     },
-    style = { winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder" },
+    -- style = { winhighlight = "NormalFloat:NormalFloat,FloatBorder:FloatBorder" },
     experimental = { ghost_text = true },
     performance = {
       throttle = 10,
@@ -259,7 +260,7 @@ end
 
 return lib.module.create({
   name = "completion/nvim-cmp",
-  enabled = false,
+  -- enabled = false,
   hosts = "*",
   plugins = {
     {
@@ -274,16 +275,9 @@ return lib.module.create({
         "hrsh7th/cmp-nvim-lsp-signature-help",
         "hrsh7th/cmp-nvim-lua",
         "hrsh7th/cmp-path",
-        -- "ray-x/cmp-treesitter",
         "saadparwaiz1/cmp_luasnip",
         "nvim-web-devicons",
-        -- {
-        --   "abecodes/tabout.nvim",
-        --   opts = {
-        --     ignore_beginning = false,
-        --     completion = false,
-        --   },
-        -- },
+        -- "ray-x/cmp-treesitter",
       },
       config = setup,
     },
