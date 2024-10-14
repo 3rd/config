@@ -8,17 +8,17 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(255, 11, 14),
-  foreground = hsl(255, 16, 82),
-  blue = hsl(210, 95, 75),
-  cyan = hsl(180, 50, 50),
-  green = hsl(140, 55, 62),
+  background = hsl(252, 13, 15),
+  foreground = hsl(250, 20, 80),
+  blue = hsl(200, 95, 70),
+  cyan = hsl(180, 85, 45),
+  green = hsl(90, 50, 55),
   indigo = hsl(250, 60, 70),
   magenta = hsl(315, 80, 70),
   orange = hsl(25, 80, 65),
   pink = hsl(315, 70, 75),
-  red = hsl(0, 80, 65),
-  yellow = hsl(40, 90, 80),
+  red = hsl(10, 90, 40),
+  yellow = hsl(40, 90, 55),
 }
 colors.plugins = {
   indent_guides = {
@@ -33,12 +33,12 @@ local operator = colors.foreground.darken(25).desaturate(40)
 local delimiter = colors.foreground.darken(40).desaturate(40)
 local control = keyword.lighten(20).saturation(20)
 
-local parameter = colors.red.rotate(35).saturation(68)
+local parameter = colors.red.rotate(15).saturation(75).lighten(40)
 local property = colors.foreground.darken(10).desaturate(10)
 local field = property
-local constant = colors.red.lighten(20).saturation(80)
+local constant = colors.red.lighten(40).desaturate(20)
 local comment = colors.foreground.darken(40).desaturate(40)
-local builtin = colors.red.saturation(60)
+local builtin = colors.red.lighten(40).desaturate(20)
 local special = colors.indigo.saturation(80).lighten(25)
 
 colors.common = {
@@ -66,7 +66,7 @@ colors.common = {
   -- extra
   builtin = builtin,
   macro = keyword.lighten(40).saturate(70),
-  ret = colors.red.saturation(65),
+  ret = builtin,
   constructor = colors.cyan,
   cword = colors.background.lighten(20),
 }
