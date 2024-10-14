@@ -1,25 +1,25 @@
 return {
-  background = "#24222A",
+  background = "#222028",
   blue = "#83BFFC",
   common = {
     boolean = "#F17E7E",
     builtin = "#DB7070",
-    comment = "#736C89",
-    conditional = "#AEA6C4",
+    comment = "#777089",
+    conditional = "#B3ACC8",
     constant = "#F17E7E",
     constructor = "#40BFBF",
-    cword = "#4D495B",
-    delimiter = "#736C89",
-    field = "#B1ABC4",
+    cword = "#4B4658",
+    delimiter = "#777089",
+    field = "#B8B3C6",
     ["function"] = "#83BFFC",
-    identifier = "#C7C2D6",
-    keyword = "#9C95B2",
-    macro = "#B29DF1",
+    identifier = "#CDCAD8",
+    keyword = "#A39DB4",
+    macro = "#B9A6F2",
     number = "#F17E7E",
-    operator = "#938DA5",
+    operator = "#9994A8",
     parameter = "#E2B069",
-    property = "#B1ABC4",
-    ["repeat"] = "#AEA6C4",
+    property = "#B8B3C6",
+    ["repeat"] = "#B3ACC8",
     ret = "#E06C6C",
     special = "#A99AF4",
     special_keyword = "#A99AF4",
@@ -27,7 +27,7 @@ return {
     type = "#40BFBF"
   },
   cyan = "#40BFBF",
-  foreground = "#C7C2D6",
+  foreground = "#CDCAD8",
   green = "#69D38C",
   indigo = "#9485E0",
   magenta = "#F075D1",
@@ -37,7 +37,7 @@ return {
   plugins = {
     indent_guides = {
       chunk = "#9F3885",
-      indent = { "#3A3644" }
+      indent = { "#373441" }
     }
   },
   red = "#ED5E5E",
@@ -48,16 +48,16 @@ return {
     },
     code = {
       block = {
-        background = "#3A3644",
-        content = "#C7C2D6",
-        language = "#635D74",
-        marker = "#4D495B"
+        background = "#373441",
+        content = "#CDCAD8",
+        language = "#605B71",
+        marker = "#4B4658"
       },
       inline = "#E9A677"
     },
     datetime = "#FC824A",
     document = {
-      meta = "#736C89",
+      meta = "#777089",
       meta_field = "#F075D1",
       meta_field_key = "#EC93D6",
       title = "#7DE8A1"
@@ -71,7 +71,7 @@ return {
         bg = "#402B39",
         fg = "#FF85D6"
       },
-      marker = "#9C95B2",
+      marker = "#A39DB4",
       one = {
         bg = "#2B2E40",
         fg = "#8599FF"
@@ -97,8 +97,8 @@ return {
     },
     list_item = {
       label = "#A294EB",
-      label_marker = "#736C89",
-      marker = "#78767F"
+      label_marker = "#777089",
+      marker = "#7B7981"
     },
     number = "#F17E7E",
     outline = {
@@ -126,8 +126,8 @@ return {
       active = "#40BFBF",
       cancelled = "#fa4040",
       completion = "#7378a5",
-      default = "#C7C2D6",
-      done = "#736C89",
+      default = "#CDCAD8",
+      done = "#777089",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
@@ -137,42 +137,42 @@ return {
   ui = {
     breadcrumbs = {
       normal = {
-        bg = "#2E2B36",
-        fg = "#9D96B0"
+        bg = "#2B2933",
+        fg = "#A49FB2"
       },
       separator = {
-        fg = "#88819C"
+        fg = "#8C869C"
       }
     },
     line = {
       current_line = {
-        bg = "#3A3644"
+        bg = "#373441"
       },
       current_line_nr = {
-        bg = "#3A3644",
-        fg = "#8E88A0"
+        bg = "#373441",
+        fg = "#8B859D"
       },
       current_line_sign = {
-        bg = "#3A3644",
+        bg = "#373441",
         fg = "#ED9A5E"
       },
       line_nr = {
-        fg = "#4D495B"
+        fg = "#4B4658"
       }
     },
-    split = "#2E2B36",
+    split = "#2B2933",
     status = {
       a = {
-        bg = "#43404F",
-        fg = "#B2ACC3"
+        bg = "#413D4C",
+        fg = "#B8B4C5"
       },
       b = {
-        bg = "#3A3644",
-        fg = "#A7A0BA"
+        bg = "#373441",
+        fg = "#AEA9BC"
       },
       c = {
-        bg = "#2E2B36",
-        fg = "#9D96B0"
+        bg = "#2B2933",
+        fg = "#A49FB2"
       }
     }
   },

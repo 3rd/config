@@ -8,8 +8,8 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(255, 11, 15),
-  foreground = hsl(255, 20, 80),
+  background = hsl(255, 11, 14),
+  foreground = hsl(255, 16, 82),
   blue = hsl(210, 95, 75),
   cyan = hsl(180, 50, 50),
   green = hsl(140, 55, 62),
