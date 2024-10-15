@@ -1,0 +1,25 @@
+{
+  "bvstory": {
+    "prefix": "bvstory",
+    "description": "\"vue story\"",
+    "body": [
+      "import $1 from './$1.vue';",
+      "",
+      "export default {",
+      "\ttitle: 'Components/$1',",
+      "\tcomponent: $1,",
+      "\\};",
+      "",
+      "const Template = (_, { argTypes \\}) => ({",
+      "\tcomponents: { $1 \\},",
+      "\tprops: Object.keys(argTypes),",
+      "\ttemplate: '<$1 v-bind=\"\\$\\$props\" />',",
+      "\\});",
+      "",
+      "export const Default = Template.bind({\\});",
+      "Default.args = {",
+      "\t$0",
+      "\\};"
+    ]
+  }
+}

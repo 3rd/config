@@ -9,7 +9,7 @@ local default_options = {
   unique = false,
 }
 
----@alias MappingMode "n"|"i"|"v"|"x"|"!"|""
+---@alias MappingMode "n"|"i"|"v"|"x"|"!"|"s"|""
 
 ---@param mode MappingMode|MappingMode[]
 ---@param lhs string

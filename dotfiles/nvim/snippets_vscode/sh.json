@@ -1,0 +1,252 @@
+{
+  "boil": {
+    "prefix": "boil",
+    "description": "\"boilerplate\"",
+    "body": [
+      "#!/usr/bin/env bash",
+      "set -euf -o pipefail",
+      "IFS=\\$'nt'",
+      "",
+      "$0",
+      ""
+    ]
+  },
+  "boil2": {
+    "prefix": "boil2",
+    "description": "\"Boilerplate\" b",
+    "body": [
+      "#!/usr/bin/env bash",
+      "set -euf -o pipefail",
+      "IFS=\\$'nt'",
+      "",
+      "#/ Usage:",
+      "#/ Description:",
+      "#/ Examples:",
+      "#/ Options:",
+      "#/   --help: Display this help message",
+      "usage() {",
+      "\tgrep '^#/' \"\\$0\" | cut -c4-",
+      "\texit 0",
+      "\\}",
+      "expr \"\\$*\" : \".*--help\" > /dev/null && usage",
+      "",
+      "echoerr() { printf \"%sn\" \"\\$*\" >&2; \\}",
+      "info() { echoerr \"[INFO]    \\$*\"; \\}",
+      "warning() { echoerr \"[WARNING] \\$*\"; \\}",
+      "error() { echoerr \"[ERROR]   \\$*\"; \\}",
+      "fatal() {",
+      "\techoerr \"[FATAL]   \\$*\"",
+      "\texit 1",
+      "\\}",
+      "",
+      "cleanup() {",
+      "\tinfo \"... cleaned up\"",
+      "\\}",
+      "",
+      "if [[ \"\\${BASH_SOURCE[0]\\}\" = \"\\$0\" ]]; then",
+      "\ttrap cleanup EXIT",
+      "\t$0",
+      "fi",
+      ""
+    ]
+  },
+  "scriptdir": {
+    "prefix": "scriptdir",
+    "description": "\"get dir of current script\"",
+    "body": [
+      "DIR=\"\\$( cd \"\\$(dirname \"\\${BASH_SOURCE[0]\\}\" )\" >/dev/null 2>&1 && pwd )\"",
+      ""
+    ]
+  },
+  "arg_default": {
+    "prefix": "arg_default",
+    "description": "\"argument with default value\"",
+    "body": [
+      "ARG=\\${1:-default\\}",
+      ""
+    ]
+  },
+  "arg_switch": {
+    "prefix": "arg_switch",
+    "description": "\"getopts switch\"",
+    "body": [
+      "while getopts \"hv\" arg; do",
+      "\tcase \"\\$arg\" in",
+      "\t\th) # help",
+      "\t\t\tshow_help",
+      "\t\t\texit 0",
+      "\t\t\t;;",
+      "\t\tv) # version",
+      "\t\t\tprintf \"%s\\n\" \"\\$version\"",
+      "\t\t\texit 0",
+      "\t\t\t;;",
+      "\t\t*)",
+      "\t\t\texit 1",
+      "\tesac",
+      "done",
+      ""
+    ]
+  },
+  "if_empty": {
+    "prefix": "if_empty",
+    "description": "\"if empty\"",
+    "body": [
+      "if [ -z \"\\$VAR\" ]; then",
+      "\ttrue",
+      "fi",
+      ""
+    ]
+  },
+  "if_not_empty": {
+    "prefix": "if_not_empty",
+    "description": "\"if not empty\"",
+    "body": [
+      "if [ -n \"\\$VAR\" ]; then",
+      "\ttrue",
+      "fi",
+      ""
+    ]
+  },
+  "if_file": {
+    "prefix": "if_file",
+    "description": "\"if file exists\"",
+    "body": [
+      "if [[ -f \"\\$PATH\" ]]; then",
+      "\t$0",
+      "fi",
+      ""
+    ]
+  },
+  "if_dir": {
+    "prefix": "if_dir",
+    "description": "\"if dir exists\"",
+    "body": [
+      "if [[ -d \"\\$PATH\" ]]; then",
+      "\t$0",
+      "fi",
+      ""
+    ]
+  },
+  "if_grep": {
+    "prefix": "if_grep",
+    "description": "\"if file contains\"",
+    "body": [
+      "if grep -q \"$1\" \"$2\"; then",
+      "\t$0",
+      "fi",
+      ""
+    ]
+  },
+  "if_argc": {
+    "prefix": "if_argc",
+    "description": "\"if argument count\"",
+    "body": [
+      "if [ \"\\$#\" -eq $1 ]; then",
+      "\t$0",
+      "fi",
+      "echo \\$#",
+      ""
+    ]
+  },
+  "if_not_argc": {
+    "prefix": "if_not_argc",
+    "description": "\"if not argument count\"",
+    "body": [
+      "if [ \"\\$#\" -ne $1 ]; then",
+      "\t$0",
+      "fi",
+      "echo \\$#",
+      ""
+    ]
+  },
+  "if_numeric": {
+    "prefix": "if_numeric",
+    "description": "\"check if numeric\"",
+    "body": [
+      "if printf \"%s\" \"$1\" | grep -Eq '^[+-]?[0-9]+\\$'; then",
+      "\t$0",
+      "fi",
+      ""
+    ]
+  },
+  "if_tmux": {
+    "prefix": "if_tmux",
+    "description": "\"if in tmux\"",
+    "body": [
+      "if printf \"%s\" \"\\$TERM\" | grep -Fq screen && test \"\\$TMUX\" ; then",
+      "\t$0",
+      "fi",
+      ""
+    ]
+  },
+  "if_root": {
+    "prefix": "if_root",
+    "description": "\"if not running as root\"",
+    "body": [
+      "if [[ \\$EUID -eq 0 ]]; then",
+      "\t$0",
+      "fi",
+      ""
+    ]
+  },
+  "if_not_root": {
+    "prefix": "if_not_root",
+    "description": "\"if not running as root\"",
+    "body": [
+      "if [[ \\$EUID -ne 0 ]]; then",
+      "\techo \"This script must be run as root\" ",
+      "\texit 1",
+      "fi",
+      ""
+    ]
+  },
+  "for_line_in_var": {
+    "prefix": "for_line_in_var",
+    "description": "\"for line in variable\"",
+    "body": [
+      "while read -r LINE; do",
+      "\tprintf 'line: %sn' \"\\$LINE\"",
+      "done <<< \"\\$VAR\"",
+      ""
+    ]
+  },
+  "for_file_rg": {
+    "prefix": "for_file_rg",
+    "description": "\"for file in rg match\"",
+    "body": [
+      "FILES=\\$(rg -e \"^<<<<<<\")",
+      "while IFS=: read -r FILE _; do",
+      "\tprintf 'file: %sn' \"\\$FILE\"",
+      "done <<< \"\\$FILES\"",
+      ""
+    ]
+  },
+  "confirm": {
+    "prefix": "confirm",
+    "description": "\"prompt user to confirm action\"",
+    "body": [
+      "read -p \"$1\" -n 1 -r",
+      "echo",
+      "if [[ \\$REPLY =~ ^[Yy]\\$ ]]",
+      "then",
+      "\t\t$0",
+      "fi",
+      ""
+    ]
+  },
+  "colors": {
+    "prefix": "colors",
+    "description": "\"use colors\"",
+    "body": [
+      "BLACK   = \\$(shell tput -Txterm setaf 0)",
+      "RED     = \\$(shell tput -Txterm setaf 1)",
+      "GREEN   = \\$(shell tput -Txterm setaf 2)",
+      "YELLOW  = \\$(shell tput -Txterm setaf 3)",
+      "BLUE    = \\$(shell tput -Txterm setaf 4)",
+      "MAGENTA = \\$(shell tput -Txterm setaf 5)",
+      "CYAN    = \\$(shell tput -Txterm setaf 6)",
+      "WHITE   = \\$(shell tput -Txterm setaf 7)",
+      "RESET   = \\$(shell tput -Txterm sgr0)"
+    ]
+  }
+}

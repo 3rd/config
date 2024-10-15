@@ -1,0 +1,20 @@
+{
+  "bcontext": {
+    "prefix": "bcontext",
+    "description": "\"context\"",
+    "body": [
+      "import { createContext, useContext \\} from \"react\";",
+      "",
+      "type $1ContextType = {",
+      "\t$2",
+      "\\};",
+      "",
+      "const $1Context = createContext<$1ContextType>({\\} as $1ContextType);",
+      "",
+      "export const $1Provider = $1Context.Provider;",
+      "",
+      "export const use$1 = () => useContext($1Context);",
+      ""
+    ]
+  }
+}

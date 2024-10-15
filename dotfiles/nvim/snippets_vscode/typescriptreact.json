@@ -1,0 +1,28 @@
+{
+  "boil": {
+    "prefix": "boil",
+    "description": "\"react component\"",
+    "body": [
+      "import React from \"react\";",
+      "",
+      "export type $1Props = {",
+      "\t$2",
+      "\\}",
+      "",
+      "export const $1 = ({$3\\}: $1Props) => {",
+      "\treturn $0;",
+      "\\};",
+      ""
+    ]
+  },
+  "bstory": {
+    "prefix": "bstory",
+    "description": "\"react story\"",
+    "body": [
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

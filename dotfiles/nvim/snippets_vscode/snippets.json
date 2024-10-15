@@ -1,0 +1,10 @@
+{
+  "snip": {
+    "prefix": "snip",
+    "body": [
+      "snippet ${1:trigger} \"${2:description}\"",
+      "\t${0:$TM_SELECTED_TEXT}",
+      ""
+    ]
+  }
+}

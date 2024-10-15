@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "completion/snippets",
+  enabled = false,
   hosts = "*",
   plugins = {
     {
@@ -11,7 +12,7 @@ return lib.module.create({
 
         -- load
         require("luasnip.loaders.from_snipmate").load({
-          path = { lib.path.resolve(lib.env.dirs.vim.config .. "/snippets") },
+          path = { lib.path.resolve(lib.env.dirs.vim.config .. "/snippets_snipmate") },
         })
 
         -- cancel snippet - https://github.com/L3MON4D3/LuaSnip/issues/656

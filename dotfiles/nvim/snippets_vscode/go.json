@@ -1,0 +1,128 @@
+{
+  "iferr": {
+    "prefix": "iferr",
+    "description": "\"if err\"",
+    "body": ""
+  },
+  "ifnoterr": {
+    "prefix": "ifnoterr",
+    "description": "\"if data, err; !err\"",
+    "body": ""
+  },
+  "ifok": {
+    "prefix": "ifok",
+    "description": "\"if data, ok\"",
+    "body": ""
+  },
+  "fmp": {
+    "prefix": "fmp",
+    "description": "\"fmt.Printf\"",
+    "body": ""
+  },
+  "fms": {
+    "prefix": "fms",
+    "description": "\"fmt.Sprintf\"",
+    "body": ""
+  },
+  "qq": {
+    "prefix": "qq",
+    "description": "\"qq\"",
+    "body": [
+      "q.Q(${1:})",
+      "$2",
+      ""
+    ]
+  },
+  "httphandler": {
+    "prefix": "httphandler",
+    "description": "\"http handler\"",
+    "body": [
+      "func $1(${2:w} http.ResponseWriter, ${3:r} *http.Request){",
+      "\t$0",
+      "\\}",
+      ""
+    ]
+  },
+  "httpredir": {
+    "prefix": "httpredir",
+    "description": "\"http redirect\"",
+    "body": [
+      "http.Redirect(${1:w}, ${2:r}, \"${3:/}\", ${4:http.StatusFound})",
+      ""
+    ]
+  },
+  "httperr": {
+    "prefix": "httperr",
+    "description": "\"http error\"",
+    "body": [
+      "http.Error(${1:w}, ${2:err}.Error(), ${3:http.StatusInternalServerError})",
+      ""
+    ]
+  },
+  "httpboil": {
+    "prefix": "httpboil",
+    "description": "\"http boilerplate\"",
+    "body": [
+      "package main",
+      "import (",
+      "\t\"fmt\"",
+      "\t\"net/http\"",
+      "\t\"time\"",
+      ")",
+      "",
+      "func greet(w http.ResponseWriter, r *http.Request) {",
+      "\tfmt.Fprintf(w, \"Hello World! %s\", time.Now())",
+      "\\}",
+      "",
+      "func main() {",
+      "\thttp.HandleFunc(\"/\", greet)",
+      "\thttp.ListenAndServe(\":8080\", nil)",
+      "\\}",
+      ""
+    ]
+  },
+  "testfn": {
+    "prefix": "testfn",
+    "description": "\"test function\"",
+    "body": [
+      "func Test$1(t *testing.T) {",
+      "\t$0",
+      "\\}",
+      ""
+    ]
+  },
+  "testfnt": {
+    "prefix": "testfnt",
+    "description": "\"test table\"",
+    "body": [
+      "func Test$1(t *testing.T) {",
+      "\ttestCases := []struct {",
+      "\t\tdesc string",
+      "\t\t$2",
+      "\t\\}{",
+      "\t\t{",
+      "\t\t\tdesc: \"$3\",",
+      "\t\t\t$4",
+      "\t\t\\},",
+      "\t\\}",
+      "\tfor _, tC := range testCases {",
+      "\t\ttt.Run(tC.desc, func(t *testing.T) {",
+      "\t\t\t$0",
+      "\t\t\\})",
+      "\t\\}",
+      "\\}",
+      ""
+    ]
+  },
+  "benchfn": {
+    "prefix": "benchfn",
+    "description": "\"benchmark\"",
+    "body": [
+      "func Benchmark$1(b *testing.B) {",
+      "\tfor ${2:i} := 0; ${2:i} < b.N; ${2:i}++ {",
+      "\t\t$0",
+      "\t\\}",
+      "\\}"
+    ]
+  }
+}

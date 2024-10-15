@@ -1,0 +1,21 @@
+{
+  "boil": {
+    "prefix": "boil",
+    "description": "\"boilerplate\"",
+    "body": [
+      "<template>",
+      "\t<div>$0</div>",
+      "</template>",
+      "",
+      "<script>",
+      "export default {",
+      "\tname: \"$1\"",
+      "\\}",
+      "</script>",
+      "",
+      "<style lang=\"scss\" scoped>",
+      "</style>",
+      ""
+    ]
+  }
+}

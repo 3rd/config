@@ -1,0 +1,21 @@
+{
+  "boil": {
+    "prefix": "boil",
+    "description": "\"boilerplate\"",
+    "body": [
+      "<!DOCTYPE html>",
+      "<html lang=\"en\">",
+      "\t<head>",
+      "\t\t<title>App</title>",
+      "\t\t<meta charset=\"utf-8\" />",
+      "\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+      "\t\t<script defer type=\"module\" src=\"app.js\"></script>",
+      "\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"></link>",
+      "\t</head>",
+      "\t<body>",
+      "\t\t$0",
+      "\t</body>",
+      "</html>"
+    ]
+  }
+}

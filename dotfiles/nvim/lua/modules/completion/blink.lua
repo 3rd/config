@@ -1,7 +1,7 @@
 return lib.module.create({
   name = "completion/blink",
   hosts = "*",
-  enabled = false,
+  -- enabled = false,
   plugins = {
     {
       "Saghen/blink.cmp",
@@ -94,8 +94,9 @@ return lib.module.create({
               score_offset = -3,
               -- similar to https://github.com/garymjr/nvim-snippets
               opts = {
-                friendly_snippets = true,
-                search_paths = { vim.fn.stdpath("config") .. "/snippets" },
+                -- friendly_snippets = true,
+                friendly_snippets = false,
+                search_paths = { vim.fn.stdpath("config") .. "/snippets_vscode" },
                 global_snippets = { "all" },
                 extended_filetypes = {},
                 ignored_filetypes = {},
@@ -204,6 +205,62 @@ return lib.module.create({
           String = "󰉿",
         },
       },
+    },
+    -- TODO: nvim-scissors
+    {
+      "smjonas/snippet-converter.nvim",
+      enabled = false,
+      config = function()
+        local template = {
+          sources = {
+            snipmate = { vim.fn.stdpath("config") .. "/snippets_in" },
+          },
+          output = {
+            vscode = { vim.fn.stdpath("config") .. "/snippets_out" },
+          },
+        }
+        require("snippet_converter").setup({ templates = { template } })
+      end,
+    },
+  },
+  mappings = {
+    {
+      "i",
+      "<Tab>",
+      function()
+        if vim.snippet.active({ direction = 1 }) then
+          vim.schedule(function()
+            vim.snippet.jump(1)
+          end)
+          return
+        end
+        return "<Tab>"
+      end,
+      { expr = true, silent = true },
+    },
+    {
+      "s",
+      "<Tab>",
+      function()
+        vim.schedule(function()
+          vim.snippet.jump(1)
+        end)
+      end,
+      { expr = true, silent = true },
+    },
+    {
+      "i",
+      "<S-Tab>",
+      function()
+        if vim.snippet.active({ direction = -1 }) then
+          vim.schedule(function()
+            vim.snippet.jump(-1)
+          end)
+          return
+        end
+        return "<S-Tab>"
+      end,
+      { expr = true, silent = true },
     },
   },
 })
