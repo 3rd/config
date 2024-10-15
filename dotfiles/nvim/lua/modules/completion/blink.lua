@@ -145,7 +145,7 @@ return lib.module.create({
             selection = "auto_insert",
             -- selection = "manual",
             -- 'function(blink.cmp.CompletionRenderContext): blink.cmp.Component[]' for custom rendering
-            draw = "reversed", -- simple | reversed | minimal | function
+            draw = "simple", -- simple | reversed | minimal | function
             cycle = {
               from_bottom = true,
               from_top = true,
@@ -220,6 +220,16 @@ return lib.module.create({
           },
         }
         require("snippet_converter").setup({ templates = { template } })
+      end,
+    },
+  },
+
+  hooks = {
+    lsp = {
+      -- https://github.com/Saghen/blink.cmp/issues/21
+      capabilities = function(capabilities)
+        capabilities.textDocument.completion.completionItem.insertReplaceSupport = false
+        return capabilities
       end,
     },
   },

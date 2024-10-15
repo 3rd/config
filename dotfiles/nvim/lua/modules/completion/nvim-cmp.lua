@@ -260,7 +260,7 @@ end
 
 return lib.module.create({
   name = "completion/nvim-cmp",
-  -- enabled = false,
+  enabled = false,
   hosts = "*",
   plugins = {
     {

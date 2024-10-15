@@ -22,6 +22,7 @@
     ../programs/zoxide.nix
     ../gtk.nix
     ../utilities.nix
+    ../desktop/xdg-desktop-entries.nix
   ];
 
   nixpkgs.config.allowUnfree = true;
