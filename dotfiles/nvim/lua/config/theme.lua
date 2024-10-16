@@ -312,7 +312,7 @@ local theme = lush(function(injected)
     DiagnosticVirtualTextWarn({ fg = colors.orange }),
     DiagnosticVirtualTextInfo({ fg = colors.blue }),
     DiagnosticVirtualTextHint({ fg = colors.cyan }),
-    DiagnosticUnderlineError({ bg = colors.red.darken(70).desaturate(80), gui = "none" }),
+    DiagnosticUnderlineError({ bg = colors.red.darken(30).desaturate(40), gui = "none" }),
     DiagnosticUnderlineWarn({ gui = "undercurl" }),
     DiagnosticUnderlineInfo({ gui = "undercurl" }),
     DiagnosticUnderlineHint({ gui = "undercurl" }),

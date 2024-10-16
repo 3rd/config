@@ -23,12 +23,12 @@ return {
     ret = "#E57761",
     special = "#E8B37D",
     special_keyword = "#E8B37D",
-    string = "#99CC66",
+    string = "#99D65C",
     type = "#17CFCF"
   },
   cyan = "#17CFCF",
   foreground = "#CBC8DA",
-  green = "#99CC66",
+  green = "#99D65C",
   indigo = "#9485E0",
   magenta = "#F075D1",
   none = "NONE",
@@ -110,7 +110,7 @@ return {
       two = "#BF8FFF"
     },
     section = "#8797C2",
-    string = "#99CC66",
+    string = "#99D65C",
     tag = {
       context = "#EDBE5E",
       danger = {
