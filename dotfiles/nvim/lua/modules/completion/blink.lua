@@ -47,8 +47,8 @@ return lib.module.create({
             blocked_trigger_characters = { " ", "\n", "\t" },
             show_on_insert_on_trigger_character = true,
             show_on_insert_blocked_trigger_characters = { "'", '"' },
+            show_in_snippet = false,
           },
-
           signature_help = {
             enabled = false,
             blocked_trigger_characters = {},
@@ -94,7 +94,6 @@ return lib.module.create({
               score_offset = -3,
               -- similar to https://github.com/garymjr/nvim-snippets
               opts = {
-                -- friendly_snippets = true,
                 friendly_snippets = false,
                 search_paths = { vim.fn.stdpath("config") .. "/snippets_vscode" },
                 global_snippets = { "all" },
@@ -111,8 +110,10 @@ return lib.module.create({
         },
 
         fuzzy = {
-          use_frecency = true,
+          keyword_range = "prefix",
           use_proximity = true,
+          use_frecency = true,
+          use_typo_resistance = true,
           max_items = 200,
           sorts = { "label", "kind", "score" },
           prebuiltBinaries = {
@@ -131,18 +132,18 @@ return lib.module.create({
           -- hide_documentation = "",
           scroll_documentation_up = "<C-d>",
           scroll_documentation_down = "<C-u>",
-          -- snippet_forward = "",
-          -- snippet_backward = "",
+          snippet_forward = "<Tab>",
+          snippet_backward = "<S-Tab>",
         },
         windows = {
           autocomplete = {
             min_width = 15,
             max_height = 10,
             border = "",
-            -- winhighlight = "Normal:BlinkCmpMenu,FloatBorder:BlinkCmpMenuBorder,CursorLine:BlinkCmpMenuSelection,Search:None",
             scrolloff = 0,
             direction_priority = { "s", "n" },
             selection = "auto_insert",
+            -- selection = "preselect",
             -- selection = "manual",
             -- 'function(blink.cmp.CompletionRenderContext): blink.cmp.Component[]' for custom rendering
             draw = "simple", -- simple | reversed | minimal | function
@@ -156,7 +157,6 @@ return lib.module.create({
             max_width = 60,
             max_height = 20,
             border = "rounded",
-            -- winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,CursorLine:BlinkCmpDocCursorLine,Search:None",
             direction_priority = {
               autocomplete_north = { "e", "w", "n", "s" },
               autocomplete_south = { "e", "w", "s", "n" },

@@ -57,7 +57,7 @@ return {
   textwidth = 999,
   -- completion
   complete = ".",
-  completeopt = [[menu,menuone,noinsert,noselect]],
+  completeopt = [[menu,menuone,noselect]],
   -- search
   gdefault = true,
   ignorecase = true,

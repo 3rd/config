@@ -52,7 +52,8 @@ return lib.module.create({
           },
           formatters = {
             stylua = {
-              prepend_args = { "--config-path", paths.stylua_config },
+              prepend_args = lib.path.root_has(".stylua.toml", "stylua.toml") and {}
+                or { "--config-path", paths.stylua_config },
             },
             shfmt = {
               prepend_args = { "-i", "2", "-ci", "-bn" },

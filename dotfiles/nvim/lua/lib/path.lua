@@ -24,10 +24,21 @@ local cwd_is_git_repo = function()
   return vim.v.shell_error == 0 and status ~= ""
 end
 
+---@vararg string|string[]
+---@return boolean
+local root_has = function(...)
+  local root_path = cwd()
+  for _, path in ipairs({ ... }) do
+    if vim.fn.filereadable(resolve(root_path, path)) == 1 then return true end
+  end
+  return false
+end
+
 return {
   cwd = cwd,
   resolve = resolve,
   resolve_relative = resolve_relative,
   resolve_config = resolve_config,
   cwd_is_git_repo = cwd_is_git_repo,
+  root_has = root_has,
 }

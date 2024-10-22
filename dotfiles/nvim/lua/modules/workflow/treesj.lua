@@ -10,7 +10,7 @@ return lib.module.create({
         check_syntax_error = true,
         max_join_length = 150,
         cursor_behavior = "hold",
-        notify = true,
+        notify = false,
         dot_repeat = false,
       },
     },
