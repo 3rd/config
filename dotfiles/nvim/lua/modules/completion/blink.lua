@@ -5,6 +5,7 @@ return lib.module.create({
   plugins = {
     {
       "Saghen/blink.cmp",
+      -- commit = "c218fafbf275725532f3cf2eaebdf863b958d48e",
       -- "3rd/blink.cmp",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
       lazy = false, -- lazy loading handled internally
@@ -62,60 +63,9 @@ return lib.module.create({
           accept = { auto_brackets = { enabled = true } },
           trigger = { signature_help = { enabled = true } },
         },
-        nerd_font_variant = "normal", -- mono|normal
-
-        sources = {
-          providers = {
-            -- all of these properties work on every source
-            {
-              "blink.cmp.sources.lsp",
-              name = "LSP",
-              keyword_length = 0,
-              score_offset = 0,
-              trigger_characters = { "f", "o", "o" },
-            },
-            -- the following two sources have additional options
-            {
-              "blink.cmp.sources.path",
-              name = "Path",
-              score_offset = 3,
-              opts = {
-                trailing_slash = false,
-                label_trailing_slash = true,
-                get_cwd = function(context)
-                  return vim.fn.expand(("#%d:p:h"):format(context.bufnr))
-                end,
-                show_hidden_files_by_default = true,
-              },
-            },
-            {
-              "blink.cmp.sources.snippets",
-              name = "Snippets",
-              score_offset = -3,
-              -- similar to https://github.com/garymjr/nvim-snippets
-              opts = {
-                friendly_snippets = false,
-                search_paths = { vim.fn.stdpath("config") .. "/snippets_vscode" },
-                global_snippets = { "all" },
-                extended_filetypes = {},
-                ignored_filetypes = {},
-              },
-            },
-            {
-              "blink.cmp.sources.buffer",
-              name = "Buffer",
-              fallback_for = { "LSP" },
-            },
-          },
-        },
 
         fuzzy = {
-          keyword_range = "prefix",
-          use_proximity = true,
-          use_frecency = true,
           use_typo_resistance = true,
-          max_items = 200,
-          sorts = { "label", "kind", "score" },
           prebuiltBinaries = {
             download = false,
             forceVersion = nil,
@@ -137,30 +87,16 @@ return lib.module.create({
         },
         windows = {
           autocomplete = {
-            min_width = 15,
-            max_height = 10,
-            border = "",
-            scrolloff = 0,
-            direction_priority = { "s", "n" },
             selection = "auto_insert",
             -- selection = "preselect",
             -- selection = "manual",
             -- 'function(blink.cmp.CompletionRenderContext): blink.cmp.Component[]' for custom rendering
             draw = "simple", -- simple | reversed | minimal | function
-            cycle = {
-              from_bottom = true,
-              from_top = true,
-            },
           },
           documentation = {
             min_width = 15,
             max_width = 60,
             max_height = 20,
-            border = "rounded",
-            direction_priority = {
-              autocomplete_north = { "e", "w", "n", "s" },
-              autocomplete_south = { "e", "w", "s", "n" },
-            },
             auto_show = true,
             auto_show_delay_ms = 500,
             update_delay_ms = 50,
@@ -170,7 +106,6 @@ return lib.module.create({
             max_width = 100,
             max_height = 10,
             border = "rounded",
-            -- winhighlight = "Normal:BlinkCmpSignatureHelp,FloatBorder:BlinkCmpSignatureHelpBorder",
           },
         },
 
