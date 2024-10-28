@@ -9,15 +9,15 @@ local hsl = lush.hsl
 local colors = {
   none = "NONE",
   background = hsl(252, 13, 15),
-  foreground = hsl(250, 20, 82),
-  blue = hsl(200, 95, 70),
+  foreground = hsl(250, 30, 90),
+  blue = hsl(200, 95, 75),
   cyan = hsl(180, 80, 45),
-  green = hsl(90, 60, 60),
+  green = hsl(90, 70, 70),
   indigo = hsl(250, 60, 70),
   magenta = hsl(315, 80, 70),
   orange = hsl(25, 80, 65),
   pink = hsl(315, 70, 75),
-  red = hsl(10, 90, 40),
+  red = hsl(10, 95, 45),
   yellow = hsl(40, 80, 65),
 }
 colors.plugins = {
@@ -28,7 +28,7 @@ colors.plugins = {
 }
 
 local variable = colors.foreground
-local keyword = colors.foreground.darken(20).desaturate(20)
+local keyword = colors.foreground.darken(15).desaturate(20)
 local operator = colors.foreground.darken(25).desaturate(40)
 local delimiter = colors.foreground.darken(40).desaturate(40)
 local control = keyword.lighten(20).saturation(20)

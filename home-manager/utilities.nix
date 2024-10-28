@@ -14,7 +14,7 @@
       tealdeer # https://github.com/dbrgn/tealdeer
       tokei # https://github.com/XAMPPRocky/tokei
       watchexec # https://github.com/watchexec/watchexec
-      ht-rust # https://github.com/ducaale/xh
+      xh # https://github.com/ducaale/xh
       dogdns # https://github.com/ogham/dog
       fx # https://github.com/antonmedv/fx
       xsv # https://github.com/BurntSushi/xsv
