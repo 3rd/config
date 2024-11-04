@@ -28,6 +28,7 @@
       ngrok
       rlwrap
       socat
+      p7zip
       sshfs
       usbutils
       virt-manager

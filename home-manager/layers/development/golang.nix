@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-stable, ... }:
 
 {
   home.packages = with pkgs;
@@ -10,7 +10,7 @@
     ] ++ (if (system == "x86_64-linux") then
       [
         #
-        jetbrains.goland
+        pkgs-stable.jetbrains.goland
       ]
     else
       [ ]);

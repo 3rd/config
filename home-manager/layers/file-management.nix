@@ -1,11 +1,14 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-stable, ... }:
 
 {
-  home.packages = with pkgs; [
-    #
-    yazi
-    ranger
-    pcmanfm
-  ];
+  home.packages = with pkgs;
+    [
+      #
+      ranger
+      pcmanfm
+    ] ++ [
+      #
+      pkgs-stable.yazi
+    ];
 }
 

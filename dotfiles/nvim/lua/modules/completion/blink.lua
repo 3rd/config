@@ -6,6 +6,7 @@ return lib.module.create({
     {
       "Saghen/blink.cmp",
       -- commit = "c218fafbf275725532f3cf2eaebdf863b958d48e",
+      -- commit = "88f1c203465fa3d883f2309bc22412c90a9f6a08",
       -- "3rd/blink.cmp",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
       lazy = false, -- lazy loading handled internally
@@ -73,17 +74,13 @@ return lib.module.create({
         },
 
         keymap = {
-          show = "<C-space>",
-          hide = "<C-e>",
-          accept = "<CR>",
-          select_next = { "<Down>", "<C-n>", "<Tab>" },
-          select_prev = { "<Up>", "<C-p>", "<S-Tab>" },
-          -- show_documentation = "",
-          -- hide_documentation = "",
-          scroll_documentation_up = "<C-d>",
-          scroll_documentation_down = "<C-u>",
-          snippet_forward = "<Tab>",
-          snippet_backward = "<S-Tab>",
+          ["<C-space>"] = { "show" },
+          ["<C-e>"] = { "hide" },
+          ["<CR>"] = { "accept", "fallback" },
+          ["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
+          ["<S-Tab>"] = { "snippet_backward", "select_prev", "fallback" },
+          ["<C-u>"] = { "scroll_documentation_up", "fallback" },
+          ["<C-d>"] = { "scroll_documentation_down", "fallback" },
         },
         windows = {
           autocomplete = {
@@ -92,6 +89,8 @@ return lib.module.create({
             -- selection = "manual",
             -- 'function(blink.cmp.CompletionRenderContext): blink.cmp.Component[]' for custom rendering
             draw = "simple", -- simple | reversed | minimal | function
+            direction_priority = { "s", "n" },
+            scrolloff = 2,
           },
           documentation = {
             min_width = 15,
@@ -100,6 +99,7 @@ return lib.module.create({
             auto_show = true,
             auto_show_delay_ms = 500,
             update_delay_ms = 50,
+            winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,CursorLine:BlinkCmpDocCursorLine,Search:None",
           },
           signature_help = {
             min_width = 1,
@@ -138,6 +138,28 @@ return lib.module.create({
           Variable = "󰆧",
           -- tree-sitter
           String = "󰉿",
+        },
+
+        sources = {
+          completion = {
+            enabled_providers = { "lsp", "path", "snippets", "buffer", "lazydev" },
+          },
+          providers = {
+            lsp = { fallback_for = { "lazydev" } },
+            lazydev = { name = "LazyDev", module = "lazydev.integrations.blink" },
+            snippets = {
+              name = "Snippets",
+              module = "blink.cmp.sources.snippets",
+              score_offset = -3,
+              opts = {
+                friendly_snippets = true,
+                search_paths = { vim.fn.stdpath("config") .. "/snippets_vscode" },
+                global_snippets = { "all" },
+                extended_filetypes = {},
+                ignored_filetypes = {},
+              },
+            },
+          },
         },
       },
     },

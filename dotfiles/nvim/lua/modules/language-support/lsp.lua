@@ -129,8 +129,7 @@ local setup_lspconfig = function()
           workspace = {
             library = {
               -- [".luarc.json"] = true,
-              [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-              [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
+              [vim.env.VIMRUNTIME] = true,
               [vim.fn.stdpath("config") .. "/lua"] = true,
             },
             ignoreDir = { ".git", "node_modules", "linters" },
@@ -435,8 +434,12 @@ return lib.module.create({
       opts = {
         library = {
           "lazy.nvim",
+          "image.nvim",
           { path = "luvit-meta/library", words = { "vim%.uv" } },
         },
+        enabled = function(root_dir)
+          return not vim.uv.fs_stat(root_dir .. "/.luarc.json")
+        end,
       },
     },
     { "Bilal2453/luvit-meta", lazy = true }, -- optional `vim.uv` typings

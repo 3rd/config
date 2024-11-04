@@ -84,7 +84,7 @@ return {
   -- visual
   showtabline = 1,
   cmdheight = 1,
-  concealcursor = "nc",
+  concealcursor = "c",
   conceallevel = 2,
   cursorline = true,
   cursorlineopt = "number,screenline",

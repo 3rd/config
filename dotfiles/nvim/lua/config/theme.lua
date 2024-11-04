@@ -8,11 +8,11 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(252, 13, 15),
-  foreground = hsl(250, 30, 90),
+  background = hsl(252, 13, 16),
+  foreground = hsl(250, 30, 87),
   blue = hsl(200, 95, 75),
   cyan = hsl(180, 80, 45),
-  green = hsl(90, 70, 70),
+  green = hsl(80, 75, 70),
   indigo = hsl(250, 60, 70),
   magenta = hsl(315, 80, 70),
   orange = hsl(25, 80, 65),
@@ -29,17 +29,17 @@ colors.plugins = {
 
 local variable = colors.foreground
 local keyword = colors.foreground.darken(15).desaturate(20)
-local operator = colors.foreground.darken(25).desaturate(40)
+local operator = keyword
 local delimiter = colors.foreground.darken(40).desaturate(40)
-local control = keyword.lighten(20).saturation(20)
+local control = keyword.rotate(70).lighten(10).saturation(90)
 
 local parameter = colors.red.rotate(15).saturation(75).lighten(40)
 local property = colors.foreground.darken(10).desaturate(10)
 local field = property
-local constant = colors.red.lighten(50).desaturate(0)
+local constant = colors.orange.rotate(-10).lighten(30).saturation(100)
 local comment = colors.foreground.darken(40).desaturate(40)
 local builtin = colors.red.lighten(40).desaturate(20)
-local special = colors.indigo.rotate(140).saturation(70).lighten(0)
+local special = colors.indigo.rotate(90).saturation(100).lighten(20)
 
 colors.common = {
   -- lab
@@ -188,7 +188,7 @@ local theme = lush(function(injected)
     -- base
     Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
     -- Normal({ fg = colors.foreground }), -- Normal text
-    NormalFloat({}),
+    NormalFloat({ bg = colors.background.lighten(10) }),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
     EndOfBuffer({ fg = colors.background }),
@@ -367,6 +367,7 @@ local theme = lush(function(injected)
     sym("@keyword.coroutine")({ SpecialKeyword }),
     sym("@keyword.return")({ sym("@break") }),
     sym("@keyword.exception")({ Exception }),
+    sym("@keyword.repeat")({ Conditional }),
     sym("@label")({ Label }),
     sym("@macro")({ Macro }),
     sym("@method")({ Function }),
@@ -473,7 +474,7 @@ local theme = lush(function(injected)
     sym("@constructor.lua")({ Delimiter }),
     sym("@namespace.builtin.lua")({ sym("@builtin") }),
     sym("@keyword.function.lua")({ Keyword }),
-    sym("@keyword.conditional.lua")({ sym("@conditional") }),
+    sym("@keyword.conditional")({ sym("@conditional") }),
 
     -- tsx
     sym("@constructor.tsx")({}),
@@ -547,13 +548,13 @@ local theme = lush(function(injected)
     GitSignsDeletePreview({ link = "DiffDelete" }),
 
     -- ts-rainbow
-    RainbowRed({ fg = colors.red.rotate(-20).desaturate(30).lighten(45) }),
-    RainbowYellow({ fg = colors.pink.desaturate(10).darken(10) }),
-    RainbowBlue({ fg = colors.blue.rotate(20).desaturate(20).lighten(10) }),
-    RainbowOrange({ fg = colors.orange.rotate(-10).saturate(10).lighten(10) }),
-    RainbowGreen({ fg = colors.green.rotate(35).desaturate(20).lighten(20) }),
-    RainbowViolet({ fg = colors.magenta.desaturate(20).lighten(0) }),
-    RainbowCyan({ fg = colors.cyan.desaturate(20).lighten(5) }),
+    RainbowRed({ fg = delimiter }),
+    RainbowYellow({ fg = delimiter.lighten(10).rotate(120).saturation(30) }),
+    RainbowBlue({ fg = delimiter.lighten(30) }),
+    RainbowOrange({ fg = delimiter.lighten(10).rotate(120).saturation(30) }),
+    RainbowGreen({ fg = delimiter.lighten(30) }),
+    RainbowViolet({ fg = delimiter.lighten(10).rotate(120).saturation(30) }),
+    RainbowCyan({ fg = delimiter.lighten(30) }),
 
     -- syslang
     sym("@slang.error")({ bg = "#7a2633", fg = "#ffffff" }),
@@ -660,6 +661,27 @@ local theme = lush(function(injected)
 
     -- leap
     LeapLabelPrimary({ bg = colors.orange.darken(50), fg = colors.orange.lighten(20) }),
+
+    -- markdown
+    RenderMarkdownH1Bg({ bg = colors.slang.headline.one.bg }),
+    RenderMarkdownH2Bg({ bg = colors.slang.headline.two.bg }),
+    RenderMarkdownH3Bg({ bg = colors.slang.headline.three.bg }),
+    RenderMarkdownH4Bg({ bg = colors.slang.headline.four.bg }),
+    RenderMarkdownH5Bg({ bg = colors.slang.headline.five.bg }),
+    RenderMarkdownH6Bg({ bg = colors.slang.headline.six.bg }),
+    RenderMarkdownH1({ fg = colors.slang.headline.one.fg }),
+    RenderMarkdownH2({ fg = colors.slang.headline.two.fg }),
+    RenderMarkdownH3({ fg = colors.slang.headline.three.fg }),
+    RenderMarkdownH4({ fg = colors.slang.headline.four.fg }),
+    RenderMarkdownH5({ fg = colors.slang.headline.five.fg }),
+    RenderMarkdownH6({ fg = colors.slang.headline.six.fg }),
+    RenderMarkdownBullet({ fg = colors.slang.list_item.label }),
+    RenderMarkdownUnchecked({ fg = colors.slang.list_item.marker }),
+    RenderMarkdownChecked({ fg = colors.slang.list_item.marker }),
+    RenderMarkdownQuote({ fg = colors.slang.tag.context }),
+    RenderMarkdownLink({ fg = colors.slang.link.external }),
+    RenderMarkdownCode({ bg = colors.slang.code.block.background }),
+    RenderMarkdownCodeInline({ bg = colors.slang.code.block.background }),
   }
 end)
 
