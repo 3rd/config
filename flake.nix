@@ -1,6 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-master.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
     hardware.url = "github:nixos/nixos-hardware";
     home-manager = {
@@ -26,7 +27,8 @@
     wired.url = "github:Toqozz/wired-notify";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-stable, home-manager, wired, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-master, home-manager, wired
+    , ... }@inputs:
     let
       inherit (self) outputs;
       systems = [ "aarch64-linux" "x86_64-linux" ];
@@ -43,7 +45,11 @@
 
       nixosConfigurations = {
         spaceship = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
+          specialArgs = {
+            inherit inputs outputs;
+            pkgs-master =
+              import nixpkgs-master { config = { allowUnfree = true; }; };
+          };
           modules = [ ./hosts/spaceship/configuration.nix ];
         };
         macbook = nixpkgs.lib.nixosSystem {
@@ -66,6 +72,10 @@
           extraSpecialArgs = {
             inherit inputs outputs;
             pkgs-stable = import nixpkgs-stable {
+              inherit system;
+              config = { allowUnfree = true; };
+            };
+            pkgs-master = import nixpkgs-master {
               inherit system;
               config = { allowUnfree = true; };
             };
@@ -103,6 +113,10 @@
               inherit system;
               config = { allowUnfree = true; };
             };
+            pkgs-master = import nixpkgs-master {
+              inherit system;
+              config = { allowUnfree = true; };
+            };
           };
           modules = [
             {
@@ -131,6 +145,10 @@
           extraSpecialArgs = {
             inherit inputs outputs;
             pkgs-stable = import nixpkgs-stable {
+              inherit system;
+              config = { allowUnfree = true; };
+            };
+            pkgs-master = import nixpkgs-master {
               inherit system;
               config = { allowUnfree = true; };
             };

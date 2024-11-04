@@ -347,6 +347,22 @@
         "url": "https://github.com/NixOS/nixpkgs/archive/fb192fec7cc7a4c26d51779e9bab07ce6fa5597a.tar.gz"
       }
     },
+    "nixpkgs-master": {
+      "locked": {
+        "lastModified": 1730750028,
+        "narHash": "sha256-iAz1006K9jo3WchcMPKjSbbl43VBbzDLhesDjRtAbcI=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "a9089570c511abd8817b7ed41e38722bae7f32fb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1730327045,
@@ -403,6 +419,7 @@
         "home-manager": "home-manager",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-stable": "nixpkgs-stable",
         "wired": "wired"
       }

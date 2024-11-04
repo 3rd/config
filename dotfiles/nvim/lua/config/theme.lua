@@ -188,7 +188,7 @@ local theme = lush(function(injected)
     -- base
     Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
     -- Normal({ fg = colors.foreground }), -- Normal text
-    NormalFloat({ bg = colors.background.lighten(10) }),
+    NormalFloat({ bg = colors.background.lighten(5) }),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
     EndOfBuffer({ fg = colors.background }),
@@ -548,13 +548,13 @@ local theme = lush(function(injected)
     GitSignsDeletePreview({ link = "DiffDelete" }),
 
     -- ts-rainbow
-    RainbowRed({ fg = delimiter }),
-    RainbowYellow({ fg = delimiter.lighten(10).rotate(120).saturation(30) }),
-    RainbowBlue({ fg = delimiter.lighten(30) }),
-    RainbowOrange({ fg = delimiter.lighten(10).rotate(120).saturation(30) }),
-    RainbowGreen({ fg = delimiter.lighten(30) }),
-    RainbowViolet({ fg = delimiter.lighten(10).rotate(120).saturation(30) }),
-    RainbowCyan({ fg = delimiter.lighten(30) }),
+    RainbowRed({ fg = hsl(350, 70, 70) }),
+    RainbowYellow({ fg = hsl(40, 70, 65) }),
+    RainbowBlue({ fg = hsl(200, 70, 65) }),
+    RainbowOrange({ fg = hsl(30, 75, 65) }),
+    RainbowGreen({ fg = hsl(80, 70, 65) }),
+    RainbowViolet({ fg = hsl(260, 70, 75) }),
+    RainbowCyan({ fg = hsl(180, 70, 65) }),
 
     -- syslang
     sym("@slang.error")({ bg = "#7a2633", fg = "#ffffff" }),

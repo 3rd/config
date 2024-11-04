@@ -11,7 +11,7 @@ return lib.module.create({
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
       lazy = false, -- lazy loading handled internally
       -- optional: provides snippets for the snippet source
-      dependencies = "rafamadriz/friendly-snippets",
+      -- dependencies = "rafamadriz/friendly-snippets",
 
       -- use a release tag to download pre-built binaries
       -- version = "nightly",
@@ -152,7 +152,7 @@ return lib.module.create({
               module = "blink.cmp.sources.snippets",
               score_offset = -3,
               opts = {
-                friendly_snippets = true,
+                friendly_snippets = false,
                 search_paths = { vim.fn.stdpath("config") .. "/snippets_vscode" },
                 global_snippets = { "all" },
                 extended_filetypes = {},

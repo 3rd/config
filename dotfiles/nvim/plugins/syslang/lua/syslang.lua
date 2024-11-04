@@ -17,6 +17,7 @@ local setup_options = function()
   vim.opt_local.formatoptions = "cqrt"
   vim.opt_local.cinwords = "*,-"
   vim.opt_local.textwidth = 130
+  vim.opt_local.concealcursor = "nc"
 end
 
 -- it takes a while for the fold info to be updated by ts on its own

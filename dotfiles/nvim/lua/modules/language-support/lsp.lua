@@ -128,9 +128,11 @@ local setup_lspconfig = function()
           },
           workspace = {
             library = {
-              -- [".luarc.json"] = true,
-              [vim.env.VIMRUNTIME] = true,
+              [".luarc.json"] = true,
+              [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+              [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
               [vim.fn.stdpath("config") .. "/lua"] = true,
+              [vim.fn.expand("$PWD/lua")] = true,
             },
             ignoreDir = { ".git", "node_modules", "linters" },
             checkThirdParty = "Ask",
@@ -377,7 +379,7 @@ local setup_lspconfig = function()
   end
 
   -- setup servers
-  local default_root_dir = root_pattern(".root", ".git", "go.mod", "package.json") or vim.loop.cwd()
+  local default_root_dir = root_pattern(".root", ".git", "go.mod", "package.json") or vim.uv.cwd()
   for server_name, server_options in pairs(servers) do
     local opts = vim.tbl_deep_extend("force", server_options, {
       capabilities = capabilities,
@@ -431,18 +433,23 @@ return lib.module.create({
     {
       "folke/lazydev.nvim",
       ft = "lua", -- only load on lua files
+      dependencies = {
+        { "Bilal2453/luvit-meta", lazy = true }, -- optional `vim.uv` typings
+      },
       opts = {
         library = {
           "lazy.nvim",
           "image.nvim",
+          "sqlite.nvim",
           { path = "luvit-meta/library", words = { "vim%.uv" } },
+          { path = vim.fn.stdpath("config") .. "/lua" },
+          { path = "lua" },
         },
-        enabled = function(root_dir)
-          return not vim.uv.fs_stat(root_dir .. "/.luarc.json")
-        end,
+        -- enabled = function(root_dir)
+        --   return not vim.uv.fs_stat(root_dir .. "/.luarc.json")
+        -- end,
       },
     },
-    { "Bilal2453/luvit-meta", lazy = true }, -- optional `vim.uv` typings
     {
       "j-hui/fidget.nvim",
       tag = "legacy",

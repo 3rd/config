@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, pkgs-master, lib, ... }:
 
 {
   imports = [ ../colors.nix ];
@@ -7,6 +7,7 @@
 
   programs.kitty = {
     enable = true;
+    package = pkgs-master.kitty;
     settings = with config.colors; {
       # general
       clear_all_shortcuts = "yes";
@@ -35,6 +36,10 @@
       window_border_width = "0";
       window_margin_width = "0";
       window_padding_width = "0 0 0 0";
+
+      cursor_trail = "5";
+      cursor_trail_decay = "0.1 0.4";
+      cursor_trail_start_threshold = "2";
 
       # stupid https://github.com/kovidgoyal/kitty/issues/797
       confirm_os_window_close = "0";
