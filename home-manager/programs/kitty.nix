@@ -3,7 +3,7 @@
 {
   imports = [ ../colors.nix ];
 
-  home.sessionVariables.TERMINAL = "${pkgs.kitty}/bin/kitty";
+  home.sessionVariables.TERMINAL = "${pkgs-master.kitty}/bin/kitty";
 
   programs.kitty = {
     enable = true;
