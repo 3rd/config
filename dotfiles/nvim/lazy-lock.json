@@ -3,7 +3,7 @@
   "ascii-blocks.nvim": { "branch": "main", "commit": "a8a7d99fc52df30d7c4e7664818542fd44839d97" },
   "auto-session": { "branch": "main", "commit": "2102c228854a2d74fbf35374aa86feac3f538da1" },
   "barbecue.nvim": { "branch": "main", "commit": "3e31404f0b93a2c30d151abf0648650ac811c664" },
-  "blink.cmp": { "branch": "main", "commit": "18e4438c9cfe8e9497e2dffd935627ba5d00198a" },
+  "blink.cmp": { "branch": "main", "commit": "77f037cae07358368f3b7548ba39cffceb49349e" },
   "bufferize.vim": { "branch": "main", "commit": "ec7c4445a97f19e5784a6fb6ad3c3d4a8ff505ac" },
   "clear-action.nvim": { "branch": "master", "commit": "2854c3fda5720c7e53b5a9537774fae212224484" },
   "conform.nvim": { "branch": "master", "commit": "d28ccf945374edd9f1c34a82f6c22261dbd8ab98" },

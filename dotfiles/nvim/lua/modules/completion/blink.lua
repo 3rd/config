@@ -7,6 +7,7 @@ return lib.module.create({
       "Saghen/blink.cmp",
       -- commit = "c218fafbf275725532f3cf2eaebdf863b958d48e",
       -- commit = "88f1c203465fa3d883f2309bc22412c90a9f6a08",
+      commit = "77f037cae07358368f3b7548ba39cffceb49349e",
       -- "3rd/blink.cmp",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
       lazy = false, -- lazy loading handled internally
