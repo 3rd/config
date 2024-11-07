@@ -48,6 +48,14 @@ local setup_lspconfig = function()
     return vim.fn.json_decode(luarc)
   end
 
+  -- eslint
+  local eslintConfigFile = nil
+  local eslintResolveRelativeTo = nil
+  if not lib.fs.file.exists("eslint.config.js") then
+    eslintConfigFile = lib.path.resolve_config("linters/eslint/dist/main.js")
+    eslintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
+  end
+
   local overrides = {
     -- client.server_capabilities.documentFormattingProvider
     formatting = {
@@ -280,11 +288,12 @@ local setup_lspconfig = function()
         options = {
           cache = true,
           fix = true,
-          overrideConfigFile = lib.path.resolve_config("linters/eslint/dist/main.js"),
-          resolvePluginsRelativeTo = lib.path.resolve_config("linters/eslint/node_modules"),
-          useEslintrc = false,
+          overrideConfigFile = eslintConfigFile,
+          resolvePluginsRelativeTo = eslintResolveRelativeTo,
+          useEslintrc = eslintConfigFile and false or nil,
         },
-        packageManager = "npm",
+        packageManager = "pnpm",
+        useESLintClass = false,
         run = "onSave",
         workingDirectory = { mode = "auto" },
       },
