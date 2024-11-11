@@ -186,7 +186,7 @@ local theme = lush(function(injected)
   local sym = injected.sym
   return {
     -- base
-    Normal({ bg = colors.background, fg = colors.foreground }), -- Normal text
+    Normal({ fg = colors.foreground }), -- Normal text
     -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({ bg = colors.background.lighten(5) }),
     NormalNC({}),

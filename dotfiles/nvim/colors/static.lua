@@ -1,6 +1,6 @@
 local colors = {
   -- PATCH_OPEN
-Normal = {fg = "#D7D4E8", bg = "#26232E"},
+Normal = {fg = "#D7D4E8"},
 ["@text"] = {link = "Normal"},
 ["@text.literal.markdown"] = {link = "Normal"},
 Boolean = {fg = "#FFA385"},
@@ -163,7 +163,7 @@ Macro = {fg = "#C1B7F6"},
 ["@text.environment"] = {link = "Macro"},
 MatchParen = {bg = "#4E495F"},
 NonText = {fg = "#A39CC9"},
-NormalFloat = {bg = "#383545"},
+NormalFloat = {bg = "#2F2C3A"},
 NormalNC = {},
 Number = {fg = "#FFA385"},
 Float = {link = "Number"},
