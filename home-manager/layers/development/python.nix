@@ -2,11 +2,11 @@
 
 {
 
-  home.packages = with pkgs;
-    [
-      #
-      python310Full
-    ];
+  home.packages = with pkgs; [
+    #
+    python310Full
+    conda
+  ];
 
 }
 

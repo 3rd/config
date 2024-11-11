@@ -39,7 +39,7 @@
 
       cursor_trail = "5";
       cursor_trail_decay = "0.1 0.4";
-      cursor_trail_start_threshold = "2";
+      cursor_trail_start_threshold = "3";
 
       # stupid https://github.com/kovidgoyal/kitty/issues/797
       confirm_os_window_close = "0";

@@ -74,6 +74,7 @@
       gucharmap
       libqalculate
       gnome-system-monitor
+      onefetch
     ] ++ [
       #
       pkgs-stable.miniserve # https://github.com/svenstaro/miniserve

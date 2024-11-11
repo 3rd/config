@@ -1,3 +1,5 @@
+local filter_kinds = { ["1"] = true }
+
 return lib.module.create({
   name = "completion/blink",
   hosts = "*",
@@ -7,22 +9,13 @@ return lib.module.create({
       "Saghen/blink.cmp",
       -- commit = "c218fafbf275725532f3cf2eaebdf863b958d48e",
       -- commit = "88f1c203465fa3d883f2309bc22412c90a9f6a08",
-      commit = "77f037cae07358368f3b7548ba39cffceb49349e",
+      -- commit = "77f037cae07358368f3b7548ba39cffceb49349e",
       -- "3rd/blink.cmp",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
-      lazy = false, -- lazy loading handled internally
-      -- optional: provides snippets for the snippet source
-      -- dependencies = "rafamadriz/friendly-snippets",
-
-      -- use a release tag to download pre-built binaries
+      lazy = false,
       -- version = "nightly",
       -- version = "v0.*",
       build = "cargo build --release",
-      -- OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
-      -- build = 'cargo build --release',
-      -- On musl libc based systems you need to add this flag
-      -- build = 'RUSTFLAGS="-C target-feature=-crt-static" cargo build --release',
-
       opts = {
         accept = {
           create_undo_point = true,
@@ -53,7 +46,7 @@ return lib.module.create({
             show_in_snippet = false,
           },
           signature_help = {
-            enabled = false,
+            enabled = true,
             blocked_trigger_characters = {},
             blocked_retrigger_characters = {},
             show_on_insert_on_trigger_character = true,
@@ -89,7 +82,71 @@ return lib.module.create({
             -- selection = "preselect",
             -- selection = "manual",
             -- 'function(blink.cmp.CompletionRenderContext): blink.cmp.Component[]' for custom rendering
-            draw = "simple", -- simple | reversed | minimal | function
+            draw = {
+              align_to_component = "label", -- or 'none' to disable
+              padding = 1,
+              gap = 1,
+              columns = { { "kind_icon" }, { "label", "label_description", gap = 1 } },
+              -- Definitions for possible components to render. Each component defines:
+              --   ellipsis: whether to add an ellipsis when truncating the text
+              --   width: control the min, max and fill behavior of the component
+              --   text function: will be called for each item
+              --   highlight function: will be called only when the line appears on screen
+              components = {
+                kind_icon = {
+                  ellipsis = false,
+                  text = function(ctx)
+                    return ctx.kind_icon .. " "
+                  end,
+                  highlight = function(ctx)
+                    return "BlinkCmpKind" .. ctx.kind
+                  end,
+                },
+                kind = {
+                  ellipsis = false,
+                  text = function(ctx)
+                    return ctx.kind .. " "
+                  end,
+                  highlight = function(ctx)
+                    return "BlinkCmpKind" .. ctx.kind
+                  end,
+                },
+                label = {
+                  width = { fill = true, max = 60 },
+                  text = function(ctx)
+                    return ctx.label .. (ctx.label_detail or "")
+                  end,
+                  highlight = function(ctx)
+                    -- label and label details
+                    local highlights = {
+                      { 0, #ctx.label, group = ctx.deprecated and "BlinkCmpLabelDeprecated" or "BlinkCmpLabel" },
+                    }
+                    if ctx.label_detail then
+                      table.insert(
+                        highlights,
+                        { #ctx.label, #ctx.label + #ctx.label_detail, group = "BlinkCmpLabelDetail" }
+                      )
+                    end
+
+                    -- characters matched on the label by the fuzzy matcher
+                    if ctx.label_matched_indices ~= nil then
+                      for _, idx in ipairs(ctx.label_matched_indices) do
+                        table.insert(highlights, { idx, idx + 1, group = "BlinkCmpLabelMatch" })
+                      end
+                    end
+
+                    return highlights
+                  end,
+                },
+                label_description = {
+                  width = { max = 30 },
+                  text = function(ctx)
+                    return ctx.label_description or ""
+                  end,
+                  highlight = "BlinkCmpLabelDescription",
+                },
+              },
+            },
             direction_priority = { "s", "n" },
             scrolloff = 2,
           },
@@ -146,8 +203,31 @@ return lib.module.create({
             enabled_providers = { "lsp", "path", "snippets", "buffer", "lazydev" },
           },
           providers = {
-            lsp = { fallback_for = { "lazydev" } },
-            lazydev = { name = "LazyDev", module = "lazydev.integrations.blink" },
+            lsp = {
+              fallback_for = { "lazydev" },
+              override = {
+                get_completions = function(self, context, callback)
+                  return self:get_completions(context, function(response)
+                    local filtered_items = {}
+                    for _, item in ipairs(response.items) do
+                      if not filter_kinds[tostring(item.kind)] then table.insert(filtered_items, item) end
+                    end
+                    response.items = filtered_items
+                    callback(response)
+                  end)
+                end,
+              },
+            },
+            buffer = {
+              name = "Buffer",
+              module = "blink.cmp.sources.buffer",
+              fallback_for = { "lsp" },
+              min_keyword_length = 1,
+              enabled = function()
+                local clients = vim.lsp.get_clients({ bufnr = 0 })
+                if #clients > 0 then return false end
+              end,
+            },
             snippets = {
               name = "Snippets",
               module = "blink.cmp.sources.snippets",
@@ -159,6 +239,10 @@ return lib.module.create({
                 extended_filetypes = {},
                 ignored_filetypes = {},
               },
+            },
+            lazydev = {
+              name = "LazyDev",
+              module = "lazydev.integrations.blink",
             },
           },
         },
