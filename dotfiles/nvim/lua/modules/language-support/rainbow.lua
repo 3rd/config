@@ -5,7 +5,7 @@ return lib.module.create({
   plugins = {
     {
       "HiPhish/rainbow-delimiters.nvim",
-      event = "VimEnter",
+      event = "CursorHold",
       config = function()
         local rainbow = require("rainbow-delimiters")
 
@@ -24,6 +24,10 @@ return lib.module.create({
           strategy = {
             [""] = get_strategy,
           },
+          query = {
+            [""] = "rainbow-delimiters",
+            ["lua"] = "rainbow-blocks",
+          },
           highlight = {
             "RainbowRed",
             "RainbowYellow",
@@ -33,8 +37,14 @@ return lib.module.create({
             "RainbowViolet",
             "RainbowCyan",
           },
-          blacklist = { "c", "cpp" },
+          blacklist = {
+            "c",
+            "cpp",
+            "comment",
+            -- "lua",
+          },
         })
+        vim.api.nvim_exec2("edit", {})
       end,
     },
   },

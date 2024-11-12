@@ -11,11 +11,11 @@ return lib.module.create({
         require("modes").setup({
           colors = {
             insert = colors.cyan,
-            visual = colors.magenta,
+            visual = colors.visual,
             copy = colors.yellow,
             delete = colors.red,
           },
-          line_opacity = 0.2,
+          line_opacity = 0.3,
           set_cursor = true,
           set_cursorline = true,
           set_number = true,

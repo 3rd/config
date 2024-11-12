@@ -9,7 +9,7 @@ local hsl = lush.hsl
 local colors = {
   none = "NONE",
   background = hsl(252, 13, 16),
-  foreground = hsl(250, 30, 87),
+  foreground = hsl(250, 30, 85),
   blue = hsl(200, 95, 75),
   cyan = hsl(180, 80, 45),
   green = hsl(80, 75, 70),
@@ -19,6 +19,7 @@ local colors = {
   pink = hsl(315, 70, 75),
   red = hsl(10, 95, 45),
   yellow = hsl(40, 80, 65),
+  visual = hsl(300, 100, 80),
 }
 colors.plugins = {
   indent_guides = {
@@ -548,13 +549,13 @@ local theme = lush(function(injected)
     GitSignsDeletePreview({ link = "DiffDelete" }),
 
     -- ts-rainbow
-    RainbowRed({ fg = hsl(350, 70, 70) }),
-    RainbowYellow({ fg = hsl(40, 70, 65) }),
-    RainbowBlue({ fg = hsl(200, 70, 65) }),
-    RainbowOrange({ fg = hsl(30, 75, 65) }),
-    RainbowGreen({ fg = hsl(80, 70, 65) }),
+    RainbowRed({ fg = hsl(350, 65, 70) }),
+    RainbowYellow({ fg = hsl(40, 60, 60) }),
+    RainbowBlue({ fg = hsl(200, 60, 60) }),
+    RainbowOrange({ fg = hsl(30, 90, 65) }),
+    RainbowGreen({ fg = hsl(80, 50, 60) }),
     RainbowViolet({ fg = hsl(260, 70, 75) }),
-    RainbowCyan({ fg = hsl(180, 70, 65) }),
+    RainbowCyan({ fg = hsl(180, 50, 60) }),
 
     -- syslang
     sym("@slang.error")({ bg = "#7a2633", fg = "#ffffff" }),
