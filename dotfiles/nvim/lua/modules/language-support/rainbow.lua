@@ -5,7 +5,7 @@ return lib.module.create({
   plugins = {
     {
       "HiPhish/rainbow-delimiters.nvim",
-      event = "CursorHold",
+      lazy = false,
       config = function()
         local rainbow = require("rainbow-delimiters")
 
@@ -41,10 +41,10 @@ return lib.module.create({
             "c",
             "cpp",
             "comment",
-            -- "lua",
+            "lua",
+            "syslang",
           },
         })
-        vim.api.nvim_exec2("edit", {})
       end,
     },
   },

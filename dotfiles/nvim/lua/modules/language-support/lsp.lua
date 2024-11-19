@@ -283,7 +283,7 @@ local setup_lspconfig = function()
         experimental = {
           useFlatConfig = nil,
         },
-        nodePath = lib.path.resolve_config("linters/eslint/node_modules"),
+        nodePath = eslintConfigFile and nil or lib.path.resolve_config("linters/eslint/node_modules"),
         onIgnoredFiles = "off",
         options = {
           cache = true,
@@ -357,6 +357,7 @@ local setup_lspconfig = function()
       -- https://github.com/neovim/neovim/issues/23291
       -- didChangeWatchedFiles = { dynamicRegistration = false },
     },
+    textDocument = { completion = { completionItem = { snippetSupport = true } } },
   })
 
   -- build on_attach()
