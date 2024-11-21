@@ -130,7 +130,10 @@ return lib.module.create({
     {
       "nvim-treesitter/nvim-treesitter",
       event = { "BufReadPre", "BufNewFile" },
-      dependencies = { "nvim-treesitter/playground" },
+      dependencies = {
+        "nvim-treesitter/playground",
+        { "nvim-treesitter/nvim-treesitter-textobjects" },
+      },
       build = ":TSUpdate",
       config = setup_treesitter,
     },
