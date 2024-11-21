@@ -12,7 +12,7 @@ return lib.module.create({
           colors = {
             insert = colors.cyan,
             visual = colors.visual,
-            copy = colors.yellow,
+            copy = colors.common.cword,
             delete = colors.red,
           },
           line_opacity = 0.3,
