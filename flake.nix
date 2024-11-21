@@ -43,6 +43,12 @@
     in {
       overlays = import ./overlays { inherit inputs; };
 
+      packages = forAllSystems (system: {
+        qimgv =
+          nixpkgs.legacyPackages.${system}.callPackage ./modules/packages/qimgv
+          { };
+      });
+
       nixosConfigurations = {
         spaceship = nixpkgs.lib.nixosSystem {
           specialArgs = {
@@ -93,6 +99,7 @@
             (_: {
               home.packages = [
                 #
+                self.packages.${system}.qimgv
               ];
               services.wired = {
                 enable = true;

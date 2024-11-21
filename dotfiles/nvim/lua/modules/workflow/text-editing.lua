@@ -30,7 +30,7 @@ return lib.module.create({
     },
     {
       "Wansmer/sibling-swap.nvim",
-      enabled = false,
+      -- enabled = false,
       dependencies = { "nvim-treesitter" },
       config = function()
         require("sibling-swap").setup({

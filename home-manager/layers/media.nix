@@ -1,12 +1,12 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-stable, ... }:
 
-with pkgs; {
+{
   home.packages = [
     #
-    ffmpeg-full
-    mpv
-    qimgv
-  ] ++ (if (system == "x86_64-linux") then
+    pkgs.mpv
+    pkgs-stable.ffmpeg-full
+    # qimgv
+  ] ++ (if (pkgs.system == "x86_64-linux") then
     [
       # davinci-resolve
     ]
