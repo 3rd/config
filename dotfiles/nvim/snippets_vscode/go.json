@@ -2,62 +2,47 @@
   "iferr": {
     "prefix": "iferr",
     "description": "\"if err\"",
-    "body": ""
+    "body": ["if ${1:err} != nil {", "  $0", "}"]
   },
   "ifnoterr": {
     "prefix": "ifnoterr",
     "description": "\"if data, err; !err\"",
-    "body": ""
+    "body": ["if ${1:data}, ${2:err} := ${3:exp}; $2 != nil {", "  $0", "}"]
   },
   "ifok": {
     "prefix": "ifok",
     "description": "\"if data, ok\"",
-    "body": ""
+    "body": ["if ${1:data}, ${2:ok} := ${3:exp}; $2 {", "  $0", "}"]
   },
   "fmp": {
     "prefix": "fmp",
     "description": "\"fmt.Printf\"",
-    "body": ""
+    "body": "fmt.Printf(\"%+v\n\", ${1:obj})"
   },
   "fms": {
     "prefix": "fms",
     "description": "\"fmt.Sprintf\"",
-    "body": ""
+    "body": "fmt.Sprintf(\"%+v\", ${1:obj})"
   },
   "qq": {
     "prefix": "qq",
     "description": "\"qq\"",
-    "body": [
-      "q.Q(${1:})",
-      "$2",
-      ""
-    ]
+    "body": ["q.Q(${1:})", "$2", ""]
   },
   "httphandler": {
     "prefix": "httphandler",
     "description": "\"http handler\"",
-    "body": [
-      "func $1(${2:w} http.ResponseWriter, ${3:r} *http.Request){",
-      "\t$0",
-      "\\}",
-      ""
-    ]
+    "body": ["func $1(${2:w} http.ResponseWriter, ${3:r} *http.Request){", "\t$0", "\\}", ""]
   },
   "httpredir": {
     "prefix": "httpredir",
     "description": "\"http redirect\"",
-    "body": [
-      "http.Redirect(${1:w}, ${2:r}, \"${3:/}\", ${4:http.StatusFound})",
-      ""
-    ]
+    "body": ["http.Redirect(${1:w}, ${2:r}, \"${3:/}\", ${4:http.StatusFound})", ""]
   },
   "httperr": {
     "prefix": "httperr",
     "description": "\"http error\"",
-    "body": [
-      "http.Error(${1:w}, ${2:err}.Error(), ${3:http.StatusInternalServerError})",
-      ""
-    ]
+    "body": ["http.Error(${1:w}, ${2:err}.Error(), ${3:http.StatusInternalServerError})", ""]
   },
   "httpboil": {
     "prefix": "httpboil",
@@ -84,12 +69,7 @@
   "testfn": {
     "prefix": "testfn",
     "description": "\"test function\"",
-    "body": [
-      "func Test$1(t *testing.T) {",
-      "\t$0",
-      "\\}",
-      ""
-    ]
+    "body": ["func Test$1(t *testing.T) {", "\t$0", "\\}", ""]
   },
   "testfnt": {
     "prefix": "testfnt",

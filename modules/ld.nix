@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
+  # boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
+
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [
@@ -119,5 +121,13 @@
       xz
       zlib
     ];
+  };
+
+  system.activationScripts.ldso = {
+    deps = [ ];
+    text = ''
+      mkdir -p /lib64
+      ln -sfn ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
+    '';
   };
 }

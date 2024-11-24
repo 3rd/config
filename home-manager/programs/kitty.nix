@@ -45,7 +45,7 @@
       confirm_os_window_close = "0";
 
       # background
-      background_opacity = "0.96";
+      background_opacity = "0.95";
       dynamic_background_opacity = "yes";
 
       # theme

@@ -37,12 +37,13 @@ M.find_children = function(node, type, deep)
 end
 
 --- @param node TSNode
---- @param type string
+--- @param types string|string[]
 --- @return TSNode|nil
-M.find_parent = function(node, type)
+M.find_parent = function(node, types)
+  types = type(types) == "table" and types or { types }
   local parent = node:parent()
   while parent ~= nil do
-    if parent:type() == type then return parent end
+    if vim.tbl_contains(types, parent:type()) then return parent end
     parent = parent:parent()
   end
   return nil

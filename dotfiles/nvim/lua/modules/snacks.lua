@@ -10,14 +10,14 @@ return lib.module.create({
       lazy = false,
       opts = {
         bigfile = { enabled = false },
-        dashboard = { enabled = true },
+        dashboard = { enabled = false },
         notifier = {
           enabled = true,
           timeout = 3000,
         },
         quickfile = { enabled = true },
-        statuscolumn = { enabled = true },
-        words = { enabled = true },
+        statuscolumn = { enabled = false },
+        words = { enabled = false },
         styles = {
           notification = {
             wo = { wrap = true },

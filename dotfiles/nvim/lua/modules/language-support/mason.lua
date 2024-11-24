@@ -30,9 +30,9 @@ return lib.module.create({
             "jsonls",
             "tailwindcss",
             "vimls",
-            "vtsls",
             "vuels",
             "yamlls",
+            -- "vtsls",
           },
           automatic_installation = true,
         })
