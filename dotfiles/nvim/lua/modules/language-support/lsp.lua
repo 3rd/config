@@ -49,11 +49,11 @@ local setup_lspconfig = function()
   end
 
   -- eslint
-  local eslintConfigFile = nil
-  local eslintResolveRelativeTo = nil
+  local globalESLintConfigFile = nil
+  local globalESLintResolveRelativeTo = nil
   if not lib.fs.file.exists("eslint.config.js") then
-    eslintConfigFile = lib.path.resolve_config("linters/eslint/dist/main.js")
-    eslintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
+    globalESLintConfigFile = lib.path.resolve_config("linters/eslint/dist/main.js")
+    globalESLintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
   end
 
   local overrides = {
@@ -279,18 +279,18 @@ local setup_lspconfig = function()
           disableRuleComment = { enable = true, location = "separateLine" },
           showDocumentation = { enable = true },
         },
-        useFlatConfig = false,
+        useFlatConfig = globalESLintConfigFile and false or true,
         experimental = {
           useFlatConfig = nil,
         },
-        nodePath = eslintConfigFile and nil or lib.path.resolve_config("linters/eslint/node_modules"),
+        nodePath = globalESLintResolveRelativeTo,
         onIgnoredFiles = "off",
         options = {
           cache = true,
           fix = true,
-          overrideConfigFile = eslintConfigFile,
-          resolvePluginsRelativeTo = eslintResolveRelativeTo,
-          useEslintrc = eslintConfigFile and false or nil,
+          overrideConfigFile = globalESLintConfigFile,
+          resolvePluginsRelativeTo = globalESLintResolveRelativeTo,
+          useEslintrc = globalESLintConfigFile and false or nil,
         },
         packageManager = "pnpm",
         useESLintClass = false,

@@ -78,6 +78,6 @@ return lib.module.create({
   },
   mappings = {
     -- todo
-    { "n", "<leader>t", "<cmd>TodoLocList<cr>", { desc = "Show TODOs" } },
+    { "n", "<leader>tt", "<cmd>TodoLocList<cr>", { desc = "Show TODOs" } },
   },
 })
