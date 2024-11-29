@@ -280,16 +280,16 @@ local setup_lspconfig = function()
           showDocumentation = { enable = true },
         },
         useFlatConfig = globalESLintConfigFile and false or true,
-        experimental = {
-          useFlatConfig = nil,
-        },
+        -- experimental = {
+        --   useFlatConfig = globalESLintConfigFile and false or true,
+        -- },
         nodePath = globalESLintResolveRelativeTo,
         onIgnoredFiles = "off",
         options = {
           cache = true,
           fix = true,
           overrideConfigFile = globalESLintConfigFile,
-          resolvePluginsRelativeTo = globalESLintResolveRelativeTo,
+          -- resolvePluginsRelativeTo = globalESLintResolveRelativeTo,
           useEslintrc = globalESLintConfigFile and false or nil,
         },
         packageManager = "pnpm",
