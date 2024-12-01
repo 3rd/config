@@ -17,14 +17,46 @@ return lib.module.create({
       -- version = "v0.*",
       build = "cargo build --release",
       opts = {
+        keymap = {
+          ["<C-space>"] = { "show" },
+          ["<C-e>"] = { "hide" },
+          ["<CR>"] = { "accept", "fallback" },
+          ["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
+          ["<S-Tab>"] = { "snippet_backward", "select_prev", "fallback" },
+          ["<C-u>"] = { "scroll_documentation_up", "fallback" },
+          ["<C-d>"] = { "scroll_documentation_down", "fallback" },
+        },
+        blocked_filetypes = {},
+        completion = {
+          keyword = {
+            range = "prefix",
+            regex = "[%w_\\-]",
+            exclude_from_prefix_regex = "[\\-]",
+          },
+          trigger = {
+            show_in_snippet = false,
+            show_on_keyword = true,
+            show_on_trigger_character = true,
+            show_on_blocked_trigger_characters = { " ", "\n", "\t" },
+            show_on_accept_on_trigger_character = true,
+            show_on_insert_on_trigger_character = true,
+            show_on_x_blocked_trigger_characters = { "'", '"', "(" },
+          },
+          list = {
+            max_items = 200,
+            selection = "auto_insert",
+            cycle = {
+              from_bottom = true,
+              from_top = true,
+            },
+          },
+        },
         accept = {
           create_undo_point = true,
           auto_brackets = {
             enabled = false,
             default_brackets = { "(", ")" },
             override_brackets_for_filetypes = {},
-            force_allow_filetypes = {},
-            blocked_filetypes = {},
             kind_resolution = {
               enabled = true,
               blocked_filetypes = { "typescriptreact", "javascriptreact", "vue" },
@@ -36,168 +68,9 @@ return lib.module.create({
             },
           },
         },
-
-        trigger = {
-          completion = {
-            keyword_regex = "[%w_\\-]",
-            blocked_trigger_characters = { " ", "\n", "\t" },
-            show_on_insert_on_trigger_character = true,
-            show_on_insert_blocked_trigger_characters = { "'", '"' },
-            show_in_snippet = false,
-          },
-          signature_help = {
-            enabled = true,
-            blocked_trigger_characters = {},
-            blocked_retrigger_characters = {},
-            show_on_insert_on_trigger_character = true,
-          },
+        documentation = {
+          auto_show = true,
         },
-
-        highlight = {
-          use_nvim_cmp_as_default = true,
-          accept = { auto_brackets = { enabled = true } },
-          trigger = { signature_help = { enabled = true } },
-        },
-
-        fuzzy = {
-          use_typo_resistance = true,
-          prebuiltBinaries = {
-            download = false,
-            forceVersion = nil,
-          },
-        },
-
-        keymap = {
-          ["<C-space>"] = { "show" },
-          ["<C-e>"] = { "hide" },
-          ["<CR>"] = { "accept", "fallback" },
-          ["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
-          ["<S-Tab>"] = { "snippet_backward", "select_prev", "fallback" },
-          ["<C-u>"] = { "scroll_documentation_up", "fallback" },
-          ["<C-d>"] = { "scroll_documentation_down", "fallback" },
-        },
-        windows = {
-          autocomplete = {
-            selection = "auto_insert",
-            -- selection = "preselect",
-            -- selection = "manual",
-            -- 'function(blink.cmp.CompletionRenderContext): blink.cmp.Component[]' for custom rendering
-            draw = {
-              align_to_component = "label", -- or 'none' to disable
-              padding = 1,
-              gap = 1,
-              columns = { { "kind_icon" }, { "label", "label_description", gap = 1 } },
-              -- Definitions for possible components to render. Each component defines:
-              --   ellipsis: whether to add an ellipsis when truncating the text
-              --   width: control the min, max and fill behavior of the component
-              --   text function: will be called for each item
-              --   highlight function: will be called only when the line appears on screen
-              components = {
-                kind_icon = {
-                  ellipsis = false,
-                  text = function(ctx)
-                    return ctx.kind_icon .. " "
-                  end,
-                  highlight = function(ctx)
-                    return "BlinkCmpKind" .. ctx.kind
-                  end,
-                },
-                kind = {
-                  ellipsis = false,
-                  text = function(ctx)
-                    return ctx.kind .. " "
-                  end,
-                  highlight = function(ctx)
-                    return "BlinkCmpKind" .. ctx.kind
-                  end,
-                },
-                label = {
-                  width = { fill = true, max = 60 },
-                  text = function(ctx)
-                    return ctx.label .. (ctx.label_detail or "")
-                  end,
-                  highlight = function(ctx)
-                    -- label and label details
-                    local highlights = {
-                      { 0, #ctx.label, group = ctx.deprecated and "BlinkCmpLabelDeprecated" or "BlinkCmpLabel" },
-                    }
-                    if ctx.label_detail then
-                      table.insert(
-                        highlights,
-                        { #ctx.label, #ctx.label + #ctx.label_detail, group = "BlinkCmpLabelDetail" }
-                      )
-                    end
-
-                    -- characters matched on the label by the fuzzy matcher
-                    if ctx.label_matched_indices ~= nil then
-                      for _, idx in ipairs(ctx.label_matched_indices) do
-                        table.insert(highlights, { idx, idx + 1, group = "BlinkCmpLabelMatch" })
-                      end
-                    end
-
-                    return highlights
-                  end,
-                },
-                label_description = {
-                  width = { max = 30 },
-                  text = function(ctx)
-                    return ctx.label_description or ""
-                  end,
-                  highlight = "BlinkCmpLabelDescription",
-                },
-              },
-            },
-            direction_priority = { "s", "n" },
-            scrolloff = 2,
-          },
-          documentation = {
-            min_width = 15,
-            max_width = 60,
-            max_height = 20,
-            auto_show = true,
-            auto_show_delay_ms = 500,
-            update_delay_ms = 50,
-            winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,CursorLine:BlinkCmpDocCursorLine,Search:None",
-          },
-          signature_help = {
-            min_width = 1,
-            max_width = 100,
-            max_height = 10,
-            border = "rounded",
-          },
-        },
-
-        kind_icons = {
-          -- base
-          Class = "󰠱",
-          Color = "󰏘",
-          Constant = "",
-          Constructor = "",
-          Enum = "",
-          EnumMember = "",
-          Event = "",
-          Field = "󰅩",
-          File = "󰈙",
-          Folder = "󰉋",
-          Function = "󰊕",
-          Interface = "",
-          Keyword = "󰌋",
-          Method = "󰆧",
-          Module = "",
-          Operator = "󰆕",
-          Property = "󰜢",
-          Reference = "󰈇",
-          Snippet = "",
-          Struct = "󰙅",
-          Text = "󰉿",
-          TypeParameter = "󰊄",
-          Unit = "",
-          Value = "󰎠",
-          Variable = "󰆧",
-          -- tree-sitter
-          String = "󰉿",
-        },
-
         sources = {
           completion = {
             enabled_providers = { "lsp", "path", "snippets", "buffer", "lazydev" },
@@ -244,6 +117,39 @@ return lib.module.create({
               name = "LazyDev",
               module = "lazydev.integrations.blink",
             },
+          },
+        },
+
+        appearance = {
+          kind_icons = {
+            -- base
+            Class = "󰠱",
+            Color = "󰏘",
+            Constant = "",
+            Constructor = "",
+            Enum = "",
+            EnumMember = "",
+            Event = "",
+            Field = "󰅩",
+            File = "󰈙",
+            Folder = "󰉋",
+            Function = "󰊕",
+            Interface = "",
+            Keyword = "󰌋",
+            Method = "󰆧",
+            Module = "",
+            Operator = "󰆕",
+            Property = "󰜢",
+            Reference = "󰈇",
+            Snippet = "",
+            Struct = "󰙅",
+            Text = "󰉿",
+            TypeParameter = "󰊄",
+            Unit = "",
+            Value = "󰎠",
+            Variable = "󰆧",
+            -- tree-sitter
+            String = "󰉿",
           },
         },
       },

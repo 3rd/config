@@ -3,6 +3,6 @@
 {
   home.packages = [
     #
-    inputs.browser-previews.packages.${pkgs.system}.google-chrome-dev
+    # inputs.browser-previews.packages.${pkgs.system}.google-chrome-dev
   ];
 }

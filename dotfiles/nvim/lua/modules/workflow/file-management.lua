@@ -84,12 +84,28 @@ local setup_tree = function()
       vim.keymap.set("n", "p", api.fs.paste, opts("Paste"))
       vim.keymap.set("n", "y", api.fs.copy.filename, opts("Copy Name"))
       vim.keymap.set("n", "Y", api.fs.copy.relative_path, opts("Copy Relative Path"))
-      vim.keymap.set("n", "gy", api.fs.copy.absolute_path, opts("Copy Absolute Path"))
+      vim.keymap.set("n", "gY", api.fs.copy.absolute_path, opts("Copy Absolute Path"))
       vim.keymap.set("n", "[c", api.node.navigate.git.prev, opts("Prev Git"))
       vim.keymap.set("n", "]c", api.node.navigate.git.next, opts("Next Git"))
       vim.keymap.set("n", "s", api.node.run.system, opts("Run System"))
       vim.keymap.set("n", "q", api.tree.close, opts("Close"))
       vim.keymap.set("n", "?", api.tree.toggle_help, opts("Help"))
+
+      vim.keymap.set("n", "<leader>g", function()
+        local tree_item = require("nvim-tree.api").tree.get_node_under_cursor()
+        if tree_item.type ~= "directory" then
+          log("Not a directory")
+          return
+        end
+        local absolute_path = tree_item.absolute_path
+        local relative_path = vim.fn.fnamemodify(absolute_path, ":.")
+        log(relative_path)
+
+        vim.ui.input({ prompt = "Component name:" }, function(input)
+          if not input or input == "" then return end
+          vim.cmd("!auto run react-component --path=" .. vim.fn.shellescape(relative_path .. "/" .. input))
+        end)
+      end, opts("Generate component"))
     end,
   })
 end

@@ -153,7 +153,7 @@ local setup_lspconfig = function()
       handlers = {
         -- always go to the first definition
         ["textDocument/definition"] = function(err, result, ...)
-          if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
+          if vim.islist(result) or type(result) == "table" then result = result[1] end
           vim.lsp.handlers["textDocument/definition"](err, result, ...)
         end,
       },
@@ -274,28 +274,35 @@ local setup_lspconfig = function()
         "svelte",
         "graphql",
       },
+      flags = {
+        allow_incremental_sync = false,
+        debounce_text_changes = 1000,
+      },
       settings = {
+        experimental = {
+          useFlatConfig = globalESLintConfigFile == nil and true or false,
+        },
+        useESLintClass = true,
+        codeActionOnSave = {
+          enable = false,
+          mode = "all",
+        },
+        quiet = false,
+        onIgnoredFiles = "off",
+        rulesCustomizations = {},
+        run = "onSave",
         codeAction = {
           disableRuleComment = { enable = true, location = "separateLine" },
           showDocumentation = { enable = true },
         },
-        useFlatConfig = globalESLintConfigFile and false or true,
-        -- experimental = {
-        --   useFlatConfig = globalESLintConfigFile and false or true,
-        -- },
-        nodePath = globalESLintResolveRelativeTo,
-        onIgnoredFiles = "off",
-        options = {
+        packageManager = "pnpm",
+        options = vim.tbl_deep_extend("force", {
           cache = true,
           fix = true,
           overrideConfigFile = globalESLintConfigFile,
           -- resolvePluginsRelativeTo = globalESLintResolveRelativeTo,
-          useEslintrc = globalESLintConfigFile and false or nil,
-        },
-        packageManager = "pnpm",
-        useESLintClass = false,
-        run = "onSave",
-        workingDirectory = { mode = "auto" },
+        }, globalESLintConfigFile and { useEslintrc = false } or {}),
+        nodePath = globalESLintResolveRelativeTo,
       },
     },
     jsonls = {
@@ -355,7 +362,7 @@ local setup_lspconfig = function()
   capabilities = vim.tbl_deep_extend("force", capabilities, {
     workspace = {
       -- https://github.com/neovim/neovim/issues/23291
-      -- didChangeWatchedFiles = { dynamicRegistration = false },
+      didChangeWatchedFiles = { dynamicRegistration = false },
     },
     textDocument = { completion = { completionItem = { snippetSupport = true } } },
   })

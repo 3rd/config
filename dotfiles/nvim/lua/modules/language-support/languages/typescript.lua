@@ -34,6 +34,13 @@ return lib.module.create({
         local on_attach = function(client, bufnr)
           client.server_capabilities.documentFormattingProvider = false
           client.server_capabilities.documentRangeFormattingProvider = false
+          client.capabilities = vim.tbl_deep_extend("force", client.capabilities, {
+            workspace = {
+              -- https://github.com/neovim/neovim/issues/23291
+              didChangeWatchedFiles = { dynamicRegistration = false },
+            },
+            textDocument = { completion = { completionItem = { snippetSupport = true } } },
+          })
 
           for _, module in ipairs(modules_with_on_attach_call) do
             module.hooks.lsp.on_attach_call(client, bufnr)

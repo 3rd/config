@@ -87,10 +87,6 @@
             };
           };
           modules = [
-            {
-              nixpkgs.overlays =
-                [ inputs.neovim-nightly-overlay.overlays.default ];
-            }
             ./home-manager/roles/battlestation.nix
             ./hosts/spaceship/home.nix
             disableHomeManagerNews
@@ -105,6 +101,9 @@
                 enable = true;
                 # config = ./wired.ron;
               };
+
+              programs.neovim.package =
+                inputs.neovim-nightly-overlay.packages.${system}.default;
             })
           ];
         };
@@ -112,7 +111,10 @@
         in home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ wired.overlays.default ];
+            overlays = [
+              wired.overlays.default
+
+            ];
           };
           extraSpecialArgs = {
             inherit inputs outputs;
@@ -140,6 +142,9 @@
                 enable = true;
                 # config = ./wired.ron;
               };
+
+              programs.neovim.package =
+                inputs.neovim-nightly-overlay.packages.${system}.default;
             })
           ];
         };
@@ -175,6 +180,9 @@
                 enable = true;
                 # config = ./wired.ron;
               };
+
+              programs.neovim.package =
+                inputs.neovim-nightly-overlay.packages.${system}.default;
             })
           ];
         };

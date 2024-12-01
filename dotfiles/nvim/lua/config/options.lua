@@ -13,7 +13,7 @@ return {
   shortmess = "filnxtToOFcs",
   termguicolors = true,
   timeout = true,
-  timeoutlen = 300,
+  timeoutlen = 1000,
   title = true,
   ttimeout = false,
   visualbell = true,
