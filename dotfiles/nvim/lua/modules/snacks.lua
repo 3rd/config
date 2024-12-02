@@ -52,6 +52,13 @@ return lib.module.create({
           desc = "Dismiss All Notifications",
         },
         {
+          "<leader>n",
+          desc = "Notification history",
+          function()
+            Snacks.notifier.show_history()
+          end,
+        },
+        {
           "<leader>N",
           desc = "Neovim News",
           function()
