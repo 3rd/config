@@ -279,9 +279,9 @@ local setup_lspconfig = function()
         debounce_text_changes = 1000,
       },
       settings = {
-        experimental = {
-          useFlatConfig = globalESLintConfigFile == nil and true or false,
-        },
+        -- experimental = {
+        --   useFlatConfig = globalESLintConfigFile == nil and true or false,
+        -- },
         useESLintClass = true,
         codeActionOnSave = {
           enable = false,
