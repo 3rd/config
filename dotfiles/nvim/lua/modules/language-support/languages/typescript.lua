@@ -51,7 +51,7 @@ return lib.module.create({
             local target_path_line_map = {}
 
             -- filter line duplicates and external modules if there are internal definitions
-            if (vim.tbl_islist(result) or type(result) == "table") and #result > 1 then
+            if (vim.islist(result) or type(result) == "table") and #result > 1 then
               local internal_entries = {}
               local external_entries = {}
               for _, v in ipairs(result) do
@@ -131,28 +131,16 @@ return lib.module.create({
               filetypes = { "javascriptreact", "typescriptreact" },
             },
             complete_function_calls = false,
+            include_completions_with_insert_text = false,
             tsserver_file_preferences = {
-              -- allowIncompleteCompletions = true,
-              -- allowRenameOfImportPath = true,
-              -- allowTextChangesInNewFiles = true,
-              -- disableLineTextInReferences = true,
-              -- displayPartsForJSDoc = true,
-              -- generateReturnInDocTemplate = true,
-              -- includeAutomaticOptionalChainCompletions = true,
-              -- includeCompletionsForImportStatements = true,
-              -- includeInlayEnumMemberValueHints = false,
-              -- includeInlayFunctionLikeReturnTypeHints = false,
-              -- includeInlayFunctionParameterTypeHints = false,
-              -- includeInlayParameterNameHints = "all",
-              -- includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-              -- includeInlayPropertyDeclarationTypeHints = false,
-              -- includeInlayVariableTypeHints = true,
-              -- includeInlayVariableTypeHintsWhenTypeMatchesName = false,
-              -- jsxAttributeCompletionStyle = "auto",
-              -- providePrefixAndSuffixTextForRename = true,
-              -- provideRefactorNotApplicableReason = true,
-              -- quotePreference = "auto",
-              -- useLabelDetailsInCompletionEntries = true,
+              allowIncompleteCompletions = false,
+              allowRenameOfImportPath = true,
+              allowTextChangesInNewFiles = true,
+              disableLineTextInReferences = true,
+              displayPartsForJSDoc = false,
+              importModuleSpecifierPreference = "non-relative",
+              includeAutomaticOptionalChainCompletions = true,
+              includeCompletionsForImportStatements = true,
               includeCompletionsWithClassMemberSnippets = false,
               includeCompletionsWithObjectLiteralMethodSnippets = false,
               includeCompletionsWithSnippetText = false,
@@ -164,7 +152,12 @@ return lib.module.create({
               includeInlayPropertyDeclarationTypeHints = false,
               includeInlayVariableTypeHints = false,
               includeInlayVariableTypeHintsWhenTypeMatchesName = false,
-              importModuleSpecifierPreference = "non-relative",
+              -- jsxAttributeCompletionStyle = "auto",
+              -- providePrefixAndSuffixTextForRename = true,
+              -- provideRefactorNotApplicableReason = true,
+              -- quotePreference = "auto",
+              -- useLabelDetailsInCompletionEntries = true,
+              -- generateReturnInDocTemplate = true,
             },
           },
           on_attach = on_attach,

@@ -182,6 +182,10 @@ local setup_lspconfig = function()
     --   },
     -- },
     -- vtsls = {
+    --   flags = {
+    --     allow_incremental_sync = false,
+    --     debounce_text_changes = 5000,
+    --   },
     --   -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
     --   settings = {
     --     javascript = {
@@ -204,7 +208,7 @@ local setup_lspconfig = function()
     --     typescript = {
     --       format = { enable = false },
     --       tsserver = {
-    --         maxTsServerMemory = 4000,
+    --         maxTsServerMemory = "auto",
     --         -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
     --       },
     --       preferences = {
@@ -235,7 +239,7 @@ local setup_lspconfig = function()
     --   handlers = {
     --     -- always go to the first definition
     --     ["textDocument/definition"] = function(err, result, ...)
-    --       if vim.tbl_islist(result) or type(result) == "table" then result = result[1] end
+    --       if vim.islist(result) or type(result) == "table" then result = result[1] end
     --       vim.lsp.handlers["textDocument/definition"](err, result, ...)
     --     end,
     --     ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
