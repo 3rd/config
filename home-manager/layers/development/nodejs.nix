@@ -4,7 +4,7 @@
 
   home.packages = with pkgs; [
     #
-    nodejs_20
+    nodejs_22
     electron
     quick-lint-js
   ];

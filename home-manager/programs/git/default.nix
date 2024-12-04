@@ -9,6 +9,8 @@ let
       pkgs.writeShellScriptBin "git-undo" (builtins.readFile ./git-undo.sh);
     git-status-deep = pkgs.writeShellScriptBin "git-status-deep"
       (builtins.readFile ./git-status-deep.sh);
+    git-standup = pkgs.writeShellScriptBin "git-standup"
+      (builtins.readFile ./git-standup.sh);
   };
 in {
   imports = [ ./private.nix ];
@@ -29,6 +31,7 @@ in {
     scripts.git-id
     scripts.git-undo
     scripts.git-status-deep
+    scripts.git-standup
   ];
 
   programs.git = {
@@ -100,12 +103,12 @@ in {
     gl =
       "git log --graph --pretty=format:'%Cred%h%Creset %s - %C(bold blue)%an%Creset %Cgreen(%cr)' --abbrev-commit";
     gll = "git log --graph --abbrev-commit --decorate";
-    gstandup = ''
-      git log  --all --author="$(git config user.email)" --pretty=format:'%h %ad %s | %an' --date=short -62
-    '';
+    # gstandup = ''
+    #   git log  --all --author="$(git config user.email)" --pretty=format:'%h %ad %s | %an' --date=short -62 '';
     # scripts
     gid = "git-id";
     gbr = "git-branch";
+    gstandup = "git-standup";
     gss = "git-status-deep";
   };
   programs.fish.shellAbbrs = { };
