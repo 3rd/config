@@ -51,7 +51,28 @@ return lib.module.create({
               from_top = true,
             },
           },
+
+          documentation = {
+            auto_show = true,
+            auto_show_delay_ms = 100,
+            update_delay_ms = 50,
+            treesitter_highlighting = true,
+            window = {
+              min_width = 10,
+              max_width = 60,
+              max_height = 20,
+              border = "padded",
+              winblend = 0,
+              winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,CursorLine:BlinkCmpDocCursorLine,Search:None",
+              scrollbar = true,
+              direction_priority = {
+                menu_north = { "e", "w", "n", "s" },
+                menu_south = { "e", "w", "s", "n" },
+              },
+            },
+          },
         },
+
         accept = {
           create_undo_point = true,
           auto_brackets = {
@@ -69,9 +90,7 @@ return lib.module.create({
             },
           },
         },
-        documentation = {
-          auto_show = true,
-        },
+
         sources = {
           completion = {
             enabled_providers = { "lsp", "path", "snippets", "buffer", "lazydev" },
