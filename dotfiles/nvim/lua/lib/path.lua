@@ -24,10 +24,28 @@ local cwd_is_git_repo = function()
   return vim.v.shell_error == 0 and status ~= ""
 end
 
+local default_find_root_patterns = {
+  ".root",
+  ".git",
+}
+local find_root = function(patterns)
+  patterns = patterns or default_find_root_patterns
+  local path = vim.fs.dirname(lib.buffer.current.get_path())
+  if path == "." then path = vim.loop.cwd() or "" end
+  if path == "" then return nil end
+  local match = vim.fs.find(default_find_root_patterns, {
+    path = path,
+    upward = true,
+    stop = vim.loop.os_homedir(),
+  })[1] or nil
+  if not match then return end
+  return vim.fs.dirname(match) .. "/"
+end
+
 ---@vararg string|string[]
 ---@return boolean
 local root_has = function(...)
-  local root_path = cwd()
+  local root_path = find_root()
   for _, path in ipairs({ ... }) do
     if vim.fn.filereadable(resolve(root_path, path)) == 1 then return true end
   end
@@ -41,4 +59,5 @@ return {
   resolve_config = resolve_config,
   cwd_is_git_repo = cwd_is_git_repo,
   root_has = root_has,
+  find_root = find_root,
 }

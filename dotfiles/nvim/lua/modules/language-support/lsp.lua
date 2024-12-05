@@ -51,7 +51,8 @@ local setup_lspconfig = function()
   -- eslint
   local globalESLintConfigFile = nil
   local globalESLintResolveRelativeTo = nil
-  if not lib.fs.file.exists("eslint.config.js") then
+  local root = lib.path.find_root()
+  if not lib.fs.file.exists(lib.path.resolve(root, "eslint.config.js")) then
     globalESLintConfigFile = lib.path.resolve_config("linters/eslint/dist/main.js")
     globalESLintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
   end
