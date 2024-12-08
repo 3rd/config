@@ -101,6 +101,7 @@
       "@bb" = "cd ~/sync/brain";
       # custom utils
       w = "work";
+      pp = "promptpack";
       # wiki
       p = "nvim ~/brain/wiki/plan";
       ti = "nvim ~/brain/wiki/_inbox/tasks";

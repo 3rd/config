@@ -100,6 +100,8 @@ return {
     { "i", "?", "?<c-g>U" },
     -- misc
     { "n", "Q", "@q", "Run @q macro" },
+    -- experiments
+    { "n", "<c-c>", "ciw" },
   },
   lsp = {
     { "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", "LSP: Show hover" },

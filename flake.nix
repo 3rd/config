@@ -138,6 +138,11 @@
 
             wired.homeManagerModules.default
             (_: {
+              home.packages = [
+                #
+                self.packages.${system}.qimgv
+              ];
+
               services.wired = {
                 enable = true;
                 # config = ./wired.ron;
