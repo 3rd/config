@@ -280,13 +280,10 @@ local setup_lspconfig = function()
         "graphql",
       },
       flags = {
-        allow_incremental_sync = false,
-        debounce_text_changes = 1000,
+        allow_incremental_sync = true,
+        -- debounce_text_changes = 1000,
       },
       settings = {
-        -- experimental = {
-        --   useFlatConfig = globalESLintConfigFile == nil and true or false,
-        -- },
         useESLintClass = true,
         codeActionOnSave = {
           enable = false,
