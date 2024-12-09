@@ -30,9 +30,7 @@ return lib.module.create({
         blocked_filetypes = {},
         completion = {
           keyword = {
-            range = "prefix",
-            regex = "[%w_\\-]",
-            exclude_from_prefix_regex = "[\\-]",
+            range = "full",
           },
           trigger = {
             show_in_snippet = false,
