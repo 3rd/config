@@ -60,6 +60,7 @@
       eva # https://github.com/nerdypepper/eva
       slop
       mprocs
+      scooter
 
       # gui
       firefox
