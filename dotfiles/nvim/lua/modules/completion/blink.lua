@@ -27,7 +27,6 @@ return lib.module.create({
           ["<C-u>"] = { "scroll_documentation_up", "fallback" },
           ["<C-d>"] = { "scroll_documentation_down", "fallback" },
         },
-        blocked_filetypes = {},
         completion = {
           keyword = {
             range = "full",
@@ -69,33 +68,31 @@ return lib.module.create({
               },
             },
           },
-        },
 
-        accept = {
-          create_undo_point = true,
-          auto_brackets = {
-            enabled = false,
-            default_brackets = { "(", ")" },
-            override_brackets_for_filetypes = {},
-            kind_resolution = {
-              enabled = true,
-              blocked_filetypes = { "typescriptreact", "javascriptreact", "vue" },
-            },
-            semantic_token_resolution = {
-              enabled = true,
-              blocked_filetypes = {},
-              timeout_ms = 400,
+          accept = {
+            create_undo_point = true,
+            auto_brackets = {
+              enabled = false,
+              default_brackets = { "(", ")" },
+              override_brackets_for_filetypes = {},
+              kind_resolution = {
+                enabled = true,
+                blocked_filetypes = { "typescriptreact", "javascriptreact", "vue" },
+              },
+              semantic_token_resolution = {
+                enabled = true,
+                blocked_filetypes = {},
+                timeout_ms = 400,
+              },
             },
           },
         },
 
         sources = {
-          completion = {
-            enabled_providers = { "lsp", "path", "snippets", "buffer", "lazydev" },
-          },
+          default = { "lsp", "path", "snippets", "buffer", "lazydev" },
           providers = {
             lsp = {
-              fallback_for = { "lazydev" },
+              fallbacks = { "buffer" },
               override = {
                 get_completions = function(self, context, callback)
                   return self:get_completions(context, function(response)
@@ -112,7 +109,6 @@ return lib.module.create({
             buffer = {
               name = "Buffer",
               module = "blink.cmp.sources.buffer",
-              fallback_for = { "lsp" },
               min_keyword_length = 1,
               enabled = function()
                 local clients = vim.lsp.get_clients({ bufnr = 0 })
@@ -134,6 +130,7 @@ return lib.module.create({
             lazydev = {
               name = "LazyDev",
               module = "lazydev.integrations.blink",
+              fallbacks = { "lsp" },
             },
           },
         },

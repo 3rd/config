@@ -39,6 +39,7 @@
       duf
       d2
       delta
+      neofetch
 
       # system
       htop
