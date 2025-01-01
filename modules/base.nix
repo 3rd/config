@@ -45,7 +45,7 @@
   };
 
   boot.loader.grub.configurationLimit = 50;
-  boot.initrd.systemd.enable = true;
+  # boot.initrd.systemd.enable = true;
 
   boot.tmp = {
     useTmpfs = lib.mkDefault true;

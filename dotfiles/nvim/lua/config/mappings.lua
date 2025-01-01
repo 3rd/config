@@ -45,8 +45,8 @@ return {
     { "n", "*", "m`<Cmd>keepjumps normal! *``<CR>", "Search word under cursor" },
     { "v", "/", [[<esc>/\%V]], "Search in selection" },
     -- wrap
-    { "n", "j", "gj", "Move down" },
-    { "n", "k", "gk", "Move up" },
+    { "n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, desc = "Move down" } },
+    { "n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, desc = "Move up" } },
     -- folds
     -- { "n", "<tab>", "za", "Toggle fold" },
     -- { "n", "<s-tab>", "zc", "Close fold" },
@@ -70,10 +70,12 @@ return {
     { "v", "<", "<gv", "Decrease indent" },
     { "v", ">", ">gv", "Increase indent" },
     -- move lines
-    { "n", "<a-j>", "mz:m+<cr>`z", "Move line down" },
-    { "n", "<a-k>", "mz:m-2<cr>`z", "Move line up" },
-    { "v", "<a-j>", ":m'>+<cr>`<my`>mzgv`yo`z", "Move lines down" },
-    { "v", "<a-k>", ":m'<-2<cr>`>my`<mzgv`yo`z", "Move lines up" },
+    { "n", "<a-j>", "<cmd>execute 'move .+' . v:count1<cr>==", "Move line down" },
+    { "n", "<a-k>", "<cmd>execute 'move .-' . (v:count1 + 1)<cr>==", "Move line up" },
+    { "i", "<a-j>", "<esc><cmd>m .+1<cr>==gi", "Move line down" },
+    { "i", "<a-k>", "<esc><cmd>m .-2<cr>==gi", "Move line up" },
+    { "v", "<a-j>", ":<C-u>execute \"'<,'>move '>+\" . v:count1<cr>gv=gv", "Move lines down" },
+    { "v", "<a-k>", ":<C-u>execute \"'<,'>move '<-\" . (v:count1 + 1)<cr>gv=gv", "Move lines up" },
     -- navigation
     { "n", "<c-h>", "<c-w>h", "Focus left" },
     { "n", "<c-j>", "<c-w>j", "Focus down" },

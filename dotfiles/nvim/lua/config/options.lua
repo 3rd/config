@@ -34,6 +34,7 @@ return {
   undofile = true,
   undolevels = 10000,
   writebackup = false,
+  jumpoptions = "view",
   shada = {
     "!",
     "'1000",
@@ -115,6 +116,7 @@ return {
   showmode = false,
   signcolumn = "yes",
   synmaxcol = 200,
+  smoothscroll = true,
   -- diff
   diffopt = [[hiddenoff,iwhiteall,algorithm:patience]],
 }

@@ -458,9 +458,10 @@ return lib.module.create({
       opts = {
         library = {
           "lazy.nvim",
-          "image.nvim",
-          "sqlite.nvim",
           { path = "luvit-meta/library", words = { "vim%.uv" } },
+          { path = "image.nvim", words = { "image" } },
+          { path = "sqlite.nvim", words = { "sqlite" } },
+          { path = "snacks.nvim", words = { "Snacks" } },
           { path = vim.fn.stdpath("config") .. "/lua" },
           { path = "lua" },
         },

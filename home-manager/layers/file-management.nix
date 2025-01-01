@@ -5,10 +5,10 @@
     [
       #
       ranger
-      pcmanfm
     ] ++ [
       #
       pkgs-stable.yazi
+      pkgs-stable.pcmanfm
     ];
 }
 

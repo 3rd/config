@@ -25,10 +25,13 @@
     };
 
     wired.url = "github:Toqozz/wired-notify";
+
+    nixpkgs-chromium.url =
+      "github:nixos/nixpkgs?rev=8dd2f1add978a4747a5962f2874b8ad20f86b01c";
   };
 
   outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-master, home-manager, wired
-    , ... }@inputs:
+    , nixpkgs-chromium, ... }@inputs:
     let
       inherit (self) outputs;
       systems = [ "aarch64-linux" "x86_64-linux" ];
@@ -123,6 +126,10 @@
               config = { allowUnfree = true; };
             };
             pkgs-master = import nixpkgs-master {
+              inherit system;
+              config = { allowUnfree = true; };
+            };
+            pkgs-chromium = import nixpkgs-chromium {
               inherit system;
               config = { allowUnfree = true; };
             };

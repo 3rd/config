@@ -33,7 +33,8 @@ nix_switch() {
   echo "Building NixOS config"
   copy_relevant_files_to_tmpdir
   cd "$TMPDIR"
-  sudo nixos-rebuild switch --show-trace --impure --flake .#"$HOSTNAME"
+  sudo nixos-rebuild switch --impure --flake .#"$HOSTNAME"
+  # sudo nixos-rebuild switch --show-trace --impure --flake .#"$HOSTNAME"
 }
 
 nix_update() {

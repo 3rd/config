@@ -47,6 +47,7 @@ end
 ---@return boolean
 local root_has = function(...)
   local root_path = find_root()
+  if not root_path then return false end
   for _, path in ipairs({ ... }) do
     if vim.fn.filereadable(resolve(root_path, path)) == 1 then return true end
   end

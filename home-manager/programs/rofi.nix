@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-stable, ... }:
 
 {
   programs.rofi = {
@@ -6,7 +6,7 @@
     font = "Fira 14";
     location = "center";
     theme = "Arc-Dark";
-    package = with pkgs;
+    package = with pkgs-stable;
       rofi.override { plugins = [ rofi-calc rofi-file-browser ]; };
   };
 }

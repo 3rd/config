@@ -336,6 +336,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-chromium": {
+      "locked": {
+        "lastModified": 1732045383,
+        "narHash": "sha256-PWkPHtnTSaqTdIsP5Gb/ySk1dJUbGNqiC/BLypvyljY=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "8dd2f1add978a4747a5962f2874b8ad20f86b01c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "8dd2f1add978a4747a5962f2874b8ad20f86b01c",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1727825735,
@@ -420,6 +436,7 @@
         "home-manager": "home-manager",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-chromium": "nixpkgs-chromium",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-stable": "nixpkgs-stable",
         "wired": "wired"

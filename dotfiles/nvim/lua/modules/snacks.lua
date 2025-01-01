@@ -76,6 +76,18 @@ return lib.module.create({
             })
           end,
         },
+        {
+          "<leader>gg",
+          function()
+            Snacks.lazygit()
+          end,
+        },
+        {
+          "<leader>gf",
+          function()
+            Snacks.lazygit.log_file()
+          end,
+        },
         -- FIXME: not working, stack overflow
         -- {
         --   "<leader>ps",

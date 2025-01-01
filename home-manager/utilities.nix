@@ -24,7 +24,6 @@
       sqlite
       ast-grep
       flyctl
-      netlify-cli
       ngrok
       rlwrap
       socat
@@ -81,6 +80,7 @@
       #
       pkgs-stable.miniserve # https://github.com/svenstaro/miniserve
       pkgs-stable.silicon
+      pkgs-stable.netlify-cli
     ];
 
   programs.fish.shellAliases = {

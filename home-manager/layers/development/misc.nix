@@ -1,9 +1,13 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-stable, ... }:
 
 {
-  home.packages = with pkgs; [
-    #
-    postman
-    duckdb
-  ];
+  home.packages = with pkgs;
+    [
+      #
+      duckdb
+    ] ++ (with pkgs-stable;
+      [
+        #
+        postman
+      ]);
 }
