@@ -2,51 +2,31 @@
   "dd": {
     "prefix": "dd",
     "description": "\"date\"",
-    "body": [
-      "\\${CURRENT_YEAR\\}.\\${CURRENT_MONTH\\}.\\${CURRENT_DATE\\}",
-      ""
-    ]
+    "body": ["$CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DATE", ""]
   },
   "ddd": {
     "prefix": "ddd",
     "description": "\"date (pretty)\"",
-    "body": [
-      "\\${CURRENT_YEAR\\} \\${CURRENT_MONTH_NAME_SHORT\\} \\${CURRENT_DATE\\}",
-      ""
-    ]
+    "body": ["$CURRENT_YEAR $CURRENT_MONTH_NAME_SHORT $CURRENT_DATE", ""]
   },
   "dt": {
     "prefix": "dt",
     "description": "\"datetime\"",
-    "body": [
-      "\\${CURRENT_YEAR\\}.\\${CURRENT_MONTH\\}.\\${CURRENT_DATE\\} \\${CURRENT_HOUR\\}:\\${CURRENT_MINUTE\\}",
-      ""
-    ]
+    "body": ["$CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DATE $CURRENT_HOUR:$CURRENT_MINUTE", ""]
   },
   "tt": {
     "prefix": "tt",
     "description": "\"time\"",
-    "body": [
-      "\\${CURRENT_HOUR\\}:\\${CURRENT_MINUTE\\}",
-      ""
-    ]
+    "body": ["$CURRENT_HOUR:$CURRENT_MINUTE", ""]
   },
   "hr": {
     "prefix": "hr",
     "description": "\"horizontal line\"",
-    "body": [
-      "---------------------------------------------------------------------",
-      ""
-    ]
+    "body": ["---------------------------------------------------------------------", ""]
   },
   "@code": {
     "prefix": "@code",
     "description": "\"code block\"",
-    "body": [
-      "@code $1",
-      "$0",
-      "@end",
-      ""
-    ]
+    "body": ["@code $1", "$0", "@end", ""]
   }
 }

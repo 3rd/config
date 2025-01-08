@@ -65,6 +65,8 @@
   programs.nm-applet.enable = true;
   programs.light.enable = true;
 
+  programs.atop.enable = true;
+
   services.dbus.enable = true;
   services.flatpak.enable = true;
   services.fstrim.enable = true;

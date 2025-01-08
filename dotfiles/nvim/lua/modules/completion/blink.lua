@@ -11,12 +11,16 @@ return lib.module.create({
       -- commit = "88f1c203465fa3d883f2309bc22412c90a9f6a08",
       -- commit = "77f037cae07358368f3b7548ba39cffceb49349e",
       -- commit = "7ceff61595aae682b421a68e208719b1523c7b44", -- new config
+      -- commit = "e3b7cb4a1094377c3093a021300de123d9fc60d3",
       -- "3rd/blink.cmp",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
       lazy = false,
       -- version = "nightly",
       -- version = "v0.*",
       build = "cargo build --release",
+      dependencies = {
+        { "xzbdmw/colorful-menu.nvim", opts = {} },
+      },
       opts = {
         keymap = {
           ["<C-space>"] = { "show" },
@@ -42,7 +46,7 @@ return lib.module.create({
           },
           list = {
             max_items = 200,
-            selection = "auto_insert",
+            selection = { preselect = false, auto_insert = true },
             cycle = {
               from_bottom = true,
               from_top = true,
@@ -83,6 +87,40 @@ return lib.module.create({
                 enabled = true,
                 blocked_filetypes = {},
                 timeout_ms = 400,
+              },
+            },
+          },
+          menu = {
+            draw = {
+              components = {
+                label = {
+                  width = { fill = true, max = 60 },
+                  text = function(ctx)
+                    local highlights_info = require("colorful-menu").highlights(ctx.item, vim.bo.filetype)
+                    if highlights_info ~= nil then
+                      return highlights_info.text
+                    else
+                      return ctx.label
+                    end
+                  end,
+                  highlight = function(ctx)
+                    local highlights_info = require("colorful-menu").highlights(ctx.item, vim.bo.filetype)
+                    local highlights = {}
+                    if highlights_info ~= nil then
+                      for _, info in ipairs(highlights_info.highlights) do
+                        table.insert(highlights, {
+                          info.range[1],
+                          info.range[2],
+                          group = ctx.deprecated and "BlinkCmpLabelDeprecated" or info[1],
+                        })
+                      end
+                    end
+                    for _, idx in ipairs(ctx.label_matched_indices) do
+                      table.insert(highlights, { idx, idx + 1, group = "BlinkCmpLabelMatch" })
+                    end
+                    return highlights
+                  end,
+                },
               },
             },
           },
@@ -172,14 +210,15 @@ return lib.module.create({
     -- TODO: nvim-scissors
     {
       "smjonas/snippet-converter.nvim",
-      enabled = false,
+      -- enabled = false,
+      cmd = { "ConvertSnippets" },
       config = function()
         local template = {
           sources = {
-            snipmate = { vim.fn.stdpath("config") .. "/snippets_in" },
+            snipmate = { vim.fn.stdpath("config") .. "/snippets_snipmate" },
           },
           output = {
-            vscode = { vim.fn.stdpath("config") .. "/snippets_out" },
+            vscode = { vim.fn.stdpath("config") .. "/snippets_vscode" },
           },
         }
         require("snippet_converter").setup({ templates = { template } })

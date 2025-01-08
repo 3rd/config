@@ -5,6 +5,15 @@
     #
     lua-language-server
     stylua
-    (lua5_1.withPackages (ps: with ps; [ luacheck moonscript luarocks ]))
+    (lua5_1.withPackages (ps:
+      with ps; [
+        #
+        luacheck
+        moonscript
+        luarocks
+        busted
+        luafilesystem
+        penlight
+      ]))
   ];
 }

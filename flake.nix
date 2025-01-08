@@ -15,7 +15,8 @@
     };
 
     neovim-nightly-overlay = {
-      url = "github:nix-community/neovim-nightly-overlay";
+      url =
+        "github:nix-community/neovim-nightly-overlay?rev=fd381a5a19f553c2466dc437fb94fcf799d77e82";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

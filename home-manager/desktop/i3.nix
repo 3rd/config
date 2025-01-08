@@ -190,8 +190,8 @@ in {
           "${modifier}+x" = "mode power";
           # launchers
           "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
-          "${modifier}+shift+Return" = ''
-            exec ulimit -n 999999 && /bin/sh -c "$BROWSER --disable-backgrounding-occluded-windows"'';
+          "${modifier}+shift+Return" =
+            ''exec ulimit -n 999999 && /bin/sh -c "$BROWSER"'';
           "${modifier}+p" = "exec ${pkgs.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs.flameshot}/bin/flameshot gui";
           "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
@@ -266,8 +266,8 @@ in {
         for_window [class="^.*"] border pixel 2
 
         bindcode ${modifier}+110 exec ${pkgs-stable.pcmanfm}/bin/pcmanfm
-        bindcode ${modifier}+118 exec ulimit -n 999999 && /bin/sh -c "$BROWSER --disable-backgrounding-occluded-windows"
-        bindcode ${modifier}+115 exec ulimit -n 999999 && /bin/sh -c "$BROWSER --disable-backgrounding-occluded-windows"
+        bindcode ${modifier}+118 exec ulimit -n 999999 && /bin/sh -c "$BROWSER"
+        bindcode ${modifier}+115 exec ulimit -n 999999 && /bin/sh -c "$BROWSER"
 
         # workspaces
         workspace "1: ${iconLeft} ${workspaces.one}" output ${monLeft}

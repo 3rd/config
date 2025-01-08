@@ -5,69 +5,9 @@
     "snippets": [
       {
         "language": [
-          "html"
-        ],
-        "path": "./html.json"
-      },
-      {
-        "language": [
-          "sh"
-        ],
-        "path": "./sh.json"
-      },
-      {
-        "language": [
-          "javascript"
-        ],
-        "path": "./javascript.json"
-      },
-      {
-        "language": [
           "typescript"
         ],
         "path": "./typescript.json"
-      },
-      {
-        "language": [
-          "snippets"
-        ],
-        "path": "./snippets.json"
-      },
-      {
-        "language": [
-          "vue"
-        ],
-        "path": "./vue.json"
-      },
-      {
-        "language": [
-          "make"
-        ],
-        "path": "./make.json"
-      },
-      {
-        "language": [
-          "all"
-        ],
-        "path": "./all.json"
-      },
-      {
-        "language": [
-          "lua"
-        ],
-        "path": "./lua.json"
-      },
-      {
-        "language": [
-          "syslang"
-        ],
-        "path": "./syslang.json"
-      },
-      {
-        "language": [
-          "go"
-        ],
-        "path": "./go.json"
       },
       {
         "language": [
@@ -77,9 +17,57 @@
       },
       {
         "language": [
+          "all"
+        ],
+        "path": "./all.json"
+      },
+      {
+        "language": [
+          "sh"
+        ],
+        "path": "./sh.json"
+      },
+      {
+        "language": [
+          "make"
+        ],
+        "path": "./make.json"
+      },
+      {
+        "language": [
+          "snippets"
+        ],
+        "path": "./snippets.json"
+      },
+      {
+        "language": [
           "markdown"
         ],
         "path": "./markdown.json"
+      },
+      {
+        "language": [
+          "javascript"
+        ],
+        "path": "./javascript.json"
+      },
+      {
+        "language": [
+          "html"
+        ],
+        "path": "./html.json"
+      },
+      {
+        "language": [
+          "lua"
+        ],
+        "path": "./lua.json"
+      },
+      {
+        "language": [
+          "vue"
+        ],
+        "path": "./vue.json"
       }
     ]
   }

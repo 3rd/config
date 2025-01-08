@@ -7,6 +7,7 @@
     nodejs_22
     electron
     quick-lint-js
+    bun
   ];
 
   home = {

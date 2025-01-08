@@ -5,7 +5,13 @@
 
   programs.neovim = {
     enable = true;
-    extraLuaPackages = ps: [ ps.magick ];
+    extraLuaPackages = ps:
+      with ps; [
+        #
+        magick
+        busted
+        luafilesystem
+      ];
     extraPackages = with pkgs; [ imagemagick gcc ];
     withNodeJs = true;
   };
