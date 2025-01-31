@@ -49,13 +49,13 @@ local setup_lspconfig = function()
   end
 
   -- eslint
-  local globalESLintConfigFile = nil
-  local globalESLintResolveRelativeTo = nil
+  local eslintConfigOverride = nil
+  local eslintResolveRelativeTo = nil
   local root = lib.path.find_root()
-  if root and not lib.fs.file.exists(lib.path.resolve(root, "eslint.config.js")) then
-    globalESLintConfigFile = lib.path.resolve_config("linters/eslint/dist/main.js")
-    globalESLintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
-  end
+  -- if root and not lib.fs.file.exists(lib.path.resolve(root, "eslint.config.js")) then
+  eslintConfigOverride = lib.path.resolve_config("linters/eslint/dist/main.js")
+  eslintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
+  -- end
 
   local overrides = {
     -- client.server_capabilities.documentFormattingProvider
@@ -267,46 +267,47 @@ local setup_lspconfig = function()
         },
       },
     },
-    eslint = {
-      filetypes = {
-        "javascript",
-        "javascriptreact",
-        "javascript.jsx",
-        "typescript",
-        "typescriptreact",
-        "typescript.tsx",
-        "vue",
-        "svelte",
-        "graphql",
-      },
-      flags = {
-        allow_incremental_sync = true,
-        -- debounce_text_changes = 1000,
-      },
-      settings = {
-        useESLintClass = true,
-        codeActionOnSave = {
-          enable = false,
-          mode = "all",
-        },
-        quiet = false,
-        onIgnoredFiles = "off",
-        rulesCustomizations = {},
-        run = "onSave",
-        codeAction = {
-          disableRuleComment = { enable = true, location = "separateLine" },
-          showDocumentation = { enable = true },
-        },
-        packageManager = "pnpm",
-        options = vim.tbl_deep_extend("force", {
-          cache = true,
-          fix = true,
-          overrideConfigFile = globalESLintConfigFile,
-          -- resolvePluginsRelativeTo = globalESLintResolveRelativeTo,
-        }, globalESLintConfigFile and { useEslintrc = false } or {}),
-        nodePath = globalESLintResolveRelativeTo,
-      },
-    },
+    -- eslint = {
+    --   cmd = { "vscode-eslint-language-server", "--stdio" },
+    --   filetypes = {
+    --     "javascript",
+    --     "javascriptreact",
+    --     "javascript.jsx",
+    --     "typescript",
+    --     "typescriptreact",
+    --     "typescript.tsx",
+    --     "vue",
+    --     "svelte",
+    --     "graphql",
+    --   },
+    --   flags = {
+    --     allow_incremental_sync = true,
+    --     -- debounce_text_changes = 1000,
+    --   },
+    --   settings = {
+    --     useESLintClass = true,
+    --     codeActionOnSave = {
+    --       enable = false,
+    --       mode = "all",
+    --     },
+    --     quiet = false,
+    --     onIgnoredFiles = "off",
+    --     rulesCustomizations = {},
+    --     run = "onSave",
+    --     codeAction = {
+    --       disableRuleComment = { enable = true, location = "separateLine" },
+    --       showDocumentation = { enable = true },
+    --     },
+    --     packageManager = "pnpm",
+    --     options = vim.tbl_deep_extend("force", {
+    --       cache = true,
+    --       fix = true,
+    --       overrideConfigFile = eslintConfigOverride,
+    --       resolvePluginsRelativeTo = eslintResolveRelativeTo,
+    --     }, eslintConfigOverride and { useEslintrc = false } or {}),
+    --     nodePath = eslintResolveRelativeTo,
+    --   },
+    -- },
     jsonls = {
       init_options = {
         provideFormatter = false,
@@ -472,10 +473,15 @@ return lib.module.create({
     },
     {
       "j-hui/fidget.nvim",
-      tag = "legacy",
+      -- tag = "legacy",
       event = "VeryLazy",
       opts = {
-        window = { blend = 0 },
+        notification = {
+          window = { winblend = 0 },
+        },
+        progress = {
+          ignore_done_already = true,
+        },
       },
     },
   },

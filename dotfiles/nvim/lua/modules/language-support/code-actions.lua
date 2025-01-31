@@ -79,7 +79,7 @@ return lib.module.create({
         lib.map.map({ "n", "v" }, "<leader>ac", function()
           clear_action.code_action({
             filter = function(action)
-              if vim.startswith(action.kind, "refactor") then return false end
+              if action.kind and vim.startswith(action.kind, "refactor") then return false end
               return true
             end,
           })

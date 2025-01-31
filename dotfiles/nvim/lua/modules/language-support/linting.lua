@@ -20,12 +20,33 @@ return lib.module.create({
           "-",
         }
 
+        -- lint.linters.eslint_d.env = {
+        --   ESLINT_USE_FLAT_CONFIG = "false",
+        --   ESLINT_D_ROOT = lib.path.resolve_config("linters/eslint"),
+        -- }
+        -- lint.linters.eslint_d.args = {
+        --   "--config",
+        --   lib.path.resolve_config("linters/eslint/dist/main.js"),
+        --   "--no-eslintrc",
+        --   "--format",
+        --   "json",
+        --   "--stdin",
+        --   "--stdin-filename",
+        --   function()
+        --     return vim.api.nvim_buf_get_name(0)
+        --   end,
+        -- }
+
         lint.linters_by_ft = {
           nix = { "nix", "statix" },
           cpp = { "cppcheck" },
           markdown = { "alex" },
           sh = { "shellcheck" },
           lua = vim.tbl_extend("force", {}, require("jit").arch ~= "arm64" and { "selene" } or {}),
+          -- javascript = { "eslint_d" },
+          -- javascriptreact = { "eslint_d" },
+          -- typescript = { "eslint_d" },
+          -- typescriptreact = { "eslint_d" },
         }
 
         local group = vim.api.nvim_create_augroup("lint", { clear = true })

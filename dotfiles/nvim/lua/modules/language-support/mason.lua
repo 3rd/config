@@ -1,3 +1,6 @@
+-- extra:
+-- npm i -g eslint_d eslint-formatter-visualstudio
+
 return lib.module.create({
   name = "language-support/mason",
   hosts = "*",
@@ -23,7 +26,7 @@ return lib.module.create({
             "cssls",
             "cssmodules_ls",
             "dockerls",
-            "eslint",
+            -- "eslint",
             "golangci_lint_ls",
             "gopls",
             "html",

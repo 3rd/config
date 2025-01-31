@@ -10,6 +10,7 @@ local paths = {
 local web_formatters = {
   "prettierd",
   "rustywind",
+  -- "eslint_d",
 }
 local fts_with_lsp_formatting = {
   "typescript",
@@ -61,6 +62,21 @@ return lib.module.create({
             prettierd = {
               env = { PRETTIERD_DEFAULT_CONFIG = paths.prettier_config },
             },
+            -- eslint_d = {
+            --   args = {
+            --     "--fix-to-stdout",
+            --     "--config",
+            --     lib.path.resolve_config("linters/eslint/dist/main.js"),
+            --     "--no-eslintrc",
+            --     "--stdin",
+            --     "--stdin-filename",
+            --     "$FILENAME",
+            --   },
+            --   env = {
+            --     ESLINT_USE_FLAT_CONFIG = "false",
+            --     ESLINT_D_ROOT = lib.path.resolve_config("linters/eslint"),
+            --   },
+            -- },
           },
         }
 
