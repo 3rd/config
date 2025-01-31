@@ -54,6 +54,7 @@
       brightnessctl
       dmidecode
       lsof
+      tomato-c
 
       # misc
       file

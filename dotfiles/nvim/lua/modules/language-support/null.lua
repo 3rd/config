@@ -17,19 +17,30 @@ return lib.module.create({
         "nvimtools/none-ls-extras.nvim",
       },
       config = function()
+        local cwd = vim.fn.getcwd()
         require("null-ls").setup({
+          debug = true,
           sources = {
             require("none-ls.diagnostics.eslint_d").with({
               extra_args = eslint_extra_args,
               env = eslint_env,
+              cwd = function()
+                return cwd
+              end,
             }),
             require("none-ls.code_actions.eslint_d").with({
               extra_args = eslint_extra_args,
               env = eslint_env,
+              cwd = function()
+                return cwd
+              end,
             }),
             require("none-ls.formatting.eslint_d").with({
               extra_args = eslint_extra_args,
               env = eslint_env,
+              cwd = function()
+                return cwd
+              end,
             }),
           },
         })

@@ -47,7 +47,7 @@
       "bar/top" = {
         "inherit" = "bar/common";
         modules-left = "i3";
-        modules-center = "task";
+        modules-center = "task tomato";
         modules-right =
           "bci vpn battery sep pulseaudio bluetooth cpu cpu_temp sep mem sep fs sep clock";
         height = 28;
@@ -257,6 +257,16 @@
         format-background = gray-darker;
         format-foreground = gray-light;
         format-padding = 2;
+      };
+      "module/tomato" = {
+        type = "custom/script";
+        exec = "${pkgs.tomato-c}/bin/tomato -t";
+        format = "<label>";
+        format-background = gray-dark;
+        format-foreground = red-light;
+        format-padding = 2;
+        interval = 0;
+        tail = true;
       };
     };
   };
