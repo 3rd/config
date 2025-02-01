@@ -17,7 +17,7 @@ return lib.module.create({
         "nvimtools/none-ls-extras.nvim",
       },
       config = function()
-        local cwd = vim.fn.getcwd()
+        local cwd = lib.path.find_root({ ".root", ".git" })
         require("null-ls").setup({
           debug = true,
           sources = {
