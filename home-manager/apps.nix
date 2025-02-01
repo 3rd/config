@@ -24,6 +24,13 @@ let
 
     exec appimage-run ''${files[0]}
   '';
+  webWrapperDesktopItem = { name, url }:
+    pkgs.makeDesktopItem {
+      name = name;
+      desktopName = name;
+      exec = ''google-chrome-stable --app="'' + url + ''" %U'';
+      terminal = false;
+    };
 
   heptabaseDesktopItem = pkgs.makeDesktopItem {
     name = "heptabase";
@@ -40,6 +47,17 @@ let
     terminal = false;
   };
 
+  tanaDesktopItem = webWrapperDesktopItem {
+    name = "Tana";
+    url = "https://app.tana.inc";
+  };
+
 in {
-  home.packages = [ appLaunchScript heptabaseDesktopItem cursorDesktopItem ];
+  home.packages = [
+    #
+    appLaunchScript
+    heptabaseDesktopItem
+    cursorDesktopItem
+    tanaDesktopItem
+  ];
 }
