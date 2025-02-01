@@ -26,6 +26,14 @@ for k, v in pairs(options) do
   vim.opt[k] = v
 end
 
+-- https://github.com/neovim/neovim/issues/29047
+vim.api.nvim_create_autocmd("UIEnter", {
+  pattern = "*",
+  callback = function()
+    vim.opt.ttimeout = false
+  end,
+})
+
 -- filetype
 vim.filetype.add(require("config/filetype"))
 
