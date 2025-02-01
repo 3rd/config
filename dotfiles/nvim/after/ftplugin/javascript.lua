@@ -56,4 +56,4 @@ local function toggle_test_only()
     vim.api.nvim_buf_set_text(buffer, start_row, start_col, end_row, end_col, { "it" })
   end
 end
-vim.keymap.set("n", "<leader>to", toggle_test_only, { buffer = true })
+vim.keymap.set("n", "<leader>to", toggle_test_only, { buffer = true, desc = "Toggle test.only" })

@@ -1,3 +1,5 @@
+local virtual_text_config = { prefix = "»", spacing = 4 }
+
 local setup = function()
   -- vim.diagnostic
   vim.diagnostic.config({
@@ -6,7 +8,8 @@ local setup = function()
     signs = true,
     underline = true,
     update_in_insert = false,
-    virtual_text = { prefix = "»", spacing = 4 },
+    virtual_text = virtual_text_config,
+    virtual_lines = false,
   })
 
   -- signs
@@ -21,4 +24,17 @@ return lib.module.create({
   name = "language-support/diagnostics",
   hosts = "*",
   setup = setup,
+  mappings = {
+    {
+      "n",
+      "<leader>td",
+      function()
+        vim.diagnostic.config({
+          virtual_text = vim.diagnostic.config().virtual_text == false and virtual_text_config or false,
+          virtual_lines = not vim.diagnostic.config().virtual_lines,
+        })
+      end,
+      "Toggle diagnostics virtual_lines",
+    },
+  },
 })

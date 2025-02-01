@@ -23,6 +23,7 @@
     ../gtk.nix
     ../utilities.nix
     ../desktop/xdg-desktop-entries.nix
+    ../apps.nix
   ];
 
   nixpkgs.config.allowUnfree = true;

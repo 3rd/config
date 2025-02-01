@@ -1,11 +1,11 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, pkgs-stable, lib, ... }:
 
 {
   # boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
 
   programs.nix-ld = {
     enable = true;
-    libraries = with pkgs; [
+    libraries = with pkgs-stable; [
       SDL
       SDL2
       SDL2_image

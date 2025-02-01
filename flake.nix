@@ -15,8 +15,8 @@
     };
 
     neovim-nightly-overlay = {
-      url =
-        "github:nix-community/neovim-nightly-overlay?rev=fd381a5a19f553c2466dc437fb94fcf799d77e82";
+      url = "github:nix-community/neovim-nightly-overlay";
+      #   url = "github:nix-community/neovim-nightly-overlay?rev=fd381a5a19f553c2466dc437fb94fcf799d77e82";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -59,15 +59,26 @@
             inherit inputs outputs;
             pkgs-master =
               import nixpkgs-master { config = { allowUnfree = true; }; };
+            pkgs-stable =
+              import nixpkgs-stable { config = { allowUnfree = true; }; };
           };
           modules = [ ./hosts/spaceship/configuration.nix ];
         };
         macbook = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
+          specialArgs = {
+            inherit inputs outputs;
+
+            pkgs-stable =
+              import nixpkgs-stable { config = { allowUnfree = true; }; };
+          };
           modules = [ ./hosts/macbook/configuration.nix ];
         };
         workstation = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs outputs; };
+          specialArgs = {
+            inherit inputs outputs;
+            pkgs-stable =
+              import nixpkgs-stable { config = { allowUnfree = true; }; };
+          };
           modules = [ ./hosts/workstation/configuration.nix ];
         };
       };

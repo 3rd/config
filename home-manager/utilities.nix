@@ -17,7 +17,7 @@
       xh # https://github.com/ducaale/xh
       dogdns # https://github.com/ogham/dog
       fx # https://github.com/antonmedv/fx
-      xsv # https://github.com/BurntSushi/xsv
+      # xsv # https://github.com/BurntSushi/xsv
       sd # https://github.com/chmln/sd
       grex # https://github.com/pemistahl/grex
       gron
@@ -89,15 +89,6 @@
     serve = "miniserve";
     calc = "qalc";
     cp = "xcp";
-  };
-
-  xdg.desktopEntries = {
-    httpie = {
-      name = "httpie";
-      genericName = "HTTPie";
-      exec = "appimage-run /home/rabbit/apps/HTTPie-2024.1.2.AppImage";
-      terminal = false;
-    };
   };
 }
 

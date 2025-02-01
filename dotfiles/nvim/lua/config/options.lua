@@ -15,7 +15,7 @@ return {
   timeout = true,
   timeoutlen = 1000,
   title = true,
-  ttimeout = false,
+  ttimeout = true,
   visualbell = true,
   wrap = false,
   linebreak = true,
