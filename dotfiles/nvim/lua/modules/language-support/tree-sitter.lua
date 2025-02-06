@@ -48,16 +48,16 @@ local config = {
       for _, l in ipairs({ "bash" }) do
         if lang == l then return true end
       end
-      -- local max_filesize = 1024 * 1024
-      -- local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
-      -- if ok and stats and stats.size > max_filesize then
-      --   log("tree-sitter disabled due to large file")
-      --   return true
-      -- end
+      local max_filesize = 1024 * 1024
+      local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+      if ok and stats and stats.size > max_filesize then
+        log("tree-sitter disabled due to large file")
+        return true
+      end
       -- lush
-      --   local text = lib.buffer.get_text(buf)
-      --   if string.includes(text, "lush%(function") then return true end
-      --   return false
+      local text = lib.buffer.get_text(buf)
+      if string.includes(text, "lush%(function") then return true end
+      return false
     end,
   },
   indent = {
@@ -87,7 +87,7 @@ local config = {
     lint_events = { "BufWrite", "CursorHold" },
   },
   incremental_selection = {
-    enable = false,
+    enable = false, -- handled by wildfire
     keymaps = {
       init_selection = "<cr>",
       node_incremental = "<cr>",

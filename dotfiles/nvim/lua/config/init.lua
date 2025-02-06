@@ -30,7 +30,9 @@ end
 vim.api.nvim_create_autocmd("UIEnter", {
   pattern = "*",
   callback = function()
-    vim.opt.ttimeout = false
+    vim.defer_fn(function()
+      vim.opt.ttimeout = false
+    end, 2000)
   end,
 })
 
