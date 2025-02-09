@@ -188,7 +188,6 @@ local theme = lush(function(injected)
   return {
     -- base
     Normal({ fg = colors.foreground }), -- Normal text
-    -- Normal({ fg = colors.foreground }), -- Normal text
     NormalFloat({ bg = colors.background.lighten(5) }),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),

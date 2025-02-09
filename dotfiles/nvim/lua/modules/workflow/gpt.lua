@@ -46,6 +46,14 @@ end
 ---@param options? GPTOptions
 ---@param callback fun(result:string|nil)
 local async_complete = function(prompt, options, callback)
+  if not API_KEY or API_KEY == "" then
+    vim.schedule(function()
+      vim.notify("Error: OPENAI_API_KEY is not set", vim.log.levels.ERROR)
+      callback(nil)
+    end)
+    return
+  end
+
   local messages = {
     { role = "developer", content = prompt },
   }
@@ -69,7 +77,7 @@ local async_complete = function(prompt, options, callback)
 
   if DEBUG then log("GPT async request: ", { command = command, payload = payload }) end
 
-  -- popup
+  -- loading popup
   local columns = vim.o.columns
   local loading_popup = require("nui.popup")({
     position = { row = 1, col = columns - 2 },
@@ -79,6 +87,11 @@ local async_complete = function(prompt, options, callback)
     win_options = { winblend = 10 },
   })
   loading_popup:mount()
+
+  -- close with q
+  vim.keymap.set("n", "q", function()
+    loading_popup:unmount()
+  end, { buffer = loading_popup.bufnr, silent = true })
   vim.api.nvim_buf_set_lines(loading_popup.bufnr, 0, -1, false, { "LLM call...", "" })
 
   local output_lines = {}
@@ -109,13 +122,30 @@ local async_complete = function(prompt, options, callback)
       end)
       local output = table.concat(output_lines, "\n")
       local status, response = pcall(vim.fn.json_decode, output)
-      if not status or not (response and response.choices) then
-        if DEBUG then log("GPT fail: ", { request = payload, response = output }) end
+      if not status then
         vim.schedule(function()
+          vim.notify("Error: Failed to decode GPT response", vim.log.levels.ERROR)
           callback(nil)
         end)
         return
       end
+
+      if response.error then
+        vim.schedule(function()
+          vim.notify("Error: " .. vim.inspect(response.error), vim.log.levels.ERROR)
+          callback(nil)
+        end)
+        return
+      end
+
+      if not (response and response.choices) then
+        vim.schedule(function()
+          vim.notify("Error: Unexpected GPT response format", vim.log.levels.ERROR)
+          callback(nil)
+        end)
+        return
+      end
+
       local message = response.choices[1].message
       local result = vim.fn.trim(message.content, "\n")
       vim.schedule(function()
@@ -159,6 +189,10 @@ local explain = function(code)
       win_options = { wrap = true },
     })
     popup:mount()
+    -- close with q
+    vim.keymap.set("n", "q", function()
+      popup:unmount()
+    end, { buffer = popup.bufnr, silent = true })
     popup:on(event.BufLeave, function()
       popup:unmount()
     end)
@@ -196,6 +230,10 @@ local ask = function(code)
         win_options = { wrap = true },
       })
       popup:mount()
+      -- close with q
+      vim.keymap.set("n", "q", function()
+        popup:unmount()
+      end, { buffer = popup.bufnr, silent = true })
       popup:on(event.BufLeave, function()
         popup:unmount()
       end)
@@ -317,6 +355,14 @@ return lib.module.create({
             end
           end)
         end)
+      end,
+    },
+    {
+      "n",
+      "Codex: Ask entire buffer",
+      function()
+        local code = lib.buffer.current.get_text()
+        ask(code)
       end,
     },
   },

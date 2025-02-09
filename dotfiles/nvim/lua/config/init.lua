@@ -31,8 +31,8 @@ vim.api.nvim_create_autocmd("UIEnter", {
   pattern = "*",
   callback = function()
     vim.defer_fn(function()
-      vim.opt.ttimeout = false
-    end, 2000)
+      vim.cmd("silent! edit!")
+    end, 0)
   end,
 })
 
