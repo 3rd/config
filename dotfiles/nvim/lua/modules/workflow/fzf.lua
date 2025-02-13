@@ -1,11 +1,19 @@
 local setup_fzf_lua = function()
   local fzf = require("fzf-lua")
 
+  local fd_command = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
+  if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
+    fd_command = fd_command .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%")))
+  end
+
   local config = {
-    defaults = {
-      formatter = { "path.filename_first", 2 },
+    -- defaults = {
+    --   formatter = { "path.filename_first", 2 },
+    -- },
+    fzf_opts = {
+      ["--layout"] = "default",
+      ["--highlight-line"] = true,
     },
-    fzf_opts = { ["--layout"] = "default" },
     rg_opts = { ["--column"] = "" },
     winopts = {
       split = "botright new",
@@ -15,6 +23,7 @@ local setup_fzf_lua = function()
         delay = 0,
         layout = "horizontal",
         horizontal = "right:40%",
+        wrap = true,
       },
       on_create = function()
         vim.api.nvim_buf_set_keymap(0, "t", "<C-j>", "<Down>", { silent = true })
@@ -25,12 +34,13 @@ local setup_fzf_lua = function()
     previewers = {
       bat = {
         cmd = "bat",
-        args = "--color always --style=numbers,changes",
+        args = "--color always --style=numbers,changes --wrap=auto",
         theme = "OneHalfDark",
         config = nil,
       },
     },
     files = {
+      cmd = fd_command,
       -- path_shorten = 4,
       git_icons = false,
     },
@@ -38,6 +48,7 @@ local setup_fzf_lua = function()
       -- path_shorten = 4,
     },
     grep = {
+      rg_opts = "--hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --glob '!LICENSE' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e",
       -- path_shorten = 4,
       git_icons = false,
       fzf_opts = { ["--layout"] = "default", ["--no-hscroll"] = "" },
@@ -49,31 +60,31 @@ local setup_fzf_lua = function()
   fzf.setup(config)
 
   lib.map.map("n", "<c-p>", function()
-    local opts = vim.deepcopy(config)
-    opts.cmd = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
-    if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
-      opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%")))
-    end
-    opts.prompt = "> "
-    opts.fzf_opts = {
-      ["--info"] = "inline",
-      ["--tiebreak"] = "index",
-    }
-    fzf.files(opts)
+    -- local opts = vim.deepcopy(config)
+    -- opts.cmd = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
+    -- if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
+    --   opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%")))
+    -- end
+    -- opts.prompt = "> "
+    -- opts.fzf_opts = {
+    --   ["--info"] = "inline",
+    --   ["--tiebreak"] = "index",
+    -- }
+    fzf.files()
   end, "Find file in project")
 
   lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
 
   lib.map.map("n", "<c-f>", function()
     local opts = vim.deepcopy(config)
-    opts.cmd =
-      "rg --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --glob '!LICENSE' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
-    opts.prompt = "> "
-    opts.fzf_opts = {
-      ["--info"] = "inline",
-      ["--tiebreak"] = "index",
-    }
-    fzf.grep_project(opts)
+    -- opts.cmd =
+    --   "rg --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --glob '!LICENSE' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
+    -- opts.prompt = "> "
+    -- opts.fzf_opts = {
+    --   ["--info"] = "inline",
+    --   ["--tiebreak"] = "index",
+    -- }
+    fzf.grep_project()
   end, "Find text in project")
 
   lib.map.map("n", "<leader>l", "<cmd>lua require('fzf-lua').blines()<CR>", "Find line in buffer")
@@ -88,7 +99,7 @@ return lib.module.create({
     {
       "ibhagwan/fzf-lua",
       -- commit = "a1a2d0f42eaec400cc6918a8e898fc1f9c4dbc5f", -- issues introduced by https://github.com/ibhagwan/fzf-lua/commit/b3b05f9d438736bb1f88aa373476753ddf83f481
-      commit = "60428a8dc931639ee5e88756b2d7bc896cdc20c7",
+      -- commit = "60428a8dc931639ee5e88756b2d7bc896cdc20c7",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "fzf"),
       event = "VeryLazy",
       dependencies = { "nvim-tree/nvim-web-devicons" },
