@@ -76,15 +76,53 @@ return lib.module.create({
   enabled = false,
   hosts = { "spaceship", "macbook" },
   plugins = {
-    -- { "github/copilot.vim" },
     {
-      "zbirenbaum/copilot.lua",
-      -- commit = "38a41d0d78f8823cc144c99784528b9a68bdd608",
-      event = { "InsertEnter" },
+      "github/copilot.vim",
+      event = "VeryLazy",
       config = function()
-        require("copilot").setup(config)
-        -- vim.cmd(":silent! Copilot disable")
+        vim.g.copilot_no_tab_map = true
+        vim.g.copilot_assume_mapped = true
+        vim.g.copilot_tab_fallback = ""
+
+        vim.g.copilot_filetypes = {
+          ["*"] = false,
+          env = false,
+          dotenv = false,
+          sh = false,
+          lua = true,
+          nix = true,
+          go = true,
+          rust = true,
+          typescript = true,
+          typescriptreact = true,
+          javascript = true,
+          javascriptreact = true,
+          html = true,
+          vue = true,
+          css = true,
+          scss = true,
+          astro = true,
+          mdx = true,
+        }
+
+        lib.map.map("i", "<c-l>", function()
+          local copilot_keys = vim.fn["copilot#Accept"]()
+          if copilot_keys ~= "" then
+            vim.api.nvim_feedkeys(copilot_keys, "i", true)
+            local ok, suggestion = pcall(require, "copilot.suggestion")
+            if ok and suggestion.is_visible() then suggestion.accept() end
+          end
+        end)
       end,
     },
+    -- {
+    --   "zbirenbaum/copilot.lua",
+    --   -- commit = "38a41d0d78f8823cc144c99784528b9a68bdd608",
+    --   event = { "InsertEnter" },
+    --   config = function()
+    --     require("copilot").setup(config)
+    --     -- vim.cmd(":silent! Copilot disable")
+    --   end,
+    -- },
   },
 })
