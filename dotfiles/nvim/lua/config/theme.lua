@@ -362,7 +362,7 @@ local theme = lush(function(injected)
     sym("@function.macro")({ Macro }),
     sym("@include")({ Include }),
     sym("@keyword")({ Keyword }),
-    sym("@keyword.function")({ Keyword }), -- or SpecialKeyword
+    sym("@keyword.function")({ sym("@break") }), -- or SpecialKeyword
     sym("@keyword.operator")({ SpecialKeyword }),
     sym("@keyword.coroutine")({ SpecialKeyword }),
     sym("@keyword.return")({ sym("@break") }),
@@ -473,7 +473,7 @@ local theme = lush(function(injected)
     -- lua
     sym("@constructor.lua")({ Delimiter }),
     sym("@namespace.builtin.lua")({ sym("@builtin") }),
-    sym("@keyword.function.lua")({ Keyword }),
+    sym("@keyword.function.lua")({ sym("@break") }),
     sym("@keyword.conditional")({ sym("@conditional") }),
 
     -- tsx
