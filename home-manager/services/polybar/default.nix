@@ -265,7 +265,7 @@
         format-background = gray-dark;
         format-foreground = red-light;
         format-padding = 2;
-        interval = 0;
+        interval = 1;
         tail = true;
       };
     };

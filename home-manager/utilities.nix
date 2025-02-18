@@ -20,6 +20,7 @@
       # xsv # https://github.com/BurntSushi/xsv
       sd # https://github.com/chmln/sd
       grex # https://github.com/pemistahl/grex
+      execline
       gron
       sqlite
       ast-grep
