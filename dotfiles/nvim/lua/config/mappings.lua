@@ -129,7 +129,7 @@ return {
     -- { "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", "LSP: Show signature help" },
     -- { { "n", "v" }, "<leader>ac", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP: Code action" },
     { "n", "<leader>er", "<cmd>lua vim.lsp.buf.rename()<cr>", "LSP: Rename symbol" },
-    { "n", "<leader>r", "<cmd>lua require('fzf-lua').lsp_document_symbols()<CR>", "LSP: Show document symbols" },
+    -- { "n", "<leader>r", "<cmd>lua require('fzf-lua').lsp_document_symbols()<CR>", "LSP: Show document symbols" },
     {
       "n",
       "<leader>R",

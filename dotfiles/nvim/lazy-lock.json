@@ -32,6 +32,7 @@
   "maximize.nvim": { "branch": "master", "commit": "d688b66344b03ee6e5a32a0a40af85d174490af8" },
   "mini.nvim": { "branch": "main", "commit": "4dd209e4f03bacd46d6d87408b2529a8823112fb" },
   "modes.nvim": { "branch": "main", "commit": "1e34663c32e8f5d915921a938e0dc4e3e788ceb8" },
+  "namu.nvim": { "branch": "main", "commit": "5e81a24a98af48fb4a8b937752c77a9fabb97b7d" },
   "neogit": { "branch": "master", "commit": "63124cf520ff24d09deb3b850e053908ab0fc66a" },
   "noice.nvim": { "branch": "main", "commit": "0427460c2d7f673ad60eb02b35f5e9926cf67c59" },
   "none-ls-extras.nvim": { "branch": "main", "commit": "6557f20e631d2e9b2a9fd27a5c045d701a3a292c" },
