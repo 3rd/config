@@ -12,10 +12,7 @@ return {
   shell = vim.fn.exepath("bash"),
   shortmess = "filnxtToOFcs",
   termguicolors = true,
-  timeout = true,
-  timeoutlen = 1000,
   title = true,
-  ttimeout = false,
   visualbell = true,
   wrap = false,
   linebreak = true,
@@ -23,6 +20,9 @@ return {
   laststatus = 3,
   scrolloff = 8,
   sidescrolloff = 16,
+  timeout = true,
+  timeoutlen = 1000,
+  -- ttimeout = false,
 
   -- history and persistence
   backup = false,
