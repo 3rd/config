@@ -14,8 +14,10 @@
   boot.kernel.sysctl = {
     "fs.inotify.max_queued_events" = 32768;
     "fs.inotify.max_user_instances" = 8192;
-    "fs.inotify.max_user_watches" = 524288;
+    "fs.inotify.max_user_watches" = 1048576;
   };
+  systemd.extraConfig = "DefaultLimitNOFILE=1048576";
+  systemd.user.extraConfig = "DefaultLimitNOFILE=1048576";
 
   environment.systemPackages = with pkgs; [
     acpi

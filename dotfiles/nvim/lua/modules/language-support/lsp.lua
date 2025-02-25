@@ -421,11 +421,10 @@ return lib.module.create({
   plugins = {
     {
       "neovim/nvim-lspconfig",
-      event = { "BufRead" },
+      event = "VeryLazy",
       dependencies = {
         "b0o/schemastore.nvim",
         "dmmulroy/ts-error-translator.nvim",
-        { "antosha417/nvim-lsp-file-operations", opts = {} },
       },
       config = setup_lspconfig,
     },

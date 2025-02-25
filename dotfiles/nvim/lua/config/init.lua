@@ -27,14 +27,14 @@ for k, v in pairs(options) do
 end
 
 -- https://github.com/neovim/neovim/issues/29047
--- vim.api.nvim_create_autocmd("UIEnter", {
---   pattern = "*",
---   callback = function()
---     vim.defer_fn(function()
---       vim.cmd("silent! edit!")
---     end, 0)
---   end,
--- })
+vim.api.nvim_create_autocmd("UIEnter", {
+  pattern = "*",
+  callback = function()
+    vim.defer_fn(function()
+      vim.cmd("silent! edit!")
+    end, 0)
+  end,
+})
 
 -- filetype
 vim.filetype.add(require("config/filetype"))

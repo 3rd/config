@@ -111,9 +111,10 @@ local get_enabled_modules = function(opts)
   return result
 end
 
+---@param modules_override? Module[]
 ---@return Module[]
-local get_module_plugins = function()
-  local modules = get_modules()
+local get_module_plugins = function(modules_override)
+  local modules = modules_override or get_modules()
   local plugins = {}
   for _, module in ipairs(modules) do
     if module.enabled then

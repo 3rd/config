@@ -19,7 +19,7 @@ return lib.module.create({
       config = function()
         local cwd = lib.path.find_root({ ".root", ".git" })
         require("null-ls").setup({
-          debug = true,
+          debug = false,
           sources = {
             require("none-ls.diagnostics.eslint_d").with({
               extra_args = eslint_extra_args,

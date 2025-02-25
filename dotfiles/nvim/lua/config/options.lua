@@ -22,6 +22,7 @@ return {
   sidescrolloff = 16,
   timeout = true,
   timeoutlen = 1000,
+  ttimeoutlen = 0,
   -- ttimeout = false,
 
   -- history and persistence

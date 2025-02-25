@@ -129,7 +129,13 @@ return lib.module.create({
   plugins = {
     {
       "nvim-tree/nvim-tree.lua",
-      dependencies = { "nvim-tree/nvim-web-devicons" },
+      dependencies = {
+        "nvim-tree/nvim-web-devicons",
+        {
+          "antosha417/nvim-lsp-file-operations",
+          opts = {},
+        },
+      },
       config = setup_tree,
     },
     {
