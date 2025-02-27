@@ -15,6 +15,15 @@
     "fs.inotify.max_queued_events" = 32768;
     "fs.inotify.max_user_instances" = 8192;
     "fs.inotify.max_user_watches" = 1048576;
+
+    "net.core.rmem_max" = 67108864;
+    "net.core.wmem_max" = 67108864;
+    "net.ipv4.tcp_rmem" = "4096 87380 33554432";
+    "net.ipv4.tcp_wmem" = "4096 65536 33554432";
+    "net.ipv4.tcp_tw_reuse" = true;
+    "net.core.netdev_max_backlog" = 8388608;
+    "net.core.somaxconn" = 8388608;
+    "net.ipv4.tcp_max_orphans" = 32768;
   };
   systemd.extraConfig = "DefaultLimitNOFILE=1048576";
   systemd.user.extraConfig = "DefaultLimitNOFILE=1048576";
