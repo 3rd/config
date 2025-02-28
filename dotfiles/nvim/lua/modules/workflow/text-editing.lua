@@ -4,15 +4,14 @@ return lib.module.create({
   plugins = {
     {
       "christoomey/vim-sort-motion", -- gs
-      event = "VeryLazy",
+      keys = { "gs" },
     },
     {
       "tommcdo/vim-lion", -- gl
-      event = "VeryLazy",
+      keys = { "gl" },
     },
     {
       "kylechui/nvim-surround",
-      event = "VeryLazy",
       opts = {
         keymaps = {
           insert = "<C-g>s",
@@ -26,6 +25,18 @@ return lib.module.create({
           delete = "ds",
           change = "cs",
         },
+      },
+      keys = {
+        "<C-g>s",
+        "<C-g>S",
+        "ys",
+        "yss",
+        "yS",
+        "ySS",
+        "S",
+        "gS",
+        "ds",
+        "cs",
       },
     },
     {
@@ -64,15 +75,23 @@ return lib.module.create({
           allow_interline_swaps = true,
           interline_swaps_without_separator = false,
         })
-
-        vim.keymap.set("n", "<a-l>", function()
-          require("sibling-swap").swap_with_right()
-        end, { desc = "Swap with right" })
-        vim.keymap.set("n", "<a-h>", function()
-          require("sibling-swap").swap_with_left()
-        end, { desc = "Swap with left" })
       end,
-      lazy = false,
+      keys = {
+        {
+          "<a-l>",
+          function()
+            require("sibling-swap").swap_with_right()
+          end,
+          { desc = "Swap with right" },
+        },
+        {
+          "<a-h>",
+          function()
+            require("sibling-swap").swap_with_left()
+          end,
+          { desc = "Swap with left" },
+        },
+      },
     },
   },
 })

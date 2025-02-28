@@ -40,6 +40,7 @@
       d2
       delta
       neofetch
+      playerctl
 
       # system
       htop
