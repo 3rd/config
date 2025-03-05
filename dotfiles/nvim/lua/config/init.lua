@@ -27,16 +27,16 @@ for k, v in pairs(options) do
 end
 
 -- https://github.com/neovim/neovim/issues/29047
--- vim.api.nvim_create_autocmd("UIEnter", {
---   pattern = "*",
---   callback = function()
---     vim.defer_fn(function()
---       local is_modified = vim.api.nvim_get_option_value("modified", { buf = 0 })
---       if not is_modified then return end
---       vim.cmd("silent! edit!")
---     end, 0)
---   end,
--- })
+vim.api.nvim_create_autocmd("UIEnter", {
+  pattern = "*",
+  callback = function()
+    vim.defer_fn(function()
+      local is_modified = vim.api.nvim_get_option_value("modified", { buf = 0 })
+      if not is_modified then return end
+      vim.cmd("silent! edit!")
+    end, 0)
+  end,
+})
 
 -- filetype
 vim.filetype.add(require("config/filetype"))
