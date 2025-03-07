@@ -1,9 +1,12 @@
 local eslint_config_path = lib.path.resolve_config("linters/eslint/dist/main.js")
 
-local eslint_extra_args = { "--config", eslint_config_path, "--no-eslintrc", "--ignore-pattern", "**/*.astro" }
-local eslint_env = {
-  ESLINT_USE_FLAT_CONFIG = "false",
-  ESLINT_D_ROOT = lib.path.resolve_config("linters/eslint"),
+local global = {
+  enable = false,
+  extra_args = { "--config", eslint_config_path, "--no-eslintrc", "--ignore-pattern", "**/*.astro" },
+  env = {
+    ESLINT_USE_FLAT_CONFIG = "false",
+    ESLINT_D_ROOT = lib.path.resolve_config("linters/eslint"),
+  },
 }
 
 return lib.module.create({
@@ -22,22 +25,22 @@ return lib.module.create({
           debug = false,
           sources = {
             require("none-ls.diagnostics.eslint_d").with({
-              extra_args = eslint_extra_args,
-              env = eslint_env,
+              extra_args = global.enable and global.extra_args or {},
+              env = global.enable and global.env or {},
               cwd = function()
                 return cwd
               end,
             }),
             require("none-ls.code_actions.eslint_d").with({
-              extra_args = eslint_extra_args,
-              env = eslint_env,
+              extra_args = global.enable and global.extra_args or {},
+              env = global.enable and global.env or {},
               cwd = function()
                 return cwd
               end,
             }),
             require("none-ls.formatting.eslint_d").with({
-              extra_args = eslint_extra_args,
-              env = eslint_env,
+              extra_args = global.enable and global.extra_args or {},
+              env = global.enable and global.env or {},
               cwd = function()
                 return cwd
               end,

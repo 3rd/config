@@ -48,7 +48,7 @@ return lib.module.create({
         })
       end,
       keys = {
-        { "n", "gr", "<cmd>Telescope lsp_references<cr>", desc = "LSP: Go to references" },
+        { "gr", "<cmd>Telescope lsp_references<cr>", desc = "LSP: Go to references" },
       },
     },
     {

@@ -35,7 +35,13 @@ return lib.module.create({
                   "Property",
                   "TypeParameter",
                 },
-                lua = { "Function", "Method", "Table", "Module" },
+                lua = {
+                  "Function",
+                  "Method",
+                  "Table",
+                  "Module",
+                  "Field", -- For struct fields
+                },
                 python = { "Function", "Class", "Method" },
                 yaml = { "Object", "Array" },
                 json = { "Module" },
@@ -105,8 +111,8 @@ return lib.module.create({
                 close_on_delete = true, -- Whether to close picker after deleting
               },
               movement = { -- Support multiple keys
-                next = { "<C-n>", "<DOWN>" },
-                previous = { "<C-p>", "<UP>" },
+                next = { "<C-j>", "<DOWN>" },
+                previous = { "<C-k>", "<UP>" },
                 close = { "<ESC>" }, -- "<C-c>" can be added as well
                 select = { "<CR>" },
                 delete_word = {}, -- it can assign "<C-w>"
