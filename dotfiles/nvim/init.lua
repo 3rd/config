@@ -1,3 +1,4 @@
--- vim.loader.enable(true)
--- vim.loader.reset()
+vim.loader.enable(true)
+vim.loader.reset()
+
 require("config")

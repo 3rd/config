@@ -34,6 +34,12 @@ local setup = function()
   --   end
   --   inlay_hint_handler(err, result, ctx, config)
   -- end
+
+  vim.keymap.del("n", "grn")
+  vim.keymap.del("n", "gra")
+  vim.keymap.del("n", "grr")
+  vim.keymap.del("n", "gri")
+  vim.keymap.del("n", "gO")
 end
 
 local setup_lspconfig = function()

@@ -56,6 +56,7 @@ local setup_fzf_lua = function()
     },
     tags = { git_icons = false },
     btags = { git_icons = false },
+    keymap = { builtin = {} },
   }
   fzf.setup(config)
 
