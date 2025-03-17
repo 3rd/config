@@ -34,6 +34,51 @@ local transition_task_active_to_done = function(task_node)
   local _, _, task_text_end_row, task_text_end_col = task_text_node:range()
 
   local indent = vim.fn.indent(vim.fn.line("."))
+
+  -- store task position
+  local parent = task_node:parent()
+  local child_row, _, end_row = task_node:range()
+  local parent_row = parent and parent:range() or nil
+
+  while parent and parent_row and child_row == parent_row do
+    parent = parent:parent()
+    parent_row = parent and parent:range() or nil
+  end
+
+  if not parent then return end
+  local index_of_task = nil
+  local num_children = parent:named_child_count()
+  local first_task_index = nil
+  local last_done_task_index = nil
+
+  -- find task indices
+  for i = 0, num_children - 1 do
+    local current_child = parent:named_child(i)
+    if not current_child then return end
+    local curren_child_row = current_child:range()
+    if curren_child_row == child_row then
+      index_of_task = i
+    else
+      if current_child then
+        local child_type = current_child:type()
+        if child_type == "task_done" then
+          last_done_task_index = i
+          if first_task_index and i > first_task_index then first_task_index = nil end
+        else
+          if child_type == "task_default" or child_type == "task_active" then
+            if not first_task_index then first_task_index = i end
+          else
+            first_task_index = nil
+            last_done_task_index = nil
+          end
+        end
+      end
+    end
+  end
+
+  if not index_of_task then return error("index_of_task is nil") end
+
+  -- handle sessions
   local sessions = lib.ts.find_children(task_node, "task_session")
   local active_sessions = {}
 
@@ -54,6 +99,9 @@ local transition_task_active_to_done = function(task_node)
     local edit = { range = range, newText = session_text }
     local buf = vim.api.nvim_get_current_buf()
     vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
+
+    -- account for the new session line
+    end_row = end_row + 1
   else
     -- if there are active sessions, close them
     if #active_sessions ~= 0 then
@@ -76,51 +124,6 @@ local transition_task_active_to_done = function(task_node)
     end
   end
 
-  -- tree-sitter has a bug where it returns the child as its own parent
-  local parent = task_node:parent()
-  local child_row = task_node:range()
-  local parent_row = parent and parent:range() or nil
-  while parent and parent_row and child_row == parent_row do
-    parent = parent:parent()
-    parent_row = parent and parent:range() or nil
-  end
-
-  if not parent then return end
-  local index_of_task = nil
-  local num_children = parent:named_child_count()
-  local first_task_index = nil
-  local last_done_task_index = nil
-
-  -- move the task under the previous done task on the same level or as the first task
-  for i = 0, num_children - 1 do
-    local current_child = parent:named_child(i)
-    if not current_child then return end
-    local curren_child_row = current_child:range()
-    -- can't compare by reference here, by row is good enough
-    if curren_child_row == child_row then
-      index_of_task = i
-      break
-    else
-      if current_child then
-        local child_type = current_child:type()
-        if child_type == "task_done" then
-          last_done_task_index = i
-          if first_task_index and i > first_task_index then first_task_index = nil end
-        else
-          if child_type == "task_default" or child_type == "task_active" then
-            if not first_task_index then first_task_index = i end
-          else
-            first_task_index = nil
-            last_done_task_index = nil
-          end
-        end
-      end
-    end
-  end
-
-  -- check index and
-  if not index_of_task then return error("index_of_task is nil") end
-
   -- bail if first or preceded by a done task
   if last_done_task_index == index_of_task - 1 or (last_done_task_index == nil and first_task_index == nil) then
     -- -- auto-fold
@@ -135,11 +138,11 @@ local transition_task_active_to_done = function(task_node)
   local target_node = parent:named_child(target_index)
   if not target_node then return end
 
-  local start_row, _, end_row = task_node:range()
   local target_start_row = target_node:range()
-  if start_row < target_start_row then target_start_row = target_start_row + 1 end
+  if child_row < target_start_row then target_start_row = target_start_row + 1 end
 
-  vim.cmd(string.format("%d,%dm%d", start_row + 1, end_row, target_start_row))
+  -- move the task and session
+  vim.cmd(string.format("%d,%dm%d", child_row + 1, end_row, target_start_row))
 
   -- TODO: fix empty line inserted when at the end of the file and there's no trailing newline
   -- TODO: move cursor
