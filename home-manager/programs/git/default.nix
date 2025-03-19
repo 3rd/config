@@ -26,6 +26,7 @@ in {
     meld
     sublime-merge
     gh
+    smartgithg
     # custom
     scripts.git-branch
     scripts.git-id
