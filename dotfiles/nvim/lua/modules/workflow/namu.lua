@@ -81,7 +81,6 @@ return lib.module.create({
                 max_width = 120,
                 max_height = 30,
                 padding = 2,
-                border = "rounded",
                 title_pos = "left",
                 show_footer = true,
                 footer_pos = "right",

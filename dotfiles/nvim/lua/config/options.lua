@@ -51,6 +51,7 @@ return {
   splitright = true,
   equalalways = false,
   splitkeep = "screen",
+  winborder = "rounded",
   -- text editing
   autoindent = true,
   backspace = [[indent,eol,start]],

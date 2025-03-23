@@ -18,7 +18,6 @@ local open = function(opts)
     row = math.ceil((vim.o.lines - height) / 2),
     col = math.ceil((vim.o.columns - width) / 2),
     style = "minimal",
-    border = "rounded",
   })
   vim.api.nvim_set_current_win(win)
 

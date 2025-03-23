@@ -83,7 +83,6 @@ local async_complete = function(prompt, options, callback)
     position = { row = 1, col = columns - 2 },
     size = { width = 30, height = 1 },
     enter = false,
-    border = { style = "rounded" },
     win_options = { winblend = 10 },
   })
   loading_popup:mount()
@@ -183,7 +182,6 @@ local explain = function(code)
     local popup = require("nui.popup")({
       enter = true,
       focusable = true,
-      border = { style = "rounded" },
       position = "50%",
       size = { width = "80%", height = "60%" },
       win_options = { wrap = true },
@@ -224,7 +222,6 @@ local ask = function(code)
       local popup = require("nui.popup")({
         enter = true,
         focusable = true,
-        border = { style = "rounded" },
         position = "50%",
         size = { width = "80%", height = "60%" },
         win_options = { wrap = true },

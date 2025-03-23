@@ -14,10 +14,6 @@ local setup = function()
     update_in_insert = false,
   })
 
-  -- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
-  --   border = "rounded",
-  -- })
-
   -- ty https://github.com/MariaSolOs/dotfiles/blob/fedora/.config/nvim/lua/lsp.lua#L278
   -- local methods = vim.lsp.protocol.Methods
   -- local inlay_hint_handler = vim.lsp.handlers[methods.textDocument_inlayHint]
@@ -34,7 +30,6 @@ local setup = function()
   --   end
   --   inlay_hint_handler(err, result, ctx, config)
   -- end
-
   vim.keymap.del("n", "grn")
   vim.keymap.del("n", "gra")
   vim.keymap.del("n", "grr")
@@ -347,9 +342,6 @@ local setup_lspconfig = function()
     }
     servers.ast_grep = {}
   end
-
-  -- tweaks
-  require("lspconfig.ui.windows").default_options.border = "rounded"
 
   -- load modules
   local modules = lib.module.get_enabled_modules()

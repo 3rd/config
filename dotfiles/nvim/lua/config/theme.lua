@@ -331,9 +331,9 @@ local theme = lush(function(injected)
     DiffChange({ fg = colors.yellow }),
     DiffDelete({ fg = colors.red }),
     DiffText({ fg = colors.blue }),
-    diffAdded({ DiffAdd }),
-    diffRemoved({ DiffDelete }),
-    diffChanged({ DiffChange }),
+    MiniDiffSignAdd({ DiffAdd }),
+    MiniDiffSignChange({ DiffChange }),
+    MiniDiffSignDelete({ DiffDelete }),
 
     -- Tree-sitter
     sym("@none")({ bg = "NONE", fg = "NONE" }),

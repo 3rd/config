@@ -44,7 +44,6 @@ return lib.module.create({
           },
           popup = {
             enable = true,
-            border = "rounded",
             hide_cursor = true,
             highlights = {
               header = "CodeActionHeader",
