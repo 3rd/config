@@ -34,7 +34,6 @@
   };
 
   programs.home-manager.enable = true;
-  programs.git.enable = true;
 
   home.sessionPath = [ "$HOME/.local/bin" ];
   home.sessionVariables = {

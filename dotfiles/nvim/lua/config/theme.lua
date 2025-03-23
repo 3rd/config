@@ -540,13 +540,6 @@ local theme = lush(function(injected)
     NvimTreeFolderName({ fg = colors.foreground }),
     -- NvimTreeFileIcon({ fg = colors.orange }),
 
-    -- gitsigns
-    GitSignsAdd({ fg = colors.green.darken(20) }),
-    GitSignsChange({ fg = colors.yellow.darken(20) }),
-    GitSignsDelete({ fg = colors.red.darken(20) }),
-    GitSignsAddPreview({ link = "DiffAdd" }),
-    GitSignsDeletePreview({ link = "DiffDelete" }),
-
     -- ts-rainbow
     RainbowRed({ fg = hsl(350, 65, 70) }),
     RainbowYellow({ fg = hsl(40, 60, 60) }),
