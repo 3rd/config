@@ -4,11 +4,15 @@ return lib.module.create({
   plugins = {
     {
       "christoomey/vim-sort-motion", -- gs
-      keys = { "gs" },
+      keys = {
+        { "gs", mode = "v", desc = "Sort lines" },
+      },
     },
     {
       "tommcdo/vim-lion", -- gl
-      keys = { "gl" },
+      keys = {
+        { "gl", mode = "v", desc = "Align lines" },
+      },
     },
     {
       "kylechui/nvim-surround",
@@ -27,16 +31,14 @@ return lib.module.create({
         },
       },
       keys = {
-        "<C-g>s",
-        "<C-g>S",
-        "ys",
-        "yss",
-        "yS",
-        "ySS",
-        "S",
-        "gS",
-        "ds",
-        "cs",
+        { "ys", mode = "n", desc = "Surround + motion" },
+        { "yss", mode = "n", desc = "Surround line" },
+        { "yS", mode = "n", desc = "Surround + motion + line" },
+        { "ySS", mode = "n", desc = "Surround line + line" },
+        { "S", mode = "v", desc = "Surround" },
+        { "gS", mode = "v", desc = "Surround + line" },
+        { "ds", mode = "n", desc = "Delete surround" },
+        { "cs", mode = "n", desc = "Change surround" },
       },
     },
     {

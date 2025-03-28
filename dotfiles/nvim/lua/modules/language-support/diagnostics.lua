@@ -9,7 +9,7 @@ local setup = function()
     underline = true,
     update_in_insert = false,
     virtual_text = virtual_text_config,
-    virtual_lines = false,
+    virtual_lines = true,
   })
 
   -- signs
@@ -30,7 +30,7 @@ return lib.module.create({
       "<leader>td",
       function()
         vim.diagnostic.config({
-          virtual_text = vim.diagnostic.config().virtual_text == false and virtual_text_config or false,
+          -- virtual_text = vim.diagnostic.config().virtual_text == false and virtual_text_config or false,
           virtual_lines = not vim.diagnostic.config().virtual_lines,
         })
       end,
