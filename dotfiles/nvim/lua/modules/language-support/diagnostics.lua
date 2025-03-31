@@ -8,8 +8,8 @@ local setup = function()
     signs = true,
     underline = true,
     update_in_insert = false,
-    virtual_text = false,
-    virtual_lines = true,
+    virtual_text = virtual_text_config,
+    virtual_lines = false,
   })
 
   -- signs
