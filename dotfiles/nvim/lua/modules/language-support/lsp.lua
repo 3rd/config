@@ -328,7 +328,7 @@ local setup_lspconfig = function()
       },
     },
     cssmodules_ls = {},
-    tailwindcss = {},
+    -- tailwindcss = {},
   }
 
   if lib.fs.file.exists("sgconfig.yml") then

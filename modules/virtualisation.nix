@@ -7,7 +7,7 @@
     distrobox
   ];
 
-  hardware.nvidia-container-toolkit.enable = true;
+  # hardware.nvidia-container-toolkit.enable = true;
   virtualisation = {
     oci-containers.backend = "docker";
     docker = {

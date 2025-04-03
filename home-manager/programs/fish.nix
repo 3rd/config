@@ -66,7 +66,7 @@
           end
           switch $output
             case "*-> *"
-            cd (echo $output | rg "\->" | sed "s/-> //g")
+              cd (echo $output | rg "\->" | sed "s/-> //g")
           end
           echo $output | rg -v "\->"
         '';

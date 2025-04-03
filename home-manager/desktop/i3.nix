@@ -66,9 +66,9 @@ in {
             if [ "$CURRENT_ICON" = "◧" ]; then
                 TARGET_ICON="▣"
             elif [ "$CURRENT_ICON" = "▣" ]; then
-                TARGET_ICON="◨"
-            else
                 TARGET_ICON="◧"
+            else
+                TARGET_ICON="◨"
             fi
             i3-msg workspace "$WS_NUM: $TARGET_ICON $WS_NAME"
           else

@@ -31,7 +31,7 @@ return lib.module.create({
             "gopls",
             "html",
             "jsonls",
-            "tailwindcss",
+            -- "tailwindcss",
             "vimls",
             "vuels",
             "yamlls",

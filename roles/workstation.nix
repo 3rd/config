@@ -8,7 +8,6 @@
     ../modules/xorg.nix
     ../modules/fonts.nix
     ../modules/virtualisation.nix
-    ../modules/ld.nix
   ];
 
   boot.kernel.sysctl = {
