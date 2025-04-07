@@ -675,6 +675,28 @@ local theme = lush(function(injected)
     RenderMarkdownLink({ fg = colors.slang.link.external }),
     RenderMarkdownCode({ bg = colors.slang.code.block.background }),
     RenderMarkdownCodeInline({ bg = colors.slang.code.block.background }),
+
+    -- snacks profiler
+    SnacksProfilerHot20({ bg = colors.red.darken(10) }),
+    SnacksProfilerHot19({ bg = colors.red.darken(14) }),
+    SnacksProfilerHot18({ bg = colors.red.darken(18) }),
+    SnacksProfilerHot17({ bg = colors.red.darken(22) }),
+    SnacksProfilerHot16({ bg = colors.red.darken(26) }),
+    SnacksProfilerHot15({ bg = colors.red.darken(30) }),
+    SnacksProfilerHot14({ bg = colors.orange.darken(34) }),
+    SnacksProfilerHot13({ bg = colors.orange.darken(38) }),
+    SnacksProfilerHot12({ bg = colors.orange.darken(42) }),
+    SnacksProfilerHot11({ bg = colors.orange.darken(46) }),
+    SnacksProfilerHot10({ bg = colors.orange.darken(50) }),
+    SnacksProfilerHot09({ bg = colors.orange.darken(54) }),
+    SnacksProfilerHot08({ bg = colors.orange.darken(58) }),
+    SnacksProfilerHot07({ bg = colors.indigo.darken(62) }),
+    SnacksProfilerHot06({ bg = colors.indigo.darken(66) }),
+    SnacksProfilerHot05({ bg = colors.indigo.darken(70) }),
+    SnacksProfilerHot04({ bg = colors.indigo.darken(74) }),
+    SnacksProfilerHot03({ bg = colors.indigo.darken(78) }),
+    SnacksProfilerHot02({ bg = colors.indigo.darken(82) }),
+    SnacksProfilerHot01({ bg = colors.indigo.darken(86) }),
   }
 end)
 

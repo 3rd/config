@@ -50,5 +50,3 @@ end
 function string.lines(s)
   return vim.split(s, "\n")
 end
-
-return string

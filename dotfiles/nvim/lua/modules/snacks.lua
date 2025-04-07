@@ -1,15 +1,3 @@
-if vim.env.PROF then
-  local snacks = vim.fn.stdpath("data") .. "/lazy/snacks.nvim"
-  vim.opt.rtp:append(snacks)
-  require("snacks.profiler").startup({
-    startup = {
-      event = "VimEnter", -- stop profiler on this event. Defaults to `VimEnter`
-      -- event = "UIEnter",
-      -- event = "VeryLazy",
-    },
-  })
-end
-
 return lib.module.create({
   name = "snacks",
   hosts = "*",
@@ -38,10 +26,6 @@ return lib.module.create({
             },
           },
         })
-
-        -- FIXME: not working, stack overflow
-        -- snacks.toggle.profiler():map("<leader>pp")
-        -- snacks.toggle.profiler_highlights():map("<leader>ph")
       end,
       keys = {
         {
@@ -88,14 +72,27 @@ return lib.module.create({
             Snacks.lazygit.log_file()
           end,
         },
-        -- FIXME: not working, stack overflow
-        -- {
-        --   "<leader>ps",
-        --   function()
-        --     Snacks.profiler.scratch()
-        --   end,
-        --   desc = "Profiler Scratch Bufer",
-        -- },
+        {
+          "<leader>ps",
+          function()
+            Snacks.profiler.scratch()
+          end,
+          desc = "Profiler Scratch Bufer",
+        },
+        {
+          "<leader>pp",
+          function()
+            Snacks.profiler.toggle()
+          end,
+          desc = "Profiler Toggle",
+        },
+        {
+          "<leader>ph",
+          function()
+            Snacks.profiler.toggle_highlights()
+          end,
+          desc = "Profiler Toggle Highlights",
+        },
       },
     },
   },

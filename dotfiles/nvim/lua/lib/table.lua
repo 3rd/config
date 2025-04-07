@@ -90,5 +90,3 @@ end
 function table.clone(target)
   return vim.fn.deepcopy(target)
 end
-
-return table
