@@ -31,6 +31,16 @@ return lib.module.create({
           ["<C-u>"] = { "scroll_documentation_up", "fallback" },
           ["<C-d>"] = { "scroll_documentation_down", "fallback" },
         },
+
+        fuzzy = {
+          implementation = "prefer_rust_with_warning",
+          sorts = {
+            "exact",
+            "score",
+            "sort_text",
+          },
+        },
+
         completion = {
           keyword = {
             range = "full",
@@ -143,18 +153,22 @@ return lib.module.create({
               enabled = function()
                 local clients = vim.lsp.get_clients({ bufnr = 0 })
                 if #clients > 0 then return false end
+                return true
               end,
             },
             snippets = {
               name = "Snippets",
               module = "blink.cmp.sources.snippets",
-              score_offset = -3,
+              score_offset = -2,
               opts = {
                 friendly_snippets = false,
                 search_paths = { vim.fn.stdpath("config") .. "/snippets_vscode" },
                 global_snippets = { "all" },
                 extended_filetypes = {},
                 ignored_filetypes = {},
+                get_filetype = function(context)
+                  return vim.bo.filetype
+                end,
               },
             },
             lazydev = {

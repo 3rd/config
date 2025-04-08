@@ -93,6 +93,13 @@ return lib.module.create({
           end,
           desc = "Profiler Toggle Highlights",
         },
+        {
+          "<leader>p;",
+          function()
+            Snacks.profiler.pick()
+          end,
+          desc = "Profiler Pick",
+        },
       },
     },
   },

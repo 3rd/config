@@ -38,6 +38,7 @@ return lib.module.create({
             exclude_filetypes = exclude_filetypes,
             chars = { "│", "¦", "┆", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊", "┊" }, -- │
             style = colors.plugins.indent_guides.indent,
+            delay = 200,
           },
           chunk = {
             enable = true,
