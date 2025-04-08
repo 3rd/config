@@ -33,7 +33,7 @@ return lib.module.create({
         },
 
         fuzzy = {
-          implementation = "prefer_rust_with_warning",
+          implementation = "rust",
           sorts = {
             "exact",
             "score",
@@ -56,13 +56,15 @@ return lib.module.create({
           },
           list = {
             max_items = 200,
-            selection = { preselect = false, auto_insert = true },
+            selection = {
+              preselect = false,
+              auto_insert = true,
+            },
             cycle = {
               from_bottom = true,
               from_top = true,
             },
           },
-
           documentation = {
             auto_show = true,
             auto_show_delay_ms = 100,
@@ -82,22 +84,10 @@ return lib.module.create({
               },
             },
           },
-
           accept = {
             create_undo_point = true,
             auto_brackets = {
               enabled = false,
-              default_brackets = { "(", ")" },
-              override_brackets_for_filetypes = {},
-              kind_resolution = {
-                enabled = true,
-                blocked_filetypes = { "typescriptreact", "javascriptreact", "vue" },
-              },
-              semantic_token_resolution = {
-                enabled = true,
-                blocked_filetypes = {},
-                timeout_ms = 400,
-              },
             },
           },
           menu = {
@@ -209,6 +199,13 @@ return lib.module.create({
             Variable = "󰆧",
             -- tree-sitter
             String = "󰉿",
+          },
+        },
+
+        signature = {
+          enabled = true,
+          window = {
+            show_documentation = false,
           },
         },
       },

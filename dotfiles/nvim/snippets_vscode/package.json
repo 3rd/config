@@ -68,6 +68,12 @@
           "vue"
         ],
         "path": "./vue.json"
+      },
+      {
+        "language": [
+          "syslang"
+        ],
+        "path": "./syslang.json"
       }
     ]
   }

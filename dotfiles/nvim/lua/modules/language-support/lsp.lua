@@ -138,10 +138,10 @@ local setup_lspconfig = function()
           },
           workspace = {
             library = {
-              [".luarc.json"] = true,
-              [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-              [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
-              [vim.fn.stdpath("config") .. "/lua"] = true,
+              --   [".luarc.json"] = true,
+              --   [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+              --   [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
+              --   [vim.fn.stdpath("config") .. "/lua"] = true,
               [vim.fn.expand("$PWD/lua")] = true,
             },
             ignoreDir = { ".git", "node_modules", "linters" },
@@ -449,14 +449,11 @@ return lib.module.create({
     -- },
     {
       "folke/lazydev.nvim",
-      ft = "lua", -- only load on lua files
-      dependencies = {
-        { "Bilal2453/luvit-meta", lazy = true }, -- optional `vim.uv` typings
-      },
+      ft = "lua",
       opts = {
         library = {
           "lazy.nvim",
-          { path = "luvit-meta/library", words = { "vim%.uv" } },
+          { path = "${3rd}/luv/library", words = { "vim%.uv" } },
           { path = "image.nvim", words = { "image" } },
           { path = "sqlite.nvim", words = { "sqlite" } },
           { path = "snacks.nvim", words = { "Snacks" } },
