@@ -1,7 +1,7 @@
 id: react-usememo-no-simple-expression
 message: Simple expression in useMemo
 severity: error
-language: Tsx
+language: tsx
 rule:
   any:
     - pattern: useMemo(() => { return $EXPR }, $DEPS)

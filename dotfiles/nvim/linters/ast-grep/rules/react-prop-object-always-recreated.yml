@@ -1,7 +1,7 @@
 id: react-prop-object-always-recreated
 message: Avoid recreating object/array literals as JSX props
 severity: warning
-language: Tsx
+language: tsx
 ignores:
   - "./**/*.test.tsx"
   - "./**/*.spec.tsx"
@@ -22,4 +22,3 @@ rule:
     any:
       - kind: object
       - kind: array
-
