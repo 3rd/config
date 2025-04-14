@@ -10,6 +10,7 @@ local setup = function()
     update_in_insert = false,
     virtual_text = virtual_text_config,
     virtual_lines = false,
+    jump = { float = true },
   })
 
   -- signs

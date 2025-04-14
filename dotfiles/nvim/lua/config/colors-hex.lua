@@ -127,7 +127,7 @@ return {
       cancelled = "#fa4040",
       completion = "#7378a5",
       default = "#D1CDE4",
-      done = "#736C99",
+      done = "#646170",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"

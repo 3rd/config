@@ -18,6 +18,7 @@ local handle_smart_yank = function()
     local git_branch = vim.fn.systemlist("git rev-parse --abbrev-ref HEAD")[1]
 
     if git_remote:find("github") then
+    if git_remote:find("github") and not git_remote:find("@") then
       local github_path = git_remote:gsub(".*:", ""):gsub(".git", "")
       local permalink = "https://github.com/"
         .. github_path
@@ -29,14 +30,14 @@ local handle_smart_yank = function()
         .. start_line
       if start_line ~= end_line then permalink = permalink .. "-L" .. end_line end
       vim.fn.setreg("+", permalink)
-      vim.notify("GitHub permalink:\n" .. permalink)
+      vim.notify("Yanked: " .. permalink)
     else
       vim.fn.setreg("+", file_path)
       vim.notify("Yanked: " .. file_path)
     end
   else
     vim.fn.setreg("+", file_path)
-    vim.notify("Yanked file path to clipboard")
+    vim.notify("Yanked: " .. file_path)
   end
 end
 

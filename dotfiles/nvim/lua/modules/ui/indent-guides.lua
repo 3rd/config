@@ -24,7 +24,7 @@ return lib.module.create({
           "tsplayground",
           "conf",
           "gitcommit",
-          "syslang",
+          -- "syslang",
         }
 
         for _, filetype in ipairs(additional_excludes) do
