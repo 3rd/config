@@ -17,8 +17,7 @@ local handle_smart_yank = function()
     local git_remote = vim.fn.systemlist("git config --get remote.origin.url")[1]
     local git_branch = vim.fn.systemlist("git rev-parse --abbrev-ref HEAD")[1]
 
-    if git_remote:find("github") then
-    if git_remote:find("github") and not git_remote:find("@") then
+    if git_remote:find("github") or not git_remote:find("@") then
       local github_path = git_remote:gsub(".*:", ""):gsub(".git", "")
       local permalink = "https://github.com/"
         .. github_path

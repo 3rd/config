@@ -1,7 +1,7 @@
 local eslint_config_path = lib.path.resolve_config("linters/eslint/dist/main.js")
 
 local global = {
-  enable = false,
+  enable = true,
   extra_args = { "--config", eslint_config_path, "--no-eslintrc", "--ignore-pattern", "**/*.astro" },
   env = {
     ESLINT_USE_FLAT_CONFIG = "false",

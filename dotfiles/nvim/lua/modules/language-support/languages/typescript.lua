@@ -139,6 +139,7 @@ return lib.module.create({
               disableLineTextInReferences = true,
               displayPartsForJSDoc = false,
               importModuleSpecifierPreference = "non-relative",
+              importModuleSpecifierEnding = "minimal",
               includeAutomaticOptionalChainCompletions = true,
               includeCompletionsForImportStatements = true,
               includeCompletionsWithClassMemberSnippets = false,
