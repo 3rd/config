@@ -57,6 +57,7 @@
       dmidecode
       lsof
       tomato-c
+      nix-du
 
       # misc
       file
@@ -69,7 +70,6 @@
       firefox
       gparted
       flameshot
-      copyq
       scrcpy
       eog
       file-roller
@@ -84,6 +84,7 @@
       pkgs-stable.miniserve # https://github.com/svenstaro/miniserve
       pkgs-stable.silicon
       pkgs-stable.netlify-cli
+      pkgs-stable.copyq
     ];
 
   programs.fish.shellAliases = {

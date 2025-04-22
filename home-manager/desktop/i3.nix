@@ -192,7 +192,7 @@ in {
           "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
           "${modifier}+shift+Return" =
             ''exec ulimit -n 999999 && /bin/sh -c "$BROWSER"'';
-          "${modifier}+p" = "exec ${pkgs.copyq}/bin/copyq show";
+          "${modifier}+p" = "exec ${pkgs-stable.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs.flameshot}/bin/flameshot gui";
           "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
           "ctrl+${alt}+space" =
@@ -214,7 +214,7 @@ in {
             command =
               "--no-startup-id ${pkgs.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
           }
-          { command = "--no-startup-id ${pkgs.copyq}/bin/copyq"; }
+          { command = "--no-startup-id ${pkgs-stable.copyq}/bin/copyq"; }
           { command = "--no-startup-id ${pkgs.flameshot}/bin/flameshot"; }
           {
             always = true;

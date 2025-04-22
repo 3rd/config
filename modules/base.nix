@@ -111,6 +111,9 @@
   systemd.network.wait-online.ignoredInterfaces = [ ];
   systemd.enableEmergencyMode = false;
 
+  # https://github.com/NixOS/nixpkgs/pull/330440
+  services.speechd.enable = false;
+
   # ulimit https://github.com/NixOS/nixpkgs/issues/159964
   security.pam.loginLimits = [
     {

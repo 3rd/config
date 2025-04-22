@@ -8,7 +8,6 @@
     xsel
     wmctrl
     xdotool
-    xfce.tumbler
     xorg.xdpyinfo
     xorg.xev
     xorg.xhost
