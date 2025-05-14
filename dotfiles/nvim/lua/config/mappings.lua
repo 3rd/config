@@ -104,8 +104,6 @@ return {
     { "n", "Q", "@q", "Run @q macro" },
     -- experiments
     { "n", "<c-c>", "ciw" },
-  },
-  lsp = {
     { "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", "LSP: Show hover" },
     { "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", "LSP: Go to definition" },
     -- {
@@ -144,6 +142,7 @@ return {
       "LSP: Show workspace symbols",
     },
   },
+  lsp = {},
 }
 
 -- todo: neovide tmux
