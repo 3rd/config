@@ -9,9 +9,12 @@ return lib.module.create({
       opts = {
         -- file_types = {},
         -- disable_file_types = { "tex" },
-        hlgroup = "CWordHighlight",
-        cw_hlgroup = nil,
-        insert_mode = false,
+        -- hlgroup = "CWordHighlight",
+        -- cw_hlgroup = nil,
+        -- insert_mode = false,
+        -- animate = {
+        --   enabled = false,
+        -- },
       },
       config = function(_, opts)
         require("local-highlight").setup(opts)
