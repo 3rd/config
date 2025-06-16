@@ -119,7 +119,7 @@ return lib.module.create({
         },
 
         sources = {
-          default = { "lsp", "path", "snippets", "buffer", "lazydev" },
+          default = { "lsp", "path", "snippets", "buffer", "lazydev", "files" },
           providers = {
             lsp = {
               fallbacks = { "buffer" },
@@ -165,6 +165,11 @@ return lib.module.create({
               name = "LazyDev",
               module = "lazydev.integrations.blink",
               fallbacks = { "lsp" },
+            },
+            files = {
+              name = "Files",
+              module = "modules.completion.file-source",
+              min_keyword_length = 0,
             },
           },
         },

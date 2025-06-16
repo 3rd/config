@@ -47,6 +47,7 @@ return lib.module.create({
           below = 0,
         },
         heading = {
+          render_modes = true,
           -- Turn on / off heading icon & background rendering
           enabled = true,
           -- Turn on / off any sign column related rendering
@@ -58,7 +59,14 @@ return lib.module.create({
           -- Replaces '#+' of 'atx_h._marker'
           -- The number of '#' in the heading determines the 'level'
           -- The 'level' is used to index into the list using a cycle
-          icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+          -- icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+          icons = function(ctx)
+            local text = ""
+            for i = 1, ctx.level do
+              text = text .. "#"
+            end
+            return text .. " "
+          end,
           -- Added to the sign column if enabled
           -- The 'level' is used to index into the list using a cycle
           signs = { "󰫎 " },

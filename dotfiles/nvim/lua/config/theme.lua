@@ -8,7 +8,7 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(252, 13, 16),
+  background = hsl(250, 13, 17),
   foreground = hsl(250, 30, 85),
   blue = hsl(200, 95, 75),
   cyan = hsl(180, 80, 45),
@@ -19,7 +19,7 @@ local colors = {
   pink = hsl(315, 70, 75),
   red = hsl(10, 95, 45),
   yellow = hsl(40, 80, 65),
-  visual = hsl(300, 100, 80),
+  visual = hsl(280, 70, 55),
 }
 colors.plugins = {
   indent_guides = {
@@ -187,12 +187,15 @@ local theme = lush(function(injected)
   local sym = injected.sym
   return {
     -- base
-    Normal({ fg = colors.foreground }), -- Normal text
+    Normal({
+      -- bg = colors.background,
+      fg = colors.foreground,
+    }),
     NormalFloat({ bg = colors.background.lighten(5) }),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
     EndOfBuffer({ fg = colors.background }),
-    Visual({ bg = colors.background.lighten(20) }),
+    Visual({ bg = colors.visual }),
     Conceal({ fg = colors.foreground.darken(10) }),
     Folded({}),
     Whitespace({ fg = colors.foreground.darken(40).desaturate(80) }),

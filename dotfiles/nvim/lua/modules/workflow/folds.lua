@@ -321,7 +321,6 @@ local setup_ufo = function()
   local open_all_folds = function()
     -- vim.opt_local.foldlevel = 999
     local c = require("ufo.config")
-    log(c)
     require("ufo.action").openFoldsExceptKinds(
       c.close_fold_kinds_for_ft[vim.bo.ft] or c.close_fold_kinds_for_ft.default
     )

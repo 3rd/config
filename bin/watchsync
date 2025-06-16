@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# https://unix.stackexchange.com/questions/48235/can-i-watch-the-progress-of-a-sync-operation
+
+watch -n1 'grep -E "(Dirty|Write)" /proc/meminfo; echo; ls /sys/block/ | while read device; do awk "{ print \"$device: \"  \$9 }" "/sys/block/$device/stat"; done'

@@ -54,6 +54,7 @@
     zip
     s-tui
     memtester
+    udiskie
     (pkgs.buildFHSUserEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
       name = "fhs";
       profile = "export FHS=1";

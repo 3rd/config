@@ -6,7 +6,7 @@ return lib.module.create({
   plugins = {
     {
       "mvllow/modes.nvim",
-      event = "VeryLazy",
+      lazy = false,
       config = function()
         require("modes").setup({
           colors = {
@@ -19,7 +19,7 @@ return lib.module.create({
           set_cursor = true,
           set_cursorline = true,
           set_number = true,
-          ignore_filetypes = { "NvimTree", "TelescopePrompt" },
+          ignore = { "NvimTree", "TelescopePrompt" },
         })
       end,
     },

@@ -36,6 +36,11 @@ local setup_noice = function()
       },
     },
     views = {
+      views = {
+        cmdline_input = {
+          enter = true,
+        },
+      },
       -- hover = {
       --   -- https://github.com/folke/noice.nvim/blob/main/lua/noice/config/preset.lua#L55
       --   border = {

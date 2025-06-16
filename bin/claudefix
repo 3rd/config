@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+IFS=$'nt'
+
+claude config set --global parallelTasksCount 5
+claude config set --global preferredNotifChannel terminal_bell
+
+claude mcp add sequential-thinking -s user -- npx -y @modelcontextprotocol/server-sequential-thinking

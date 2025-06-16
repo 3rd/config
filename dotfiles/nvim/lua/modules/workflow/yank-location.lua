@@ -11,6 +11,29 @@ local handle_smart_yank = function()
     start_line = vim.fn.line(".")
     end_line = start_line
   end
+
+  -- syslang code block support
+  if vim.bo.filetype == "syslang" then
+    local parser = vim.treesitter.get_parser()
+    if parser then
+      local root = parser:parse()[1]:root()
+      local position = vim.api.nvim_win_get_cursor(0)
+      local node = root:named_descendant_for_range(position[1] - 1, position[2], position[1] - 1, position[2])
+      
+      -- find code_block ancestor
+      local code_block = lib.ts.find_parent(node, "code_block")
+      if code_block then
+        local code_block_content = lib.ts.find_child(code_block, "code_block_content", true)
+        if code_block_content then
+          local content = vim.treesitter.get_node_text(code_block_content, 0)
+          vim.fn.setreg("+", content)
+          vim.notify("Yanked code block content")
+          return
+        end
+      end
+    end
+  end
+
   local git_root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
 
   if vim.v.shell_error == 0 and #git_root > 0 then

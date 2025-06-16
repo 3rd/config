@@ -40,7 +40,13 @@ end
 local toggle_session = function()
   local autosession = require("auto-session")
   local autosession_lib = require("auto-session/lib")
-  local session_file = ("%s/%s.vim"):format(lib.env.dirs.vim.sessions, autosession_lib.escaped_session_name_from_cwd())
+  local session_file = ("%s/%s.vim"):format(
+    lib.env.dirs.vim.sessions,
+    -- https://github.com/rmagatti/auto-session/blob/00334ee24b9a05001ad50221c8daffbeedaa0842/lua/auto-session/lib.lua#L32
+    vim.fn.fnamemodify(vim.v.this_session, ":t:r")
+    -- autosession_lib.get_session_display_name(vim.fn.getcwd())
+  )
+  log(session_file)
   local has_session = lib.fs.file.is_readable(session_file)
   if has_session then
     autosession.DeleteSession()
@@ -59,7 +65,7 @@ return lib.module.create({
   plugins = {
     {
       "rmagatti/auto-session",
-      commit = "2102c228854a2d74fbf35374aa86feac3f538da1",
+      -- commit = "2102c228854a2d74fbf35374aa86feac3f538da1",
       lazy = false,
       config = setup_auto_session,
     },

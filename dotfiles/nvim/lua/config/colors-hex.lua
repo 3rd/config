@@ -1,5 +1,5 @@
 return {
-  background = "#26232E",
+  background = "#282631",
   blue = "#83D3FC",
   common = {
     boolean = "#FFA385",
@@ -8,7 +8,7 @@ return {
     conditional = "#F986D2",
     constant = "#FFA385",
     constructor = "#17CFCF",
-    cword = "#4E495F",
+    cword = "#4F4B62",
     delimiter = "#736C99",
     field = "#BAB5D4",
     ["function"] = "#83D3FC",
@@ -37,7 +37,7 @@ return {
   plugins = {
     indent_guides = {
       chunk = "#9F3885",
-      indent = { "#383545" }
+      indent = { "#3A3748" }
     }
   },
   red = "#E02A06",
@@ -48,10 +48,10 @@ return {
     },
     code = {
       block = {
-        background = "#383545",
+        background = "#3A3748",
         content = "#D1CDE4",
-        language = "#605B76",
-        marker = "#4E495F"
+        language = "#625D79",
+        marker = "#4F4B62"
       },
       inline = "#E9A677"
     },
@@ -127,7 +127,7 @@ return {
       cancelled = "#fa4040",
       completion = "#7378a5",
       default = "#D1CDE4",
-      done = "#646170",
+      done = "#666473",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
@@ -137,7 +137,7 @@ return {
   ui = {
     breadcrumbs = {
       normal = {
-        bg = "#2F2C3A",
+        bg = "#312F3D",
         fg = "#A29CBF"
       },
       separator = {
@@ -146,36 +146,36 @@ return {
     },
     line = {
       current_line = {
-        bg = "#383545"
+        bg = "#3A3748"
       },
       current_line_nr = {
-        bg = "#383545",
-        fg = "#8C86A2"
+        bg = "#3A3748",
+        fg = "#8D89A4"
       },
       current_line_sign = {
-        bg = "#383545",
+        bg = "#3A3748",
         fg = "#ED9A5E"
       },
       line_nr = {
-        fg = "#4E495F"
+        fg = "#4F4B62"
       }
     },
-    split = "#2F2C3A",
+    split = "#312F3D",
     status = {
       a = {
         bg = "#444054",
         fg = "#BBB6D2"
       },
       b = {
-        bg = "#383545",
+        bg = "#3A3748",
         fg = "#ACA6C9"
       },
       c = {
-        bg = "#2F2C3A",
+        bg = "#312F3D",
         fg = "#A29CBF"
       }
     }
   },
-  visual = "#FF99FF",
+  visual = "#A73CDD",
   yellow = "#EDBE5E"
 }

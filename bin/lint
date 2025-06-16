@@ -18,7 +18,7 @@ if [ -f "package.json" ]; then
     TARGET="$TARGET/src"
   fi
   echo "Linting $TARGET"
-  ESLINT_USE_FLAT_CONFIG=false ~/brain/core/linter/eslint/node_modules/eslint/bin/eslint.js -c ~/.config/nvim/linters/eslint/dist/main.js --no-eslintrc "$TARGET"
+  ESLINT_USE_FLAT_CONFIG=false ~/brain/core/linter/eslint/node_modules/eslint/bin/eslint.js -c ~/.config/nvim/linters/eslint/dist/main.js --no-eslintrc "$TARGET" --fix
   # ~/brain/core/linter/eslint/node_modules/eslint/bin/eslint.js -c ~/.config/nvim/linters/eslint/dist/main.js --no-eslintrc "$TARGET"
   LINTED=1
 fi

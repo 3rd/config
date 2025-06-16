@@ -3,6 +3,7 @@
 {
   services.picom = {
     enable = true;
+    package = pkgs.picom-next;
     backend = lib.mkDefault "glx";
     vSync = true;
     settings = {
@@ -41,8 +42,46 @@
         "_GTK_FRAME_EXTENTS@:c"
       ];
 
-      use-damage = true;
+      use-damage = false;
       transparent-clipping = false;
+
+      window-shader-fg = "default";
+
+      # fade = true;
+      # fadeSteps = [ 0.1 0.1 ];
+      # fadeDelta = 10;
+      # animations = [
+      #   {
+      #     triggers = [ "open" "show" ];
+      #
+      #     preset = "appear";
+      #     duration = "1";
+      #   }
+      #   {
+      #     triggers = [ "close" "hide" ];
+      #
+      #     preset = "disappear";
+      #     duration = "1";
+      #   }
+      #   {
+      #     triggers = [ "geometry" ];
+      #     preset = "geometry-change";
+      #     duration = "1";
+      #   }
+      # ];
+
+      fading = true;
+      fade-in-step = 5.0e-2;
+      fade-out-step = 5.0e-2;
+
+      corner-radius = 8;
+      rounded-corners-exclude = [
+        "class_g = 'Polybar'"
+        "window_type = 'dock'"
+        "window_type = 'tooltip'"
+      ];
+      round-borders = 8;
+      round-borders-exclude = [ ];
 
       log-level = "warn";
       log-file = "/tmp/picom.log";

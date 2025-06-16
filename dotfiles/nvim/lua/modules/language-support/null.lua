@@ -14,8 +14,8 @@ return lib.module.create({
   hosts = "*",
   plugins = {
     {
-      -- "nvimtools/none-ls.nvim",
-      "ulisses-cruz/none-ls.nvim",
+      "nvimtools/none-ls.nvim",
+      -- "ulisses-cruz/none-ls.nvim",
       event = "VeryLazy",
       dependencies = {
         "nvimtools/none-ls-extras.nvim",

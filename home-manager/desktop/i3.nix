@@ -91,6 +91,14 @@ in {
     windowManager.i3 = {
       enable = true;
       # package = pkgs.i3-gaps; # https://github.com/NixOS/nixpkgs/commit/7d4e95ba7527fa7bd5b1f8a1707b7e3ee2bbe82d
+      package = pkgs.i3.overrideAttrs (oldAttrs: {
+        src = pkgs.fetchFromGitHub {
+          owner = "i3";
+          repo = "i3";
+          rev = "cfa4cf16bea809c7c715a86c428757e577c85254";
+          sha256 = "sha256-Kvygsx0r2SGaAttSWLY/pk71oWf5VdUrB1dF8UwWwGI=";
+        };
+      });
       config = {
         bars = [ ];
         colors = with config.colors; {
@@ -189,7 +197,7 @@ in {
           "${modifier}+r" = "mode resize";
           "${modifier}+x" = "mode power";
           # launchers
-          "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
+          "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty -1";
           "${modifier}+shift+Return" =
             ''exec ulimit -n 999999 && /bin/sh -c "$BROWSER"'';
           "${modifier}+p" = "exec ${pkgs-stable.copyq}/bin/copyq show";

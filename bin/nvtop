@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+while true; do
+  clear
+  nvidia-smi
+  read -rsn1 -t 0.5 key
+  if [ "$key" = "q" ]; then
+    echo "Exiting."
+    break
+  fi
+done
