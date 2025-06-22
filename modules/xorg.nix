@@ -25,8 +25,9 @@
       enable = true;
       mouse.accelProfile = "flat";
       touchpad = {
+        clickMethod = "clickfinger";
         disableWhileTyping = true;
-        tapping = false;
+        tapping = true;
         additionalOptions = ''
           Option "PalmDetection" "on"
         '';

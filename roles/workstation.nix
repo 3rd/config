@@ -76,13 +76,26 @@
   programs.nm-applet.enable = true;
   programs.light.enable = true;
 
-  services.dbus.enable = true;
+  services.dbus = {
+    enable = true;
+    packages = [ pkgs.gcr pkgs.gnome-keyring ];
+  };
+
+  services.gnome.gnome-keyring.enable = true;
+  services.gnome.gcr-ssh-agent.enable = false;
+  programs.ssh.startAgent = true;
+  security.pam.services = {
+    greetd.enableGnomeKeyring = true;
+    greetd-password.enableGnomeKeyring = true;
+    login.enableGnomeKeyring = true;
+  };
+
   services.flatpak.enable = true;
   services.fstrim.enable = true;
   services.fwupd.enable = true;
   services.timesyncd.enable = lib.mkDefault true;
   services.udisks2.enable = true;
-  services.gnome.gnome-keyring.enable = true;
+
   services.atd.enable = true;
   services.gvfs.enable = true; # trash, MTP
   services.logind.killUserProcesses = true;

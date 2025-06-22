@@ -48,7 +48,7 @@ return lib.module.create({
             jsonc = { "fixjson", "prettierd" },
             html = { "prettierd" },
             yaml = { "prettierd" },
-            markdown = { "prettierd" },
+            -- markdown = { "prettierd" },
             graphql = { "prettierd" },
           },
           formatters = {

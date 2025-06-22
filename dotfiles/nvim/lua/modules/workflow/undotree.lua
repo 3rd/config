@@ -1,3 +1,4 @@
+vim.g.undotree_RelativeTimestamp = 0
 return lib.module.create({
   name = "workflow/undotree",
   hosts = "*",

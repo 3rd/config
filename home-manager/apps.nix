@@ -1,27 +1,33 @@
-{ pkgs, pkgs-stable, ... }:
+{ pkgs, pkgs-stable, config, ... }:
 
 let
+  fhsEnv = pkgs.buildFHSUserEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
+    name = "fhs";
+    profile = "export FHS=1";
+    runScript = ''fish -c "$@"'';
+  });
+  fhsBin = "${fhsEnv}/bin/fhs";
   appLaunchScript = pkgs.writeScriptBin "app-launch" ''
     #! ${pkgs.bash}/bin/bash
     set -e
     set -x
-
     if [ "$#" -lt 1 ]; then
       echo "Usage: $0 <app-image-search-string>" >&2
       exit 1
     fi
-
     app="$1"
     apps_dir="$HOME/apps"
-    pattern="''${apps_dir}/''${app}*.AppImage"
 
+    shopt -s nocaseglob
+    pattern="''${apps_dir}/''${app}*.AppImage"
     files=( ''${pattern} )
-    if [ ''${#files[@]} -eq 0 ]; then
+
+    if [ ''${#files[@]} -eq 1 ] && [ ! -f "''${files[0]}" ]; then
       echo "DEBUG: No AppImage files found matching: ''${pattern}" >&2
       exit 1
     fi
-    echo "DEBUG: Found AppImage file(s): ''${files[*]}" >&2
 
+    echo "DEBUG: Found AppImage file(s): ''${files[*]}" >&2
     exec appimage-run ''${files[0]}
   '';
   webWrapperDesktopItem = { name, url }:

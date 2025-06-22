@@ -11,7 +11,7 @@ function update_all() {
 
 if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   if [[ -f "$CACHE_FILE" ]]; then
-    if [[ -n $(find "$CACHE_FILE" -mtime +2 -print) ]]; then
+    if [[ -n $(find "$CACHE_FILE" -mtime +30 -print) ]]; then
       update_all
     fi
   else

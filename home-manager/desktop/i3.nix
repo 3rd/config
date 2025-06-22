@@ -101,6 +101,10 @@ in {
       });
       config = {
         bars = [ ];
+        gaps = {
+          inner = lib.mkDefault 4;
+          outer = lib.mkDefault 0;
+        };
         colors = with config.colors; {
           focused = {
             background = gray-dark;
@@ -254,7 +258,8 @@ in {
           {
             always = true;
             command =
-              "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/assets/wallpaper";
+              "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/.config/wallpaper";
+            # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/assets/wallpaper";
           }
         ];
       };
@@ -266,8 +271,6 @@ in {
         focus_follows_mouse no
         focus_on_window_activation none
         hide_edge_borders both
-        gaps inner 4
-        gaps outer 0
 
         default_border pixel 2
         default_floating_border pixel 2
@@ -334,8 +337,7 @@ in {
 
   xsession.profileExtra = ''
     systemctl --user import-environment
-    eval $(${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --start --components=secrets,ssh,pkcs11)
-    export SSH_AUTH_SOCK
+    eval $(${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --start --components=secrets,pkcs11)
   '';
 
   systemd.user.services = {

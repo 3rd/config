@@ -115,7 +115,7 @@ local toggle_or_focus_file_tree = function()
   if lib.buffer.current.get_filetype() == "NvimTree" then
     vim.cmd([[wincmd w]])
   else
-    if require("nvim-tree.view").is_visible() then
+    if api.tree.is_visible() then
       api.tree.focus()
     else
       api.tree.toggle(true)

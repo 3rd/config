@@ -1,4 +1,4 @@
-{ lib, config, ... }:
+{ pkgs, lib, config, ... }:
 
 {
   services.picom = {
@@ -71,16 +71,17 @@
       # ];
 
       fading = true;
-      fade-in-step = 5.0e-2;
-      fade-out-step = 5.0e-2;
+      fade-in-step = 1.0e-2;
+      fade-out-step = 1.0e-2;
+      fade-delta = 1;
 
-      corner-radius = 8;
+      corner-radius = lib.mkDefault 8;
       rounded-corners-exclude = [
         "class_g = 'Polybar'"
         "window_type = 'dock'"
         "window_type = 'tooltip'"
       ];
-      round-borders = 8;
+      round-borders = lib.mkDefault 8;
       round-borders-exclude = [ ];
 
       log-level = "warn";

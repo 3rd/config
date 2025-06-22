@@ -3,32 +3,26 @@
 let
   vault_path = "$HOME/brain/storage/vault.encfs";
   mount_path = "$HOME/brain/storage/vault";
-in
-{
+in {
   home.packages = with pkgs; [ encfs ];
 
   home.file = {
     ".local/bin/vault-mount" = {
       executable = true;
-      source = pkgs.substituteAll {
-        src = ./vault-mount.sh;
+      source = pkgs.replaceVars ./vault-mount.sh {
         vault_path = "${vault_path}";
         mount_path = "${mount_path}";
       };
     };
     ".local/bin/vault-unmount" = {
       executable = true;
-      source = pkgs.substituteAll {
-        src = ./vault-unmount.sh;
-        mount_path = "${mount_path}";
-      };
+      source =
+        pkgs.replaceVars ./vault-unmount.sh { mount_path = "${mount_path}"; };
     };
     ".local/bin/vault-passwd" = {
       executable = true;
-      source = pkgs.substituteAll {
-        src = ./vault-passwd.sh;
-        vault_path = "${vault_path}";
-      };
+      source =
+        pkgs.replaceVars ./vault-passwd.sh { vault_path = "${vault_path}"; };
     };
   };
 }

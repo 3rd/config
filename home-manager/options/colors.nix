@@ -10,6 +10,15 @@ with lib; {
       };
     };
   in listToAttrs (map mkColorOption [
+    "background"
+    "foreground"
+    "cursor"
+    "selection-background"
+    "selection-foreground"
+
+    "accent"
+    "accent-dark"
+
     "gray-lightest"
     "gray-lighter"
     "gray-light"
@@ -18,6 +27,7 @@ with lib; {
     "gray-dark"
     "gray-darker"
     "gray-darkest"
+
     "blue-lightest"
     "blue-lighter"
     "blue-light"
@@ -26,6 +36,7 @@ with lib; {
     "blue-dark"
     "blue-darker"
     "blue-darkest"
+
     "cyan-lightest"
     "cyan-lighter"
     "cyan-light"
@@ -34,6 +45,7 @@ with lib; {
     "cyan-dark"
     "cyan-darker"
     "cyan-darkest"
+
     "green-lightest"
     "green-lighter"
     "green-light"
@@ -42,6 +54,7 @@ with lib; {
     "green-dark"
     "green-darker"
     "green-darkest"
+
     "indigo-lightest"
     "indigo-lighter"
     "indigo-light"
@@ -50,6 +63,7 @@ with lib; {
     "indigo-dark"
     "indigo-darker"
     "indigo-darkest"
+
     "magenta-lightest"
     "magenta-lighter"
     "magenta-light"
@@ -58,6 +72,7 @@ with lib; {
     "magenta-dark"
     "magenta-darker"
     "magenta-darkest"
+
     "orange-lightest"
     "orange-lighter"
     "orange-light"
@@ -66,6 +81,7 @@ with lib; {
     "orange-dark"
     "orange-darker"
     "orange-darkest"
+
     "red-lightest"
     "red-lighter"
     "red-light"
@@ -74,6 +90,7 @@ with lib; {
     "red-dark"
     "red-darker"
     "red-darkest"
+
     "yellow-lightest"
     "yellow-lighter"
     "yellow-light"
@@ -82,12 +99,6 @@ with lib; {
     "yellow-dark"
     "yellow-darker"
     "yellow-darkest"
-
-    "background"
-    "foreground"
-    "cursor"
-    "selection-background"
-    "selection-foreground"
 
     "color0"
     "color1"

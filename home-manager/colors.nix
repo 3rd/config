@@ -11,6 +11,9 @@
     selection-background = "#303233";
     selection-foreground = "#cacecd";
 
+    accent = "#c20a5d";
+    accent-dark = "#61052f";
+
     gray-lightest = "#B0ACC3";
     gray-lighter = "#A5A0BA";
     gray-light = "#9B96B0";

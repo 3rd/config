@@ -30,7 +30,7 @@ local is_initialized = false
 return lib.module.create({
   name = "completion/supermaven",
   enabled = config.enabled,
-  hosts = { "spaceship", "macbook" },
+  hosts = { "spaceship", "macbook", "death" },
   plugins = {
     {
       "supermaven-inc/supermaven-nvim",

@@ -39,7 +39,7 @@
     '';
     config = with config.colors; {
       "bar/common" = {
-        background = gray-darkest;
+        background = lib.mkDefault gray-darkest;
         font-0 = lib.mkDefault "Fira Sans Mono:size=12;3";
         font-1 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-2 = lib.mkDefault "Symbols Nerd Font:size=12;3";
@@ -47,9 +47,9 @@
       "bar/top" = {
         "inherit" = "bar/common";
         modules-left = "i3";
-        modules-center = "task tomato";
+        modules-center = "task";
         modules-right =
-          "bci vpn battery sep pulseaudio bluetooth cpu cpu_temp sep mem sep fs sep clock";
+          "vpn battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock";
         height = 28;
         fixed-center = true;
         tray-background = gray-darkest;
@@ -60,9 +60,9 @@
         type = "custom/text";
         content = " ";
       };
-      "module/sep" = {
+      "module/separator" = {
         type = "custom/text";
-        content = " ";
+        content = "  ";
         content-background = gray-darkest;
       };
       "module/<" = {
@@ -116,7 +116,7 @@
         label-mode-padding = 2;
         label-unfocused = "%icon% %name%";
         label-unfocused-background = gray-darkest;
-        label-unfocused-foreground = gray-light;
+        label-unfocused-foreground = foreground;
         label-unfocused-padding = 2;
         label-urgent = "%icon% %name%";
         label-urgent-background = red-medium;
@@ -158,7 +158,7 @@
       "module/cpu" = {
         type = "internal/cpu";
         format-background = gray-darkest;
-        format-foreground = gray-light;
+        format-foreground = foreground;
         format-prefix = " ";
         format-prefix-foreground = gray-lighter;
         format-padding = 1;
@@ -171,13 +171,13 @@
         hwmon-path = "/sys/devices/platform/it87.2656/hwmon/hwmon2/temp1_input";
         label = "%temperature-c%";
         format-background = gray-darkest;
-        format-foreground = gray-light;
+        format-foreground = foreground;
       };
       "module/mem" = {
         type = "internal/memory";
         format = "<label>";
         format-background = gray-darkest;
-        format-foreground = gray-light;
+        format-foreground = foreground;
         format-prefix = "󰍛 ";
         format-prefix-foreground = gray-lighter;
         format-padding = 1;
@@ -189,7 +189,7 @@
         mount-0 = "/";
         interval = 60;
         format-mounted-background = gray-darkest;
-        format-mounted-foreground = gray-light;
+        format-mounted-foreground = foreground;
         label-mounted = "%mountpoint% %percentage_used%%";
         label-unmounted = "";
       };
@@ -250,24 +250,24 @@
         format-padding = 2;
         interval = 10;
       };
-      "module/bci" = {
-        type = "custom/script";
-        exec = "/home/rabbit/.config/polybar/bci.sh";
-        interval = 1;
-        format-background = gray-darker;
-        format-foreground = gray-light;
-        format-padding = 2;
-      };
-      "module/tomato" = {
-        type = "custom/script";
-        exec = "${pkgs.tomato-c}/bin/tomato -t";
-        format = "<label>";
-        format-background = gray-dark;
-        format-foreground = red-light;
-        format-padding = 2;
-        interval = 1;
-        tail = true;
-      };
+      # "module/bci" = {
+      #   type = "custom/script";
+      #   exec = "/home/rabbit/.config/polybar/bci.sh";
+      #   interval = 1;
+      #   format-background = gray-darker;
+      #   format-foreground = foreground;
+      #   format-padding = 2;
+      # };
+      # "module/tomato" = {
+      #   type = "custom/script";
+      #   exec = "${pkgs.tomato-c}/bin/tomato -t";
+      #   format = "<label>";
+      #   format-background = gray-dark;
+      #   format-foreground = red-light;
+      #   format-padding = 2;
+      #   interval = 1;
+      #   tail = true;
+      # };
     };
   };
 }
