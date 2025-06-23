@@ -140,8 +140,9 @@ local async_complete = function(prompt, options, callback, streaming_popup)
 
   if streaming_popup then
     -- streaming mode
-    local content_blocks = {} -- separate tracking for thinking vs text
+    local content_blocks = {}
     local current_event = nil
+    local json_buffer = ""
 
     local job_id = vim.fn.jobstart(command, {
       stdout_buffered = false,
@@ -152,12 +153,17 @@ local async_complete = function(prompt, options, callback, streaming_popup)
               -- each chunk is either an event: line or data: line
               if chunk:match("^event:") then
                 current_event = chunk:match("^event:%s*(.+)")
+                json_buffer = "" -- clear on new event
               elseif chunk:match("^data:") then
                 local data_json = chunk:match("^data:%s*(.+)")
 
                 if data_json then
-                  local status, event_data = pcall(vim.fn.json_decode, data_json)
+                  json_buffer = json_buffer .. data_json
+
+                  local status, event_data = pcall(vim.fn.json_decode, json_buffer)
                   if status and event_data then
+                    json_buffer = ""
+
                     vim.schedule(function()
                       if event_data.type == "content_block_start" then
                         content_blocks[event_data.index] = {
@@ -172,12 +178,14 @@ local async_complete = function(prompt, options, callback, streaming_popup)
                             delta_text = event_data.delta.thinking
                           elseif event_data.delta.type == "text_delta" and event_data.delta.text then
                             delta_text = event_data.delta.text
+                          elseif event_data.delta.type == "signature_delta" then
+                            return
                           end
 
-                          -- always append delta text, even if empty (for real-time updates)
+                          -- append text delta
                           content_blocks[index].content = content_blocks[index].content .. delta_text
 
-                          -- build display content with both thinking and text - update EVERY time
+                          -- build display content
                           local display_content = ""
                           local thinking_content = ""
                           local text_content = ""
@@ -213,7 +221,11 @@ local async_complete = function(prompt, options, callback, streaming_popup)
                       end
                     end)
                   else
-                    log("Failed to parse JSON: " .. (data_json or "nil"))
+                    -- JSON parse failed, keep in buffer for next chunk
+                    if #json_buffer > 10000 then
+                      log("Large unparsed JSON buffer: " .. string.sub(json_buffer, 1, 100) .. "...")
+                      json_buffer = "" -- reset to prevent memory issues
+                    end
                   end
                 end
               end

@@ -35,8 +35,7 @@ return lib.module.create({
 
         require("mini.diff").setup({
           view = {
-            -- style = vim.go.number and "number" or "sign",
-            style = "sign",
+            style = vim.go.number and "number" or "sign",
             signs = { add = "▒", change = "▒", delete = "▁" },
             priority = 199,
           },

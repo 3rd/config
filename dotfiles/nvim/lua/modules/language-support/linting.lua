@@ -40,7 +40,9 @@ return lib.module.create({
         lint.linters_by_ft = {
           nix = { "nix", "statix" },
           cpp = { "cppcheck" },
-          markdown = { "alex" },
+          markdown = {
+            -- "alex",
+          },
           sh = { "shellcheck" },
           lua = vim.tbl_extend("force", {}, require("jit").arch ~= "arm64" and { "selene" } or {}),
           -- javascript = { "eslint_d" },

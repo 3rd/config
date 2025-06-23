@@ -4,6 +4,6 @@ IFS=$'\n\t'
 
 cd ~/brain/config/assets/wallpapers || exit
 RANDOM_WALLPAPER=$(find . -type f | shuf -n 1)
-cp "$RANDOM_WALLPAPER" ~/brain/config/assets/wallpaper
+cp "$RANDOM_WALLPAPER" ~/.config/wallpaper
 
-feh --bg-fill --no-fehbg "$HOME/brain/config/assets/wallpaper"
+feh --bg-fill --no-fehbg "$HOME/.config/wallpaper"

@@ -35,6 +35,8 @@ return lib.module.create({
         -- config/colors-hex.lua
         log("Writing colors...")
         local colors = require("config/theme").colors
+        local hostname = vim.loop.os_gethostname()
+
         local function parse(part)
           local result = {}
           for key, value in pairs(part) do
@@ -48,10 +50,62 @@ return lib.module.create({
           end
           return result
         end
+
         local hex_colors = parse(colors)
-        local lua_colors = vim.inspect(hex_colors)
+        local template = [[
+local hostname = vim.loop.os_gethostname()
+
+-- base colors
+local colors = %s
+
+-- host-specific overrides
+if hostname == "death" then
+colors.ui = {
+  breadcrumbs = {
+    normal = {
+      fg = "#A29CBF"
+    },
+    separator = {
+      fg = "#8D87AB"
+    }
+  },
+  line = {
+    current_line = {
+    },
+    current_line_nr = {
+      bg = "#3A3748",
+      fg = "#8D89A4"
+    },
+    current_line_sign = {
+      bg = "#3A3748",
+      fg = "#ED9A5E"
+    },
+    line_nr = {
+      fg = "#4F4B62"
+    }
+  },
+  split = "#312F3D",
+  status = {
+    a = {
+      bg = "#312F3D",
+      fg = "#BBB6D2"
+    },
+    b = {
+      bg = "#211F2D",
+      fg = "#ACA6C9"
+    },
+    c = {
+      bg = "#110F18",
+      fg = "#A29CBF"
+    }
+  }
+}
+end
+return colors]]
+
+        local colors_content = string.format(template, vim.inspect(hex_colors))
         local colors_path = vim.fn.stdpath("config") .. "/lua/config/colors-hex.lua"
-        lib.fs.file.write(colors_path, "return " .. lua_colors)
+        lib.fs.file.write(colors_path, colors_content)
         log("Theme built!")
       end,
     },

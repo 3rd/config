@@ -1,4 +1,7 @@
-return {
+local hostname = vim.loop.os_gethostname()
+
+-- base colors
+local colors = {
   background = "#282631",
   blue = "#83D3FC",
   common = {
@@ -179,3 +182,48 @@ return {
   visual = "#A73CDD",
   yellow = "#EDBE5E"
 }
+
+-- host-specific overrides
+if hostname == "death" then
+colors.ui = {
+  breadcrumbs = {
+    normal = {
+      fg = "#A29CBF"
+    },
+    separator = {
+      fg = "#8D87AB"
+    }
+  },
+  line = {
+    current_line = {
+    },
+    current_line_nr = {
+      bg = "#3A3748",
+      fg = "#8D89A4"
+    },
+    current_line_sign = {
+      bg = "#3A3748",
+      fg = "#ED9A5E"
+    },
+    line_nr = {
+      fg = "#4F4B62"
+    }
+  },
+  split = "#312F3D",
+  status = {
+    a = {
+      bg = "#312F3D",
+      fg = "#BBB6D2"
+    },
+    b = {
+      bg = "#211F2D",
+      fg = "#ACA6C9"
+    },
+    c = {
+      bg = "#110F18",
+      fg = "#A29CBF"
+    }
+  }
+}
+end
+return colors

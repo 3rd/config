@@ -5,8 +5,11 @@
     enable = true;
     package = pkgs.picom-next;
     backend = lib.mkDefault "glx";
-    vSync = true;
+    vSync = false;
     settings = {
+      glx-no-stencil = true;
+      glx-no-rebind-pixmap = true;
+
       shadow-radius = 12;
       shadow-offset-x = -12;
       shadow-offset-y = -12;
