@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+FORMATTED=0
+
+if [ -f "go.mod" ]; then
+  TARGET="${1:-./...}"
+  # TODO: format "$TARGET"
+  exit
+fi
+
+if [ -f "package.json" ]; then
+  TARGET="${1:-.}"
+  if [ -d "$TARGET/src" ]; then
+    TARGET="$TARGET/src"
+  fi
+  echo "Formatting $TARGET"
+  prettier -w "$TARGET" --config ~/.config/nvim/linters/prettier.json
+  FORMATTED=1
+fi
+
+if [ "$FORMATTED" -eq 0 ]; then
+  echo "FATAL: Unknown project type."
+fi

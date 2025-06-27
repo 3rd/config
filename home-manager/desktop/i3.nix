@@ -83,14 +83,21 @@ in {
     })
   ];
 
-  home.packages = with pkgs; [ lock i3lock scrot xss-lock feh screen-cycle ];
+  home.packages = with pkgs; [
+    lock
+    i3lock
+    scrot
+    xss-lock
+    feh
+    screen-cycle
+    xmousepasteblock
+  ];
 
   xsession = {
     enable = true;
     scriptPath = ".hm-xsession";
     windowManager.i3 = {
       enable = true;
-      # package = pkgs.i3-gaps; # https://github.com/NixOS/nixpkgs/commit/7d4e95ba7527fa7bd5b1f8a1707b7e3ee2bbe82d
       package = pkgs.i3.overrideAttrs (oldAttrs: {
         src = pkgs.fetchFromGitHub {
           owner = "i3";
@@ -260,6 +267,11 @@ in {
             command =
               "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/.config/wallpaper";
             # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/assets/wallpaper";
+          }
+          {
+            always = true;
+            command =
+              "--no-startup-id ${pkgs.xmousepasteblock}/bin/xmousepasteblock";
           }
         ];
       };
