@@ -60,6 +60,12 @@
       profile = "export FHS=1";
       runScript = "fish";
     }))
+
+    xorg.libX11.dev
+    xorg.libXcursor.dev
+    xorg.libXi.dev
+    xorg.libXrandr.dev
+    libGL.dev
   ];
   environment.variables.EDITOR = "vim";
 

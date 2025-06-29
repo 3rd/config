@@ -76,6 +76,7 @@ local setup_lspconfig = function()
       },
     },
     dockerls = {},
+    nil_ls = {},
     gopls = {
       cmd = { "gopls", "-remote=auto", "-remote.debug=:0" },
       settings = {
@@ -83,6 +84,7 @@ local setup_lspconfig = function()
           analyses = {
             unusedparams = true,
             unreachable = false,
+            ST1003 = false,
           },
           codelenses = {
             generate = true,
@@ -252,63 +254,64 @@ local setup_lspconfig = function()
     --     end,
     --   },
     -- },
-    vuels = {
-      init_options = {
-        config = {
-          vetur = {
-            completion = {
-              autoImport = true,
-              tagCasing = "kebab",
-              useScaffoldSnippets = false,
-            },
-            format = { defaultFormatter = { js = "none", ts = "none" } },
-            useWorkspaceDependencies = false,
-            validation = { script = true, style = true, template = true },
-          },
-        },
-      },
-    },
-    -- eslint = {
-    --   cmd = { "vscode-eslint-language-server", "--stdio" },
-    --   filetypes = {
-    --     "javascript",
-    --     "javascriptreact",
-    --     "javascript.jsx",
-    --     "typescript",
-    --     "typescriptreact",
-    --     "typescript.tsx",
-    --     "vue",
-    --     "svelte",
-    --     "graphql",
-    --   },
-    --   flags = {
-    --     allow_incremental_sync = true,
-    --     -- debounce_text_changes = 1000,
-    --   },
-    --   settings = {
-    --     useESLintClass = true,
-    --     codeActionOnSave = {
-    --       enable = false,
-    --       mode = "all",
+    -- vuels = {
+    --   init_options = {
+    --     config = {
+    --       vetur = {
+    --         completion = {
+    --           autoImport = true,
+    --           tagCasing = "kebab",
+    --           useScaffoldSnippets = false,
+    --         },
+    --         format = { defaultFormatter = { js = "none", ts = "none" } },
+    --         useWorkspaceDependencies = false,
+    --         validation = { script = true, style = true, template = true },
+    --       },
     --     },
-    --     quiet = false,
-    --     onIgnoredFiles = "off",
-    --     rulesCustomizations = {},
-    --     run = "onSave",
-    --     codeAction = {
-    --       disableRuleComment = { enable = true, location = "separateLine" },
-    --       showDocumentation = { enable = true },
-    --     },
-    --     packageManager = "pnpm",
-    --     options = vim.tbl_deep_extend("force", {
-    --       cache = true,
-    --       fix = true,
-    --       overrideConfigFile = eslintConfigOverride,
-    --       resolvePluginsRelativeTo = eslintResolveRelativeTo,
-    --     }, eslintConfigOverride and { useEslintrc = false } or {}),
-    --     nodePath = eslintResolveRelativeTo,
     --   },
     -- },
+    eslint = {
+      cmd = { "vscode-eslint-language-server", "--stdio" },
+      filetypes = {
+        "javascript",
+        "javascriptreact",
+        "javascript.jsx",
+        "typescript",
+        "typescriptreact",
+        "typescript.tsx",
+      },
+      flags = {
+        allow_incremental_sync = true,
+        -- debounce_text_changes = 1000,
+      },
+      settings = {
+        useESLintClass = true,
+        codeActionOnSave = {
+          enable = false,
+          mode = "all",
+        },
+        quiet = false,
+        onIgnoredFiles = "off",
+        rulesCustomizations = {},
+        run = "onSave",
+        codeAction = {
+          disableRuleComment = { enable = true, location = "separateLine" },
+          showDocumentation = { enable = true },
+        },
+        packageManager = "bun",
+        options = vim.tbl_deep_extend("force", {
+          cache = true,
+          cacheLocation = ".eslintcache",
+          fix = false,
+          overrideConfigFile = eslintConfigOverride,
+          resolvePluginsRelativeTo = eslintResolveRelativeTo,
+        }, eslintConfigOverride and { useEslintrc = false } or {}),
+        nodePath = eslintResolveRelativeTo,
+        -- after https://github.com/pmizio/typescript-tools.nvim/pull/302/files
+        -- + auto local override
+        -- tsserver_node_executable = "bun",
+      },
+    },
     jsonls = {
       init_options = {
         provideFormatter = false,
@@ -328,7 +331,7 @@ local setup_lspconfig = function()
       },
     },
     cssmodules_ls = {},
-    -- tailwindcss = {},
+    tailwindcss = {},
   }
 
   if lib.fs.file.exists("sgconfig.yml") then

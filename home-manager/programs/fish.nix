@@ -107,6 +107,8 @@
       ti = "nvim ~/brain/wiki/_inbox/tasks";
       tl = "nvim ~/brain/wiki/_inbox/links";
       bookmarks = "nvim ~/brain/wiki/bookmarks";
+      # extra
+      vv = "~/sources/v/v";
     };
   };
 }

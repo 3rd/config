@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+TESTED=0
+
+if [ -f "Makefile" ] || [ -f "makefile" ]; then
+  TARGET="${1:-}"
+  echo "Found Makefile, checking for test target..."
+
+  # check "make test"
+  if make -n test >/dev/null 2>&1; then
+    echo "Running make test${TARGET:+ with target: $TARGET}"
+    if [ -n "$TARGET" ]; then
+      make test TARGET="$TARGET"
+    else
+      make test
+    fi
+    TESTED=1
+    exit
+  fi
+fi
+
+# go
+if [ -f "go.mod" ]; then
+  TARGET="${1:-./...}"
+  echo "Testing Go project: $TARGET"
+
+  # run with coverage
+  go test -v -race -coverprofile=coverage.out "$TARGET"
+
+  # show coverage summary
+  if [ -f "coverage.out" ]; then
+    echo
+    echo "Coverage Summary:"
+    go tool cover -func=coverage.out | tail -1
+  fi
+
+  TESTED=1
+  exit
+fi
+
+# js
+if [ -f "package.json" ]; then
+  TARGET="${1:-.}"
+  echo "Testing JS project: $TARGET"
+
+  if [ -f "bun.lockb" ]; then
+    echo "Using bun..."
+    bun test "$TARGET"
+  elif [ -f "pnpm-lock.yaml" ]; then
+    echo "Using pnpm..."
+    pnpm test "$TARGET"
+  else
+    echo "Using npm..."
+    npm test -- "$TARGET"
+  fi
+
+  TESTED=1
+  exit
+fi
+
+# rust
+if [ -f "Cargo.toml" ]; then
+  TARGET="${1:-}"
+  echo "Testing Rust project${TARGET:+: $TARGET}"
+
+  if [ -n "$TARGET" ]; then
+    cargo test "$TARGET" -- --nocapture
+  else
+    cargo test --all-features -- --nocapture
+  fi
+
+  TESTED=1
+  exit
+fi
+
+# zig
+if [ -f "build.zig" ]; then
+  TARGET="${1:-}"
+  echo "Testing Zig project${TARGET:+: $TARGET}"
+
+  # check if there's a test step in build.zig
+  if zig build --help 2>/dev/null | grep -q "test"; then
+    echo "Running 'zig build test'..."
+    zig build test ${TARGET:+-- "$TARGET"}
+  else
+    # fallback to finding and running test files
+    echo "Running test files directly..."
+
+    if [ -n "$TARGET" ]; then
+      if [ -f "$TARGET" ]; then
+        zig test "$TARGET"
+      else
+        echo "ERROR: Target file '$TARGET' not found"
+        exit 1
+      fi
+    else
+      # Find and run all test files
+      TEST_FILES=$(find . -name "*.zig" -type f | xargs grep -l "test \"" 2>/dev/null || true)
+
+      if [ -z "$TEST_FILES" ]; then
+        echo "No test files found (files containing 'test \"')"
+        exit 0
+      fi
+
+      for test_file in $TEST_FILES; do
+        echo
+        echo "Testing: $test_file"
+        zig test "$test_file"
+      done
+    fi
+  fi
+
+  TESTED=1
+  exit
+fi
+
+if [ "$TESTED" -eq 0 ]; then
+  echo "FATAL: Unknown project type."
+  exit 1
+fi

@@ -3,6 +3,7 @@
 
 return lib.module.create({
   name = "language-support/mason",
+  -- enabled = false,
   hosts = "*",
   plugins = {
     {
@@ -26,15 +27,15 @@ return lib.module.create({
             "cssls",
             "cssmodules_ls",
             "dockerls",
-            -- "eslint",
+            "eslint",
             "golangci_lint_ls",
             "gopls",
             "html",
             "jsonls",
-            -- "tailwindcss",
             "vimls",
-            "vuels",
             "yamlls",
+            "tailwindcss",
+            -- "vuels",
             -- "vtsls",
           },
           automatic_installation = true,
