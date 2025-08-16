@@ -2,7 +2,7 @@ local hostname = vim.loop.os_gethostname()
 
 -- base colors
 local colors = {
-  background = "#1E1D25",
+  background = "#211F28",
   blue = "#83D3FC",
   common = {
     boolean = "#FF8170",
@@ -11,7 +11,7 @@ local colors = {
     conditional = "#F07AC9",
     constant = "#FF8170",
     constructor = "#17CFCF",
-    cword = "#464356",
+    cword = "#494659",
     delimiter = "#746F8B",
     field = "#A5A0BA",
     ["function"] = "#83D3FC",
@@ -40,7 +40,7 @@ local colors = {
   plugins = {
     indent_guides = {
       chunk = "#9F3885",
-      indent = { "#34313F" }
+      indent = { "#363442" }
     }
   },
   red = "#E02A06",
@@ -51,10 +51,10 @@ local colors = {
     },
     code = {
       block = {
-        background = "#26242E",
+        background = "#282631",
         content = "#C6C3D5",
-        language = "#5B586F",
-        marker = "#464356"
+        language = "#5E5A72",
+        marker = "#494659"
       },
       inline = "#ED9145"
     },
@@ -130,7 +130,7 @@ local colors = {
       cancelled = "#fa4040",
       completion = "#7378a5",
       default = "#C6C3D5",
-      done = "#5F5D69",
+      done = "#62606C",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
@@ -140,7 +140,7 @@ local colors = {
   ui = {
     breadcrumbs = {
       normal = {
-        bg = "#282631",
+        bg = "#2F2D39",
         fg = "#9B97AF"
       },
       separator = {
@@ -149,32 +149,32 @@ local colors = {
     },
     line = {
       current_line = {
-        bg = "#2F2D39"
+        bg = "#312F3C"
       },
       current_line_nr = {
-        bg = "#34313F",
+        bg = "#363442",
         fg = "#89849F"
       },
       current_line_sign = {
-        bg = "#34313F",
+        bg = "#363442",
         fg = "#EB9147"
       },
       line_nr = {
-        fg = "#464356"
+        fg = "#494659"
       }
     },
-    split = "#282631",
+    split = "#2A2833",
     status = {
       a = {
-        bg = "#3D3A4A",
+        bg = "#3F3D4D",
         fg = "#B1AEC2"
       },
       b = {
-        bg = "#34313F",
+        bg = "#363442",
         fg = "#A6A2B9"
       },
       c = {
-        bg = "#282631",
+        bg = "#2A2833",
         fg = "#9B97AF"
       }
     }

@@ -1,30 +1,31 @@
 local M = {}
 
 local meta_config = {
-  document = { -- default
+  -- default
+  document = {
     title_key = "title",
     title_prefix = "",
-    icon = "🖹",
+    icon = "",
   },
   project = {
-    fallback_match = "^project[-]",
     title_prefix = "Project: ",
-    icon = "🖬 ",
+    icon = "",
+    fallback_node_name_match = "^project[-]",
   },
   consume = {
-    fallback_match = "^consume[-]",
     title_prefix = "Consume: ",
-    icon = "🕮 ",
+    icon = "",
+    fallback_node_name_match = "^consume[-]",
   },
   person = {
     title_key = "name",
-    icon = "👤",
+    icon = "",
   },
 }
 
 local get_fallback_type = function(node_name)
   for type, config in pairs(meta_config) do
-    if config.fallback_match and node_name:find(config.fallback_match) then return type end
+    if config.fallback_node_name_match and node_name:find(config.fallback_node_name_match) then return type end
   end
   return "document"
 end
@@ -32,8 +33,8 @@ end
 local get_fallback_title = function(type, node_name)
   local config = meta_config[type]
 
-  if config.fallback_match and config.title_prefix then
-    node_name = node_name:gsub(config.fallback_match, config.title_prefix)
+  if config.fallback_node_name_match and config.title_prefix then
+    node_name = node_name:gsub(config.fallback_node_name_match, config.title_prefix)
   end
   node_name = node_name:gsub("-", " ")
 

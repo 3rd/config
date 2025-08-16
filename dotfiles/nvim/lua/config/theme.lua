@@ -8,7 +8,7 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(250, 12, 13),
+  background = hsl(250, 12, 14),
   foreground = hsl(250, 18, 80),
   blue = hsl(200, 95, 75),
   cyan = hsl(180, 80, 45),
@@ -85,7 +85,7 @@ colors.ui = {
     c = { bg = colors.background.lighten(5), fg = colors.foreground.darken(20).desaturate(30) },
   },
   breadcrumbs = {
-    normal = { bg = colors.background.lighten(5), fg = colors.foreground.darken(20).desaturate(30) },
+    normal = { bg = colors.background.lighten(7), fg = colors.foreground.darken(20).desaturate(30) },
     separator = { fg = colors.foreground.darken(30).desaturate(40) },
   },
 }
@@ -188,7 +188,7 @@ local theme = lush(function(injected)
   return {
     -- base
     Normal({
-      bg = colors.background,
+      -- bg = colors.background,
       fg = colors.foreground,
     }),
     NormalFloat({ bg = colors.background.lighten(5) }),

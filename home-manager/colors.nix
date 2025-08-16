@@ -5,7 +5,8 @@
     # background = "#1E1F27";
     # background = "#1e1f29";
     # background = "#21222c";
-    background = "#23212c";
+    # background = "#23212c";
+    background = "#211F28";
     foreground = "#d1d1e6";
     cursor = "#f2b90d";
     selection-background = "#303233";

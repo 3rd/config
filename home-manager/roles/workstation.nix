@@ -10,7 +10,6 @@
     ../programs/tmux
     ../programs/bat.nix
     ../programs/chromium.nix
-    ../programs/google-chrome.nix
     ../programs/eza.nix
     ../programs/fish.nix
     ../programs/fzf.nix
