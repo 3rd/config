@@ -38,7 +38,7 @@ local setup_tree = function()
       timeout = 500,
     },
     view = {
-      width = 50,
+      width = 40,
       side = "left",
       number = false,
       relativenumber = false,

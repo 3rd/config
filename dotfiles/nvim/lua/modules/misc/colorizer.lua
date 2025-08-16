@@ -4,6 +4,7 @@ return lib.module.create({
   plugins = {
     {
       "brenoprata10/nvim-highlight-colors",
+      -- enabled = false,
       event = "VeryLazy",
       config = function()
         require("nvim-highlight-colors").setup({

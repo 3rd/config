@@ -1,7 +1,7 @@
 return lib.module.create({
   name = "core/tracker",
   -- enabled = false,
-  hosts = { "spaceship", "macbook" },
+  hosts = { "spaceship", "death" },
   plugins = {
     {
       "3rd/time-tracker.nvim",

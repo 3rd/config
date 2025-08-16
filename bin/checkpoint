@@ -1,0 +1,942 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly SCRIPT_NAME="checkpoint"
+readonly VERSION="1.0.0"
+
+# Colors and formatting
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[0;33m'
+readonly BLUE='\033[0;34m'
+readonly MAGENTA='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly BOLD='\033[1m'
+readonly DIM='\033[2m'
+readonly RESET='\033[0m'
+
+# Emojis
+readonly EMOJI_CHECKPOINT="📸"
+readonly EMOJI_LIST="📋"
+readonly EMOJI_DIFF="🔍"
+readonly EMOJI_RESTORE="⏪"
+readonly EMOJI_SUCCESS="✅"
+readonly EMOJI_WARNING="⚠️"
+readonly EMOJI_ERROR="❌"
+readonly EMOJI_INFO="ℹ️"
+
+show_help() {
+  printf "%b%b%s%b %b%s%b - %bGit repository checkpoint manager%b\n" "$BOLD" "$MAGENTA" "$SCRIPT_NAME" "$RESET" "$DIM" "$VERSION" "$RESET" "$BOLD" "$RESET"
+  printf "  %bCreates snapshots when inside git repositories for later restoration.%b\n" "$DIM" "$RESET"
+  if git rev-parse --git-dir >/dev/null 2>&1; then
+    local checkpoint_dir
+    checkpoint_dir=$(get_checkpoint_dir)
+    printf "  %bStorage path:%b %b%s%b\n" "$DIM" "$RESET" "$GREEN" "$checkpoint_dir" "$RESET"
+    printf "\n"
+  fi
+
+  printf "%b%b🚀 USAGE:%b\n" "$BOLD" "$YELLOW" "$RESET"
+  printf "  %b%s create [comment]%b %s Create a new checkpoint with optional comment\n" "$CYAN" "$SCRIPT_NAME" "$RESET" "$EMOJI_CHECKPOINT"
+  printf "  %b%s list%b            %s List all checkpoints\n" "$CYAN" "$SCRIPT_NAME" "$RESET" "$EMOJI_LIST"
+  printf "  %b%s diff [N]%b        %s Show diff with current state (N versions back, default: 1)\n" "$CYAN" "$SCRIPT_NAME" "$RESET" "$EMOJI_DIFF"
+  printf "  %b%s restore N%b       %s Restore to checkpoint N (from list)\n" "$CYAN" "$SCRIPT_NAME" "$RESET" "$EMOJI_RESTORE"
+  printf "  %b%s test%b            🧪 Run safety tests\n" "$CYAN" "$SCRIPT_NAME" "$RESET"
+  printf "  %b%s help%b            %s Show this help\n" "$CYAN" "$SCRIPT_NAME" "$RESET" "$EMOJI_INFO"
+  printf "\n"
+
+  printf "%b%b💡 EXAMPLES:%b\n" "$BOLD" "$YELLOW" "$RESET"
+  printf "  %b%s create%b          %b# Create snapshot of current state%b\n" "$GREEN" "$SCRIPT_NAME" "$RESET" "$DIM" "$RESET"
+  printf "  %b%s create \"bug fix\"%b  %b# Create snapshot with a comment%b\n" "$GREEN" "$SCRIPT_NAME" "$RESET" "$DIM" "$RESET"
+  printf "  %b%s list%b            %b# Show all checkpoints with timestamps%b\n" "$GREEN" "$SCRIPT_NAME" "$RESET" "$DIM" "$RESET"
+  printf "  %b%s diff%b            %b# Diff with latest checkpoint%b\n" "$GREEN" "$SCRIPT_NAME" "$RESET" "$DIM" "$RESET"
+  printf "  %b%s diff 3%b          %b# Diff with 3rd checkpoint back%b\n" "$GREEN" "$SCRIPT_NAME" "$RESET" "$DIM" "$RESET"
+  printf "  %b%s restore 2%b       %b# Restore to 2nd checkpoint in list%b\n" "$GREEN" "$SCRIPT_NAME" "$RESET" "$DIM" "$RESET"
+}
+
+error() {
+  printf "%b%b%s Error:%b %s\n" "$BOLD" "$RED" "$EMOJI_ERROR" "$RESET" "$*" >&2
+  exit 1
+}
+
+info() {
+  printf "%b%b%s Info:%b %s\n" "$BOLD" "$BLUE" "$EMOJI_INFO" "$RESET" "$*" >&2
+}
+
+warn() {
+  printf "%b%b%s Warning:%b %s\n" "$BOLD" "$YELLOW" "$EMOJI_WARNING" "$RESET" "$*" >&2
+}
+
+check_git_repo() {
+  if ! git rev-parse --git-dir >/dev/null 2>&1; then
+    error "Not in a git repository. Please run this command from within a git repository."
+  fi
+}
+
+get_repo_hash() {
+  local git_root
+  git_root=$(git rev-parse --show-toplevel)
+  echo -n "$git_root" | sha256sum | cut -c1-16
+}
+
+get_checkpoint_dir() {
+  local repo_hash
+  repo_hash=$(get_repo_hash)
+  local xdg_data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+  echo "$xdg_data_home/checkpoint/$repo_hash"
+}
+
+create_checkpoint() {
+  check_git_repo
+
+  local comment="$*"
+
+  local checkpoint_dir
+  checkpoint_dir=$(get_checkpoint_dir)
+  mkdir -p "$checkpoint_dir"
+
+  local timestamp
+  timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
+  local checkpoint_file="$checkpoint_dir/$timestamp.tar.gz"
+  local metadata_file="$checkpoint_dir/$timestamp.meta"
+
+  if [[ -n "$comment" ]]; then
+    info "Creating checkpoint: $timestamp - $comment"
+  else
+    info "Creating checkpoint: $timestamp"
+  fi
+
+  local git_root
+  git_root=$(git rev-parse --show-toplevel)
+  cd "$git_root"
+
+  # Check if there are any changes (tracked, staged, or untracked)
+  if git diff --quiet && git diff --cached --quiet && [[ -z $(git ls-files --others --exclude-standard) ]]; then
+    # No changes at all, just archive HEAD
+    git archive --format=tar.gz HEAD >"$checkpoint_file"
+    info "Checkpoint created: $checkpoint_file"
+  else
+    # There are changes (tracked, staged, or untracked files)
+    info "Including all changes (tracked, staged, and untracked files)"
+
+    # Capture current git state to restore it later
+    local original_index
+    original_index=$(mktemp)
+    cp .git/index "$original_index" 2>/dev/null || touch "$original_index"
+
+    # Stage all files (modified and untracked) temporarily
+    git add -A >/dev/null 2>&1
+
+    # Create a tree with all current changes
+    local temp_tree
+    temp_tree=$(git write-tree)
+
+    # Restore original index state
+    if [[ -s "$original_index" ]]; then
+      cp "$original_index" .git/index
+    else
+      rm -f .git/index
+      git reset >/dev/null 2>&1 || true
+    fi
+    rm -f "$original_index"
+
+    # Archive the temporary tree
+    git archive --format=tar.gz "$temp_tree" >"$checkpoint_file"
+
+    info "Checkpoint created with all changes: $checkpoint_file"
+  fi
+
+  # Save metadata (comment) if provided
+  if [[ -n "$comment" ]]; then
+    printf "%s\n" "$comment" >"$metadata_file"
+  fi
+}
+
+list_checkpoints() {
+  check_git_repo
+
+  local checkpoint_dir
+  checkpoint_dir=$(get_checkpoint_dir)
+
+  if [[ ! -d "$checkpoint_dir" ]]; then
+    info "No checkpoints found for this repository"
+    return 0
+  fi
+
+  local count=1
+  printf "%b%b%s Checkpoints for repository:%b\n\n" "$BOLD" "$MAGENTA" "$EMOJI_LIST" "$RESET"
+
+  for checkpoint in "$checkpoint_dir"/*.tar.gz; do
+    if [[ ! -f "$checkpoint" ]]; then
+      info "No checkpoints found"
+      return 0
+    fi
+
+    local basename
+    basename=$(basename "$checkpoint" .tar.gz)
+    local formatted_date
+    formatted_date=$(echo "$basename" | sed 's/_/ /' | sed 's/-/\//g' | sed 's/\([0-9]\{4\}\)\/\([0-9]\{2\}\)\/\([0-9]\{2\}\)/\1-\2-\3/')
+
+    # Check for comment metadata
+    local metadata_file="$checkpoint_dir/$basename.meta"
+    local comment=""
+    if [[ -f "$metadata_file" ]]; then
+      comment=$(cat "$metadata_file" 2>/dev/null || true)
+    fi
+
+    if [[ -n "$comment" ]]; then
+      printf "%b%b%2d.%b %b%s%b %b(%s)%b\n" "$BOLD" "$CYAN" "$count" "$RESET" "$GREEN" "$formatted_date" "$RESET" "$DIM" "$basename" "$RESET"
+      printf "    %b💬 %s%b\n" "$DIM" "$comment" "$RESET"
+    else
+      printf "%b%b%2d.%b %b%s%b %b(%s)%b\n" "$BOLD" "$CYAN" "$count" "$RESET" "$GREEN" "$formatted_date" "$RESET" "$DIM" "$basename" "$RESET"
+    fi
+    ((count++))
+  done
+}
+
+diff_checkpoint() {
+  check_git_repo
+
+  local versions_back=${1:-1}
+  local checkpoint_dir
+  checkpoint_dir=$(get_checkpoint_dir)
+
+  if [[ ! -d "$checkpoint_dir" ]]; then
+    error "No checkpoints found for this repository"
+  fi
+
+  local checkpoints
+  readarray -t checkpoints < <(find "$checkpoint_dir" -name "*.tar.gz" | sort -r)
+
+  if [[ ${#checkpoints[@]} -eq 0 ]]; then
+    error "No checkpoints found"
+  fi
+
+  if [[ $versions_back -gt ${#checkpoints[@]} ]]; then
+    error "Only ${#checkpoints[@]} checkpoints available, cannot go back $versions_back versions"
+  fi
+
+  local checkpoint_file="${checkpoints[$((versions_back - 1))]}"
+  local temp_dir
+  temp_dir=$(mktemp -d)
+
+  info "Extracting checkpoint for diff..."
+  tar -xzf "$checkpoint_file" -C "$temp_dir"
+
+  local git_root
+  git_root=$(git rev-parse --show-toplevel)
+
+  printf "\n%b%b%s Diff between checkpoint and current state:%b\n" "$BOLD" "$YELLOW" "$EMOJI_DIFF" "$RESET"
+  printf "%b%b%s%b\n\n" "$BOLD" "$DIM" "$(printf '=%.0s' {1..50})" "$RESET"
+
+  diff -ur "$temp_dir" "$git_root" --exclude='.git' || true
+
+  rm -rf "$temp_dir"
+}
+
+restore_checkpoint() {
+  check_git_repo
+
+  local checkpoint_num="$1"
+  local checkpoint_dir
+  checkpoint_dir=$(get_checkpoint_dir)
+
+  if [[ ! -d "$checkpoint_dir" ]]; then
+    error "No checkpoints found for this repository"
+  fi
+
+  local checkpoints
+  readarray -t checkpoints < <(find "$checkpoint_dir" -name "*.tar.gz" | sort -r)
+
+  if [[ ${#checkpoints[@]} -eq 0 ]]; then
+    error "No checkpoints found"
+  fi
+
+  if [[ $checkpoint_num -lt 1 || $checkpoint_num -gt ${#checkpoints[@]} ]]; then
+    error "Invalid checkpoint number. Available: 1-${#checkpoints[@]}"
+  fi
+
+  local checkpoint_file="${checkpoints[$((checkpoint_num - 1))]}"
+  local git_root
+  git_root=$(git rev-parse --show-toplevel)
+
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    error "Working directory has uncommitted changes. Please commit or stash them before restoring."
+  fi
+
+  printf "%b%b%s This will overwrite your current working directory!%b\n" "$BOLD" "$YELLOW" "$EMOJI_WARNING" "$RESET"
+  printf "%bAre you sure you want to restore checkpoint %b%s%b? %b(y/N)%b " "$BOLD" "$CYAN" "$checkpoint_num" "$RESET" "$DIM" "$RESET"
+  read -n 1 -r
+  echo
+
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    info "Restore cancelled"
+    return 0
+  fi
+
+  local temp_dir
+  temp_dir=$(mktemp -d)
+
+  info "Extracting checkpoint..."
+  tar -xzf "$checkpoint_file" -C "$temp_dir"
+
+  info "Restoring files..."
+  rsync -av --delete --exclude='.git/' "$temp_dir/" "$git_root/"
+
+  printf "%b%b%s Checkpoint %s restored successfully%b\n" "$BOLD" "$GREEN" "$EMOJI_SUCCESS" "$checkpoint_num" "$RESET"
+
+  rm -rf "$temp_dir"
+}
+
+# Test globals
+TEST_COUNT=0
+PASS_COUNT=0
+FAIL_COUNT=0
+
+assert_equals() {
+  local expected="$1"
+  local actual="$2"
+  local message="${3:-}"
+
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  if [[ "$expected" == "$actual" ]]; then
+    PASS_COUNT=$((PASS_COUNT + 1))
+    printf "  %b✅ %s%b\n" "$GREEN" "${message:-assertion passed}" "$RESET"
+  else
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    printf "  %b❌ %s%b\n" "$RED" "${message:-assertion failed}" "$RESET"
+    printf "    %bExpected: %s%b\n" "$DIM" "$expected" "$RESET"
+    printf "    %bActual:   %s%b\n" "$DIM" "$actual" "$RESET"
+  fi
+}
+
+assert_contains() {
+  local needle="$1"
+  local haystack="$2"
+  local message="${3:-}"
+
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  if [[ "$haystack" == *"$needle"* ]]; then
+    PASS_COUNT=$((PASS_COUNT + 1))
+    printf "  %b✅ %s%b\n" "$GREEN" "${message:-contains assertion passed}" "$RESET"
+  else
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    printf "  %b❌ %s%b\n" "$RED" "${message:-contains assertion failed}" "$RESET"
+    printf "    %bExpected to contain: %s%b\n" "$DIM" "$needle" "$RESET"
+    printf "    %bActual string:       %s%b\n" "$DIM" "$haystack" "$RESET"
+  fi
+}
+
+assert_file_exists() {
+  local file="$1"
+  local message="${2:-}"
+
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  if [[ -f "$file" ]]; then
+    PASS_COUNT=$((PASS_COUNT + 1))
+    printf "  %b✅ %s%b\n" "$GREEN" "${message:-file exists}" "$RESET"
+  else
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    printf "  %b❌ %s%b\n" "$RED" "${message:-file should exist}" "$RESET"
+    printf "    %bFile: %s%b\n" "$DIM" "$file" "$RESET"
+  fi
+}
+
+test_suite_header() {
+  local test_name="$1"
+  printf "\n%b%b🧪 %s%b\n" "$BOLD" "$CYAN" "$test_name" "$RESET"
+}
+
+capture_git_state() {
+  local state_file="$1"
+  {
+    echo "=== GIT STATUS ==="
+    git status --porcelain || true
+    echo "=== BRANCH ==="
+    git branch --show-current || true
+    echo "=== HEAD ==="
+    git rev-parse HEAD 2>/dev/null || echo "NO_HEAD"
+    echo "=== STAGED FILES ==="
+    git diff --cached --name-only || true
+    echo "=== MODIFIED FILES ==="
+    git diff --name-only || true
+    echo "=== UNTRACKED FILES ==="
+    git ls-files --others --exclude-standard || true
+    echo "=== ALL TRACKED FILES ==="
+    git ls-files || true
+  } >"$state_file"
+}
+
+capture_file_hashes() {
+  local hash_file="$1"
+  find . -type f -not -path "./.git/*" -exec sha256sum {} \; | sort >"$hash_file" 2>/dev/null || true
+}
+
+compare_git_states() {
+  local before_state="$1"
+  local after_state="$2"
+  local message="$3"
+
+  if diff -u "$before_state" "$after_state" >/dev/null 2>&1; then
+    printf "  %b✅ %s%b\n" "$GREEN" "$message" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ %s%b\n" "$RED" "$message" "$RESET"
+    printf "    %bDifferences found in git state:%b\n" "$DIM" "$RESET"
+    diff -u "$before_state" "$after_state" | head -10 | sed 's/^/    /'
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+}
+
+compare_file_hashes() {
+  local before_hashes="$1"
+  local after_hashes="$2"
+  local message="$3"
+
+  if diff -u "$before_hashes" "$after_hashes" >/dev/null 2>&1; then
+    printf "  %b✅ %s%b\n" "$GREEN" "$message" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ %s%b\n" "$RED" "$message" "$RESET"
+    printf "    %bFile changes detected:%b\n" "$DIM" "$RESET"
+    diff -u "$before_hashes" "$after_hashes" | head -10 | sed 's/^/    /'
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+}
+
+verify_checkpoint_contents() {
+  local checkpoint_file="$1"
+  local expected_files="$2"
+  local message="$3"
+
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  if [[ ! -f "$checkpoint_file" ]]; then
+    printf "  %b❌ %s - checkpoint file missing%b\n" "$RED" "$message" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    return 1
+  fi
+
+  local archive_contents
+  archive_contents=$(tar -tzf "$checkpoint_file" 2>/dev/null | sort)
+  local missing_files=()
+
+  while IFS= read -r file; do
+    if [[ ! "$archive_contents" == *"$file"* ]]; then
+      missing_files+=("$file")
+    fi
+  done <<<"$expected_files"
+
+  if [[ ${#missing_files[@]} -eq 0 ]]; then
+    printf "  %b✅ %s%b\n" "$GREEN" "$message" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ %s - missing: %s%b\n" "$RED" "$message" "${missing_files[*]}" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+}
+
+test_suite_summary() {
+  printf "\n%b%b📊 Test Summary%b\n" "$BOLD" "$MAGENTA" "$RESET"
+  printf "  Tests run: %b%d%b\n" "$BOLD" "$TEST_COUNT" "$RESET"
+  printf "  Passed:    %b%d%b\n" "$GREEN" "$PASS_COUNT" "$RESET"
+  printf "  Failed:    %b%d%b\n" "$RED" "$FAIL_COUNT" "$RESET"
+
+  if [[ $FAIL_COUNT -eq 0 ]]; then
+    printf "\n%b%b✅ All tests passed!%b\n" "$BOLD" "$GREEN" "$RESET"
+    return 0
+  else
+    printf "\n%b%b❌ Some tests failed!%b\n" "$BOLD" "$RED" "$RESET"
+    return 1
+  fi
+}
+
+run_docker_tests() {
+  local script_path
+  script_path="$(realpath "$0")"
+
+  printf "%b%b🐳 Creating Docker test environment...%b\n" "$BOLD" "$YELLOW" "$RESET"
+
+  local dockerfile_content='
+FROM alpine:latest
+RUN apk add --no-cache git bash tar gzip rsync coreutils findutils
+WORKDIR /test-repo
+RUN git init . && \
+    git config user.name "Test User" && \
+    git config user.email "test@example.com"
+COPY checkpoint /usr/local/bin/checkpoint
+RUN chmod +x /usr/local/bin/checkpoint
+'
+
+  local build_dir
+  build_dir=$(mktemp -d)
+
+  echo "$dockerfile_content" >"$build_dir/Dockerfile"
+  cp "$script_path" "$build_dir/checkpoint"
+
+  if ! command -v docker >/dev/null 2>&1; then
+    printf "%b⚠️ Docker not available, running tests locally instead%b\n" "$YELLOW" "$RESET"
+    rm -rf "$build_dir"
+    run_local_tests
+    return $?
+  fi
+
+  local image_name="checkpoint-test-$$"
+
+  printf "  %bBuilding test image...%b\n" "$DIM" "$RESET"
+  if ! docker build -t "$image_name" "$build_dir" >/dev/null 2>&1; then
+    printf "%b❌ Failed to build Docker image, falling back to local tests%b\n" "$RED" "$RESET"
+    rm -rf "$build_dir"
+    run_local_tests
+    return $?
+  fi
+
+  printf "  %bRunning tests in container...%b\n" "$DIM" "$RESET"
+  docker run --rm "$image_name" checkpoint test-internal
+  local exit_code=$?
+
+  # Cleanup
+  docker rmi "$image_name" >/dev/null 2>&1 || true
+  rm -rf "$build_dir"
+
+  return $exit_code
+}
+
+run_internal_tests() {
+  printf "%b%b🧪 Running tests%b\n" "$BOLD" "$MAGENTA" "$RESET"
+
+  test_suite_header "Repository Initialization"
+
+  if ! git rev-parse --git-dir >/dev/null 2>&1; then
+    git init . >/dev/null 2>&1
+    git config user.name "Test User" >/dev/null 2>&1
+    git config user.email "test@example.com" >/dev/null 2>&1
+  fi
+
+  test_suite_header "Git Version Compatibility"
+
+  local git_version
+  git_version=$(git --version | cut -d' ' -f3)
+  printf "  %bTesting with Git version: %s%b\n" "$DIM" "$git_version" "$RESET"
+
+  echo "test" >temp_test_file.txt
+  git add temp_test_file.txt >/dev/null 2>&1
+  git commit -m "temp test commit" >/dev/null 2>&1
+
+  if git archive --format=tar --add-file=temp_test_file.txt HEAD >/dev/null 2>&1; then
+    printf "  %b✅ Git supports --add-file (version %s)%b\n" "$GREEN" "$git_version" "$RESET"
+  else
+    printf "  %b⚠️ Git too old for --add-file, some tests may fail (version %s)%b\n" "$YELLOW" "$git_version" "$RESET"
+  fi
+
+  rm -f temp_test_file.txt
+
+  test_suite_header "🔒 Complete state Verification"
+
+  # Create test environment
+  echo "tracked content 1" >tracked1.txt
+  echo "tracked content 2" >tracked2.txt
+  echo "untracked content 1" >untracked1.txt
+  echo "untracked content 2" >untracked2.txt
+  mkdir -p dir1/subdir dir2
+  echo "nested 1" >dir1/nested1.txt
+  echo "nested 2" >dir1/subdir/nested2.txt
+  echo "dir2 file" >dir2/file.txt
+  git add tracked1.txt tracked2.txt >/dev/null 2>&1
+  git commit -m "Base commit" >/dev/null 2>&1
+
+  # Modify files to create mixed state
+  echo "modified tracked 1" >tracked1.txt
+  echo "staged content" >staged.txt
+  git add staged.txt >/dev/null 2>&1
+
+  # Capture complete state before checkpoint
+  local before_state before_hashes
+  before_state=$(mktemp)
+  before_hashes=$(mktemp)
+
+  capture_git_state "$before_state"
+  capture_file_hashes "$before_hashes"
+
+  printf "  %bCaptured state: %d git properties, %d file hashes%b\n" \
+    "$DIM" "$(wc -l <"$before_state")" "$(wc -l <"$before_hashes")" "$RESET"
+
+  # Create checkpoint
+  printf "  %bCreating checkpoint with mixed state...%b\n" "$DIM" "$RESET"
+  local checkpoint_output
+  if ! checkpoint_output=$(checkpoint create 2>&1); then
+    printf "  %b❌ Checkpoint creation failed: %s%b\n" "$RED" "$checkpoint_output" "$RESET"
+    rm -f "$before_state" "$before_hashes"
+    return 1
+  fi
+
+  # Capture state after checkpoint
+  local after_state after_hashes
+  after_state=$(mktemp)
+  after_hashes=$(mktemp)
+
+  capture_git_state "$after_state"
+  capture_file_hashes "$after_hashes"
+
+  # Compare complete git state
+  compare_git_states "$before_state" "$after_state" "Complete git state identical"
+
+  # Compare all file hashes
+  compare_file_hashes "$before_hashes" "$after_hashes" "All file contents unchanged"
+
+  # Get checkpoint file for content verification
+  local checkpoint_dir latest_checkpoint
+  checkpoint_dir=$(get_checkpoint_dir)
+  latest_checkpoint=$(find "$checkpoint_dir" -name "*.tar.gz" | sort | tail -1)
+
+  # Verify checkpoint contains expected files
+  local expected_files
+  expected_files=$(find . -type f -not -path "./.git/*" | sed 's|^\./||' | sort)
+  verify_checkpoint_contents "$latest_checkpoint" "$expected_files" "Checkpoint contains all working files"
+
+  rm -f "$before_state" "$after_state" "$before_hashes" "$after_hashes"
+
+  # Test 2: Edge Cases
+  test_suite_header "🌪️ Edge Cases"
+
+  # Unicode and special characters
+  echo "content" >"файл.txt" # Cyrillic
+  echo "content" >"测试.txt"   # Chinese
+  echo "content" >"🚀.txt"    # Emoji
+  echo "content" >'file"with"quotes.txt'
+  echo "content" >"file'with'apostrophes.txt"
+  echo "content" >"file\$with\$dollar.txt"
+  echo "content" >"file\nwith\nnewlines.txt"
+
+  # Very long filename
+  local long_name
+  long_name=$(printf "very_long_filename_%0100d.txt" 1)
+  echo "long name content" >"$long_name"
+
+  # Empty files
+  touch empty_file.txt
+  mkdir -p empty_dir
+
+  # Binary content
+  printf '\x00\x01\x02\x03\xFF\xFE\xFD' >binary_file.bin
+
+  # Files with spaces at end of lines
+  printf "line1   \nline2\t\nline3 " >whitespace_file.txt
+
+  checkpoint create >/dev/null 2>&1
+
+  # Verify all edge case files exist
+  assert_file_exists "файл.txt" "Cyrillic filename preserved"
+  assert_file_exists "测试.txt" "Chinese filename preserved"
+  assert_file_exists "🚀.txt" "Emoji filename preserved"
+  assert_file_exists 'file"with"quotes.txt' "Quotes in filename preserved"
+  assert_file_exists "file'with'apostrophes.txt" "Apostrophes in filename preserved"
+  assert_file_exists "file\$with\$dollar.txt" "Dollar signs in filename preserved"
+  assert_file_exists "$long_name" "Very long filename preserved"
+  assert_file_exists "empty_file.txt" "Empty file preserved"
+  assert_file_exists "binary_file.bin" "Binary file preserved"
+  assert_file_exists "whitespace_file.txt" "Whitespace file preserved"
+
+  # Test 3: Many files
+  test_suite_header "📈 Many files test"
+
+  # Create many files
+  mkdir -p scale_test
+  for i in {1..100}; do
+    echo "Content $i" >"scale_test/file_$i.txt"
+  done
+
+  # Create deep directory structure
+  mkdir -p scale_test/a/b/c/d/e/f/g/h/i/j
+  echo "deep content" >scale_test/a/b/c/d/e/f/g/h/i/j/deep.txt
+
+  local scale_before scale_after
+  scale_before=$(mktemp)
+  scale_after=$(mktemp)
+
+  capture_file_hashes "$scale_before"
+
+  printf "  %bCreating checkpoint with 100+ files...%b\n" "$DIM" "$RESET"
+  local start_time end_time
+  start_time=$(date +%s)
+  checkpoint create >/dev/null 2>&1
+  end_time=$(date +%s)
+
+  capture_file_hashes "$scale_after"
+
+  compare_file_hashes "$scale_before" "$scale_after" "Large scale file preservation"
+
+  local duration=$((end_time - start_time))
+  printf "  %b✅ Checkpoint created in %d seconds%b\n" "$GREEN" "$duration" "$RESET"
+  TEST_COUNT=$((TEST_COUNT + 1))
+  PASS_COUNT=$((PASS_COUNT + 1))
+
+  rm -f "$scale_before" "$scale_after"
+
+  # Test 4: Git State Scenarios
+  test_suite_header "🔀 Git State Scenarios"
+
+  # Create branch scenario
+  git checkout -b feature_branch >/dev/null 2>&1
+  echo "feature content" >feature.txt
+  git add feature.txt >/dev/null 2>&1
+  git commit -m "Feature commit" >/dev/null 2>&1
+
+  # Create merge conflict scenario (without actually merging)
+  git checkout master >/dev/null 2>&1
+  echo "master content" >conflict.txt
+  git add conflict.txt >/dev/null 2>&1
+  git commit -m "Master commit" >/dev/null 2>&1
+
+  # Add staged and unstaged changes
+  echo "staged change" >staged_change.txt
+  git add staged_change.txt >/dev/null 2>&1
+  echo "unstaged change" >unstaged_change.txt
+
+  local git_before git_after
+  git_before=$(mktemp)
+  git_after=$(mktemp)
+
+  capture_git_state "$git_before"
+  checkpoint create >/dev/null 2>&1
+  capture_git_state "$git_after"
+
+  compare_git_states "$git_before" "$git_after" "Git state preserved"
+
+  rm -f "$git_before" "$git_after"
+
+  # Test 5: Archive Content Verification
+  test_suite_header "🔍 Archive Content Analysis"
+
+  echo "verification content" >verify.txt
+  checkpoint create >/dev/null 2>&1
+
+  latest_checkpoint=$(find "$checkpoint_dir" -name "*.tar.gz" | sort | tail -1)
+
+  # Extract and verify content
+  local extract_dir
+  extract_dir=$(mktemp -d)
+  tar -xzf "$latest_checkpoint" -C "$extract_dir" 2>/dev/null
+
+  if [[ -f "$extract_dir/verify.txt" ]]; then
+    local original_content extracted_content
+    original_content=$(cat verify.txt)
+    extracted_content=$(cat "$extract_dir/verify.txt")
+
+    if [[ "$original_content" == "$extracted_content" ]]; then
+      printf "  %b✅ Archive content matches original%b\n" "$GREEN" "$RESET"
+      PASS_COUNT=$((PASS_COUNT + 1))
+    else
+      printf "  %b❌ Archive content differs from original%b\n" "$RED" "$RESET"
+      FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+  else
+    printf "  %b❌ File missing from archive%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  rm -rf "$extract_dir"
+
+  # Test 6: Command Testing
+  test_suite_header "⚡ Commands Comprehensive Test"
+
+  # Test listing with multiple checkpoints
+  local list_output
+  list_output=$(checkpoint list 2>&1)
+  if [[ "$list_output" == *"Checkpoints for repository"* ]]; then
+    printf "  %b✅ List command works%b\n" "$GREEN" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ List command failed%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Test diff functionality
+  echo "changed for diff" >>verify.txt
+  local diff_output
+  diff_output=$(checkpoint diff 2>&1)
+  if [[ "$diff_output" == *"Diff between checkpoint"* ]]; then
+    printf "  %b✅ Diff command works%b\n" "$GREEN" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ Diff command failed%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Test error conditions thoroughly
+  local error_output
+  error_output=$(checkpoint restore 9999 2>&1 || true)
+  if [[ "$error_output" == *"Invalid checkpoint number"* ]]; then
+    printf "  %b✅ Error handling works%b\n" "$GREEN" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ Error handling failed%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Test 7: Comment Functionality
+  test_suite_header "💬 Comment Functionality Testing"
+
+  # Create checkpoint with comment
+  local comment_test="test comment with spaces"
+  local comment_output
+  comment_output=$(checkpoint create "$comment_test" 2>&1)
+  if [[ "$comment_output" == *"$comment_test"* ]]; then
+    printf "  %b✅ Checkpoint with comment created successfully%b\n" "$GREEN" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ Checkpoint with comment creation failed%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Create checkpoint without comment
+  local no_comment_output
+  no_comment_output=$(checkpoint create 2>&1)
+  if [[ "$no_comment_output" == *"Creating checkpoint:"* ]] && [[ "$no_comment_output" != *"$comment_test"* ]]; then
+    printf "  %b✅ Checkpoint without comment created successfully%b\n" "$GREEN" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ Checkpoint without comment creation failed%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Test listing shows comments correctly
+  local list_with_comments
+  list_with_comments=$(checkpoint list 2>&1)
+  if [[ "$list_with_comments" == *"💬 $comment_test"* ]]; then
+    printf "  %b✅ Comment appears in checkpoint list%b\n" "$GREEN" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ Comment missing from checkpoint list%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Test comment with special characters
+  local special_comment="fix: added @feature #123 & improved performance!"
+  checkpoint create "$special_comment" >/dev/null 2>&1
+  local special_list
+  special_list=$(checkpoint list 2>&1)
+  if [[ "$special_list" == *"$special_comment"* ]]; then
+    printf "  %b✅ Special characters in comments preserved%b\n" "$GREEN" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ Special characters in comments not preserved%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Test very long comment
+  local long_comment="This is a very long comment that tests whether the checkpoint system can handle extended descriptions that might contain multiple sentences and detailed explanations of what changes were made in this particular checkpoint snapshot."
+  checkpoint create "$long_comment" >/dev/null 2>&1
+  local long_list
+  long_list=$(checkpoint list 2>&1)
+  if [[ "$long_list" == *"$long_comment"* ]]; then
+    printf "  %b✅ Long comments preserved correctly%b\n" "$GREEN" "$RESET"
+    PASS_COUNT=$((PASS_COUNT + 1))
+  else
+    printf "  %b❌ Long comments not preserved correctly%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Test metadata file creation for the specific comment checkpoint
+  local checkpoint_dir
+  checkpoint_dir=$(get_checkpoint_dir)
+  local latest_checkpoint
+  latest_checkpoint=$(ls -t "$checkpoint_dir"/*.tar.gz 2>/dev/null | head -1)
+  if [[ -n "$latest_checkpoint" ]]; then
+    local basename_latest
+    basename_latest=$(basename "$latest_checkpoint" .tar.gz)
+    local expected_meta="$checkpoint_dir/$basename_latest.meta"
+    if [[ -f "$expected_meta" ]] && [[ -s "$expected_meta" ]]; then
+      printf "  %b✅ Metadata files created for comments%b\n" "$GREEN" "$RESET"
+      PASS_COUNT=$((PASS_COUNT + 1))
+    else
+      printf "  %b❌ Metadata file missing or empty for latest checkpoint%b\n" "$RED" "$RESET"
+      FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+  else
+    printf "  %b❌ No checkpoint files found for metadata test%b\n" "$RED" "$RESET"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+  fi
+  TEST_COUNT=$((TEST_COUNT + 1))
+
+  # Test summary
+  test_suite_summary
+}
+
+# Local test runner (fallback when Docker unavailable)
+run_local_tests() {
+  printf "%b%b🏠 Running tests locally (no Docker)%b\n" "$BOLD" "$YELLOW" "$RESET"
+
+  local temp_dir
+  temp_dir=$(mktemp -d)
+  local original_dir
+  original_dir=$(pwd)
+
+  cd "$temp_dir"
+  export XDG_DATA_HOME="$temp_dir/.local/share"
+
+  run_internal_tests
+
+  cd "$original_dir"
+  rm -rf "$temp_dir"
+}
+
+# Main test entry point
+run_tests() {
+  if [[ "${1:-}" == "internal" ]]; then
+    # Running inside Docker or as fallback
+    run_internal_tests
+  else
+    # Try Docker first, fallback to local
+    run_docker_tests
+  fi
+}
+
+main() {
+  case "${1:-help}" in
+    create)
+      shift # Remove "create" from arguments
+      create_checkpoint "$@"
+      ;;
+    list)
+      list_checkpoints
+      ;;
+    diff)
+      diff_checkpoint "${2:-1}"
+      ;;
+    restore)
+      if [[ $# -lt 2 ]]; then
+        error "restore requires a checkpoint number. Use 'checkpoint list' to see available checkpoints."
+      fi
+      restore_checkpoint "$2"
+      ;;
+    test)
+      run_tests
+      ;;
+    test-internal)
+      run_tests internal
+      ;;
+    help | --help | -h)
+      show_help
+      ;;
+    *)
+      error "Unknown command: $1. Use 'checkpoint help' for usage information."
+      ;;
+  esac
+}
+
+main "$@"

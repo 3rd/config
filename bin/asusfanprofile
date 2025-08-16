@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+
+asusctl fan-curve --mod-profile performance -f cpu --data 40c:10%,42c:15%,45c:20%,50c:50%,60c:70%,65c:80%,70c:90%,72c:95%
+asusctl fan-curve --mod-profile performance -f gpu --data 40c:10%,42c:15%,45c:20%,50c:50%,60c:70%,65c:80%,70c:90%,72c:95%
+asusctl fan-curve --mod-profile performance -e true
+asusctl fan-curve --mod-profile balanced -f cpu --data 40c:10%,42c:15%,45c:20%,50c:50%,60c:70%,65c:80%,70c:90%,72c:95%
+asusctl fan-curve --mod-profile balanced -f gpu --data 40c:10%,42c:15%,45c:20%,50c:50%,60c:70%,65c:80%,70c:90%,72c:95%
+asusctl fan-curve --mod-profile balanced -e true
+echo ""
+
+echo "--- FAN CURVE ---"
+asusctl fan-curve -g
+echo "--- PROFILE ---"
+asusctl profile -p

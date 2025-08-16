@@ -471,7 +471,10 @@ local setup = function()
   vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
     buffer = 0,
     callback = function()
-      vim.opt_local.winbar = slib.get_document_title()
+      -- vim.opt_local.winbar = slib.get_document_title()
+      -- with pcall
+      local ok, title = pcall(slib.get_document_title)
+      if ok then vim.opt_local.winbar = title end
     end,
   })
 

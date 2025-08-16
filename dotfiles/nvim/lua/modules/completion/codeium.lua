@@ -1,7 +1,7 @@
 return lib.module.create({
   name = "completion/codeium",
   enabled = false,
-  hosts = { "spaceship", "macbook" },
+  hosts = { "spaceship", "death" },
   plugins = {
     {
       "Exafunction/codeium.vim",

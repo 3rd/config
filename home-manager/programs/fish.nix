@@ -97,8 +97,9 @@
       "@docs" = "cd ~/brain/storage/documents";
       "@tpl" = "cd ~/brain/projects/templates";
       "@s" = "cd ~/sync";
-      "@trash" = "cd ~/.local/share/Trash/files";
       "@bb" = "cd ~/sync/brain";
+      "@ccc" = "cd /home/rabbit/brain/config/workflow/claude/launcher";
+      "@trash" = "cd ~/.local/share/Trash/files";
       # custom utils
       w = "work";
       pp = "promptpack";

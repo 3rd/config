@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+xrandr --output DisplayPort-1 --mode 1920x1080 --pos 2880x0 --rotate normal -r 120 --panning 0x0+0+0
+# xrandr --output DisplayPort-1 --mode 3840x1080 --pos 2880x0 --rotate normal -r 120 --panning 0x0+0+0

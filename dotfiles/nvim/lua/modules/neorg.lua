@@ -1,7 +1,7 @@
 return lib.module.create({
   name = "neorg",
   enabled = false,
-  hosts = { "spaceship", "macbook" },
+  hosts = { "spaceship", "death" },
   plugins = {
     {
       "nvim-neorg/neorg",

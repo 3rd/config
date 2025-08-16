@@ -1,7 +1,7 @@
 { pkgs, pkgs-stable, config, ... }:
 
 let
-  fhsEnv = pkgs.buildFHSUserEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
+  fhsEnv = pkgs.buildFHSEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
     name = "fhs";
     profile = "export FHS=1";
     runScript = ''fish -c "$@"'';

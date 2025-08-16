@@ -1,5 +1,15 @@
 { pkgs, lib, config, ... }:
 
+# https://picom.app/#_animations
+# https://github.com/Sanatana-Linux/nixos-config/blob/main/home/shared/services/picom.nix
+# https://forum.maboxlinux.org/t/picom-with-animations-config-for-mabox-try-it/2121/4
+# https://www-gem.codeberg.page/picom/
+# https://nuxsh.is-a.dev/blog/picom.html
+# https://www.reddit.com/r/unixporn/comments/1kntk5b/oc_completely_custom_opening_and_closing/
+# https://github.com/ikz87/GLWall
+# https://github.com/ikz87/dots-2.0?tab=readme-ov-file
+# https://github.com/ikz87/picom-shaders/tree/main/Animations
+
 {
   services.picom = {
     enable = true;
@@ -74,8 +84,8 @@
       # ];
 
       fading = true;
-      fade-in-step = 1.0e-2;
-      fade-out-step = 1.0e-2;
+      fade-in-step = 0.1;
+      fade-out-step = 0.1;
       fade-delta = 1;
 
       corner-radius = lib.mkDefault 8;
@@ -103,7 +113,7 @@
         popup_menu = {
           shadow = true;
           focus = false;
-          opacity = 0.9;
+          opacity = 1;
         };
         dropdown_menu = {
           shadow = false;
@@ -142,8 +152,8 @@
     ];
   };
 
-  xsession.windowManager.i3.config.window.commands = [{
-    command = "border pixel 0";
-    criteria.class = ".*";
-  }];
+  # xsession.windowManager.i3.config.window.commands = [{
+  #   command = "border pixel 0";
+  #   criteria.class = ".*";
+  # }];
 }

@@ -12,4 +12,5 @@ plugins/hlchunk.nvim
 plugins/nvim-ufo
 plugins/diagram.nvim
 plugins/blink.cmp
+plugins/bunvim
 time-tracker.json

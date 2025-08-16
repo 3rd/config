@@ -74,7 +74,7 @@ local config = {
 return lib.module.create({
   name = "completion/copilot",
   enabled = false,
-  hosts = { "spaceship", "macbook" },
+  hosts = { "spaceship", "death" },
   plugins = {
     {
       "github/copilot.vim",

@@ -8,14 +8,14 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(250, 13, 17),
-  foreground = hsl(250, 30, 85),
+  background = hsl(250, 12, 13),
+  foreground = hsl(250, 18, 80),
   blue = hsl(200, 95, 75),
   cyan = hsl(180, 80, 45),
   green = hsl(80, 75, 70),
   indigo = hsl(250, 60, 70),
   magenta = hsl(315, 80, 70),
-  orange = hsl(25, 80, 65),
+  orange = hsl(27, 80, 60),
   pink = hsl(315, 70, 75),
   red = hsl(10, 95, 45),
   yellow = hsl(40, 80, 65),
@@ -29,15 +29,15 @@ colors.plugins = {
 }
 
 local variable = colors.foreground
-local keyword = colors.foreground.darken(15).desaturate(20)
+local keyword = colors.foreground.darken(20).desaturate(10)
 local operator = keyword
-local delimiter = colors.foreground.darken(40).desaturate(40)
-local control = keyword.rotate(70).lighten(10).saturation(90)
+local delimiter = colors.foreground.darken(39).desaturate(40)
+local control = keyword.rotate(70).lighten(20).saturation(80)
 
-local parameter = colors.red.rotate(15).saturation(75).lighten(40)
-local property = colors.foreground.darken(10).desaturate(10)
+local parameter = colors.red.rotate(10).saturation(80).lighten(40)
+local property = colors.foreground.darken(15).saturation(16)
 local field = property
-local constant = colors.orange.rotate(-10).lighten(30).saturation(100)
+local constant = colors.orange.rotate(-20).lighten(30).saturation(100)
 local comment = colors.foreground.darken(40).desaturate(40)
 local builtin = colors.red.lighten(40).desaturate(20)
 local special = colors.indigo.rotate(90).saturation(100).lighten(20)
@@ -74,7 +74,7 @@ colors.common = {
 colors.ui = {
   line = {
     line_nr = { fg = colors.background.lighten(20) },
-    current_line = { bg = colors.background.lighten(10) },
+    current_line = { bg = colors.background.lighten(8) },
     current_line_nr = { bg = colors.background.lighten(10), fg = colors.background.lighten(50) },
     current_line_sign = { bg = colors.background.lighten(10), fg = colors.orange },
   },
@@ -101,9 +101,9 @@ colors.slang = {
   ticket = "#fa89f6",
   datetime = "#FC824A",
   code = {
-    inline = colors.orange.desaturate(10).lighten(10),
+    inline = colors.orange.saturate(10),
     block = {
-      background = colors.background.lighten(10),
+      background = colors.background.lighten(3),
       marker = colors.background.lighten(20),
       language = colors.background.lighten(30),
       content = colors.foreground,
@@ -124,28 +124,28 @@ colors.slang = {
   headline = {
     marker = colors.foreground.darken(20).desaturate(20),
     one = {
-      bg = colors.indigo.rotate(-20).darken(70).saturation(20),
-      fg = colors.indigo.rotate(-20).lighten(20).saturation(100),
+      bg = colors.indigo.rotate(-20).darken(75).saturation(20),
+      fg = colors.indigo.rotate(-20).lighten(25).saturation(100),
     },
     two = {
-      bg = colors.indigo.rotate(10).darken(70).saturation(20),
-      fg = colors.indigo.rotate(10).lighten(20).saturation(100),
+      bg = colors.indigo.rotate(10).darken(75).saturation(20),
+      fg = colors.indigo.rotate(10).lighten(25).saturation(100),
     },
     three = {
-      bg = colors.indigo.rotate(40).darken(70).saturation(20),
-      fg = colors.indigo.rotate(40).lighten(20).saturation(100),
+      bg = colors.indigo.rotate(40).darken(75).saturation(20),
+      fg = colors.indigo.rotate(40).lighten(25).saturation(100),
     },
     four = {
-      bg = colors.indigo.rotate(70).darken(70).saturation(20),
+      bg = colors.indigo.rotate(70).darken(75).saturation(20),
       fg = colors.indigo.rotate(70).lighten(20).saturation(100),
     },
     five = {
-      bg = colors.indigo.rotate(100).darken(70).saturation(20),
-      fg = colors.indigo.rotate(100).lighten(20).saturation(100),
+      bg = colors.indigo.rotate(100).darken(75).saturation(20),
+      fg = colors.indigo.rotate(100).lighten(25).saturation(100),
     },
     six = {
-      bg = colors.indigo.rotate(130).darken(70).saturation(20),
-      fg = colors.indigo.rotate(130).lighten(20).saturation(100),
+      bg = colors.indigo.rotate(130).darken(75).saturation(20),
+      fg = colors.indigo.rotate(130).lighten(25).saturation(100),
     },
   },
   section = "#8797C2",
@@ -188,7 +188,7 @@ local theme = lush(function(injected)
   return {
     -- base
     Normal({
-      -- bg = colors.background,
+      bg = colors.background,
       fg = colors.foreground,
     }),
     NormalFloat({ bg = colors.background.lighten(5) }),
@@ -403,7 +403,7 @@ local theme = lush(function(injected)
     sym("@text.environment.name")({ Type }),
     sym("@text.literal")({ String }),
     sym("@text.literal.markdown")({ Normal }),
-    sym("@text.literal.markdown_inline")({ Special }),
+    sym("@text.literal.markdown_inline")({ fg = colors.slang.code.inline }),
     sym("@text.math")({ Special }),
     sym("@text.note")({ SpecialComment }),
     sym("@text.reference")({ Underlined }),
@@ -422,6 +422,8 @@ local theme = lush(function(injected)
     sym("@type.qualifier")({ Type }),
     sym("@variable")({ Identifier }),
     sym("@variable.builtin")({ sym("@builtin") }),
+
+    sym("@markup.raw.markdown_inline")({ fg = colors.slang.code.inline }),
 
     -- semantic tokens
     -- https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
@@ -677,7 +679,8 @@ local theme = lush(function(injected)
     RenderMarkdownQuote({ fg = colors.slang.tag.context }),
     RenderMarkdownLink({ fg = colors.slang.link.external }),
     RenderMarkdownCode({ bg = colors.slang.code.block.background }),
-    RenderMarkdownCodeInline({ bg = colors.slang.code.block.background }),
+    RenderMarkdownCodeInline({ fg = colors.slang.code.inline }),
+    RenderMarkdownCodeBorder({ bg = colors.slang.code.block.marker.darken(40) }),
 
     -- snacks profiler
     SnacksProfilerHot20({ bg = colors.red.darken(10) }),

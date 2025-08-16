@@ -10,10 +10,12 @@
     ../programs/tmux
     ../programs/bat.nix
     ../programs/chromium.nix
+    ../programs/google-chrome.nix
     ../programs/eza.nix
     ../programs/fish.nix
     ../programs/fzf.nix
     ../programs/kitty.nix
+    # ../programs/ghostty.nix
     ../programs/navi.nix
     ../programs/zathura.nix
     ../programs/neovim.nix

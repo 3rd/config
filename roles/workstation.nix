@@ -24,7 +24,7 @@
     "net.core.somaxconn" = 8388608;
     "net.ipv4.tcp_max_orphans" = 32768;
   };
-  systemd.extraConfig = "DefaultLimitNOFILE=1048576";
+  # systemd.extraConfig = "DefaultLimitNOFILE=1048576";
   systemd.user.extraConfig = "DefaultLimitNOFILE=1048576";
 
   environment.systemPackages = with pkgs; [
@@ -35,6 +35,7 @@
     fd
     fzf
     git
+    tree
     glib
     gnumake
     graphviz
@@ -55,7 +56,7 @@
     s-tui
     memtester
     udiskie
-    (pkgs.buildFHSUserEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
+    (pkgs.buildFHSEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
       name = "fhs";
       profile = "export FHS=1";
       runScript = "fish";

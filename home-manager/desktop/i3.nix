@@ -3,9 +3,9 @@
 let
   modifier = "Mod3";
   alt = "Mod1";
-  monLeft = "DP-2";
-  monCenter = "DP-0";
-  monRight = "DP-4";
+  monLeft = "DP-0";
+  monCenter = "DP-2";
+  monRight = "HDMI-0";
   workspaces = {
     one = "main";
     two = "dev";
@@ -63,7 +63,7 @@ in {
             WS_NUM=$(echo "$WORKSPACE_INFO" | cut -d':' -f1)
             CURRENT_ICON=$(echo "$WORKSPACE_INFO" | cut -d' ' -f2)
             WS_NAME=$(echo "$WORKSPACE_INFO" | cut -d' ' -f3)
-            if [ "$CURRENT_ICON" = "◧" ]; then
+            if [ "$CURRENT_ICON" = "◨" ]; then
                 TARGET_ICON="▣"
             elif [ "$CURRENT_ICON" = "▣" ]; then
                 TARGET_ICON="◧"

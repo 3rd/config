@@ -30,7 +30,8 @@ end
 
 return lib.module.create({
   name = "misc/diagrams",
-  hosts = { "spaceship", "macbook" },
+  enabled = false,
+  hosts = { "spaceship", "death" },
   plugins = {
     { "jbyuki/venn.nvim", cmd = { "VBox" } },
     { "superhawk610/ascii-blocks.nvim", cmd = { "AsciiBlockify" } },

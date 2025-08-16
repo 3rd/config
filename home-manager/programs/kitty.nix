@@ -1,4 +1,4 @@
-{ config, pkgs, pkgs-master, lib, ... }:
+{ config, pkgs-master, lib, ... }:
 
 {
   imports = [ ../colors.nix ];
@@ -98,7 +98,7 @@
 
       font_family = lib.mkDefault "Berkeley Mono";
       # font_size = lib.mkDefault "9.4";
-      font_size = lib.mkDefault "9.6";
+      font_size = lib.mkDefault "10";
       # font_size = lib.mkDefault "9.9";
       # font_size = lib.mkDefault "10.4";
       # font_size = lib.mkDefault "10.5";

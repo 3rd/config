@@ -1,7 +1,11 @@
 { config, pkgs, options, lib, ... }:
 
 {
-  environment.systemPackages = with pkgs; [ pulseaudioFull pavucontrol ];
+  environment.systemPackages = with pkgs; [
+    pulseaudioFull
+    pavucontrol
+    alsa-utils
+  ];
 
   # https://github.com/NixOS/nixpkgs/issues/102547
   # https://nixos.wiki/wiki/PipeWire - https://github.com/NixOS/nixpkgs/issues/220967

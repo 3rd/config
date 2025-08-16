@@ -1,0 +1,4 @@
+% workflow
+
+# linter: clear global eslint cache
+pkill -9 eslint_d; rm -r $HOME/.config/nvim/linters/eslint/output

@@ -1,13 +1,10 @@
 { config, pkgs, pkgs-stable, options, ... }: {
 
   environment.systemPackages = with pkgs;
-    [
-      #
-      oterm
-      # (pkgs.ollama.override { acceleration = "cuda"; })
-    ];
+    [ (pkgs.ollama.override { acceleration = "cuda"; }) ];
 
   services.open-webui = {
+    package = pkgs-stable.open-webui;
     enable = true;
     port = 9999;
     environment = {

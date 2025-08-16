@@ -46,12 +46,20 @@ local get_fallback_title = function(type, node_name)
   return table.concat(words, " ")
 end
 
-M.get_icon = function(type) return meta_config[type] and meta_config[type].icon or meta_config.document.icon end
+M.get_icon = function(type)
+  return meta_config[type] and meta_config[type].icon or meta_config.document.icon
+end
 
 M.get_root = function()
-  if vim.bo.filetype ~= "syslang" then error("syslang function called on wrong filetype") end
+  if vim.bo.filetype ~= "syslang" then
+    vim.notify("syslang: not in syslang filetype", vim.log.levels.WARN)
+    return
+  end
   local parser = vim.treesitter.get_parser(0)
-  if parser:lang() ~= "syslang" then error("wrong parser") end
+  if parser:lang() ~= "syslang" then
+    vim.notify("syslang: not in syslang filetype", vim.log.levels.WARN)
+    return
+  end
   return parser:parse()[1]:root()
 end
 

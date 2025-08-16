@@ -1,6 +1,6 @@
 return lib.module.create({
   name = "misc/bufferize",
-  hosts = { "spaceship", "macbook" },
+  hosts = { "spaceship", "death" },
   plugins = {
     {
       "AndrewRadev/bufferize.vim",
