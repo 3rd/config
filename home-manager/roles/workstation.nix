@@ -1,30 +1,31 @@
 { inputs, lib, config, pkgs, ... }: {
   imports = [
+    ../layers/communication.nix
     ../layers/custom
     ../layers/development
-    ../layers/password-management.nix
-    ../layers/communication.nix
     ../layers/file-management.nix
     ../layers/media.nix
-    ../programs/git
-    ../programs/tmux
+    ../layers/password-management.nix
+    ../desktop/xdg-desktop-entries.nix
     ../programs/bat.nix
     ../programs/chromium.nix
+    ../programs/emacs.nix
     ../programs/eza.nix
     ../programs/fish.nix
     ../programs/fzf.nix
+    ../programs/git
     ../programs/kitty.nix
-    # ../programs/ghostty.nix
     ../programs/navi.nix
-    ../programs/zathura.nix
     ../programs/neovim.nix
     ../programs/rofi.nix
     ../programs/starship.nix
+    ../programs/tmux
+    ../programs/zathura.nix
     ../programs/zoxide.nix
+    ../apps.nix
     ../gtk.nix
     ../utilities.nix
-    ../desktop/xdg-desktop-entries.nix
-    ../apps.nix
+    # ../programs/ghostty.nix
   ];
 
   nixpkgs.config.allowUnfree = true;

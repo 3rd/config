@@ -216,22 +216,22 @@ return lib.module.create({
       },
     },
     -- TODO: nvim-scissors
-    {
-      "smjonas/snippet-converter.nvim",
-      -- enabled = false,
-      cmd = { "ConvertSnippets" },
-      config = function()
-        local template = {
-          sources = {
-            snipmate = { vim.fn.stdpath("config") .. "/snippets_snipmate" },
-          },
-          output = {
-            vscode = { vim.fn.stdpath("config") .. "/snippets_vscode" },
-          },
-        }
-        require("snippet_converter").setup({ templates = { template } })
-      end,
-    },
+    -- {
+    --   "smjonas/snippet-converter.nvim",
+    --   -- enabled = false,
+    --   cmd = { "ConvertSnippets" },
+    --   config = function()
+    --     local template = {
+    --       sources = {
+    --         snipmate = { vim.fn.stdpath("config") .. "/snippets_snipmate" },
+    --       },
+    --       output = {
+    --         vscode = { vim.fn.stdpath("config") .. "/snippets_vscode" },
+    --       },
+    --     }
+    --     require("snippet_converter").setup({ templates = { template } })
+    --   end,
+    -- },
   },
 
   hooks = {

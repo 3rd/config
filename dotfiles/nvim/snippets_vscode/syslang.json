@@ -28,5 +28,20 @@
     "prefix": "@code",
     "description": "\"code block\"",
     "body": ["@code $1", "$0", "@end", ""]
+  },
+  "@project": {
+    "prefix": "@project",
+    "description": "project document",
+    "body": ["@meta", "  title: $1", "  type: project", "@end", "$0"]
+  },
+  "@consume": {
+    "prefix": "@consume",
+    "description": "consume document",
+    "body": ["@meta", "  title: $1", "  type: consume", "@end", "$0"]
+  },
+  "@person": {
+    "prefix": "@person",
+    "description": "person document",
+    "body": ["@meta", "  title: $1", "  type: person", "@end", "$0"]
   }
 }
