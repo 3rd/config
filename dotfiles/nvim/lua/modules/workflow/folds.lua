@@ -1,4 +1,4 @@
-local enable_slang_meta = true
+local enable_slang_meta = vim.fn.line("$") < 200
 
 local get_upper_fold_level = function()
   local winview = vim.fn.winsaveview()

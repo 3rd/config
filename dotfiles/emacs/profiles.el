@@ -6,4 +6,7 @@
  ("main" . (
             (user-emacs-directory . "~/.emacs.d/profiles/main")
             ))
+ ("dev" . (
+            (user-emacs-directory . "~/.emacs.d/profiles/dev")
+            ))
 )

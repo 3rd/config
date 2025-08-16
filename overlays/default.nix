@@ -6,5 +6,5 @@
     };
 
   apple-silicon = inputs.apple-silicon.overlays.apple-silicon-overlay;
-  neovim-nightly-overlay = inputs.neovim-nightly-overlay.overlay;
+  neovim-nightly-overlay = inputs.neovim-nightly-overlay.overlays.default;
 }

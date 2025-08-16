@@ -344,6 +344,7 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
 (use-package all-the-icons
   :straight t
   :if (display-graphic-p))
+(use-package nerd-icons)
 #+END_SRC
 *** company
 #+BEGIN_SRC emacs-lisp
