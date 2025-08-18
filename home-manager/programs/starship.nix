@@ -11,6 +11,11 @@
         truncate_to_repo = true;
         truncation_length = 2;
       };
+      cmd_duration = {
+        min_time = 10;
+        format = "[$duration](bold yellow) ";
+      };
+      hostname = { ssh_only = true; };
       git_status = { disabled = true; };
       git_commit = {
         commit_hash_length = 4;
@@ -22,10 +27,6 @@
         symbol = " ";
         format = "[\\($symbol$branch\\)]($style) ";
         # ignore_branches = [ "master" "main" ];
-      };
-      cmd_duration = {
-        min_time = 10;
-        format = "[$duration](bold yellow) ";
       };
     };
   };

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+  if [ -f "typecheck.sh" ]; then
+    ./typecheck.sh
+    exit 0
+  fi
+
+  # make
+  if [ -f "Makefile" ]; then
+    if grep -q "typecheck:" "Makefile"; then
+      make typecheck
+      exit 0
+    fi
+  fi
+
+  # js/ts with package.json
+  if [ -f "package.json" ]; then
+    if command -v bun &>/dev/null; then
+      if grep -q '"typecheck"' package.json; then
+        bun run typecheck
+      else
+        bunx tsc --noEmit
+      fi
+    else
+      if grep -q '"typecheck"' package.json; then
+        npm run typecheck
+      else
+        npx tsc --noEmit
+      fi
+    fi
+    exit 0
+  fi
+
+  # rust
+  if [ -f "Cargo.toml" ]; then
+    cargo check "$@"
+    exit 0
+  fi
+
+  # go
+  if [ -f "go.mod" ]; then
+    go vet ./...
+    exit 0
+  fi
+
+  echo "⚠️ Unrecognized project type"
+  exit 1
+fi
+

@@ -9,7 +9,7 @@ local api = {
     return entries
   end,
   list_projects = function()
-    local command = "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki ls --type project | sort"
+    local command = "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki ls --type project,person | sort"
     local entries = string.split(lib.shell.exec(command), "\n")
     return entries
   end,

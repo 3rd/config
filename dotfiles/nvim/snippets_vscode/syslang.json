@@ -32,7 +32,7 @@
   "@project": {
     "prefix": "@project",
     "description": "project document",
-    "body": ["@meta", "  title: $1", "  type: project", "@end", "$0"]
+    "body": ["@meta", "  title: project:$1", "  type: project", "@end", "$0"]
   },
   "@consume": {
     "prefix": "@consume",
