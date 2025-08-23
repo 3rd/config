@@ -7,6 +7,7 @@
       gotools
       golangci-lint
       gotest
+      gopls
     ] ++ (if (system == "x86_64-linux") then
       [
         #

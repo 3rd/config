@@ -41,12 +41,15 @@
       cursor_trail_decay = "0.1 0.4";
       cursor_trail_start_threshold = "3";
 
-      # stupid https://github.com/kovidgoyal/kitty/issues/797
+      # https://github.com/kovidgoyal/kitty/issues/797
       confirm_os_window_close = "0";
 
       # background
       background_opacity = "0.98";
-      dynamic_background_opacity = "yes";
+      dynamic_background_opacity = "no";
+      # background_tint = "0.5";
+      transparent_background_colors =
+        "#312F3C@0.95 #282631@0.95 #2F2D39@0.95 #2A2833@0.95 #363442@0.95 #3F3D4D@0.95 #26232f@0.95 #494659@0.95"; # max 8
 
       # theme
       cursor_text_color = "background";
@@ -97,12 +100,15 @@
       # font_size = lib.mkDefault "9.4";
 
       font_family = lib.mkDefault "Berkeley Mono";
-      # font_size = lib.mkDefault "9.4";
-      font_size = lib.mkDefault "10";
+      font_size = lib.mkDefault "9.4";
+      # font_size = lib.mkDefault "10";
       # font_size = lib.mkDefault "9.9";
       # font_size = lib.mkDefault "10.4";
       # font_size = lib.mkDefault "10.5";
       # font_size = lib.mkDefault "10";
+
+      # font_family = lib.mkDefault "Berkeley Mono Variable";
+      # font_size = lib.mkDefault "9.9";
 
       # font_family = lib.mkDefault "Maple Mono";
       # font_size = lib.mkDefault "8.7";
@@ -126,7 +132,7 @@
       "ctrl+6" = "goto_tab 6";
       "ctrl+7" = "goto_tab 7";
       # change font size
-      "ctrl+shift+0" = "change_font_size all 8.6";
+      "ctrl+shift+0" = "change_font_size all 8.5";
       "ctrl+shift+minus" = "change_font_size all -0.1";
       "ctrl+shift+equal" = "change_font_size all +0.1";
       "ctrl+shift+backspace" = "change_font_size all 0";

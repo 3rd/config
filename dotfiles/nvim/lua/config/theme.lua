@@ -12,7 +12,7 @@ local colors = {
   foreground = hsl(250, 18, 80),
   blue = hsl(200, 95, 75),
   cyan = hsl(180, 80, 45),
-  green = hsl(80, 75, 70),
+  green = hsl(80, 57, 60),
   indigo = hsl(250, 60, 70),
   magenta = hsl(315, 80, 70),
   orange = hsl(27, 80, 60),
@@ -69,7 +69,7 @@ colors.common = {
   macro = keyword.lighten(40).saturate(70),
   ret = builtin,
   constructor = colors.cyan,
-  cword = colors.background.lighten(20),
+  cword = colors.background.lighten(10),
 }
 colors.ui = {
   line = {
@@ -703,6 +703,8 @@ local theme = lush(function(injected)
     SnacksProfilerHot03({ bg = colors.indigo.darken(78) }),
     SnacksProfilerHot02({ bg = colors.indigo.darken(82) }),
     SnacksProfilerHot01({ bg = colors.indigo.darken(86) }),
+
+    CursorWord({ bg = colors.common.cword }),
   }
 end)
 

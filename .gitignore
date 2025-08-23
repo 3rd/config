@@ -4,11 +4,11 @@
 .git-alt
 .gitignore-alt
 
-assets
-hosts
-ssh
-workspaces
+/assets
+/hosts
+/ssh
+/workspaces
 
 *private*
-dotfiles/emacs/url
-workflow
+/dotfiles/emacs/url
+/workflow

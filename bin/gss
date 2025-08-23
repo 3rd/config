@@ -1,0 +1,362 @@
+#!/usr/bin/env bash
+
+# Usage:
+#   gss [snap] [-m MESSAGE] [-u] [--tag TAG] [-q] [-v]
+#   gss clean [--tag TAG] [--keep N] [--yes] [--dry-run]
+#   gss list [--tag TAG]
+#
+# Defaults:
+#   TAG: [gss]
+#
+# Notes:
+#   * Tracked-only snapshots use `git stash create` + `git stash store` so your tree is untouched.
+#   * With -u/--include-untracked, we temporarily `git stash push -u` and immediately re-apply.
+#     If re-apply conflicts, you'll be warned and the stash is kept.
+
+set -euo pipefail
+IFS=$'\n\t'
+
+is_tty() { [[ -t 1 ]]; }
+if is_tty && [[ -z "${NO_COLOR:-}" ]]; then
+  BOLD=$'\033[1m'
+  DIM=$'\033[2m'
+  GREEN=$'\033[32m'
+  YELLOW=$'\033[33m'
+  RED=$'\033[31m'
+  RESET=$'\033[0m'
+else
+  BOLD=
+  DIM=
+  GREEN=
+  YELLOW=
+  RED=
+  RESET=
+fi
+say() { echo -e "$*"; }
+info() { say "${DIM}$*${RESET}"; }
+okay() { say "${GREEN}$*${RESET}"; }
+warn() { say "${YELLOW}$*${RESET}" >&2; }
+die() {
+  say "${RED}gss: $*${RESET}" >&2
+  exit 1
+}
+
+need_git_repo() {
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a git repository."
+}
+
+usage() {
+  cat <<'EOF'
+gss — Git Stash Snapshot
+
+Snapshot (no clean):
+  gss [snap] [-m MESSAGE] [-u] [--tag TAG] [-q] [-v]
+
+  -m, --message MESSAGE    Custom message (default auto)
+  -u, --include-untracked  Also capture untracked files (temp stash & re-apply)
+      --tag TAG            Tag prefix for automated stashes (default: [gss])
+  -q, --quiet              Print only the created ref
+  -v, --verbose            Print extra context (repo/branch and change summary)
+
+Clean automated stashes:
+  gss clean [--tag TAG] [--keep N] [--yes] [--dry-run]
+
+      --tag TAG            Match messages starting with TAG (default: [gss])
+      --keep N             Keep the N most recent matching stashes; drop the rest
+  -y, --yes                Do not prompt (DANGEROUS)
+      --dry-run            Show what would be removed
+
+List matching stashes:
+  gss list [--tag TAG]
+
+Examples:
+  gss -m "before refactor"
+  gss -u -m "incl untracked"
+  gss clean --keep 5
+  gss list
+EOF
+}
+
+repo_name() { basename "$(git rev-parse --show-toplevel)"; }
+branch_name() { git symbolic-ref --quiet --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo 'detached'; }
+timestamp() { date +%Y-%m-%dT%H:%M:%S%z; }
+
+stash_ref_for_oid() {
+  local oid="$1"
+  git stash list --pretty='%gd %H' | awk -v oid="$oid" '$2==oid{print $1; exit}'
+}
+
+starts_with() {
+  local haystack="$1" needle="$2"
+  [[ "${haystack:0:${#needle}}" == "$needle" ]]
+}
+
+# (legacy placeholder after removing --json)
+:
+
+cmd_snapshot() {
+  local tag='[gss]' msg='' include_untracked=0 quiet=0 verbose=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -m | --message)
+        [[ $# -ge 2 ]] || die "-m/--message needs an argument"
+        msg="$2"
+        shift 2
+        ;;
+      -u | --include-untracked)
+        include_untracked=1
+        shift
+        ;;
+      --tag)
+        [[ $# -ge 2 ]] || die "--tag needs an argument"
+        tag="$2"
+        shift 2
+        ;;
+      -q | --quiet)
+        quiet=1
+        shift
+        ;;
+      -v | --verbose)
+        verbose=1
+        shift
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *)
+        msg="${msg:+$msg }$1"
+        shift
+        ;;
+    esac
+  done
+
+  need_git_repo
+
+  local repo branch now final_msg
+  repo="$(repo_name)"
+  branch="$(branch_name)"
+  now="$(timestamp)"
+  final_msg="$tag ${msg:-snapshot on $repo:$branch @ $now}"
+
+  local status_lines
+  status_lines="$(git status --porcelain)" || status_lines=""
+
+  if ((include_untracked)); then
+    # nothing changed, bail
+    if [[ -z "$(git status --porcelain)" ]]; then
+      ((quiet)) || info "nothing to snapshot on ${repo}:${branch}."
+      ((verbose)) && [[ -z "$status_lines" ]] && info "working tree clean."
+      exit 3
+    fi
+    git stash push -u -m "$final_msg" >/dev/null || true
+    # no local changes, git may print a message and not create a stash
+    if ! git stash list --pretty='%gs' | head -n1 | grep -Fqx -- "$final_msg"; then
+      ((quiet)) || info "nothing to snapshot on ${repo}:${branch}."
+      ((verbose)) && info "working tree clean."
+      exit 3
+    fi
+    local ref="stash@{0}"
+    # re-apply to restore state
+    if ! git stash apply -q --index "$ref"; then
+      warn "re-applying temporary stash had conflicts; working tree may need attention."
+      warn "stash kept as $ref"
+      ((quiet)) || say "$ref — $final_msg"
+      ((quiet)) && echo "$ref"
+      exit 1
+    fi
+    if ((quiet)); then
+      echo "$ref"
+    else
+      echo "Created $ref — $final_msg"
+      if ((verbose)); then
+        printf '%s\n' "$status_lines" | sed 's/^/  /'
+      fi
+    fi
+    exit 0
+  fi
+
+  # tracked-only stash
+  local oid
+  oid="$(git stash create || true)"
+  if [[ -z "${oid:-}" ]]; then
+    ((quiet)) || info "nothing to snapshot on ${repo}:${branch}."
+    ((verbose)) && [[ -n "$status_lines" ]] && info "only untracked changes present; try -u/--include-untracked."
+    ((verbose)) && [[ -z "$status_lines" ]] && info "working tree clean."
+    exit 3
+  fi
+  git stash store -m "$final_msg" "$oid" >/dev/null
+  local ref
+  ref="$(stash_ref_for_oid "$oid")" || true
+  if [[ -z "$ref" ]]; then
+    ref='stash@{0}'
+  fi
+  if ((quiet)); then
+    echo "$ref"
+    exit 0
+  else
+    echo "Created $ref — $final_msg"
+    if ((verbose)); then
+      printf '%s\n' "$status_lines" | sed 's/^/  /'
+    fi
+    exit 0
+  fi
+}
+
+cmd_list() {
+  local tag='[gss]'
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --tag)
+        [[ $# -ge 2 ]] || die "--tag needs an argument"
+        tag="$2"
+        shift 2
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *) die "unknown argument to list: $1" ;;
+    esac
+  done
+
+  need_git_repo
+
+  local have=0 i=1
+  while IFS= read -r line; do
+    local ref="${line%%::*}" msg="${line#*::}"
+    if starts_with "$msg" "$tag"; then
+      printf "%2d) %-12s %s\n" "$i" "$ref" "$msg"
+      have=1
+      ((i++))
+    fi
+  done < <(git stash list --pretty='%gd::%gs')
+
+  ((have)) || info "no stashes tagged with '$tag' found."
+}
+
+cmd_clean() {
+  local tag='[gss]' keep=0 yes=0 dryrun=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --tag)
+        [[ $# -ge 2 ]] || die "--tag needs an argument"
+        tag="$2"
+        shift 2
+        ;;
+      --keep)
+        [[ $# -ge 2 ]] || die "--keep needs an integer"
+        keep="$2"
+        shift 2
+        ;;
+      --yes | -y)
+        yes=1
+        shift
+        ;;
+      --dry-run | --dryrun | -n)
+        dryrun=1
+        shift
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *) die "unknown argument to clean: $1" ;;
+    esac
+  done
+
+  need_git_repo
+
+  local matches_refs=() matches_msgs=()
+  while IFS= read -r line; do
+    local ref="${line%%::*}" msg="${line#*::}"
+    if starts_with "$msg" "$tag"; then
+      matches_refs+=("$ref")
+      matches_msgs+=("$msg")
+    fi
+  done < <(git stash list --pretty='%gd::%gs')
+
+  local total="${#matches_refs[@]}"
+  if ((total == 0)); then
+    info "no stashes tagged with '$tag' found."
+    exit 0
+  fi
+
+  # Decide what to drop
+  local drop_start=0
+  if ((keep > 0)); then
+    if ((keep >= total)); then
+      info "nothing to drop (keep=$keep, have=$total)."
+      exit 0
+    fi
+    drop_start="$keep"
+  fi
+
+  say "Found $total matching stash(es)."
+  ((keep > 0)) && say "Will keep the ${keep} most recent."
+  say "To drop:"
+  local i=1
+  for ((idx = drop_start; idx < total; idx++)); do
+    printf "  %2d) %-12s %s\n" "$i" "${matches_refs[idx]}" "${matches_msgs[idx]}"
+    ((i++))
+  done
+
+  if ((dryrun)); then
+    info "(dry run) Nothing was removed."
+    exit 0
+  fi
+
+  if ((!yes)); then
+    echo
+    read -r -p "Type ${BOLD}yes${RESET} to confirm deletion of $((total - drop_start)) stash(es): " reply
+    if [[ "$reply" != "yes" ]]; then
+      warn "aborted."
+      exit 1
+    fi
+  fi
+
+  local dropped=0
+  for ((idx = total - 1; idx >= drop_start; idx--)); do
+    local ref="${matches_refs[idx]}"
+    if git stash drop "$ref" >/dev/null; then
+      ((dropped++))
+    else
+      warn "failed to drop $ref"
+    fi
+  done
+  okay "removed $dropped stash(es) tagged with '$tag'."
+}
+
+main() {
+  if [[ $# -eq 0 ]]; then
+    cmd_snapshot
+    exit $?
+  fi
+  case "$1" in
+    snap)
+      shift
+      cmd_snapshot "$@"
+      exit $?
+      ;;
+    clean | rm | prune)
+      shift
+      cmd_clean "$@"
+      exit $?
+      ;;
+    list | ls)
+      shift
+      cmd_list "$@"
+      exit $?
+      ;;
+    -h | --help) usage ;;
+    --version) echo "gss 1.0" ;;
+    -*)
+      cmd_snapshot "$@"
+      exit $?
+      ;;
+    *)
+      die "unknown subcommand: $1 (try --help)"
+      ;;
+  esac
+}
+main "$@"

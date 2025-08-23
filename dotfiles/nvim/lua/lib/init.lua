@@ -24,6 +24,7 @@ end
 
 _G.lib = {
   buffer = require("lib/buffer"),
+  bun = require("lib/bun"),
   env = require("lib/env"),
   fs = require("lib/fs"),
   is = require("lib/is"),

@@ -110,7 +110,7 @@ in {
     gid = "git-id";
     gbr = "git-branch";
     gstandup = "git-standup";
-    gss = "git-status-deep";
+    gsd = "git-status-deep";
   };
   programs.fish.shellAbbrs = { };
 }

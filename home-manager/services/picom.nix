@@ -23,7 +23,7 @@
       shadow-radius = 12;
       shadow-offset-x = -12;
       shadow-offset-y = -12;
-      shadow-color = "#000000";
+      shadow-color = "#211F28";
       no-fading-openclose = false;
       no-fading-destroyed-argb = true;
       frame-opacity = 1;
@@ -107,7 +107,7 @@
           shadow = false;
           focus = false;
         };
-        normal = { shadow = false; };
+        normal = { shadow = true; };
         dock = { shadow = false; };
         dnd = { shadow = false; };
         popup_menu = {
@@ -137,7 +137,7 @@
     };
 
     opacityRules = [ "0:_NET_WM_STATE@:32a *= '_NET_WM_STATE_HIDDEN'" ];
-    shadow = false;
+    shadow = true;
     shadowExclude = [
       # "bounding_shaped && !rounded_corners"
       "window_type *= 'menu'"

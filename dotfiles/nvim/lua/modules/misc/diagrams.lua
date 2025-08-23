@@ -30,20 +30,32 @@ end
 
 return lib.module.create({
   name = "misc/diagrams",
-  enabled = false,
+  -- enabled = false,
   hosts = { "spaceship", "death" },
   plugins = {
-    { "jbyuki/venn.nvim", cmd = { "VBox" } },
-    { "superhawk610/ascii-blocks.nvim", cmd = { "AsciiBlockify" } },
+    {
+      enabled = false,
+      "jbyuki/venn.nvim",
+      cmd = { "VBox" },
+    },
+    {
+      enabled = false,
+      "superhawk610/ascii-blocks.nvim",
+      cmd = { "AsciiBlockify" },
+    },
     {
       "3rd/diagram.nvim",
       ft = { "markdown", "syslang" },
       dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "diagram.nvim"),
       opts = {
+        events = {
+          render_buffer = { "InsertLeave", "BufWinEnter", "TextChanged" },
+          clear_buffer = { "BufLeave" },
+        },
         renderer_options = {
           mermaid = {
-            background = "transparent",
-            theme = "dark",
+            -- background = "transparent",
+            -- theme = "dark",
           },
         },
         -- conceal_enable = true,

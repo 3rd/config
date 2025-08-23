@@ -13,14 +13,14 @@
     selection-foreground = "#cacecd";
 
     accent = "#c20a5d";
-    accent-dark = "#61052f";
+    accent-dark = "#f1052f";
 
     gray-lightest = "#B0ACC3";
     gray-lighter = "#A5A0BA";
     gray-light = "#9B96B0";
     gray-medium = "#5F5B76";
     gray-darkish = "#4B475C";
-    gray-dark = "#413E51";
+    gray-dark = "#3F3D4D";
     gray-darker = "#383545";
     gray-darkest = "#2C2A37";
 

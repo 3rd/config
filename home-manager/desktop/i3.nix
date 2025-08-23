@@ -115,21 +115,21 @@ in {
         colors = with config.colors; {
           focused = {
             background = gray-dark;
-            border = gray-lighter;
-            childBorder = gray-medium;
+            border = gray-darkish;
+            childBorder = gray-darkish;
             indicator = gray-medium;
             text = gray-lightest;
           };
           focusedInactive = {
             background = gray-dark;
-            border = gray-light;
-            childBorder = gray-dark;
+            border = gray-darkish;
+            childBorder = gray-darkish;
             indicator = gray-dark;
             text = gray-lightest;
           };
           unfocused = {
             background = gray-dark;
-            border = gray-light;
+            border = gray-dark;
             childBorder = gray-dark;
             indicator = gray-dark;
             text = gray-lightest;
