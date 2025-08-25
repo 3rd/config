@@ -8,7 +8,7 @@ return lib.module.create({
       config = function()
         require("symbol-usage").setup({
           ---@type table<string, any> `nvim_set_hl`-like options for highlight virtual text
-          -- hl = { link = "Comment" },
+          hl = { link = "DimmedComment" },
           ---@type lsp.SymbolKind[] Symbol kinds what need to be count (see `lsp.SymbolKind`)
           -- kinds = { SymbolKind.Function, SymbolKind.Method },
           ---Additional filter for kinds. Recommended use in the filetypes override table.

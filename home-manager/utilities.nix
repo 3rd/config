@@ -79,6 +79,12 @@
       libqalculate
       gnome-system-monitor
       onefetch
+
+      # new
+      below
+      posting
+      superfile
+
     ] ++ [
       #
       pkgs-stable.miniserve # https://github.com/svenstaro/miniserve

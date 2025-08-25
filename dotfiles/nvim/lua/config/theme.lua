@@ -38,7 +38,8 @@ local parameter = colors.red.rotate(10).saturation(80).lighten(40)
 local property = colors.foreground.darken(15).saturation(16)
 local field = property
 local constant = colors.orange.rotate(-20).lighten(30).saturation(100)
-local comment = colors.foreground.darken(40).desaturate(40)
+local comment = colors.foreground.darken(38).desaturate(60)
+local dimmedComment = colors.foreground.darken(50).desaturate(20)
 local builtin = colors.red.lighten(40).desaturate(20)
 local special = colors.indigo.rotate(90).saturation(100).lighten(20)
 
@@ -268,6 +269,7 @@ local theme = lush(function(injected)
     Function({ fg = colors.common["function"] }),
     Type({ fg = colors.common.type }),
     Comment({ fg = colors.common.comment, gui = "italic" }),
+    DimmedComment({ fg = dimmedComment, gui = "italic" }),
     Constructor({ fg = colors.common.constructor }),
     Field({ fg = colors.common.field }),
     Property({ fg = colors.common.property }),

@@ -49,7 +49,7 @@
       dynamic_background_opacity = "no";
       # background_tint = "0.5";
       transparent_background_colors =
-        "#312F3C@0.95 #282631@0.95 #2F2D39@0.95 #2A2833@0.95 #363442@0.95 #3F3D4D@0.95 #26232f@0.95 #494659@0.95"; # max 8
+        "#312F3C@0.98 #282631@0.98 #2F2D39@0.98 #2A2833@0.98 #363442@0.98 #3F3D4D@0.98 #26232f@0.98 #494659@0.98"; # max 8
 
       # theme
       cursor_text_color = "background";
@@ -100,7 +100,8 @@
       # font_size = lib.mkDefault "9.4";
 
       font_family = lib.mkDefault "Berkeley Mono";
-      font_size = lib.mkDefault "9.4";
+      # font_size = lib.mkDefault "9.4";
+      font_size = lib.mkDefault "9.9";
       # font_size = lib.mkDefault "10";
       # font_size = lib.mkDefault "9.9";
       # font_size = lib.mkDefault "10.4";

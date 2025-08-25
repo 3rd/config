@@ -7,7 +7,7 @@ local colors = {
   common = {
     boolean = "#FF8170",
     builtin = "#EB806B",
-    comment = "#716D88",
+    comment = "#7A7788",
     conditional = "#F07AC9",
     constant = "#FF8170",
     constructor = "#17CFCF",
@@ -60,7 +60,7 @@ local colors = {
     },
     datetime = "#FC824A",
     document = {
-      meta = "#716D88",
+      meta = "#7A7788",
       meta_field = "#F075D1",
       meta_field_key = "#EC93D6",
       title = "#C0E774"
@@ -100,7 +100,7 @@ local colors = {
     },
     list_item = {
       label = "#A294EB",
-      label_marker = "#716D88",
+      label_marker = "#7A7788",
       marker = "#77767F"
     },
     number = "#FF8170",
