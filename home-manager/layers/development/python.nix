@@ -6,6 +6,7 @@
     #
     python310Full
     conda
+    uv
   ];
 
 }

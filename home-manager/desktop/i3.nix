@@ -212,7 +212,7 @@ in {
           "${modifier}+shift+Return" =
             ''exec ulimit -n 999999 && /bin/sh -c "$BROWSER"'';
           "${modifier}+p" = "exec ${pkgs-stable.copyq}/bin/copyq show";
-          "Print" = "exec ${pkgs.flameshot}/bin/flameshot gui";
+          "Print" = "exec ${pkgs-stable.flameshot}/bin/flameshot gui";
           "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
           "ctrl+${alt}+space" =
             "exec ${pkgs.rofi}/bin/rofi -show window -dpi 120";

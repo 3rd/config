@@ -54,9 +54,10 @@ local setup_lspconfig = function()
   local eslintResolveRelativeTo = nil
   local root = lib.path.find_root()
   -- if root and not lib.fs.file.exists(lib.path.resolve(root, "eslint.config.js")) then
-  eslintConfigOverride = lib.path.resolve_config("linters/eslint/dist/main.js")
-  eslintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
-  -- end
+  if root and not lib.fs.file.exists(lib.path.resolve(root, ".noglobaleslint")) then
+    eslintConfigOverride = lib.path.resolve_config("linters/eslint/dist/main.js")
+    eslintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
+  end
 
   local overrides = {
     -- client.server_capabilities.documentFormattingProvider
