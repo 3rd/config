@@ -1,35 +1,24 @@
-local setup_nvim_notify = function()
-  local notify = require("notify")
-  notify.setup({
-    background_colour = "#000000",
-    fps = 30,
-    icons = {
-      DEBUG = "",
-      ERROR = "",
-      INFO = "",
-      TRACE = "✎",
-      WARN = "",
-    },
-    level = 2,
-    max_width = 80,
-    render = "minimal",
-    stages = "fade",
-    -- stages = "fade_in_slide_out",
-    timeout = 5000,
-    top_down = true,
-  })
-  vim.notify = notify
+-- https://github.com/rmagatti/goto-preview/issues/129
+local setup = function()
+  local notify_original = vim.notify
+  ---@diagnostic disable-next-line: duplicate-set-field
+  vim.notify = function(msg, ...)
+    if
+      msg
+      and (
+        msg:match("position_encoding param is required")
+        or msg:match("Defaulting to position encoding of the first client")
+        or msg:match("multiple different client offset_encodings")
+      )
+    then
+      return
+    end
+    return notify_original(msg, ...)
+  end
 end
+setup()
 
 return lib.module.create({
   name = "ui/notifications",
   hosts = "*",
-  enabled = false,
-  plugins = {
-    {
-      "rcarriga/nvim-notify",
-      event = "VeryLazy",
-      config = setup_nvim_notify,
-    },
-  },
 })

@@ -1,6 +1,6 @@
 # Global hotkeys (cannot conflict with other hotkeys)
-confirm = ['enter', '']
-quit = ['ctrl+c', ''] # also know as, theprimeagen troller
+confirm = ['enter', 'L', '']
+quit = ['ctrl+c', '']
 # movement
 list_up = ['k', '']
 list_down = ['j', '']
@@ -48,7 +48,7 @@ confirm_typing = ['enter', '']
 cancel_typing = ['esc', '']
 # =================================================================================================
 # Normal mode hotkeys (can conflict with other modes, cannot conflict with global hotkeys)
-parent_directory = ['-', '']
+parent_directory = ['h', 'backspace', '']
 search_bar = ['/', '']
 # =================================================================================================
 # Select mode hotkeys (can conflict with other modes, cannot conflict with global hotkeys)
