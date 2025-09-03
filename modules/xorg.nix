@@ -13,6 +13,7 @@
     xorg.xhost
     xorg.xkill
     xorg.xmodmap
+    xorg.xwininfo
   ];
 
   services = {

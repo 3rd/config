@@ -1,3 +1,4 @@
+---@diagnostic disable-next-line: unused-function
 local setup_cmdheight = function()
   -- https://superuser.com/questions/619765/hiding-vim-command-line-when-its-not-being-used
   local group = vim.api.nvim_create_augroup("MacrosCmdHeight", { clear = true })

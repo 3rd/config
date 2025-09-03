@@ -24,7 +24,7 @@ return lib.module.create({
   plugins = {
     {
       "MeanderingProgrammer/render-markdown.nvim",
-      -- enabled = true,
+      -- enabled = false,
       ft = { "markdown" },
       ---@module 'render-markdown'
       ---@type render.md.UserConfig
@@ -62,7 +62,7 @@ return lib.module.create({
           setext = false,
           sign = false,
           position = "inline", -- inline, overlay
-          -- icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+          icons = { "# ", "## ", "### ", "#### ", "##### ", "###### " },
           -- icons = function(ctx)
           --   local text = ""
           --   for i = 1, ctx.level do
@@ -70,7 +70,7 @@ return lib.module.create({
           --   end
           --   return text .. " "
           -- end,
-          icons = { "▶ ", "▸ ", "▹ ", "‣ ", "• ", "· " },
+          -- icons = { "▶ ", "▸ ", "▹ ", "‣ ", "• ", "· " },
           signs = { "󰫎 " },
           width = "full", -- block, full
           left_margin = 0,

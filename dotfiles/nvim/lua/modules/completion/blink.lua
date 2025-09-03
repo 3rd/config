@@ -7,16 +7,14 @@ return lib.module.create({
   plugins = {
     {
       "Saghen/blink.cmp",
+      lazy = false,
+      -- "3rd/blink.cmp",
+      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
       -- commit = "c218fafbf275725532f3cf2eaebdf863b958d48e",
       -- commit = "88f1c203465fa3d883f2309bc22412c90a9f6a08",
       -- commit = "77f037cae07358368f3b7548ba39cffceb49349e",
       -- commit = "7ceff61595aae682b421a68e208719b1523c7b44", -- new config
       -- commit = "e3b7cb4a1094377c3093a021300de123d9fc60d3",
-      -- "3rd/blink.cmp",
-      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
-      lazy = false,
-      -- version = "nightly",
-      -- version = "v0.*",
       build = "cargo build --release",
       dependencies = {
         { "xzbdmw/colorful-menu.nvim", opts = {} },
@@ -31,7 +29,6 @@ return lib.module.create({
           ["<C-u>"] = { "scroll_documentation_up", "fallback" },
           ["<C-d>"] = { "scroll_documentation_down", "fallback" },
         },
-
         fuzzy = {
           implementation = "rust",
           sorts = {
@@ -40,7 +37,6 @@ return lib.module.create({
             "sort_text",
           },
         },
-
         completion = {
           keyword = {
             range = "full",
@@ -117,9 +113,8 @@ return lib.module.create({
             },
           },
         },
-
         sources = {
-          default = { "lsp", "path", "snippets", "buffer", "lazydev", "files" },
+          default = { "lsp", "path", "snippets", "buffer", "files" },
           providers = {
             lsp = {
               fallbacks = { "buffer" },
@@ -161,11 +156,6 @@ return lib.module.create({
                 end,
               },
             },
-            lazydev = {
-              name = "LazyDev",
-              module = "lazydev.integrations.blink",
-              fallbacks = { "lsp" },
-            },
             files = {
               name = "Files",
               module = "modules.completion.file-source",
@@ -173,7 +163,6 @@ return lib.module.create({
             },
           },
         },
-
         appearance = {
           kind_icons = {
             -- base
@@ -206,7 +195,6 @@ return lib.module.create({
             String = "󰉿",
           },
         },
-
         signature = {
           enabled = true,
           window = {
@@ -215,25 +203,7 @@ return lib.module.create({
         },
       },
     },
-    -- TODO: nvim-scissors
-    -- {
-    --   "smjonas/snippet-converter.nvim",
-    --   -- enabled = false,
-    --   cmd = { "ConvertSnippets" },
-    --   config = function()
-    --     local template = {
-    --       sources = {
-    --         snipmate = { vim.fn.stdpath("config") .. "/snippets_snipmate" },
-    --       },
-    --       output = {
-    --         vscode = { vim.fn.stdpath("config") .. "/snippets_vscode" },
-    --       },
-    --     }
-    --     require("snippet_converter").setup({ templates = { template } })
-    --   end,
-    -- },
   },
-
   hooks = {
     lsp = {
       -- https://github.com/Saghen/blink.cmp/issues/21

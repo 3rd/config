@@ -40,15 +40,6 @@ end
 local setup_lspconfig = function()
   local root_pattern = require("lspconfig.util").root_pattern
 
-  local load_luarc = function()
-    local root = root_pattern(".luarc.json")(lib.path.cwd())
-    if not root then return {} end
-    local luarc_path = lib.path.resolve(root, ".luarc.json")
-    if not lib.fs.file.is_readable(luarc_path) then return {} end
-    local luarc = lib.fs.file.read(luarc_path)
-    return vim.fn.json_decode(luarc)
-  end
-
   -- eslint
   local eslintConfigOverride = nil
   local eslintResolveRelativeTo = nil
@@ -63,7 +54,7 @@ local setup_lspconfig = function()
     -- client.server_capabilities.documentFormattingProvider
     formatting = {
       enable = { "eslint" },
-      disable = { "html" },
+      disable = { "html", "vtsls", "ts_ls" },
     },
   }
 
@@ -77,7 +68,15 @@ local setup_lspconfig = function()
       },
     },
     dockerls = {},
-    nil_ls = {},
+    nil_ls = {
+      settings = {
+        nix = {
+          flake = {
+            autoArchive = true,
+          },
+        },
+      },
+    },
     gopls = {
       cmd = { "gopls", "-remote=auto", "-remote.debug=:0" },
       settings = {
@@ -124,45 +123,49 @@ local setup_lspconfig = function()
         },
       },
     },
-    lua_ls = {
-      root_dir = root_pattern(".root", "init.lua", ".git"),
-      settings = {
-        Lua = vim.tbl_deep_extend("keep", load_luarc(), {
-          completion = { callSnippet = "Replace" },
-          runtime = {
-            version = "LuaJIT",
-            path = vim.split(package.path, ";"),
-            pathStrict = true,
-          },
-          diagnostics = {
-            unusedLocalExclude = { "_*" },
-            globals = { "vim", "describe", "it", "before_each", "after_each" },
-            disable = { "missing-fields", "unused-local" },
-          },
-          workspace = {
-            library = {
-              --   [".luarc.json"] = true,
-              --   [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-              --   [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
-              --   [vim.fn.stdpath("config") .. "/lua"] = true,
-              [vim.fn.expand("$PWD/lua")] = true,
-            },
-            ignoreDir = { ".git", "node_modules", "linters" },
-            checkThirdParty = "Ask",
-          },
-          hint = { enable = true },
-          semantic = { keyword = true },
-          telemetry = { enable = false },
-        }),
-      },
-      handlers = {
-        -- always go to the first definition
-        ["textDocument/definition"] = function(err, result, ...)
-          if vim.islist(result) or type(result) == "table" then result = result[1] end
-          vim.lsp.handlers["textDocument/definition"](err, result, ...)
-        end,
-      },
-    },
+    -- lua_ls = {
+    --   root_dir = root_pattern(".root", "init.lua", ".git"),
+    --   settings = {
+    --     Lua = vim.tbl_deep_extend("keep", load_luarc(), {
+    --       completion = { callSnippet = "Replace" },
+    --       runtime = {
+    --         version = "LuaJIT",
+    --         path = vim.split(package.path, ";"),
+    --         pathStrict = true,
+    --       },
+    --       diagnostics = {
+    --         unusedLocalExclude = { "_*" },
+    --         globals = { "vim", "describe", "it", "before_each", "after_each" },
+    --         disable = { "missing-fields", "unused-local" },
+    --       },
+    --       workspace = {
+    --         library = {
+    --           vim.env.VIMRUNTIME,
+    --           -- [".luarc.json"] = true,
+    --           -- [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+    --           -- [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
+    --           -- [vim.fn.stdpath("config") .. "/lua"] = true,
+    --           -- [vim.fn.expand("$PWD/lua")] = true,
+    --         },
+    --         -- library = vim.api.nvim_get_runtime_file("", true),
+    --         ignoreDir = { ".git", "node_modules", "linters", "plugins" },
+    --         checkThirdParty = false,
+    --         -- maxPreload = 500,
+    --         -- preloadFileSize = 500,
+    --       },
+    --       hint = { enable = true },
+    --       semantic = { keyword = true },
+    --       telemetry = { enable = false },
+    --     }),
+    --   },
+    --   handlers = {
+    --     -- always go to the first definition
+    --     ["textDocument/definition"] = function(err, result, ...)
+    --       if vim.islist(result) or type(result) == "table" then result = result[1] end
+    --       vim.lsp.handlers["textDocument/definition"](err, result, ...)
+    --     end,
+    --   },
+    -- },
     -- tsserver = {
     --   init_options = {
     --     hostInfo = "neovim",
@@ -186,35 +189,106 @@ local setup_lspconfig = function()
     --     end,
     --   },
     -- },
-    -- vtsls = {
-    --   flags = {
-    --     allow_incremental_sync = false,
-    --     debounce_text_changes = 5000,
+    vtsls = {
+      root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
+      filetypes = {
+        "javascript",
+        "javascriptreact",
+        "javascript.jsx",
+        "typescript",
+        "typescriptreact",
+        "typescript.tsx",
+      },
+      flags = {
+        allow_incremental_sync = false,
+        debounce_text_changes = 5000,
+      },
+      -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
+      settings = {
+        complete_function_calls = true,
+        vtsls = {
+          enableMoveToFileCodeAction = true,
+          autoUseWorkspaceTsdk = true,
+          experimental = {
+            maxInlayHintLength = 30,
+            completion = {
+              enableServerSideFuzzyMatch = true,
+              entriesLimit = 150,
+            },
+          },
+        },
+        typescript = {
+          format = { enable = false },
+          tsserver = {
+            maxTsServerMemory = "auto",
+            -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files
+          },
+          preferences = {
+            includePackageJsonAutoImports = "off",
+            useAliasesForRenames = true,
+          },
+          suggest = {
+            completeFunctionCalls = true,
+          },
+          inlayHints = {
+            enumMemberValues = { enabled = true },
+            functionLikeReturnTypes = { enabled = true },
+            parameterNames = { enabled = "literals" },
+            parameterTypes = { enabled = true },
+            propertyDeclarationTypes = { enabled = true },
+            variableTypes = { enabled = true },
+          },
+          updateImportsOnFileMove = { enabled = "always" },
+        },
+      },
+      handlers = {
+        -- always go to the first definition
+        ["textDocument/definition"] = function(err, result, ...)
+          if vim.islist(result) or type(result) == "table" then result = result[1] end
+          vim.lsp.handlers["textDocument/definition"](err, result, ...)
+        end,
+        ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+          if ctx.client_id == "vtsls" then
+            require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
+          end
+          vim.lsp.handlers["textDocument/publishDiagnostics"](err, result, ctx, config)
+        end,
+      },
+    },
+    -- ts_ls = {
+    --   root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
+    --   -- cmd = { "tsgo", "--lsp", "--stdio" },
+    --   -- cmd = { "bunx", "@typescript/native-preview", "--lsp", "--stdio" },
+    --   init_options = {
+    --     hostInfo = "neovim",
+    --     disableAutomaticTypingAcquisition = true,
+    --     preferences = {
+    --       allowIncompleteCompletions = true,
+    --       includeCompletionsForModuleExports = false,
+    --       importModuleSpecifierPreference = "shortest",
+    --       includePackageJsonAutoImports = "off",
+    --       useAliasesForRenames = true,
+    --     },
+    --     maxTsServerMemory = 2 * 4096,
     --   },
-    --   -- https://github.com/yioneko/vtsls/blob/main/packages/service/configuration.schema.json
     --   settings = {
     --     javascript = {
     --       format = { enable = false },
     --       preferences = {
     --         useAliasesForRenames = true,
     --       },
-    --       inlayHints = {
-    --         parameterNames = { enabled = "literals" },
-    --         parameterTypes = { enabled = true },
-    --         variableTypes = { enabled = true },
-    --         propertyDeclarationTypes = { enabled = true },
-    --         functionLikeReturnTypes = { enabled = true },
-    --         enumMemberValues = { enabled = true },
-    --       },
-    --       updateImportsOnFileMove = {
-    --         enabled = "always",
-    --       },
+    --       parameterNames = { enabled = "literals", suppressWhenArgumentMatchesName = true },
+    --       parameterTypes = { enabled = true },
+    --       variableTypes = { enabled = true },
+    --       propertyDeclarationTypes = { enabled = true },
+    --       functionLikeReturnTypes = { enabled = true },
+    --       enumMemberValues = { enabled = true },
     --     },
     --     typescript = {
     --       format = { enable = false },
     --       tsserver = {
     --         maxTsServerMemory = "auto",
-    --         -- experimental = { enableProjectDiagnostics = true }, -- this breaks vts by opening unrelated files, funny
+    --         experimental = { enableProjectDiagnostics = true },
     --       },
     --       preferences = {
     --         includePackageJsonAutoImports = "off",
@@ -232,14 +306,6 @@ local setup_lspconfig = function()
     --         enabled = "always",
     --       },
     --     },
-    --     vtsls = {
-    --       experimental = {
-    --         completion = {
-    --           enableServerSideFuzzyMatch = true,
-    --           entriesLimit = 150,
-    --         },
-    --       },
-    --     },
     --   },
     --   handlers = {
     --     -- always go to the first definition
@@ -252,6 +318,44 @@ local setup_lspconfig = function()
     --         require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
     --       end
     --       vim.lsp.handlers["textDocument/publishDiagnostics"](err, result, ctx, config)
+    --     end,
+    --     ["_typescript.rename"] = function(_, result, ctx)
+    --       local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+    --       vim.lsp.util.show_document({
+    --         uri = result.textDocument.uri,
+    --         range = {
+    --           start = result.position,
+    --           ["end"] = result.position,
+    --         },
+    --       }, client.offset_encoding)
+    --       vim.lsp.buf.rename()
+    --       return vim.NIL
+    --     end,
+    --   },
+    --   commands = {
+    --     ["editor.action.showReferences"] = function(command, ctx)
+    --       local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+    --       local file_uri, position, references = unpack(command.arguments)
+    --
+    --       local quickfix_items = vim.lsp.util.locations_to_items(references, client.offset_encoding)
+    --       vim.fn.setqflist({}, " ", {
+    --         title = command.title,
+    --         items = quickfix_items,
+    --         context = {
+    --           command = command,
+    --           bufnr = ctx.bufnr,
+    --         },
+    --       })
+    --
+    --       vim.lsp.util.show_document({
+    --         uri = file_uri,
+    --         range = {
+    --           start = position,
+    --           ["end"] = position,
+    --         },
+    --       }, client.offset_encoding)
+    --
+    --       vim.cmd("botright copen")
     --     end,
     --   },
     -- },
@@ -272,6 +376,7 @@ local setup_lspconfig = function()
     --   },
     -- },
     eslint = {
+      root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
       cmd = { "vscode-eslint-language-server", "--stdio" },
       filetypes = {
         "javascript",
@@ -429,45 +534,6 @@ return lib.module.create({
         "dmmulroy/ts-error-translator.nvim",
       },
       config = setup_lspconfig,
-    },
-
-    -- {
-    --   "folke/neodev.nvim",
-    --   ft = "lua",
-    --   dependencies = { "neovim/nvim-lspconfig" },
-    --   opts = {
-    --     library = {
-    --       enabled = true,
-    --       runtime = true,
-    --       types = true,
-    --       plugins = {
-    --         "nvim-treesitter",
-    --         "testing.nvim",
-    --         "sqlite.nvim",
-    --       },
-    --     },
-    --     setup_jsonls = true,
-    --     lspconfig = true,
-    --     pathStrict = true,
-    --   },
-    -- },
-    {
-      "folke/lazydev.nvim",
-      ft = "lua",
-      opts = {
-        library = {
-          "lazy.nvim",
-          { path = "${3rd}/luv/library", words = { "vim%.uv" } },
-          { path = "image.nvim", words = { "image" } },
-          { path = "sqlite.nvim", words = { "sqlite" } },
-          { path = "snacks.nvim", words = { "Snacks" } },
-          { path = vim.fn.stdpath("config") .. "/lua" },
-          { path = "lua" },
-        },
-        -- enabled = function(root_dir)
-        --   return not vim.uv.fs_stat(root_dir .. "/.luarc.json")
-        -- end,
-      },
     },
     {
       "j-hui/fidget.nvim",

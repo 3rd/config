@@ -26,8 +26,8 @@ end
 
 local default_find_root_patterns = {
   ".root",
-  ".git",
   "package.json",
+  "go.mod",
 }
 local find_root = function(patterns)
   patterns = patterns or default_find_root_patterns

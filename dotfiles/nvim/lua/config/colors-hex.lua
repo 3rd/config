@@ -3,29 +3,29 @@ local hostname = vim.loop.os_gethostname()
 -- base colors
 local colors = {
   background = "#211F28",
-  blue = "#83D3FC",
+  blue = "#7EBDFC",
   common = {
     boolean = "#FF8170",
     builtin = "#EB806B",
     comment = "#7A7788",
-    conditional = "#F07AC9",
+    conditional = "#EF71C5",
     constant = "#FF8170",
     constructor = "#17CFCF",
     cword = "#363442",
     delimiter = "#746F8B",
     field = "#A5A0BA",
-    ["function"] = "#83D3FC",
+    ["function"] = "#7EBDFC",
     identifier = "#C6C3D5",
-    keyword = "#9995B2",
-    macro = "#AB9DF1",
+    keyword = "#918CAB",
+    macro = "#A798F0",
     number = "#FF8170",
-    operator = "#9995B2",
-    parameter = "#EE9468",
+    operator = "#918CAB",
+    parameter = "#E3AC63",
     property = "#A5A0BA",
-    ["repeat"] = "#F07AC9",
+    ["repeat"] = "#EF71C5",
     ret = "#EB806B",
-    special = "#FF85AD",
-    special_keyword = "#FF85AD",
+    special = "#FF80AA",
+    special_keyword = "#FF80AA",
     string = "#ACD35F",
     type = "#17CFCF"
   },
@@ -67,35 +67,35 @@ local colors = {
     },
     headline = {
       five = {
-        bg = "#372528",
-        fg = "#FF8FA2"
+        bg = "#414B53",
+        fg = "#C6C3D5"
       },
       four = {
-        bg = "#372531",
-        fg = "#FF85D6"
+        bg = "#3D434D",
+        fg = "#C6C3D5"
       },
       marker = "#9B96B0",
       one = {
-        bg = "#252837",
-        fg = "#8FA2FF"
+        bg = "#2A2938",
+        fg = "#C6C3D5"
       },
       six = {
-        bg = "#372B25",
-        fg = "#FFB48F"
+        bg = "#48565B",
+        fg = "#C6C3D5"
       },
       three = {
-        bg = "#342537",
-        fg = "#EC8FFF"
+        bg = "#313749",
+        fg = "#C6C3D5"
       },
       two = {
-        bg = "#2B2537",
-        fg = "#B48FFF"
+        bg = "#2F3042",
+        fg = "#C6C3D5"
       }
     },
     label = "#E486CC",
     label_line = "#20C5C5",
     link = {
-      external = "#6FC2EB",
+      external = "#6BABEB",
       internal = "#5BC0CD"
     },
     list_item = {
@@ -115,7 +115,7 @@ local colors = {
     section = "#8797C2",
     string = "#ACD35F",
     tag = {
-      context = "#EDBE5E",
+      context = "#EDAF5E",
       danger = {
         bg = "#C3423F",
         fg = "#ffffff"
@@ -179,8 +179,8 @@ local colors = {
       }
     }
   },
-  visual = "#A73CDD",
-  yellow = "#EDBE5E"
+  visual = "#471F5C",
+  yellow = "#EDAF5E"
 }
 
 -- host-specific overrides

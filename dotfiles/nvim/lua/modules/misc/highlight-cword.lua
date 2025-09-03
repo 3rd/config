@@ -5,7 +5,9 @@ return lib.module.create({
     {
       "nvimdev/cwordmini.nvim",
       event = "CursorHold",
-      opts = {},
+      opts = {
+        exclude = { "markdown", "syslang" },
+      },
     },
   },
 })

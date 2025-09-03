@@ -15,7 +15,6 @@ local setup = function()
     filename = { "filename", path = 1 },
     filetype = { "filetype", path = 1 },
     location = { "location" },
-    progress = { "progress" },
     git_branch = { "branch" },
     git_diff = {
       "diff",
@@ -30,15 +29,12 @@ local setup = function()
     },
   }
 
-  local lsp_progress = function()
-    return require("lsp-progress").progress()
-  end
-  vim.api.nvim_create_augroup("lualine_augroup", { clear = true })
-  vim.api.nvim_create_autocmd("User", {
-    group = "lualine_augroup",
-    pattern = "LspProgressStatusUpdated",
-    callback = require("lualine").refresh,
-  })
+  -- vim.api.nvim_create_augroup("lualine_augroup", { clear = true })
+  -- vim.api.nvim_create_autocmd("User", {
+  --   group = "lualine_augroup",
+  --   pattern = "LspProgressStatusUpdated",
+  --   callback = require("lualine").refresh,
+  -- })
 
   local copilot_status = (function()
     if not require("modules/completion/copilot").enabled then return "" end
@@ -67,24 +63,12 @@ local setup = function()
     end
   end)()
 
-  local codeium_status = (function()
-    if not require("modules/completion/codeium").enabled then return "" end
-
-    return function()
-      local result = vim.api.nvim_call_function("codeium#GetStatusString", {})
-      local status = vim.trim(result)
-      return status
-    end
-  end)()
-
   local sections = {
     lualine_a = { components.git_branch },
     lualine_b = { components.filename },
-    lualine_c = { components.git_diff, components.diagnostics, lsp_progress },
+    lualine_c = { components.git_diff, components.diagnostics },
     lualine_x = {
       copilot_status,
-      codeium_status,
-      -- aw_status,
     },
     lualine_y = { components.filetype },
     lualine_z = { components.location },
@@ -108,7 +92,6 @@ end
 
 return lib.module.create({
   name = "ui/statusline",
-  -- enabled = false,
   hosts = "*",
   plugins = {
     {
@@ -117,6 +100,5 @@ return lib.module.create({
       dependencies = { "nvim-tree/nvim-web-devicons" },
       config = setup,
     },
-    -- { "tjdevries/express_line.nvim" } -- alternative
   },
 })

@@ -1,6 +1,6 @@
 return lib.module.create({
   name = "orgmode",
-  enabled = false,
+  enabled = true,
   hosts = { "spaceship", "death" },
   plugins = {
     {

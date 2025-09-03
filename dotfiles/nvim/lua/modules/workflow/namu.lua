@@ -65,6 +65,7 @@ return lib.module.create({
               display = {
                 mode = "icon", -- "icon" or "raw"
                 padding = 2,
+                format = "tree_guides",
               },
               -- This is a preset that let's set window without really get into the hassle of tuning window options
               -- top10 meaning top 10% of the window
@@ -77,8 +78,8 @@ return lib.module.create({
               window = {
                 auto_size = true,
                 min_height = 1,
-                min_width = 20,
-                max_width = 120,
+                min_width = 40,
+                max_width = 320,
                 max_height = 30,
                 padding = 2,
                 title_pos = "left",
@@ -95,7 +96,7 @@ return lib.module.create({
               auto_select = false,
               initially_hidden = false,
               multiselect = {
-                enabled = true,
+                enabled = false,
                 indicator = "✓", -- or "✓"●
                 keymaps = {
                   toggle = "<Tab>",
@@ -110,8 +111,8 @@ return lib.module.create({
                 close_on_delete = true, -- Whether to close picker after deleting
               },
               movement = { -- Support multiple keys
-                next = { "<C-j>", "<DOWN>" },
-                previous = { "<C-k>", "<UP>" },
+                next = { "<C-j>", "<DOWN>", "<tab>" },
+                previous = { "<C-k>", "<UP>", "<s-tab>" },
                 close = { "<ESC>" }, -- "<C-c>" can be added as well
                 select = { "<CR>" },
                 delete_word = {}, -- it can assign "<C-w>"
@@ -209,9 +210,30 @@ return lib.module.create({
               },
             },
           },
+          workspace = {
+            enable = false,
+            options = {
+              multiselect = {
+                enabled = false,
+              },
+              preview = {
+                highlight_on_move = true, -- Whether to highlight symbols as you move through them
+                -- still needs implmenting, keep it always now
+                highlight_mode = "always", -- "always" | "select" (only highlight when selecting)
+              },
+              movement = { -- Support multiple keys
+                next = { "<C-j>", "<DOWN>", "<tab>" },
+                previous = { "<C-k>", "<UP>", "<s-tab>" },
+                close = { "<ESC>" }, -- "<C-c>" can be added as well
+                select = { "<CR>" },
+                delete_word = {}, -- it can assign "<C-w>"
+                clear_line = {}, -- it can be "<C-u>"
+              },
+            },
+          },
           ui_select = { enable = false },
           colorscheme = {
-            enable = false,
+            enable = true,
             options = {
               persist = false,
               write_shada = false,
@@ -222,6 +244,10 @@ return lib.module.create({
           desc = "Jump to LSP symbol",
           silent = true,
         })
+        -- vim.keymap.set("n", "<leader>R", ":Namu workspace<cr>", {
+        --   desc = "Jump to LSP symbol",
+        --   silent = true,
+        -- })
       end,
     },
   },

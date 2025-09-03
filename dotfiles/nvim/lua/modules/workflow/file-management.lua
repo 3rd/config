@@ -38,11 +38,12 @@ local setup_tree = function()
       timeout = 500,
     },
     view = {
-      width = 32,
+      -- width = 32,
       side = "left",
       number = false,
       relativenumber = false,
       signcolumn = "yes",
+      adaptive_size = true,
     },
     trash = {
       cmd = "trash",
@@ -60,7 +61,7 @@ local setup_tree = function()
       vim.keymap.set("n", "<2-LeftMouse>", api.node.open.edit, opts("Open"))
       vim.keymap.set("n", "O", api.node.open.no_window_picker, opts("Open: No Window Picker"))
       vim.keymap.set("n", "<2-RightMouse>", api.tree.change_root_to_node, opts("CD"))
-      vim.keymap.set("n", "<C-]>", api.tree.change_root_to_node, opts("CD"))
+      vim.keymap.set("n", "<leader>c", api.tree.change_root_to_node, opts("CD"))
       vim.keymap.set("n", "<C-v>", api.node.open.vertical, opts("Open: Vertical Split"))
       vim.keymap.set("n", "<C-x>", api.node.open.horizontal, opts("Open: Horizontal Split"))
       vim.keymap.set("n", "<C-t>", api.node.open.tab, opts("Open: New Tab"))

@@ -1,16 +1,20 @@
+-- Misc links:
+-- https://github.com/search?q=language%3Alua+%22%40text.strong%22&type=code
+-- https://github.com/RRethy/nvim-base16/blob/4f3aa29f49b38edb6db1c52cea57e64ce3de2373/lua/base16-colorscheme.lua#L383
+-- https://github.com/ray-x/nvim/blob/8147b4d90361782d43d8a841d09868ef17d0a4c8/lua/modules/ui/galaxy.lua#L425
+
 -- local colors = require("config/colors")
 local lush = require("lush")
 local hsl = lush.hsl
 
--- https://github.com/search?q=language%3Alua+%22%40text.strong%22&type=code
--- https://github.com/RRethy/nvim-base16/blob/4f3aa29f49b38edb6db1c52cea57e64ce3de2373/lua/base16-colorscheme.lua#L383
--- https://github.com/ray-x/nvim/blob/8147b4d90361782d43d8a841d09868ef17d0a4c8/lua/modules/ui/galaxy.lua#L425
+-- Highlighting
+-- Core: keywords, types, calls (default, special), data (containers, values)
 
 local colors = {
   none = "NONE",
   background = hsl(250, 12, 14),
   foreground = hsl(250, 18, 80),
-  blue = hsl(200, 95, 75),
+  blue = hsl(210, 95, 74),
   cyan = hsl(180, 80, 45),
   green = hsl(80, 57, 60),
   indigo = hsl(250, 60, 70),
@@ -18,8 +22,8 @@ local colors = {
   orange = hsl(27, 80, 60),
   pink = hsl(315, 70, 75),
   red = hsl(10, 95, 45),
-  yellow = hsl(40, 80, 65),
-  visual = hsl(280, 70, 55),
+  yellow = hsl(34, 80, 65),
+  visual = hsl(280, 50, 24),
 }
 colors.plugins = {
   indent_guides = {
@@ -29,19 +33,19 @@ colors.plugins = {
 }
 
 local variable = colors.foreground
-local keyword = colors.foreground.darken(20).desaturate(10)
-local operator = keyword
+local keyword = colors.foreground.darken(24).desaturate(10)
 local delimiter = colors.foreground.darken(39).desaturate(40)
 local control = keyword.rotate(70).lighten(20).saturation(80)
+local operator = keyword
 
-local parameter = colors.red.rotate(10).saturation(80).lighten(40)
+local parameter = colors.yellow.saturation(70).lightness(64)
 local property = colors.foreground.darken(15).saturation(16)
 local field = property
 local constant = colors.orange.rotate(-20).lighten(30).saturation(100)
 local comment = colors.foreground.darken(38).desaturate(60)
 local dimmedComment = colors.foreground.darken(50).desaturate(20)
 local builtin = colors.red.lighten(40).desaturate(20)
-local special = colors.indigo.rotate(90).saturation(100).lighten(20)
+local special = colors.indigo.rotate(90).saturation(100).lighten(15)
 
 colors.common = {
   -- lab
@@ -125,28 +129,28 @@ colors.slang = {
   headline = {
     marker = colors.foreground.darken(20).desaturate(20),
     one = {
-      bg = colors.indigo.rotate(-20).darken(75).saturation(20),
-      fg = colors.indigo.rotate(-20).lighten(25).saturation(100),
+      bg = colors.background.rotate(-5).saturate(3).lighten(6),
+      fg = colors.foreground,
     },
     two = {
-      bg = colors.indigo.rotate(10).darken(75).saturation(20),
-      fg = colors.indigo.rotate(10).lighten(25).saturation(100),
+      bg = colors.background.rotate(-15).saturate(6).lighten(9),
+      fg = colors.foreground,
     },
     three = {
-      bg = colors.indigo.rotate(40).darken(75).saturation(20),
-      fg = colors.indigo.rotate(40).lighten(25).saturation(100),
+      bg = colors.background.rotate(-25).saturate(9).lighten(12),
+      fg = colors.foreground,
     },
     four = {
-      bg = colors.indigo.rotate(70).darken(75).saturation(20),
-      fg = colors.indigo.rotate(70).lighten(20).saturation(100),
+      bg = colors.background.rotate(-35).lighten(15),
+      fg = colors.foreground,
     },
     five = {
-      bg = colors.indigo.rotate(100).darken(75).saturation(20),
-      fg = colors.indigo.rotate(100).lighten(25).saturation(100),
+      bg = colors.background.rotate(-45).lighten(18),
+      fg = colors.foreground,
     },
     six = {
-      bg = colors.indigo.rotate(130).darken(75).saturation(20),
-      fg = colors.indigo.rotate(130).lighten(25).saturation(100),
+      bg = colors.background.rotate(-55).lighten(21),
+      fg = colors.foreground,
     },
   },
   section = "#8797C2",
@@ -447,7 +451,7 @@ local theme = lush(function(injected)
     sym("@lsp.type.method")({ sym("@method") }),
     sym("@lsp.type.namespace")({ sym("@constant") }),
     sym("@lsp.type.number")({ sym("@number") }),
-    sym("@lsp.type.operator")({ sym("@operator") }),
+    sym("@lsp.type.operator")({ fg = control }),
     sym("@lsp.type.parameter")({ sym("@parameter") }),
     sym("@lsp.type.property")({ sym("@property") }),
     sym("@lsp.type.string")({ sym("@string") }),

@@ -1,3 +1,5 @@
+-- custom @/project-root/.. source
+
 local M = {}
 
 M.new = function()
@@ -24,13 +26,13 @@ end
 function M:get_completions(context, callback)
   local cwd = vim.fn.getcwd()
 
-  local line = context.line
+  local context_line = context.line
   local cursor = context.cursor
   local query = ""
 
-  if line and cursor then
-    local at_start_match = line:match("^@([^%s]*)")
-    local at_space_match = line:match("%s@([^%s]*)")
+  if context_line and cursor then
+    local at_start_match = context_line:match("^@([^%s]*)")
+    local at_space_match = context_line:match("%s@([^%s]*)")
 
     if at_start_match then
       query = at_start_match

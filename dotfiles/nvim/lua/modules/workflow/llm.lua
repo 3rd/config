@@ -499,9 +499,7 @@ local explain = function(code)
     "Content:\n```" .. filetype .. "\n" .. code .. "\n```",
     "Explanation:",
   }, "\n")
-  complete_streaming(prompt, nil, function(result)
-    -- streaming popup already handled in complete_streaming
-  end)
+  complete_streaming(prompt, nil, function(result) end)
 end
 
 -- enhanced input with model switching - using fallback approach if nui.input has issues

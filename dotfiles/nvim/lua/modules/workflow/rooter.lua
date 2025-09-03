@@ -1,11 +1,14 @@
 local setup = function()
+  local group = vim.api.nvim_create_augroup("rooter", {})
   vim.api.nvim_create_autocmd("BufEnter", {
-    group = vim.api.nvim_create_augroup("rooter", {}),
+    group = group,
     callback = function()
-      local root = lib.path.find_root()
-      if not root then return end
-      local root_path = vim.fs.dirname(root) .. "/"
-      vim.fn.chdir(root_path)
+      if vim.g.rooter_done then return end
+      local target = lib.path.find_root()
+      if not target then return end
+      vim.g.rooter_done = true
+      pcall(vim.api.nvim_clear_autocmds, { group = group })
+      vim.fn.chdir(target)
     end,
   })
 end

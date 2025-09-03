@@ -11,7 +11,7 @@ return lib.module.create({
         require("modes").setup({
           colors = {
             insert = colors.cyan,
-            visual = colors.visual,
+            visual = "#c881de",
             copy = colors.common.cword,
             delete = colors.red,
           },

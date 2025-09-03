@@ -1,7 +1,3 @@
--- https://github.com/stevearc/conform.nvim/issues/36
--- requirecwd https://github.com/stevearc/conform.nvim/issues/72
--- https://github.com/chrisgrieser/.config/blob/7dc36c350976010b32ece078edd581687634811a/nvim/lua/plugins/linter-formatter.lua#L27-L82
-
 local paths = {
   stylua_config = lib.path.resolve_config("linters/stylua.toml"),
   prettier_config = lib.path.resolve_config("linters/prettier.json"),
@@ -48,8 +44,8 @@ return lib.module.create({
             jsonc = { "fixjson", "prettierd" },
             html = { "prettierd" },
             yaml = { "prettierd" },
-            -- markdown = { "prettierd" },
             graphql = { "prettierd" },
+            -- markdown = { "prettierd" },
           },
           formatters = {
             stylua = {
@@ -62,21 +58,6 @@ return lib.module.create({
             prettierd = {
               env = { PRETTIERD_DEFAULT_CONFIG = paths.prettier_config },
             },
-            -- eslint_d = {
-            --   args = {
-            --     "--fix-to-stdout",
-            --     "--config",
-            --     lib.path.resolve_config("linters/eslint/dist/main.js"),
-            --     "--no-eslintrc",
-            --     "--stdin",
-            --     "--stdin-filename",
-            --     "$FILENAME",
-            --   },
-            --   env = {
-            --     ESLINT_USE_FLAT_CONFIG = "false",
-            --     ESLINT_D_ROOT = lib.path.resolve_config("linters/eslint"),
-            --   },
-            -- },
           },
         }
 

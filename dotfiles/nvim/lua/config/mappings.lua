@@ -86,6 +86,7 @@ return {
     { "n", "<up>", ":resize -2<cr>", "Resize window up" },
     { "n", "<left>", ":vertical resize -2<cr>", "Resize window left" },
     { "n", "<right>", ":vertical resize +2<cr>", "Resize window right" },
+    { "n", "==", ":tabdo wincmd =<cr>" },
     -- comments
     { "n", "<c-_>", "gcc", { remap = true, desc = "Toggle comment" } },
     { "v", "<c-_>", "gc", { remap = true, desc = "Toggle comment" } },

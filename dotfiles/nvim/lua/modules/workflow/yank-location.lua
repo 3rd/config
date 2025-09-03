@@ -19,7 +19,7 @@ local handle_smart_yank = function()
       local root = parser:parse()[1]:root()
       local position = vim.api.nvim_win_get_cursor(0)
       local node = root:named_descendant_for_range(position[1] - 1, position[2], position[1] - 1, position[2])
-      
+
       -- find code_block ancestor
       local code_block = lib.ts.find_parent(node, "code_block")
       if code_block then
