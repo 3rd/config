@@ -711,6 +711,8 @@ local theme = lush(function(injected)
     SnacksProfilerHot01({ bg = colors.indigo.darken(86) }),
 
     CursorWord({ bg = colors.common.cword }),
+
+    NotifyBackground({ bg = colors.background }),
   }
 end)
 

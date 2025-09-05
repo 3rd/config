@@ -1,13 +1,13 @@
-{ config, pkgs-master, lib, ... }:
+{ config, pkgs, pkgs-master, lib, ... }:
 
 {
   imports = [ ../colors.nix ];
 
-  home.sessionVariables.TERMINAL = "${pkgs-master.kitty}/bin/kitty";
+  home.sessionVariables.TERMINAL = "${pkgs.kitty}/bin/kitty";
 
   programs.kitty = {
     enable = true;
-    package = pkgs-master.kitty;
+    package = pkgs.kitty;
     settings = with config.colors; {
       # general
       clear_all_shortcuts = "yes";
