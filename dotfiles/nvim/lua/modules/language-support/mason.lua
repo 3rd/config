@@ -21,7 +21,7 @@ return lib.module.create({
             "cssls",
             "cssmodules_ls",
             "dockerls",
-            "eslint",
+            -- "eslint",
             "golangci_lint_ls",
             "gopls",
             "html",

@@ -8,9 +8,6 @@ return lib.module.create({
     treesitter = {
       "nix",
     },
-    lspconfig = {
-      ["nil"] = {},
-    },
     null = {
       -- null_ls.builtins.diagnostics.statix,
       -- null_ls.builtins.code_actions.statix,

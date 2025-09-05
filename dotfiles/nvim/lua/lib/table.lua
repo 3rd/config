@@ -90,3 +90,11 @@ end
 function table.clone(target)
   return vim.fn.deepcopy(target)
 end
+
+function table.keys(t)
+  local result = {}
+  for key in pairs(t) do
+    result[#result + 1] = key
+  end
+  return result
+end

@@ -40,16 +40,6 @@ end
 local setup_lspconfig = function()
   local root_pattern = require("lspconfig.util").root_pattern
 
-  -- eslint
-  local eslintConfigOverride = nil
-  local eslintResolveRelativeTo = nil
-  local root = lib.path.find_root()
-  -- if root and not lib.fs.file.exists(lib.path.resolve(root, "eslint.config.js")) then
-  if root and not lib.fs.file.exists(lib.path.resolve(root, ".noglobaleslint")) then
-    eslintConfigOverride = lib.path.resolve_config("linters/eslint/dist/main.js")
-    eslintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
-  end
-
   local overrides = {
     -- client.server_capabilities.documentFormattingProvider
     formatting = {
@@ -59,6 +49,9 @@ local setup_lspconfig = function()
   }
 
   local servers = {
+    eslint = {
+      enabled = false,
+    },
     zls = {},
     bashls = {},
     cssls = {
@@ -70,9 +63,14 @@ local setup_lspconfig = function()
     dockerls = {},
     nil_ls = {
       settings = {
-        nix = {
-          flake = {
-            autoArchive = true,
+        ["nil"] = {
+          nix = {
+            binary = "nix",
+            maxMemoryMB = nil,
+            flake = {
+              autoEvalInputs = true,
+              autoArchive = true,
+            },
           },
         },
       },
@@ -375,49 +373,49 @@ local setup_lspconfig = function()
     --     },
     --   },
     -- },
-    eslint = {
-      root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
-      cmd = { "vscode-eslint-language-server", "--stdio" },
-      filetypes = {
-        "javascript",
-        "javascriptreact",
-        "javascript.jsx",
-        "typescript",
-        "typescriptreact",
-        "typescript.tsx",
-      },
-      flags = {
-        allow_incremental_sync = true,
-        -- debounce_text_changes = 1000,
-      },
-      settings = {
-        useESLintClass = true,
-        codeActionOnSave = {
-          enable = false,
-          mode = "all",
-        },
-        quiet = false,
-        onIgnoredFiles = "off",
-        rulesCustomizations = {},
-        run = "onSave",
-        codeAction = {
-          disableRuleComment = { enable = true, location = "separateLine" },
-          showDocumentation = { enable = true },
-        },
-        packageManager = "bun",
-        options = vim.tbl_deep_extend("force", {
-          cache = true,
-          cacheLocation = ".eslintcache",
-          fix = false,
-          overrideConfigFile = eslintConfigOverride,
-          resolvePluginsRelativeTo = eslintResolveRelativeTo,
-        }, eslintConfigOverride and { useEslintrc = false } or {}),
-        nodePath = eslintResolveRelativeTo,
-        -- after https://github.com/pmizio/typescript-tools.nvim/pull/302/files
-        -- + auto local override
-        -- tsserver_node_executable = "bun",
-      },
-    },
+    -- eslint = {
+    --   root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
+    --   cmd = { "vscode-eslint-language-server", "--stdio" },
+    --   filetypes = {
+    --     "javascript",
+    --     "javascriptreact",
+    --     "javascript.jsx",
+    --     "typescript",
+    --     "typescriptreact",
+    --     "typescript.tsx",
+    --   },
+    --   flags = {
+    --     allow_incremental_sync = true,
+    --     -- debounce_text_changes = 1000,
+    --   },
+    --   settings = {
+    --     useESLintClass = true,
+    --     codeActionOnSave = {
+    --       enable = false,
+    --       mode = "all",
+    --     },
+    --     quiet = false,
+    --     onIgnoredFiles = "off",
+    --     rulesCustomizations = {},
+    --     run = "onSave",
+    --     codeAction = {
+    --       disableRuleComment = { enable = true, location = "separateLine" },
+    --       showDocumentation = { enable = true },
+    --     },
+    --     packageManager = "bun",
+    --     options = vim.tbl_deep_extend("force", {
+    --       cache = true,
+    --       cacheLocation = ".eslintcache",
+    --       fix = false,
+    --       overrideConfigFile = eslintConfigOverride,
+    --       resolvePluginsRelativeTo = eslintResolveRelativeTo,
+    --     }, eslintConfigOverride and { useEslintrc = false } or {}),
+    --     nodePath = eslintResolveRelativeTo,
+    --     -- after https://github.com/pmizio/typescript-tools.nvim/pull/302/files
+    --     -- + auto local override
+    --     -- tsserver_node_executable = "bun",
+    --   },
+    -- },
     jsonls = {
       init_options = {
         provideFormatter = false,
@@ -547,6 +545,67 @@ return lib.module.create({
           ignore_done_already = true,
         },
       },
+    },
+    {
+      "esmuellert/nvim-eslint",
+      lazy = false,
+      dependencies = {
+        "neovim/nvim-lspconfig",
+      },
+      opts = function(_, opts)
+        local root_pattern = require("lspconfig.util").root_pattern
+
+        -- override
+        local eslintConfigOverride = nil
+        local eslintResolveRelativeTo = nil
+        local root = lib.path.find_root({ "package.json" })
+        -- if root and not lib.fs.file.exists(lib.path.resolve(root, "eslint.config.js")) then
+        if root and not lib.fs.file.exists(lib.path.resolve(root, ".noglobaleslint")) then
+          eslintConfigOverride = lib.path.resolve_config("linters/eslint/dist/main.js")
+          eslintResolveRelativeTo = lib.path.resolve_config("linters/eslint/node_modules")
+        end
+
+        opts = vim.tbl_deep_extend("force", opts or {}, {
+          -- debug = true,
+          -- root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
+          handlers = {
+            ["eslint/noConfig"] = function(_, result)
+              vim.notify(result.message, vim.log.levels.WARN)
+              return {}
+            end,
+            ["workspace/diagnostic/refresh"] = function(_, _, ctx)
+              local ns = vim.lsp.diagnostic.get_namespace(ctx.client_id)
+              local bufnr = vim.api.nvim_get_current_buf()
+              vim.diagnostic.reset(ns, bufnr)
+              return true
+            end,
+          },
+          settings = {
+            format = true,
+            -- useESLintClass = false,
+            run = "onType",
+            options = vim.tbl_deep_extend("force", {
+              cache = true,
+              cacheLocation = ".eslintcache",
+              fix = false,
+              overrideConfigFile = eslintConfigOverride,
+              resolvePluginsRelativeTo = eslintResolveRelativeTo,
+            }, eslintConfigOverride and { useEslintrc = false } or {}),
+            nodePath = eslintResolveRelativeTo,
+            workingDirectories = { mode = "auto" },
+            workingDirectory = function(bufnr)
+              return { directory = vim.fs.root(bufnr, { "package.json" }) }
+            end,
+          },
+        })
+
+        if eslintConfigOverride then
+          opts.settings.useFlatConfig = false
+          opts.settings.experimental = { useFlatConfig = false }
+        end
+
+        return opts
+      end,
     },
   },
 })
