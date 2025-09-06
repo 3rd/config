@@ -23,7 +23,7 @@ local barbecue_config = {
 
 return lib.module.create({
   name = "language-support/breadcrumbs",
-  -- enabled = false,
+  enabled = false,
   hosts = "*",
   hooks = {
     lsp = {

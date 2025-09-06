@@ -430,6 +430,8 @@ local theme = lush(function(injected)
     sym("@variable.builtin")({ sym("@builtin") }),
 
     sym("@markup.raw.markdown_inline")({ fg = colors.slang.code.inline }),
+    sym("@markup.link.markdown_inline")({ fg = colors.slang.link.internal }),
+    sym("@markup.link.label.markdown_inline")({ fg = colors.slang.link.internal }),
 
     -- semantic tokens
     -- https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
@@ -713,6 +715,15 @@ local theme = lush(function(injected)
     CursorWord({ bg = colors.common.cword }),
 
     NotifyBackground({ bg = colors.background }),
+
+    TreesitterContext({
+      bg = colors.background.rotate(120).lighten(5),
+    }),
+    TreesitterContextLineNumber({
+      bg = colors.background.rotate(120).lighten(5),
+      fg = colors.ui.line.line_nr.fg.rotate(120).lighten(20),
+    }),
+    TreesitterContextLineNumberBottom({ gui = "underline" }),
   }
 end)
 

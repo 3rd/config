@@ -12,6 +12,7 @@ local setup = function()
 
   vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
     update_in_insert = false,
+    severity_sort = true,
   })
 
   -- ty https://github.com/MariaSolOs/dotfiles/blob/fedora/.config/nvim/lua/lsp.lua#L278
@@ -472,7 +473,16 @@ local setup_lspconfig = function()
       -- https://github.com/neovim/neovim/issues/23291
       didChangeWatchedFiles = { dynamicRegistration = false },
     },
-    textDocument = { completion = { completionItem = { snippetSupport = true } } },
+    textDocument = {
+      completion = {
+        completionItem = {
+          snippetSupport = true,
+          resolveSupport = {
+            properties = { "documentation", "detail", "additionalTextEdits" },
+          },
+        },
+      },
+    },
   })
 
   -- build on_attach()

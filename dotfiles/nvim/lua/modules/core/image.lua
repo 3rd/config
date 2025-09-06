@@ -17,6 +17,7 @@ return lib.module.create({
             format = "compact",
           },
           -- backend = "ueberzug",
+          -- backend = "sixel",
           processor = "magick_cli",
           -- processor = "magick_rock",
           tmux_show_only_in_active_window = true,

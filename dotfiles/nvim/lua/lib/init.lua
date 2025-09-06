@@ -10,6 +10,13 @@ _G.log = log.create_logger({
   output_file = "/tmp/nvim-log.txt",
 })
 
+_G.flog = log.create_logger({
+  prefix = "[flog]",
+  formatter = log.default_log_formatter,
+  handler = nil,
+  output_file = "/tmp/nvim-log.txt",
+})
+
 _G.throw = log.create_logger({
   prefix = "[error]",
   formatter = log.default_log_formatter,
