@@ -2,7 +2,7 @@ local env = require("lib/env")
 
 return {
   -- base
-  clipboard = "unnamed,unnamedplus",
+  clipboard = "unnamedplus",
   fileformat = "unix",
   hidden = true,
   lazyredraw = false,

@@ -15,7 +15,6 @@ stdenv.mkDerivation {
 
   buildInputs = with libsForQt5; [
     exiv2
-    kimageformats
     mpv-unwrapped
     opencv4
     qtbase

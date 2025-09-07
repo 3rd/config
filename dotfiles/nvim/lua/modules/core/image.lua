@@ -11,7 +11,7 @@ return lib.module.create({
       config = function()
         require("image").setup({
           debug = {
-            enabled = true,
+            enabled = false,
             level = "debug",
             file_path = "/tmp/image.nvim.log",
             format = "compact",
