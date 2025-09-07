@@ -31,9 +31,10 @@ return lib.module.create({
         local allowed_keys = string.split("acdfimnoprstuxyz0123456789", "")
 
         local custom_keys = {
-          -- ts: functions
+          -- ts: general
           { key = "a", pattern = "Add braces to arrow function" },
           { key = "r", pattern = "Remove braces from arrow function" },
+          { key = "u", pattern = "Update import.*" },
           -- ts: extract function
           { key = "i", pattern = "Extract to inner function in arrow function" },
           { key = "i", pattern = "Extract to inner function in method.*" },
