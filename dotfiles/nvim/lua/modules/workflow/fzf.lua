@@ -3,7 +3,7 @@ local setup_fzf_lua = function()
 
   local fd_command = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
   if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
-    fd_command = fd_command .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%")))
+    fd_command = fd_command .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%:.")))
   end
 
   local config = {
@@ -61,23 +61,23 @@ local setup_fzf_lua = function()
   fzf.setup(config)
 
   lib.map.map("n", "<c-p>", function()
-    -- local opts = vim.deepcopy(config)
-    -- opts.cmd = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
-    -- if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
-    --   opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%")))
-    -- end
-    -- opts.prompt = "> "
-    -- opts.fzf_opts = {
-    --   ["--info"] = "inline",
-    --   ["--tiebreak"] = "index",
-    -- }
-    fzf.files()
+    local opts = {}
+    opts.cmd = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
+    if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
+      opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%:.")))
+    end
+    opts.prompt = "> "
+    opts.fzf_opts = {
+      ["--info"] = "inline",
+      ["--tiebreak"] = "index",
+    }
+    fzf.files(opts)
   end, "Find file in project")
 
   lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
 
   lib.map.map("n", "<c-f>", function()
-    local opts = vim.deepcopy(config)
+    -- local opts = vim.deepcopy(config)
     -- opts.cmd =
     --   "rg --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --glob '!LICENSE' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
     -- opts.prompt = "> "

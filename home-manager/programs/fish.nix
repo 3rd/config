@@ -103,6 +103,7 @@
       # custom utils
       w = "work";
       pp = "promptpack";
+      r = "auto run";
       # wiki
       p = "nvim ~/brain/wiki/plan";
       ti = "nvim ~/brain/wiki/_inbox/tasks";

@@ -32,24 +32,35 @@ return lib.module.create({
 
         local custom_keys = {
           -- ts: general
-          { key = "a", pattern = "Add braces to arrow function" },
-          { key = "r", pattern = "Remove braces from arrow function" },
-          { key = "u", pattern = "Update import.*" },
+          { key = "a", pattern = [[^Add braces to arrow function$]] },
+          { key = "r", pattern = [[^Remove braces from arrow function$]] },
+
+          -- ts: add import (local/aliases)
+          { key = "a", pattern = [[^Add import from "%./.+$]] }, -- "./foo"
+          { key = "a", pattern = [[^Add import from "%.%./.+$]] }, -- "../foo"
+          { key = "a", pattern = [[^Add import from "@@/.+$]] }, -- "@@/foo"
+          { key = "a", pattern = [[^Add import from "@/.+$]] }, -- "@/foo"
+
+          { key = "u", pattern = [[^Update import.+$]] },
+
           -- ts: extract function
-          { key = "i", pattern = "Extract to inner function in arrow function" },
-          { key = "i", pattern = "Extract to inner function in method.*" },
-          { key = "m", pattern = "Extract to function in module scope" },
-          { key = "c", pattern = "Extract to method in class.*" },
+          { key = "i", pattern = [[^Extract to inner function in arrow function$]] },
+          { key = "i", pattern = [[^Extract to inner function in method.+$]] },
+          { key = "m", pattern = [[^Extract to function in module scope$]] },
+          { key = "c", pattern = [[^Extract to method in class.+$]] },
+
           -- ts: extract variable
-          { key = "s", pattern = "Extract to constant in enclosing scope" },
+          { key = "s", pattern = [[^Extract to constant in enclosing scope$]] },
+
           -- eslint
-          { key = "d", pattern = ".* for this line" },
-          { key = "a", pattern = ".* for the entire file" },
-          { key = "f", pattern = "Fix this.*" },
+          { key = "d", pattern = [[.+ for this line$]] },
+          { key = "a", pattern = [[.+ for the entire file$]] },
+          { key = "f", pattern = [[^Fix this.+$]] },
+
           -- lua
-          { key = "d", pattern = "Disable diagnostics on this line.*" },
-          { key = "a", pattern = "Disable diagnostics on this line.*" },
-          { key = "w", pattern = "Disable diagnostics in the workspace.*" },
+          { key = "d", pattern = [[^Disable diagnostics on this line.+$]] },
+          { key = "a", pattern = [[^Disable diagnostics on this line.+$]] },
+          { key = "w", pattern = [[^Disable diagnostics in the workspace.+$]] },
         }
 
         local opts = {
@@ -69,7 +80,11 @@ return lib.module.create({
                 -- seed with used hotkeys
                 if type(used_hotkeys) == "table" then
                   for k, v in pairs(used_hotkeys) do
-                    if v then taken[k] = true end
+                    if type(v) == "string" then
+                      taken[v] = true
+                    elseif v == true and type(k) == "string" then
+                      taken[k] = true
+                    end
                   end
                 end
 
