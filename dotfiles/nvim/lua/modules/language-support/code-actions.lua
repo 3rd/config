@@ -9,7 +9,9 @@ return lib.module.create({
   hosts = "*",
   plugins = {
     {
-      "rachartier/tiny-code-action.nvim",
+      "3rd/tiny-code-action.nvim",
+      -- "rachartier/tiny-code-action.nvim",
+      -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "tiny-code-action.nvim"),
       dependencies = {
         { "nvim-lua/plenary.nvim" },
       },
@@ -172,6 +174,17 @@ return lib.module.create({
           return false
         end
 
+        local sorter = function(items)
+          local sorted = vim.tbl_deep_extend("force", {}, items)
+          table.sort(sorted, function(a, b)
+            local hotkey_a = a.hotkey or "zzz"
+            local hotkey_b = b.hotkey or "zzz"
+            if #hotkey_a ~= #hotkey_b then return #hotkey_a < #hotkey_b end
+            return hotkey_a < hotkey_b
+          end)
+          return sorted
+        end
+
         lib.map.map({ "n", "v" }, "<leader>ar", function()
           close_floating_windows()
           plugin.code_action({
@@ -181,6 +194,7 @@ return lib.module.create({
               if not vim.startswith(action.kind, "refactor") then return false end
               return true
             end,
+            sort = sorter,
           })
         end, { desc = "LSP: Refactor" })
 
@@ -192,6 +206,7 @@ return lib.module.create({
               if action.kind and vim.startswith(action.kind, "refactor") then return false end
               return true
             end,
+            sort = sorter,
           })
         end, { desc = "LSP: Code action" })
 
@@ -211,6 +226,7 @@ return lib.module.create({
               end
               return false
             end,
+            sort = sorter,
           })
         end, { desc = "LSP: Extract function" })
 
@@ -231,6 +247,7 @@ return lib.module.create({
               end
               return false
             end,
+            sort = sorter,
           })
         end, { desc = "LSP: Extract variable" })
 

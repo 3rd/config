@@ -2,8 +2,12 @@ local setup_fzf_lua = function()
   local fzf = require("fzf-lua")
 
   local fd_command = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
-  if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
-    fd_command = fd_command .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%:.")))
+  do
+    local prox = vim.fn.exepath("proximity-sort")
+    if prox ~= nil and #prox > 0 then
+      local libuv = require("fzf-lua.libuv")
+      fd_command = fd_command .. " | " .. libuv.shellescape(prox) .. " " .. libuv.shellescape(vim.fn.expand("%:."))
+    end
   end
 
   local config = {
@@ -43,6 +47,9 @@ local setup_fzf_lua = function()
       cmd = fd_command,
       -- path_shorten = 4,
       git_icons = false,
+      fzf_opts = {
+        ["--tiebreak"] = "index",
+      },
     },
     buffers = {
       -- path_shorten = 4,
@@ -61,36 +68,80 @@ local setup_fzf_lua = function()
   fzf.setup(config)
 
   lib.map.map("n", "<c-p>", function()
-    local opts = {}
-    opts.cmd = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
-    if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
-      opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%:.")))
-    end
-    opts.prompt = "> "
-    opts.fzf_opts = {
-      ["--info"] = "inline",
-      ["--tiebreak"] = "index",
-    }
-    fzf.files(opts)
-  end, "Find file in project")
-
-  lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
-
-  lib.map.map("n", "<c-f>", function()
     -- local opts = vim.deepcopy(config)
-    -- opts.cmd =
-    --   "rg --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --glob '!LICENSE' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
+    -- opts.cmd = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
+    -- if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
+    --   opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(lib.shell.escape(vim.fn.expand("%")))
+    -- end
     -- opts.prompt = "> "
     -- opts.fzf_opts = {
     --   ["--info"] = "inline",
     --   ["--tiebreak"] = "index",
     -- }
-    fzf.grep_project()
+    fzf.files()
+  end, "Find file in project")
+
+  lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
+
+  lib.map.map("n", "<c-f>", function()
+    local opts = {}
+
+    -- nvim-tree search
+    if vim.bo.filetype == "NvimTree" then
+      local ok, api = pcall(require, "nvim-tree.api")
+      if ok then
+        local node = api.tree.get_node_under_cursor()
+        if node and node.absolute_path and #node.absolute_path > 0 then
+          if node.type == "directory" then
+            opts.search_paths = { node.absolute_path }
+          else
+            opts.filename = node.absolute_path
+          end
+          local prox = vim.fn.exepath("proximity-sort")
+          if prox and #prox > 0 then
+            local libuv = require("fzf-lua.libuv")
+            local ctx = vim.fn.fnamemodify(node.absolute_path, ":.")
+            opts.filter = string.format("%s %s", libuv.shellescape(prox), libuv.shellescape(ctx))
+          end
+        end
+      end
+    end
+
+    -- regular search
+    if not opts.filter then
+      local prox = vim.fn.exepath("proximity-sort")
+      if prox and #prox > 0 then
+        local ctx = vim.fn.expand("%:.")
+        if ctx and #ctx > 0 then
+          local libuv = require("fzf-lua.libuv")
+          opts.filter = string.format("%s %s", libuv.shellescape(prox), libuv.shellescape(ctx))
+        end
+      end
+    end
+
+    fzf.grep_project(opts)
   end, "Find text in project")
 
   lib.map.map("n", "<leader>l", "<cmd>lua require('fzf-lua').blines()<CR>", "Find line in buffer")
   lib.map.map("n", "<leader>L", "<cmd>lua require('fzf-lua').lines()<CR>", "Find line in project")
   lib.map.map("n", "<leader>;", "<cmd>lua require('fzf-lua').resume()<CR>", "Resume last fzf-lua command")
+
+  -- visual
+  lib.map.map("v", "<c-f>", function()
+    local opts = {}
+    if type(config) == "table" and type(config.grep) == "table" and type(config.grep.rg_opts) == "string" then
+      opts.rg_opts = (config.grep.rg_opts:gsub("%-%-color=always", "--color=never"))
+    end
+    local prox = vim.fn.exepath("proximity-sort")
+    if prox and #prox > 0 then
+      local ctx = vim.fn.expand("%:.")
+      if ctx and #ctx > 0 then
+        local libuv = require("fzf-lua.libuv")
+        opts.filter = string.format("%s %s", libuv.shellescape(prox), libuv.shellescape(ctx))
+      end
+    end
+    require("fzf-lua").grep_visual(opts)
+  end, "Find selected text in project")
 end
 
 return lib.module.create({
