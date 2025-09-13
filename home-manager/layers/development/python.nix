@@ -4,7 +4,6 @@
 
   home.packages = with pkgs; [
     #
-    python310Full
     conda
     uv
   ];
