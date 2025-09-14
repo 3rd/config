@@ -1,4 +1,4 @@
-{ pkgs, pkgs-stable, ... }:
+{ config, pkgs, pkgs-stable, ... }:
 
 {
   home.packages = with pkgs;
@@ -19,8 +19,8 @@
   programs.go = {
     enable = true;
     env = {
-      GOBIN = "go/bin";
-      GOPATH = "go";
+      GOPATH = "${config.home.homeDirectory}/go";
+      GOBIN = "${config.home.homeDirectory}/go/bin";
     };
     # package = pkgs.go_1_21;
   };
