@@ -108,4 +108,9 @@
   services.logind.killUserProcesses = true;
   services.devmon.enable = true;
   services.irqbalance.enable = true;
+
+  qt = {
+    enable = true;
+    platformTheme = "kde";
+  };
 }

@@ -32,11 +32,6 @@ return lib.module.create({
         { "<c-j>", "<cmd>lua require('tmux').move_bottom()<cr>", desc = "Navigate down" },
         { "<c-k>", "<cmd>lua require('tmux').move_top()<cr>", desc = "Navigate up" },
         { "<c-l>", "<cmd>lua require('tmux').move_right()<cr>", desc = "Navigate right" },
-        -- resize
-        { "<a-h>", "<cmd>lua require('tmux').resize_left()<cr>", desc = "Resize left" },
-        { "<a-j>", "<cmd>lua require('tmux').resize_bottom()<cr>", desc = "Resize down" },
-        { "<a-k>", "<cmd>lua require('tmux').resize_top()<cr>", desc = "Resize up" },
-        { "<a-l>", "<cmd>lua require('tmux').resize_right()<cr>", desc = "Resize right" },
       },
     },
   },

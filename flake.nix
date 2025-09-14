@@ -9,12 +9,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    apple-silicon = {
-      url =
-        "github:tpwrules/nixos-apple-silicon?rev=f51de44b1d720ac23e838db8e0cf13fadb7942b8";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
       # url = "github:nix-community/neovim-nightly-overlay?rev=fd381a5a19f553c2466dc437fb94fcf799d77e82";
@@ -26,22 +20,26 @@
       url = "github:nix-community/browser-previews";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    wired.url = "github:Toqozz/wired-notify";
-
     nixpkgs-chromium.url =
       "github:nixos/nixpkgs?rev=8dd2f1add978a4747a5962f2874b8ad20f86b01c";
 
-    hyprland.url = "github:hyprwm/Hyprland";
+    wired.url = "github:Toqozz/wired-notify";
+    vicinae.url = "github:vicinaehq/vicinae";
 
-    ghostty = {
-      url = "github:ghostty-org/ghostty";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # apple-silicon = {
+    #   url =
+    #     "github:tpwrules/nixos-apple-silicon?rev=f51de44b1d720ac23e838db8e0cf13fadb7942b8";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
+    # ghostty = {
+    #   url = "github:ghostty-org/ghostty";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
+    # hyprland.url = "github:hyprwm/Hyprland";
   };
 
   outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-master, home-manager, wired
-    , nixpkgs-chromium, hardware, ... }@inputs:
+    , nixpkgs-chromium, hardware, vicinae, ... }@inputs:
     let
       inherit (self) outputs;
       systems = [ "aarch64-linux" "x86_64-linux" ];
@@ -125,7 +123,7 @@
             overlays = [
               wired.overlays.default
               fixTextualOverlay
-              inputs.ghostty.overlays.default
+              # inputs.ghostty.overlays.default
             ];
           };
           extraSpecialArgs = {
@@ -144,7 +142,6 @@
             ./hosts/spaceship/home.nix
             disableHomeManagerNews
 
-            wired.homeManagerModules.default
             (_: {
               home.packages = [
                 #
@@ -158,16 +155,16 @@
               programs.neovim.package =
                 inputs.neovim-nightly-overlay.packages.${system}.default;
             })
+
+            wired.homeManagerModules.default
+            vicinae.homeManagerModules.default
           ];
         };
         "rabbit@macbook" = let system = "aarch64-linux";
         in home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [
-              wired.overlays.default
-
-            ];
+            overlays = [ wired.overlays.default ];
           };
           extraSpecialArgs = {
             inherit inputs outputs;
@@ -194,6 +191,8 @@
             disableHomeManagerNews
 
             wired.homeManagerModules.default
+            vicinae.homeManagerModules.default
+
             (_: {
               home.packages = [
                 #
@@ -237,6 +236,8 @@
             disableHomeManagerNews
 
             wired.homeManagerModules.default
+            vicinae.homeManagerModules.default
+
             (_: {
               services.wired = {
                 enable = true;

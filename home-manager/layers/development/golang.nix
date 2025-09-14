@@ -18,8 +18,10 @@
 
   programs.go = {
     enable = true;
-    goPath = "go";
-    goBin = "go/bin";
+    env = {
+      GOBIN = "go/bin";
+      GOPATH = "go";
+    };
     # package = pkgs.go_1_21;
   };
 

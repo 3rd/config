@@ -113,4 +113,9 @@
       vv = "~/sources/v/v";
     };
   };
+
+  programs.carapace = {
+    enable = true;
+    enableFishIntegration = true;
+  };
 }

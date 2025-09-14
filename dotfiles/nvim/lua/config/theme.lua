@@ -724,6 +724,8 @@ local theme = lush(function(injected)
       fg = colors.ui.line.line_nr.fg.rotate(120).lighten(20),
     }),
     TreesitterContextLineNumberBottom({ gui = "underline" }),
+
+    Lens({ fg = colors.orange.darken(50).desaturate(65) }),
   }
 end)
 

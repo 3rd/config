@@ -1,5 +1,6 @@
 return lib.module.create({
   name = "language-support/symbol-usage",
+  enabled = false,
   hosts = "*",
   plugins = {
     {

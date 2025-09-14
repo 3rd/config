@@ -22,6 +22,7 @@
     ../programs/tmux
     ../programs/zathura.nix
     ../programs/zoxide.nix
+    ../programs/vicinae.nix
     ../apps.nix
     ../gtk.nix
     ../utilities.nix

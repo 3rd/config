@@ -213,7 +213,8 @@ in {
             ''exec ulimit -n 999999 && /bin/sh -c "$BROWSER"'';
           "${modifier}+p" = "exec ${pkgs-stable.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs-stable.flameshot}/bin/flameshot gui";
-          "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
+          # "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
+          "${alt}+space" = ''exec vicinae "vicinae://open?popToRoot=true"'';
           "ctrl+${alt}+space" =
             "exec ${pkgs.rofi}/bin/rofi -show window -dpi 120";
         };
@@ -225,6 +226,7 @@ in {
             { instance = "copyq"; }
             { instance = "pavucontrol"; }
             { instance = "yad"; }
+            { class = "vicinae"; }
           ];
         };
         startup = [
