@@ -236,7 +236,9 @@ in {
               "--no-startup-id ${pkgs.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
           }
           { command = "--no-startup-id ${pkgs-stable.copyq}/bin/copyq"; }
-          { command = "--no-startup-id ${pkgs.flameshot}/bin/flameshot"; }
+          {
+            command = "--no-startup-id ${pkgs-stable.flameshot}/bin/flameshot";
+          }
           {
             always = true;
             command =

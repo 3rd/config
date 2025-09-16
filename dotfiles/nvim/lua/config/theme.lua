@@ -725,7 +725,7 @@ local theme = lush(function(injected)
     }),
     TreesitterContextLineNumberBottom({ gui = "underline" }),
 
-    Lens({ fg = colors.orange.darken(50).desaturate(65) }),
+    Lens({ fg = colors.background.lighten(20).desaturate(25) }),
   }
 end)
 

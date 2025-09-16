@@ -109,8 +109,8 @@
   services.devmon.enable = true;
   services.irqbalance.enable = true;
 
-  qt = {
-    enable = true;
-    platformTheme = "kde";
-  };
+  # qt = {
+  #   enable = true;
+  #   platformTheme = "kde";
+  # };
 }

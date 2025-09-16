@@ -69,7 +69,6 @@
       # gui
       firefox
       gparted
-      flameshot
       scrcpy
       eog
       file-roller
@@ -91,6 +90,7 @@
       pkgs-stable.silicon
       pkgs-stable.netlify-cli
       pkgs-stable.copyq
+      pkgs-stable.flameshot
     ];
 
   programs.fish.shellAliases = {
