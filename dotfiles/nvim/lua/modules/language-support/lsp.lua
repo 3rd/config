@@ -39,7 +39,12 @@ local setup = function()
 end
 
 local setup_lspconfig = function()
-  local root_pattern = require("lspconfig.util").root_pattern
+  local function root_pattern(...)
+    local patterns = { ... }
+    return function(startpath)
+      return vim.fs.root(startpath or vim.api.nvim_buf_get_name(0), patterns)
+    end
+  end
 
   local overrides = {
     -- client.server_capabilities.documentFormattingProvider
@@ -122,49 +127,6 @@ local setup_lspconfig = function()
         },
       },
     },
-    -- lua_ls = {
-    --   root_dir = root_pattern(".root", "init.lua", ".git"),
-    --   settings = {
-    --     Lua = vim.tbl_deep_extend("keep", load_luarc(), {
-    --       completion = { callSnippet = "Replace" },
-    --       runtime = {
-    --         version = "LuaJIT",
-    --         path = vim.split(package.path, ";"),
-    --         pathStrict = true,
-    --       },
-    --       diagnostics = {
-    --         unusedLocalExclude = { "_*" },
-    --         globals = { "vim", "describe", "it", "before_each", "after_each" },
-    --         disable = { "missing-fields", "unused-local" },
-    --       },
-    --       workspace = {
-    --         library = {
-    --           vim.env.VIMRUNTIME,
-    --           -- [".luarc.json"] = true,
-    --           -- [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-    --           -- [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
-    --           -- [vim.fn.stdpath("config") .. "/lua"] = true,
-    --           -- [vim.fn.expand("$PWD/lua")] = true,
-    --         },
-    --         -- library = vim.api.nvim_get_runtime_file("", true),
-    --         ignoreDir = { ".git", "node_modules", "linters", "plugins" },
-    --         checkThirdParty = false,
-    --         -- maxPreload = 500,
-    --         -- preloadFileSize = 500,
-    --       },
-    --       hint = { enable = true },
-    --       semantic = { keyword = true },
-    --       telemetry = { enable = false },
-    --     }),
-    --   },
-    --   handlers = {
-    --     -- always go to the first definition
-    --     ["textDocument/definition"] = function(err, result, ...)
-    --       if vim.islist(result) or type(result) == "table" then result = result[1] end
-    --       vim.lsp.handlers["textDocument/definition"](err, result, ...)
-    --     end,
-    --   },
-    -- },
     -- tsserver = {
     --   init_options = {
     --     hostInfo = "neovim",
@@ -427,15 +389,11 @@ local setup_lspconfig = function()
   }
 
   if lib.fs.file.exists("sgconfig.yml") then
-    local configs = require("lspconfig.configs")
-    configs.ast_grep = {
-      default_config = {
-        cmd = { "ast-grep", "lsp" },
-        single_file_support = false,
-        root_dir = root_pattern("sgconfig.yml"),
-      },
+    servers.ast_grep = {
+      cmd = { "ast-grep", "lsp" },
+      single_file_support = false,
+      root_markers = { "sgconfig.yml" },
     }
-    servers.ast_grep = {}
   end
 
   -- load modules
@@ -501,17 +459,37 @@ local setup_lspconfig = function()
   end
 
   -- setup servers
-  local default_root_dir = root_pattern(".root", ".git", "go.mod", "package.json") or vim.uv.cwd()
   for server_name, server_options in pairs(servers) do
-    local opts = vim.tbl_deep_extend("force", server_options, {
-      capabilities = capabilities,
-      on_attach = on_attach,
-    })
-    opts.flags = opts.flags or {}
-    opts.flags.allow_incremental_sync = true
-    if not opts.root_dir then opts.root_dir = default_root_dir end
-    require("lspconfig")[server_name].setup(opts)
+    if server_options.enabled ~= false then
+      local config = vim.tbl_deep_extend("force", {
+        capabilities = capabilities,
+        on_attach = on_attach,
+      }, server_options)
+
+      -- add flags
+      config.flags = vim.tbl_deep_extend("force", config.flags or {}, {
+        allow_incremental_sync = true,
+      })
+
+      -- handle special root_dir cases
+      if server_name == "vtsls" and not config.root_dir then
+        config.root_dir = root_pattern(".root", "package.json") or vim.uv.cwd()
+      end
+
+      -- clean up fields not used by vim.lsp.config
+      config.enabled = nil
+
+      -- register the config
+      vim.lsp.config[server_name] = config
+    end
   end
+
+  -- enable all registered servers
+  local enabled_servers = {}
+  for server_name, server_options in pairs(servers) do
+    if server_options.enabled ~= false then table.insert(enabled_servers, server_name) end
+  end
+  vim.lsp.enable(enabled_servers)
 
   vim.api.nvim_exec_autocmds("FileType", {})
 end
@@ -519,16 +497,19 @@ end
 return lib.module.create({
   name = "language-support/lsp",
   hosts = "*",
-  setup = setup,
+  setup = function()
+    setup()
+    -- defer LSP configuration setup
+    vim.schedule(setup_lspconfig)
+  end,
   plugins = {
     {
-      "neovim/nvim-lspconfig",
+      "b0o/schemastore.nvim",
       event = "VeryLazy",
-      dependencies = {
-        "b0o/schemastore.nvim",
-        "dmmulroy/ts-error-translator.nvim",
-      },
-      config = setup_lspconfig,
+    },
+    {
+      "dmmulroy/ts-error-translator.nvim",
+      event = "VeryLazy",
     },
     {
       "j-hui/fidget.nvim",
@@ -551,7 +532,12 @@ return lib.module.create({
         "neovim/nvim-lspconfig",
       },
       opts = function(_, opts)
-        local root_pattern = require("lspconfig.util").root_pattern
+        local function root_pattern(...)
+          local patterns = { ... }
+          return function(startpath)
+            return vim.fs.root(startpath or vim.api.nvim_buf_get_name(0), patterns)
+          end
+        end
 
         -- override
         local eslintConfigOverride = nil
