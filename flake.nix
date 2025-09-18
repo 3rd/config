@@ -24,7 +24,6 @@
       "github:nixos/nixpkgs?rev=8dd2f1add978a4747a5962f2874b8ad20f86b01c";
 
     wired.url = "github:Toqozz/wired-notify";
-    vicinae.url = "github:vicinaehq/vicinae";
 
     # apple-silicon = {
     #   url =
@@ -39,7 +38,7 @@
   };
 
   outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-master, home-manager, wired
-    , nixpkgs-chromium, hardware, vicinae, ... }@inputs:
+    , nixpkgs-chromium, hardware, ... }@inputs:
     let
       inherit (self) outputs;
       systems = [ "aarch64-linux" "x86_64-linux" ];
@@ -157,7 +156,6 @@
             })
 
             wired.homeManagerModules.default
-            vicinae.homeManagerModules.default
           ];
         };
         "rabbit@macbook" = let system = "aarch64-linux";
@@ -191,7 +189,6 @@
             disableHomeManagerNews
 
             wired.homeManagerModules.default
-            vicinae.homeManagerModules.default
 
             (_: {
               home.packages = [
@@ -236,7 +233,6 @@
             disableHomeManagerNews
 
             wired.homeManagerModules.default
-            vicinae.homeManagerModules.default
 
             (_: {
               services.wired = {

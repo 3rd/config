@@ -46,10 +46,12 @@ vim.lsp.config["luals"] = {
   },
   handlers = {
     -- always go to the first definition
-    ["textDocument/definition"] = function(err, result, ...)
-      if vim.islist(result) or type(result) == "table" then result = result[1] end
-      vim.lsp.handlers["textDocument/definition"](err, result, ...)
-    end,
   },
 }
 vim.lsp.enable("luals")
+
+local publish_diagnostics_original = vim.lsp.handlers["textDocument/publishDiagnostics"]
+vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+  if ctx.client_id == "vtsls" then require("ts-error-translator").translate_diagnostics(err, result, ctx, config) end
+  publish_diagnostics_original(err, result, ctx, config)
+end

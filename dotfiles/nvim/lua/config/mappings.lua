@@ -106,7 +106,24 @@ return {
     -- experiments
     { "n", "<c-c>", "ciw" },
     { "n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", "LSP: Show hover" },
-    { "n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", "LSP: Go to definition" },
+    {
+      "n",
+      "gd",
+      function()
+        vim.lsp.buf.definition({
+          on_list = function(options)
+            if vim.islist(options.items) or type(options.items) == "table" then
+              -- TODO: filter based on item.filename
+              vim.fn.setqflist({}, " ", { title = options.title, items = options.items, context = options.context })
+              vim.api.nvim_command("cfirst")
+              return
+            end
+            vim.lsp.buf.definition()
+          end,
+        })
+      end,
+      "LSP: Go to definition",
+    },
     -- {
     --   "n",
     --   "gvd",

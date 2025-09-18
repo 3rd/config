@@ -13,7 +13,6 @@ return lib.module.create({
               providers = {
                 {
                   name = "references_with_warning",
-                  enabled = true,
                   event = { "LspAttach", "BufWritePost" },
                   handler = function(bufnr, func_info, provider_config, callback)
                     local filename = vim.api.nvim_buf_get_name(bufnr)
@@ -80,7 +79,7 @@ return lib.module.create({
           },
           limits = {
             exclude = {},
-            exclude_gitignored = true,
+            exclude_gitignored = false,
             max_lines = 2000,
             max_lenses = 200,
           },

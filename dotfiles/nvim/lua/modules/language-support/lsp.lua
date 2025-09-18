@@ -240,19 +240,6 @@ local setup_lspconfig = function()
           updateImportsOnFileMove = { enabled = "always" },
         },
       },
-      handlers = {
-        -- always go to the first definition
-        ["textDocument/definition"] = function(err, result, ...)
-          if vim.islist(result) or type(result) == "table" then result = result[1] end
-          vim.lsp.handlers["textDocument/definition"](err, result, ...)
-        end,
-        ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
-          if ctx.client_id == "vtsls" then
-            require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
-          end
-          vim.lsp.handlers["textDocument/publishDiagnostics"](err, result, ctx, config)
-        end,
-      },
     },
     -- ts_ls = {
     --   root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
@@ -558,6 +545,7 @@ return lib.module.create({
     },
     {
       "esmuellert/nvim-eslint",
+      enabled = lib.path.find_root({ "package.json" }) ~= nil,
       lazy = false,
       dependencies = {
         "neovim/nvim-lspconfig",
@@ -577,7 +565,7 @@ return lib.module.create({
 
         opts = vim.tbl_deep_extend("force", opts or {}, {
           -- debug = true,
-          -- root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
+          root_dir = root_pattern(".root", "package.json", ".git") or vim.uv.cwd(),
           handlers = {
             ["eslint/noConfig"] = function(_, result)
               vim.notify(result.message, vim.log.levels.WARN)
