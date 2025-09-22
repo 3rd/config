@@ -4,6 +4,7 @@ return lib.module.create({
   plugins = {
     {
       "neovim/nvim-lspconfig",
+      commit = "c8b90ae5cbe21d547b342b05c9266dcb8ca0de8f",
       lazy = false,
       config = function()
         local servers = {
@@ -22,7 +23,8 @@ return lib.module.create({
           "rust_analyzer",
           "tailwindcss",
           "eslint",
-          "vtsls",
+          "ts_ls",
+          -- "vtsls",
           "yamlls",
           "zls",
         }
@@ -73,12 +75,13 @@ return lib.module.create({
         "neovim/nvim-lspconfig",
       },
       opts = function(_, opts)
-        local function root_pattern(...)
-          local patterns = { ... }
-          return function(startpath)
-            return vim.fs.root(startpath or vim.api.nvim_buf_get_name(0), patterns)
-          end
-        end
+        local root_pattern = require("lspconfig.util").root_pattern
+        -- local function root_pattern(...)
+        --   local patterns = { ... }
+        --   return function(startpath)
+        --     return vim.fs.root(startpath or vim.api.nvim_buf_get_name(0), patterns)
+        --   end
+        -- end
 
         -- override
         local eslintConfigOverride = nil
