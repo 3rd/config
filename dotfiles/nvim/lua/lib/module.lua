@@ -2,8 +2,7 @@ local is = require("lib/is")
 
 ---@class lsp_hooks
 ---@field capabilities nil|fun(capabilities: table): table|nil
----@field on_attach nil|fun(on_attach: function)
----@field on_attach_call nil|fun(client: table, bufnr: number)
+---@field on_attach nil|fun(client: table, bufnr: number)
 
 ---@class hooks
 ---@field lsp lsp_hooks|nil
@@ -86,6 +85,7 @@ local get_modules = function(opts)
     path = string.gsub(path, ".lua$", "")
     if is.no.empty(path) then
       local ok, module = pcall(require, path)
+      if not ok then error(string.format("Error loading module %s: %s", path, module)) end
       ---@cast module Module
       local is_module = ok and type(module) == "table" and module.__is_module
       local is_valid_module_for_host = is_module

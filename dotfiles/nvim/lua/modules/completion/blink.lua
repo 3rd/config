@@ -204,15 +204,6 @@ return lib.module.create({
       },
     },
   },
-  hooks = {
-    lsp = {
-      -- https://github.com/Saghen/blink.cmp/issues/21
-      capabilities = function(capabilities)
-        capabilities.textDocument.completion.completionItem.insertReplaceSupport = false
-        return capabilities
-      end,
-    },
-  },
   mappings = {
     {
       "i",

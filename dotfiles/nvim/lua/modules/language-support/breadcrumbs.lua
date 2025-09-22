@@ -27,7 +27,7 @@ return lib.module.create({
   hosts = "*",
   hooks = {
     lsp = {
-      on_attach_call = function(client, bufnr)
+      on_attach = function(client, bufnr)
         local ft = vim.bo.filetype
         if vim.tbl_contains(barbecue_config.exclude_filetypes, ft) then return end
         if client.server_capabilities.documentSymbolProvider then require("nvim-navic").attach(client, bufnr) end

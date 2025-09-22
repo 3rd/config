@@ -15,6 +15,7 @@ return lib.module.create({
         mason.setup()
 
         mason_lspconfig.setup({
+          automatic_enable = false,
           ensure_installed = {
             "astro",
             "bashls",
@@ -32,7 +33,6 @@ return lib.module.create({
             "vtsls",
             -- "vuels",
           },
-          automatic_installation = true,
         })
       end,
     },

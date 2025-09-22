@@ -5,7 +5,7 @@ return lib.module.create({
   plugins = {
     {
       "Wansmer/symbol-usage.nvim",
-      event = "BufReadPre", -- need run before LspAttach if you use nvim 0.9. On 0.10 use 'LspAttach'
+      event = "LspAttach",
       config = function()
         require("symbol-usage").setup({
           ---@type table<string, any> `nvim_set_hl`-like options for highlight virtual text

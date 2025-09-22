@@ -26,7 +26,7 @@ return lib.module.create({
   },
   hooks = {
     lsp = {
-      on_attach_call = function(client, bufnr)
+      on_attach = function(client, bufnr)
         vim.api.nvim_buf_create_user_command(bufnr, "LspTypescriptSourceAction", function()
           local source_actions = vim.tbl_filter(function(action)
             return vim.startswith(action, "source.")

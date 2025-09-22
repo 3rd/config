@@ -1,55 +1,83 @@
-local function lua_rtp()
-  local runtime_path = vim.split(package.path, ";")
-  table.insert(runtime_path, "lua/?.lua")
-  table.insert(runtime_path, "lua/?/init.lua")
-  return runtime_path
-end
+vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
+  update_in_insert = false,
+  severity_sort = true,
+})
 
-vim.lsp.config["luals"] = {
-  cmd = { "lua-language-server" },
-  filetypes = { "lua" },
-  root_markers = { ".root", ".luarc.json", ".luarc.jsonc" },
-  settings = {
-    Lua = {
-      runtime = {
-        version = "LuaJIT",
-        path = lua_rtp(),
-      },
-      workspace = {
-        library = {
-          vim.env.VIMRUNTIME,
-          -- [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-          -- [vim.fn.stdpath("config")] = true,
-          -- [".luarc.json"] = true,
-          -- [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-          -- [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
-          -- [vim.fn.stdpath("config") .. "/lua"] = true,
-          -- [vim.fn.expand("$PWD/lua")] = true,
+vim.lsp.config("*", {
+  root_markers = { ".root", ".git" },
+  capabilities = {
+    workspace = {
+      -- https://github.com/neovim/neovim/issues/23291
+      didChangeWatchedFiles = { dynamicRegistration = false },
+    },
+    textDocument = {
+      completion = {
+        completionItem = {
+          snippetSupport = true,
+          resolveSupport = {
+            properties = { "documentation", "detail", "additionalTextEdits" },
+          },
         },
-        checkThirdParty = false,
-        ignoreDir = { ".git", "node_modules", "linters", "plugins" },
-        maxPreload = 500,
-        preloadFileSize = 500,
-      },
-      completion = { callSnippet = "Replace" },
-      diagnostics = {
-        globals = { "vim", "describe", "it", "before_each", "after_each" },
-        disable = { "missing-fields", "unused-local" },
-        unusedLocalExclude = { "_*" },
-      },
-      hint = { enable = true },
-      semantic = { keyword = true },
-      telemetry = {
-        enable = false,
       },
     },
   },
-  handlers = {},
-}
-vim.lsp.enable("luals")
+})
 
-local publish_diagnostics_original = vim.lsp.handlers["textDocument/publishDiagnostics"]
-vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
-  if ctx.client_id == "vtsls" then require("ts-error-translator").translate_diagnostics(err, result, ctx, config) end
-  publish_diagnostics_original(err, result, ctx, config)
-end
+local overrides = {
+  formatting = {
+    enable = { "eslint" },
+    disable = { "html", "vtsls", "ts_ls" },
+  },
+}
+
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+
+    -- because fuck consistency
+    local disable_default_lsp_mappings = function()
+      vim.keymap.del("n", "K", { buffer = args.buf })
+      vim.keymap.del("n", "grr")
+      vim.keymap.del("n", "grn")
+      vim.keymap.del("n", "gra")
+      vim.keymap.del("n", "gri")
+      vim.keymap.del("n", "grt")
+      vim.keymap.del("n", "gO")
+    end
+    pcall(disable_default_lsp_mappings)
+
+    -- mappings
+    for _, mapping in ipairs(require("config/mappings").lsp) do
+      local mode, lhs, rhs, opts_or_desc = mapping[1], mapping[2], mapping[3], mapping[4]
+      local opts = lib.is.string(opts_or_desc) and { desc = opts_or_desc } or opts_or_desc or {}
+      opts.buffer = args.buf
+      lib.map.map(mode, lhs, rhs, opts)
+    end
+
+    if not client then return end
+
+    -- hook.lsp.on_attach
+    local modules = lib.module.get_enabled_modules()
+    local modules_with_capabilities = table.filter(modules, function(module)
+      return ((module.hooks or {}).lsp or {}).capabilities ~= nil
+    end)
+    local modules_with_on_attach = table.filter(modules, function(module)
+      return ((module.hooks or {}).lsp or {}).on_attach ~= nil
+    end)
+    for _, module in ipairs(modules_with_on_attach) do
+      module.hooks.lsp.on_attach(client, args.buf)
+    end
+
+    -- hook.lsp.capabilities
+    for _, module in ipairs(modules_with_capabilities) do
+      client.server_capabilities = module.hooks.lsp.capabilities(client.server_capabilities)
+    end
+
+    -- lsp formatting
+    if vim.tbl_contains(overrides.formatting.enable, client.name) then
+      client.server_capabilities.documentFormattingProvider = true
+    elseif vim.tbl_contains(overrides.formatting.disable, client.name) then
+      client.server_capabilities.documentFormattingProvider = false
+    end
+  end,
+})

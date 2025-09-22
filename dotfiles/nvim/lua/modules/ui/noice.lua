@@ -41,13 +41,14 @@ local setup_noice = function()
           enter = true,
         },
       },
-      -- hover = {
-      --   -- https://github.com/folke/noice.nvim/blob/main/lua/noice/config/preset.lua#L55
-      --   border = {
-      --     padding = { 0, 1 },
-      --   },
-      --   position = { row = 2, col = 2 },
-      -- },
+      hover = {
+        -- https://github.com/folke/noice.nvim/blob/main/lua/noice/config/preset.lua#L55
+        border = {
+          style = "rounded",
+          padding = { 0, 1 },
+        },
+        position = { row = 2, col = 2 },
+      },
     },
   })
 end
