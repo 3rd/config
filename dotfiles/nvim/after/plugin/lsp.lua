@@ -44,9 +44,7 @@ vim.lsp.config["luals"] = {
       },
     },
   },
-  handlers = {
-    -- always go to the first definition
-  },
+  handlers = {},
 }
 vim.lsp.enable("luals")
 

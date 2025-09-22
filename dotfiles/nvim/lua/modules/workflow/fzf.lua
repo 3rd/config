@@ -92,27 +92,12 @@ local setup_fzf_lua = function()
           else
             opts.filename = node.absolute_path
           end
-          local prox = vim.fn.exepath("proximity-sort")
-          if prox and #prox > 0 then
-            local libuv = require("fzf-lua.libuv")
-            local ctx = vim.fn.fnamemodify(node.absolute_path, ":.")
-            opts.filter = string.format("%s %s", libuv.shellescape(prox), libuv.shellescape(ctx))
-          end
         end
       end
     end
 
     -- regular search
-    if not opts.filter then
-      local prox = vim.fn.exepath("proximity-sort")
-      if prox and #prox > 0 then
-        local ctx = vim.fn.expand("%:.")
-        if ctx and #ctx > 0 then
-          local libuv = require("fzf-lua.libuv")
-          opts.filter = string.format("%s %s", libuv.shellescape(prox), libuv.shellescape(ctx))
-        end
-      end
-    end
+    -- if not opts.filter then end
 
     fzf.grep_project(opts)
   end, "Find text in project")

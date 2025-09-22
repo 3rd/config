@@ -39,12 +39,13 @@ local setup = function()
 end
 
 local setup_lspconfig = function()
-  local function root_pattern(...)
-    local patterns = { ... }
-    return function(startpath)
-      return vim.fs.root(startpath or vim.api.nvim_buf_get_name(0), patterns)
-    end
-  end
+  local util = require("lspconfig.util")
+  -- local function root_pattern(...)
+  --   local patterns = { ... }
+  --   return function(startpath)
+  --     return vim.fs.root(startpath or vim.api.nvim_buf_get_name(0), patterns)
+  --   end
+  -- end
 
   local overrides = {
     -- client.server_capabilities.documentFormattingProvider
@@ -151,7 +152,7 @@ local setup_lspconfig = function()
     --   },
     -- },
     vtsls = {
-      root_dir = root_pattern(".root", "package.json") or vim.uv.cwd(),
+      root_dir = util.root_pattern("tsconfig.json", ".root", "package.json") or vim.uv.cwd(),
       filetypes = {
         "javascript",
         "javascriptreact",
@@ -473,7 +474,7 @@ local setup_lspconfig = function()
 
       -- handle special root_dir cases
       if server_name == "vtsls" and not config.root_dir then
-        config.root_dir = root_pattern(".root", "package.json") or vim.uv.cwd()
+        config.root_dir = util.root_pattern("tsconfig.json", ".root", "package.json") or vim.uv.cwd()
       end
 
       -- clean up fields not used by vim.lsp.config
@@ -499,10 +500,13 @@ return lib.module.create({
   hosts = "*",
   setup = function()
     setup()
-    -- defer LSP configuration setup
-    vim.schedule(setup_lspconfig)
   end,
   plugins = {
+    dependencies = {
+      "neovim/nvim-lspconfig",
+      event = "VeryLazy",
+      config = setup_lspconfig,
+    },
     {
       "b0o/schemastore.nvim",
       event = "VeryLazy",
