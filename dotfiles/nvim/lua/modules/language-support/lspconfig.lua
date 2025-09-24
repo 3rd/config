@@ -4,7 +4,6 @@ return lib.module.create({
   plugins = {
     {
       "neovim/nvim-lspconfig",
-      commit = "c8b90ae5cbe21d547b342b05c9266dcb8ca0de8f",
       lazy = false,
       config = function()
         local servers = {
