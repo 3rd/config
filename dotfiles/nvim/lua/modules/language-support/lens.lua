@@ -32,7 +32,8 @@ return lib.module.create({
                         local count = #references
                         local icon, text
                         if count == 0 then
-                          icon = utils.if_nerdfont_else("⛺ ", "WARN ")
+                          -- icon = utils.if_nerdfont_else("⛺ ", "WARN ")
+                          icon = ""
                           text = icon .. "noref"
                         else
                           icon = utils.if_nerdfont_else("󰌹 ", "")

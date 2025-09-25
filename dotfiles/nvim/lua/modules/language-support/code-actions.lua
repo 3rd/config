@@ -42,22 +42,24 @@ return lib.module.create({
           { key = "a", pattern = [[^Add import from "%.%./.+$]] }, -- "../foo"
           { key = "a", pattern = [[^Add import from "@@/.+$]] }, -- "@@/foo"
           { key = "a", pattern = [[^Add import from "@/.+$]] }, -- "@/foo"
-
           { key = "u", pattern = [[^Update import.+$]] },
-
-          -- ts: extract function
-          { key = "i", pattern = [[^Extract to inner function in arrow function$]] },
-          { key = "i", pattern = [[^Extract to inner function in method.+$]] },
-          { key = "m", pattern = [[^Extract to function in module scope$]] },
-          { key = "c", pattern = [[^Extract to method in class.+$]] },
-
-          -- ts: extract variable
-          { key = "s", pattern = [[^Extract to constant in enclosing scope$]] },
 
           -- eslint
           { key = "d", pattern = [[.+ for this line$]] },
           { key = "a", pattern = [[.+ for the entire file$]] },
           { key = "f", pattern = [[^Fix this.+$]] },
+
+          -- ts: extract function
+          { key = "i", pattern = [[^Extract to inner function in arrow function$]] },
+          { key = "i", pattern = [[^Extract to inner function in method.+$]] },
+          { key = "s", pattern = [[^Extract to function in module scope$]] },
+          { key = "m", pattern = [[^Extract to method in class.+$]] },
+
+          -- ts: extract variable
+          { key = "c", pattern = [[^Extract to constant in enclosing scope$]] },
+
+          -- ts: extra
+          { key = "f", pattern = [[^Infer parameter types from usage$]] },
 
           -- lua
           { key = "d", pattern = [[^Disable diagnostics on this line.+$]] },
