@@ -14,7 +14,8 @@ return {
     disableAutomaticTypingAcquisition = true,
     preferences = {
       allowIncompleteCompletions = true,
-      includeCompletionsForModuleExports = false,
+      includeCompletionsForModuleExports = true,
+      includeCompletionsForImportStatements = true,
       importModuleSpecifierPreference = "shortest",
       includePackageJsonAutoImports = "off",
       useAliasesForRenames = true,
@@ -64,10 +65,8 @@ return {
       vim.lsp.handlers["textDocument/definition"](err, result, ...)
     end,
     ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
-      if ctx.client_id == "vtsls" then
-        require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
-      end
-      vim.lsp.handlers["textDocument/publishDiagnostics"](err, result, ctx, config)
+      require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
+      vim.lsp.diagnostic.on_publish_diagnostics(err, result, ctx)
     end,
     ["_typescript.rename"] = function(_, result, ctx)
       local client = assert(vim.lsp.get_client_by_id(ctx.client_id))

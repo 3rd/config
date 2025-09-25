@@ -60,8 +60,9 @@ return lib.module.create({
               return nil
             end,
             is_available = function()
-              local ok = vim.fn.system("tmux list-sessions 2>/dev/null")
-              return vim.v.shell_error == 0
+              -- local ok = vim.fn.system("tmux list-sessions 2>/dev/null")
+              -- return vim.v.shell_error == 0
+              return true
             end,
           },
           auto_close = true,

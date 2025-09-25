@@ -5,7 +5,7 @@ vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagn
 
 vim.lsp.config("*", {
   root_markers = { ".root", ".git" },
-  capabilities = {
+  capabilities = require("blink.cmp").get_lsp_capabilities({
     workspace = {
       -- https://github.com/neovim/neovim/issues/23291
       didChangeWatchedFiles = { dynamicRegistration = false },
@@ -20,7 +20,7 @@ vim.lsp.config("*", {
         },
       },
     },
-  },
+  }),
 })
 
 local overrides = {

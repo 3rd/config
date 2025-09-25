@@ -46,12 +46,12 @@ return lib.module.create({
     {
       "dmmulroy/ts-error-translator.nvim",
       event = "VeryLazy",
-      config = function()
-        vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx)
-          if ctx.client_id == "vtsls" then require("ts-error-translator").translate_diagnostics(err, result, ctx) end
-          vim.lsp.diagnostic.on_publish_diagnostics(err, result, ctx)
-        end
-      end,
+      -- config = function()
+      --   vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx)
+      --     if ctx.client_id == "vtsls" then require("ts-error-translator").translate_diagnostics(err, result, ctx) end
+      --     vim.lsp.diagnostic.on_publish_diagnostics(err, result, ctx)
+      --   end
+      -- end,
     },
     {
       "j-hui/fidget.nvim",
