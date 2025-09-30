@@ -45,7 +45,7 @@
       confirm_os_window_close = "0";
 
       # background
-      background_opacity = "0.97";
+      background_opacity = "0.98";
       dynamic_background_opacity = "yes";
       # background_tint = "0.5";
       transparent_background_colors =

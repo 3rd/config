@@ -68,8 +68,7 @@ return lib.module.create({
     },
     {
       "esmuellert/nvim-eslint",
-      enabled = lib.path.find_root({ "package.json" }) ~= nil,
-      lazy = false,
+      lazy = lib.path.find_root({ "package.json" }) == nil and true or false,
       dependencies = {
         "neovim/nvim-lspconfig",
       },

@@ -65,6 +65,10 @@ return lib.module.create({
           { key = "d", pattern = [[^Disable diagnostics on this line.+$]] },
           { key = "a", pattern = [[^Disable diagnostics on this line.+$]] },
           { key = "w", pattern = [[^Disable diagnostics in the workspace.+$]] },
+
+          -- generic
+          { key = "a", pattern = [[^Add.+$]] },
+          { key = "u", pattern = [[^Update.+$]] },
         }
 
         local opts = {
