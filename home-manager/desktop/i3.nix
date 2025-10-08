@@ -83,15 +83,9 @@ in {
     })
   ];
 
-  home.packages = with pkgs; [
-    lock
-    i3lock
-    scrot
-    xss-lock
-    feh
-    screen-cycle
-    xmousepasteblock
-  ];
+  home.packages = with pkgs;
+    [ lock i3lock scrot feh screen-cycle xmousepasteblock ]
+    ++ (with pkgs-stable; [ xss-lock ]);
 
   xsession = {
     enable = true;
@@ -231,7 +225,7 @@ in {
           {
             always = true;
             command =
-              "--no-startup-id ${pkgs.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
+              "--no-startup-id ${pkgs-stable.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
           }
           { command = "--no-startup-id ${pkgs-stable.copyq}/bin/copyq"; }
           {

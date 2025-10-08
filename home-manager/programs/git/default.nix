@@ -56,7 +56,7 @@ in {
     };
     difftastic = {
       enable = true;
-      background = "dark";
+      options = { background = "dark"; };
     };
     extraConfig = {
       init.defaultBranch = "master";

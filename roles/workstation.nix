@@ -39,7 +39,7 @@
     glib
     gnumake
     graphviz
-    imhex
+    # imhex
     inotify-tools
     libfaketime
     libnotify
@@ -67,6 +67,7 @@
     xorg.libXi.dev
     xorg.libXrandr.dev
     libGL.dev
+    lm_sensors
   ];
   environment.variables.EDITOR = "vim";
 

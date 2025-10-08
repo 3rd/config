@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, pkgs-stable, ... }:
 
 {
 
@@ -6,7 +6,7 @@
     #
     nodejs_22
     electron
-    quick-lint-js
+    pkgs-stable.quick-lint-js
     # bun
   ];
 
