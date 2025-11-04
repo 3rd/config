@@ -13,7 +13,7 @@
 {
   services.picom = {
     enable = true;
-    package = pkgs.picom-next;
+    # package = pkgs.picom-next;
     backend = lib.mkDefault "glx";
     vSync = false;
     settings = {

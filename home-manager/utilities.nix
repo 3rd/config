@@ -44,10 +44,10 @@
 
       # system
       htop
-      du-dust # https://github.com/bootandy/dust
+      dust # https://github.com/bootandy/dust
       dua # https://github.com/Byron/dua-cli
       fclones # https://github.com/pkolaczk/fclones
-      lfs # https://github.com/Canop/lfs
+      dysk # https://github.com/Canop/lfs
       xcp # https://github.com/tarka/xcp
       procs # https://github.com/dalance/procs
       evemu

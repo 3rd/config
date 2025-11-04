@@ -69,8 +69,7 @@
       # joypixels
       manrope
       noto-fonts
-      noto-fonts-emoji
-      noto-fonts-extra
+      noto-fonts-color-emoji
       symbola
       unifont
       nerd-fonts.fira-code

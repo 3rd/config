@@ -93,7 +93,7 @@
 
   # hardware
   hardware = {
-    firmware = with pkgs; [ firmwareLinuxNonfree ];
+    firmware = with pkgs; [ linux-firmware ];
     enableAllFirmware = true;
     enableRedistributableFirmware = true;
     i2c.enable = true;
