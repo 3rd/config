@@ -24,7 +24,7 @@
       gron
       sqlite
       ast-grep
-      flyctl
+      # flyctl
       ngrok
       rlwrap
       socat
@@ -91,6 +91,7 @@
       pkgs-stable.netlify-cli
       pkgs-stable.copyq
       pkgs-stable.flameshot
+      pkgs-stable.flyctl
     ];
 
   programs.fish.shellAliases = {

@@ -46,6 +46,18 @@ return lib.module.create({
     {
       "dmmulroy/ts-error-translator.nvim",
       event = "VeryLazy",
+      opts = {
+        auto_attach = true,
+        servers = {
+          "astro",
+          "svelte",
+          "ts_ls",
+          "tsserver",
+          "typescript-tools",
+          "volar",
+          "vtsls",
+        },
+      },
       -- config = function()
       --   vim.lsp.handlers["textDocument/publishDiagnostics"] = function(err, result, ctx)
       --     if ctx.client_id == "vtsls" then require("ts-error-translator").translate_diagnostics(err, result, ctx) end

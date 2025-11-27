@@ -4,7 +4,7 @@ return lib.module.create({
   plugins = {
     {
       "oribarilan/lensline.nvim",
-      event = "VeryLazy",
+      -- event = "VeryLazy",
       config = function()
         require("lensline").setup({
           profiles = {

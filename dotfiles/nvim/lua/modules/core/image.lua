@@ -1,6 +1,6 @@
 return lib.module.create({
   name = "core/image",
-  -- enabled = false,
+  enabled = false,
   hosts = { "spaceship", "death" },
   plugins = {
     {

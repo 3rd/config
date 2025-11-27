@@ -64,10 +64,6 @@ return {
       if vim.islist(result) or type(result) == "table" then result = result[1] end
       vim.lsp.handlers["textDocument/definition"](err, result, ...)
     end,
-    ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
-      require("ts-error-translator").translate_diagnostics(err, result, ctx, config)
-      vim.lsp.diagnostic.on_publish_diagnostics(err, result, ctx)
-    end,
     ["_typescript.rename"] = function(_, result, ctx)
       local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
       vim.lsp.util.show_document({

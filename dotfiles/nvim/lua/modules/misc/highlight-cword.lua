@@ -1,6 +1,6 @@
 return lib.module.create({
   name = "highlight-cword",
-  hosts = "*",
+  -- hosts = "*",
   plugins = {
     {
       "nvimdev/cwordmini.nvim",
