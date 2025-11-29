@@ -37,28 +37,14 @@ in {
 
   programs.git = {
     enable = true;
-    aliases = {
-      undo = ''
-        !f() {\
-          git-undo; \
-        }; f
-      '';
-    };
-    delta = {
-      enable = false;
-      options = {
-        navigate = true;
-        line-numbers = true;
-        syntax-theme = "Dracula";
-        features = "decorations";
-        whitespace-error-style = "22 reverse";
+    settings = {
+      alias = {
+        undo = ''
+          !f() {\
+            git-undo; \
+          }; f
+        '';
       };
-    };
-    difftastic = {
-      enable = true;
-      options = { background = "dark"; };
-    };
-    extraConfig = {
       init.defaultBranch = "master";
       color.ui = true;
       gc = {
@@ -84,6 +70,23 @@ in {
       push = { default = "simple"; };
       rebase = { autoStash = true; };
     };
+  };
+
+  programs.delta = {
+    enable = false;
+    options = {
+      navigate = true;
+      line-numbers = true;
+      syntax-theme = "Dracula";
+      features = "decorations";
+      whitespace-error-style = "22 reverse";
+    };
+  };
+
+  programs.difftastic = {
+    enable = true;
+    git.enable = true;
+    options = { background = "dark"; };
   };
 
   programs.fish.shellAliases = {
