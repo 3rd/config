@@ -12,6 +12,7 @@ if [ -f "go.mod" ]; then
   exit
 fi
 
+export NODE_OPTIONS="--max-old-space-size=24000"
 if [ -f "package.json" ]; then
   TARGET="${1:-.}"
   if [ -d "$TARGET/src" ]; then
