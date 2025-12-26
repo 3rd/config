@@ -8,6 +8,7 @@
     ../layers/custom/vault.nix
     ../services/syncthing.private.nix
     ../misc/remarkable.nix
+    ../programs/obs.nix
   ];
 
   home.packages = with pkgs;

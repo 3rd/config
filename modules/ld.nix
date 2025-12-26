@@ -6,12 +6,13 @@
   # https://www.reddit.com/r/NixOS/comments/1d7zvgu/nvim_cant_find_standard_library_headers/
   programs.nix-ld = {
     enable = true;
-    libraries = with pkgs; [
-      stdenv.cc.cc
+    libraries = with pkgs;
+      [
+        stdenv.cc.cc
 
-      (runCommand "steamrun-lib" { }
-        "mkdir $out; ln -s ${steam-run.fhsenv}/usr/lib64 $out/lib")
-    ];
+        (runCommand "steamrun-lib" { }
+          "mkdir $out; ln -s ${steam-run.fhsenv}/usr/lib64 $out/lib")
+      ] ++ [ config.boot.kernelPackages.nvidia_x11 ];
   };
 
   system.activationScripts.ldso = {

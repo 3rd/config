@@ -150,11 +150,12 @@
       "ctrl+," = "send_text all \\x1b[44;5u";
       "ctrl+." = "send_text all \\x1b[46;5u";
       "ctrl+;" = "send_text all \\x1b[59;5u";
-      "shift+enter" = "send_text all \\x1b[13;2u";
+      # "shift+enter" = "send_text all \\x1b[13;2u";
     };
     extraConfig = ''
       mouse_map ctrl+shift+left release grabbed,ungrabbed mouse_click_url
       mouse_map left click ungrabbed mouse_click_url_or_select
+      map shift+enter send_text all \x1b\r
 
       # <c-i>
       map ctrl+i send_text all \x1b[105;5u

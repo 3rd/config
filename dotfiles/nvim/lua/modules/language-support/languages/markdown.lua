@@ -32,10 +32,11 @@ return lib.module.create({
         -- log_level = "debug",
         preset = "obsidian",
         file_types = { "markdown" },
+        restart_highlighter = false,
         overrides = {
           buftype = {
             nofile = {
-              render_modes = { "n", "c", "i" },
+              render_modes = { "n", "i", "c" },
               -- render_modes = {},
               debounce = 5,
               code = {
@@ -55,6 +56,9 @@ return lib.module.create({
           },
           above = 0,
           below = 0,
+        },
+        win_options = {
+          concealcursor = { rendered = "" },
         },
         heading = {
           render_modes = true,
@@ -109,7 +113,6 @@ return lib.module.create({
         },
         checkbox = {
           enabled = true,
-          position = "inline",
           unchecked = {
             icon = "󰄱",
             highlight = "RenderMarkdownUnchecked",

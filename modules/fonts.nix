@@ -67,7 +67,6 @@
       inter
       jetbrains-mono
       # joypixels
-      manrope
       noto-fonts
       noto-fonts-color-emoji
       symbola
