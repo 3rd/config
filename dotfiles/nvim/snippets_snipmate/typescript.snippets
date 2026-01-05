@@ -21,7 +21,7 @@ snippet breducer "reducer"
 	type $1Action =
 		| { type: "action"; payload: string; }
 		| { type: "action"; payload: number; };
-	
+
 	const ${1/\w+/\l$0/g}Reducer = (state: $1State, action: $1Action): $1State => {
 		switch (action.type) {
 			case "action":

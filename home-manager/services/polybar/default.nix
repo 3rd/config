@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, pkgs-stable, lib, ... }:
 
 {
   imports = [ ../../colors.nix ];
@@ -28,7 +28,7 @@
 
   services.polybar = {
     enable = true;
-    package = pkgs.polybar.override {
+    package = pkgs-stable.polybar.override {
       # i3GapsSupport = true;
       i3Support = true;
       mpdSupport = true;

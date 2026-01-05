@@ -63,11 +63,18 @@ local setup = function()
     end
   end)()
 
+  local cursor_status = function()
+    local ok, cursor = pcall(require, "cursor")
+    if not ok then return "" end
+    return cursor.status_icon()
+  end
+
   local sections = {
     lualine_a = { components.git_branch },
     lualine_b = { components.filename },
     lualine_c = { components.git_diff, components.diagnostics },
     lualine_x = {
+      cursor_status,
       copilot_status,
     },
     lualine_y = { components.filetype },

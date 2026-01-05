@@ -14,8 +14,8 @@
       enable = true;
       enableOnBoot = true;
       # new docker shitfest
-      # package = pkgs.docker_25;
-      package = pkgs.stable.docker;
+      package = pkgs.docker_25;
+      # package = pkgs.stable.docker;
       # extraOptions = "--default-runtime=nvidia";
     };
     libvirtd = {

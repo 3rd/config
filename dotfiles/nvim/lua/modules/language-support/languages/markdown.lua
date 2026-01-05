@@ -1,3 +1,24 @@
+local handle_toggle_task = function()
+  local line = vim.fn.getline(".")
+  local col = vim.fn.col(".")
+
+  if line:match("%[[ ]%]") then
+    vim.cmd([[s/\[ \]/[-]/e]])
+  elseif line:match("%[%-%]") then
+    vim.cmd([[s/\[-\]/[x]/e]])
+  elseif line:match("%[[xX]%]") then
+    vim.cmd([[s/\[[xX]\]/[ ]/e]])
+  elseif line:match("%[_%]") then
+    vim.cmd([[s/\[_\]/[ ]/e]])
+  else
+    -- create checkbox: preserve indent, add "- [ ] " prefix
+    vim.cmd([[s/\v^(\s*)\S/\1- [ ] \0/e]])
+  end
+
+  vim.cmd("nohl")
+  vim.fn.cursor(vim.fn.line("."), col)
+end
+
 local setup = function()
   vim.g.markdown_fenced_languages = {
     "ts=typescript",
@@ -13,6 +34,7 @@ local setup = function()
       vim.opt_local.wrap = true
       vim.opt_local.linebreak = true
       vim.opt_local.breakindent = true
+      vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true, noremap = true })
     end,
   })
 end

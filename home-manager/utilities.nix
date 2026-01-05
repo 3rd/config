@@ -15,7 +15,6 @@
       tokei # https://github.com/XAMPPRocky/tokei
       watchexec # https://github.com/watchexec/watchexec
       xh # https://github.com/ducaale/xh
-      dogdns # https://github.com/ogham/dog
       fx # https://github.com/antonmedv/fx
       # xsv # https://github.com/BurntSushi/xsv
       sd # https://github.com/chmln/sd

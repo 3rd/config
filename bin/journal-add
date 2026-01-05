@@ -1,11 +1,31 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bun
+import { $ } from "bun";
 
-TEXT=$(yad --entry --text "Journal entry:" --width 600)
-DEST=~/brain/wiki/journal
+// get user input via yad
+const { stdout } = await $`yad --entry --text "Journal entry:" --width 600`.quiet().nothrow();
+const text = stdout.toString().trim();
 
-if [ "$TEXT" != "" ]; then
-  DATE=$(date "+%Y-%m-%d %H:%M:%S")
-  ENTRY="$DATE: $TEXT"
+if (text) {
+  const dest = `${process.env.HOME}/brain/wiki/journal`;
 
-  echo "$ENTRY" >>"$DEST"
-fi
+  // compute date header with ordinal suffix
+  const now = new Date();
+  const day = now.getDate();
+  const suffix = [1, 21, 31].includes(day) ? "st"
+    : [2, 22].includes(day) ? "nd"
+    : [3, 23].includes(day) ? "rd"
+    : "th";
+  const month = now.toLocaleString("en-US", { month: "long" });
+  const year = now.getFullYear();
+  const dateHeader = `* ${year} ${month} ${day}${suffix}`;
+
+  // check if header exists, append if not
+  const { exitCode } = await $`grep -qxF ${dateHeader} ${dest}`.nothrow().quiet();
+  if (exitCode !== 0) {
+    await $`echo ${dateHeader} >> ${dest}`;
+  }
+
+  // add entry with timestamp
+  const timestamp = now.toISOString().slice(0, 19).replace("T", " ");
+  await $`echo "  - ${timestamp}: ${text}" >> ${dest}`;
+}

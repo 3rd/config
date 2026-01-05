@@ -7,7 +7,7 @@ in {
   home.sessionVariables = { };
 
   xsession.windowManager.i3.config.keybindings = {
-    "Mod3+d" = "exec ~/.config/bin/journal-add";
+    "Mod3+d" = "exec --no-startup-id fish -c '~/.config/bin/journal-add'";
   };
 
   programs.fish.shellAliases = { j = "nvim ${journalPath}"; };

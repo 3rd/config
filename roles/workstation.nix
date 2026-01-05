@@ -23,6 +23,9 @@
     "net.core.netdev_max_backlog" = 8388608;
     "net.core.somaxconn" = 8388608;
     "net.ipv4.tcp_max_orphans" = 32768;
+
+    "net.ipv6.conf.default.disable_ipv6" = true;
+    "net.ipv6.conf.all.disable_ipv6" = true;
   };
   # systemd.extraConfig = "DefaultLimitNOFILE=1048576";
   systemd.user.extraConfig = "DefaultLimitNOFILE=1048576";
@@ -68,6 +71,8 @@
     xorg.libXrandr.dev
     libGL.dev
     lm_sensors
+    socat
+    bubblewrap
   ];
   environment.variables.EDITOR = "vim";
 
@@ -107,8 +112,8 @@
   services.atd.enable = true;
   services.gvfs.enable = true; # trash, MTP
   services.logind.killUserProcesses = true;
-  services.devmon.enable = true;
   services.irqbalance.enable = true;
+  # services.devmon.enable = true;
 
   # qt = {
   #   enable = true;
