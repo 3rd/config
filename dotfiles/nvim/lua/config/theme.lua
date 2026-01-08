@@ -79,8 +79,11 @@ colors.common = {
 colors.ui = {
   line = {
     line_nr = { fg = colors.background.lighten(20) },
-    current_line = { bg = colors.background.lighten(8) },
-    current_line_nr = { bg = colors.background.lighten(10), fg = colors.background.lighten(50) },
+    current_line = { bg = colors.background.lighten(5) },
+    current_line_nr = {
+      bg = colors.background.lighten(10),
+      fg = colors.background.lighten(50),
+    },
     current_line_sign = { bg = colors.background.lighten(10), fg = colors.orange },
   },
   split = colors.background.lighten(5),

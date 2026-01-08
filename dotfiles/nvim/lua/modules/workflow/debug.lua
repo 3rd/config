@@ -1,6 +1,6 @@
 return lib.module.create({
   name = "debug",
-  hosts = "*",
+  -- hosts = "*",
   plugins = {
     {
       "mfussenegger/nvim-dap",

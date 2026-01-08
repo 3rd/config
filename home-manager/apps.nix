@@ -53,6 +53,13 @@ let
     terminal = false;
   };
 
+  handyDesktopItem = pkgs.makeDesktopItem {
+    name = "stt-handy";
+    desktopName = "Handy - Speech to Text";
+    exec = "${appLaunchScript}/bin/app-launch handy";
+    terminal = false;
+  };
+
   tanaDesktopItem = webWrapperDesktopItem {
     name = "Tana";
     url = "https://app.tana.inc";
@@ -64,6 +71,7 @@ in {
     appLaunchScript
     heptabaseDesktopItem
     cursorDesktopItem
+    handyDesktopItem
     tanaDesktopItem
   ];
 }

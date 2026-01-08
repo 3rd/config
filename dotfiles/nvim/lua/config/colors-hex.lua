@@ -149,7 +149,7 @@ local colors = {
     },
     line = {
       current_line = {
-        bg = "#312F3C"
+        bg = "#2A2833"
       },
       current_line_nr = {
         bg = "#363442",
