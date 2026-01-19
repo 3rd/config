@@ -429,7 +429,10 @@ return lib.module.create({
       -- "3rd/nvim-ufo",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "nvim-ufo"),
       ft = "syslang",
-      dependencies = { "nvim-treesitter", "kevinhwang91/promise-async" },
+      dependencies = {
+        { "nvim-treesitter/nvim-treesitter", branch = "master" },
+        "kevinhwang91/promise-async",
+      },
       config = setup_ufo,
     },
     {

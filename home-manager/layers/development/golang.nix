@@ -2,7 +2,13 @@
 
 {
   home.packages = with pkgs;
-    [
+    let
+      gotools = pkgs.gotools.overrideAttrs (finalAttrs: previousAttrs: {
+        postInstall = previousAttrs.postInstall + ''
+          mv $out/bin/play $out/bin/goplay
+        '';
+      });
+    in [
       #
       gotools
       golangci-lint

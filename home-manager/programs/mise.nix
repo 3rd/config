@@ -4,14 +4,16 @@
 {
   programs.mise = {
     enable = true;
-    settings = {
-      tools = {
-        #
-        guck = "latest";
+    globalConfig = {
+      settings = {
+        # tools = {
+        #   #
+        #   guck = "latest";
+        # };
+        # aliases = {
+        #   cnode = "20";
+        # };
       };
-      # aliases = {
-      #   cnode = "20";
-      # };
     };
   };
 }

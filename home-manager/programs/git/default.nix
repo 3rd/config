@@ -16,7 +16,6 @@ in {
   imports = [ ./private.nix ];
 
   home.packages = with pkgs; [
-    blackbox
     commit-formatter
     git-crecord
     git-sizer

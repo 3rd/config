@@ -64,7 +64,10 @@ return lib.module.create({
       event = "VeryLazy",
       dependencies = {
         "nvim-lua/plenary.nvim",
-        "nvim-treesitter/nvim-treesitter",
+        {
+          "nvim-treesitter/nvim-treesitter",
+          branch = "master",
+        },
       },
       config = setup,
     },

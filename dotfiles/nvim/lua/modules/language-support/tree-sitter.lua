@@ -231,6 +231,7 @@ return lib.module.create({
   plugins = {
     {
       "nvim-treesitter/nvim-treesitter",
+      branch = "master",
       event = { "BufReadPre", "BufNewFile" },
       dependencies = {
         "nvim-treesitter/playground",
