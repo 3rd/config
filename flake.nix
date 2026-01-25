@@ -10,12 +10,11 @@
     };
 
     neovim-nightly-overlay = {
-      # url = "github:nix-community/neovim-nightly-overlay";
+      url = "github:nix-community/neovim-nightly-overlay";
       # url = "github:nix-community/neovim-nightly-overlay?rev=fd381a5a19f553c2466dc437fb94fcf799d77e82";
       # url = "github:nix-community/neovim-nightly-overlay?rev=9fb5bc0eff86f8bad827f9f3d17d76789d28643b";
       # https://github.com/neovim/neovim/issues/36436
-      url =
-        "github:nix-community/neovim-nightly-overlay?rev=37853aa4419e22dc2b7544e4238dd880af673bc8";
+      # url = "github:nix-community/neovim-nightly-overlay?rev=37853aa4419e22dc2b7544e4238dd880af673bc8";
       # inputs.nixpkgs.follows = "nixpkgs";
     };
 

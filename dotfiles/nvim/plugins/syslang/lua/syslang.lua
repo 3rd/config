@@ -1,6 +1,6 @@
 local folding = require("syslang/folding")
 local slib = require("syslang/lib")
--- local ts_utils = require("nvim-treesitter.ts_utils")
+local ts_utils = require("nvim-treesitter.ts_utils")
 
 local setup_options = function()
   vim.opt_local.foldlevel = 999
@@ -114,7 +114,7 @@ local transition_task_active_to_done = function(task_node)
         local start_time = vim.treesitter.get_node_text(start_time_node, 0)
         local end_date = os.date("%Y.%m.%d")
         local end_time = os.date("%H:%M")
-        local range = vim.treesitter.node_to_lsp_range(datetime_node)
+        local range = ts_utils.node_to_lsp_range(datetime_node)
         local text = string.format("%s %s - %s %s", start_date, start_time, end_date, end_time)
         if start_date == end_date then text = string.format("%s %s-%s", start_date, start_time, end_time) end
         local edit = { range = range, newText = text }
@@ -162,7 +162,7 @@ local transition_task_done_to_default = function(task_node)
       if #date_nodes == 2 then end_date = vim.treesitter.get_node_text(date_nodes[2], 0) end
       local end_time = vim.treesitter.get_node_text(time_nodes[#time_nodes], 0)
       if start_date == end_date and start_time == end_time then
-        local range = vim.treesitter.node_to_lsp_range(session_node)
+        local range = ts_utils.node_to_lsp_range(session_node)
         range.start.line = range.start.line - line_offset
         range.start.character = 0
         range["end"].line = range["end"].line + 1 - line_offset
@@ -207,7 +207,7 @@ local function toggle_task(node, force_clear)
       local marker_node = node:child(0)
       if not marker_node then return end
       if marker_node:type() == task_node_type.marker then
-        local range = vim.treesitter.node_to_lsp_range(marker_node)
+        local range = ts_utils.node_to_lsp_range(marker_node)
         local edit = { range = range, newText = task_node_type.next_text }
         local buf = vim.api.nvim_get_current_buf()
         vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
@@ -283,7 +283,7 @@ local handle_set_schedule = function()
       -- edit existing schedule
       if node:type() == "task_schedule" then
         -- set the text of the whole session node
-        local range = vim.treesitter.node_to_lsp_range(node)
+        local range = ts_utils.node_to_lsp_range(node)
         local edit = { range = range, newText = schedule_text }
         local buf = vim.api.nvim_get_current_buf()
         vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")

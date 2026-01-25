@@ -6,16 +6,12 @@
   programs.neovim = {
     enable = true;
     defaultEditor = true;
-    extraLuaPackages = ps:
-      with ps; [
-        #
-        magick
-        busted
-        # luafilesystem
-      ];
     extraPackages = with pkgs; [ imagemagick gcc ];
     withNodeJs = true;
   };
+
+  # prevent home-manager from generating init.lua
+  xdg.configFile."nvim/init.lua".enable = false;
 
   programs.fish.shellAliases = {
     v = "/home/rabbit/.nix-profile/bin/with-vendors nvim";

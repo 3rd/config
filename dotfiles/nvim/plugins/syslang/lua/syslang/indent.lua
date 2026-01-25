@@ -2,16 +2,16 @@ local outline_node_types = { "outline_1", "outline_2", "outline_3", "outline_4",
 
 -- TODO: indent suboutlines, dedent
 local handle_indent = function()
-  -- local ts_utils = require("nvim-treesitter.ts_utils")
+  local ts_utils = require("nvim-treesitter.ts_utils")
   local outline_node = lib.ts.find_parent_at_line(outline_node_types)
   if outline_node ~= nil then
     local outline_level = outline_node:type():match("%d")
-    local outline_node_range = vim.treesitter.node_to_lsp_range(outline_node)
+    local outline_node_range = ts_utils.node_to_lsp_range(outline_node)
 
     local outline_text_node = lib.ts.find_child(outline_node, "text_to_eol")
     if outline_text_node == nil then throw("no text node found") end
     local outline_text = vim.treesitter.get_node_text(outline_text_node, 0)
-    local outline_text_range = vim.treesitter.node_to_lsp_range(outline_text_node)
+    local outline_text_range = ts_utils.node_to_lsp_range(outline_text_node)
 
     local newIndent = string.rep("  ", outline_level)
     local newMarker = string.rep("*", outline_level + 1)
