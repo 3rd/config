@@ -1,4 +1,22 @@
 #!/usr/bin/env bash
 
-xrandr --output DisplayPort-1 --mode 1920x1080 --pos 2880x0 --rotate normal -r 120 --panning 0x0+0+0
-# xrandr --output DisplayPort-1 --mode 3840x1080 --pos 2880x0 --rotate normal -r 120 --panning 0x0+0+0
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 {on|off}"
+  exit 1
+fi
+
+case "$1" in
+  on)
+    xrandr --output DisplayPort-1 --mode 1920x1080 --pos 2880x0 --rotate normal -r 120 --panning 0x0+0+0
+    # xrandr --output DisplayPort-1 --mode 3840x1080 --pos 2880x0 --rotate normal -r 120 --panning 0x0+0+0
+    echo "Display DisplayPort-1 enabled"
+    ;;
+  off)
+    xrandr --output DisplayPort-1 --off
+    echo "Display DisplayPort-1 disabled"
+    ;;
+  *)
+    echo "Usage: $0 {on|off}"
+    exit 1
+    ;;
+esac

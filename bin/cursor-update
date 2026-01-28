@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+IFS=$'nt'
+
+UPDATE_URL="https://raw.githubusercontent.com/oslook/cursor-ai-downloads/refs/heads/main/version-history.json"
+DEST="${HOME}/apps/Cursor.AppImage"
+
+echo "fetching version info..."
+VERSION_JSON=$(curl -fsSL "$UPDATE_URL")
+
+LATEST_VERSION=$(echo "$VERSION_JSON" | jq -r '.versions[0].version')
+DOWNLOAD_URL=$(echo "$VERSION_JSON" | jq -r '.versions[0].platforms["linux-x64"]')
+
+if [[ -z "$DOWNLOAD_URL" || "$DOWNLOAD_URL" == "null" ]]; then
+  echo "error: could not find linux-x64 download url"
+  exit 1
+fi
+
+echo "latest version: $LATEST_VERSION"
+echo "downloading from: $DOWNLOAD_URL"
+
+mkdir -p "$(dirname "$DEST")"
+curl -fL --progress-bar -o "$DEST" "$DOWNLOAD_URL"
+echo "downloaded to $DEST"
