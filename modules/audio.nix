@@ -5,6 +5,7 @@
     pulseaudioFull
     pavucontrol
     alsa-utils
+    sox
   ];
 
   # https://github.com/NixOS/nixpkgs/issues/102547
