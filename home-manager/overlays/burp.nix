@@ -1,7 +1,9 @@
 self:
-{ pkgs, xorg, stdenv, lib, fetchurl, jre, runtimeShell, makeDesktopItem
+{ pkgs, stdenv, lib, fetchurl, jre, runtimeShell, makeDesktopItem
 , alsa-lib, nss, nspr, cairo, cups, mesa, pango, glib, atk, at-spi2-atk
-, at-spi2-core, dbus, expat, libdrm, libxkbcommon, ... }: {
+, at-spi2-core, dbus, expat, libdrm, libxkbcommon
+, libx11, libxcb, libxi, libxext, libxfixes, libxcomposite, libxdamage, libxrandr
+, ... }: {
   burppro = let
     version = "2024.3.1.3";
     product = "pro";
@@ -16,14 +18,14 @@ self:
       #!${runtimeShell}
               export LD_LIBRARY_PATH=${
                 lib.makeLibraryPath [
-                  xorg.libX11
-                  xorg.libxcb
-                  xorg.libXi
-                  xorg.libXext
-                  xorg.libXfixes
-                  xorg.libXcomposite
-                  xorg.libXdamage
-                  xorg.libXrandr
+                  libx11
+                  libxcb
+                  libxi
+                  libxext
+                  libxfixes
+                  libxcomposite
+                  libxdamage
+                  libxrandr
                   alsa-lib
                   nss
                   nspr

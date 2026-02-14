@@ -65,10 +65,10 @@
       runScript = "fish";
     }))
 
-    xorg.libX11.dev
-    xorg.libXcursor.dev
-    xorg.libXi.dev
-    xorg.libXrandr.dev
+    libx11.dev
+    libxcursor.dev
+    libxi.dev
+    libxrandr.dev
     libGL.dev
     lm_sensors
     socat

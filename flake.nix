@@ -71,7 +71,7 @@
 
       packages = forAllSystems (system: {
         qimgv =
-          nixpkgs.legacyPackages.${system}.callPackage ./system/modules/packages/qimgv
+          nixpkgs.legacyPackages.${system}.callPackage ./system/pkgs/qimgv
           { };
       });
 

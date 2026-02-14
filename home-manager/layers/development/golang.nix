@@ -14,7 +14,7 @@
       golangci-lint
       gotest
       gopls
-    ] ++ (if (system == "x86_64-linux") then
+    ] ++ (if (pkgs.stdenv.hostPlatform.system == "x86_64-linux") then
       [
         #
         pkgs-stable.jetbrains.goland

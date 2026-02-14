@@ -38,14 +38,6 @@ let
       terminal = false;
     };
 
-  heptabaseDesktopItem = pkgs.makeDesktopItem {
-    name = "heptabase";
-    desktopName = "Heptabase";
-    exec = "${appLaunchScript}/bin/app-launch heptabase";
-    terminal = false;
-    # mimetype="x-scheme-handler/x-protocol";
-  };
-
   cursorDesktopItem = pkgs.makeDesktopItem {
     name = "cursor";
     desktopName = "Cursor";
@@ -60,18 +52,17 @@ let
     terminal = false;
   };
 
-  tanaDesktopItem = webWrapperDesktopItem {
-    name = "Tana";
-    url = "https://app.tana.inc";
+  excalidrawDesktopItem = webWrapperDesktopItem {
+    name = "excalidraw";
+    url = "https://app.excalidraw.com";
   };
 
 in {
   home.packages = [
     #
     appLaunchScript
-    heptabaseDesktopItem
     cursorDesktopItem
     handyDesktopItem
-    tanaDesktopItem
+    excalidrawDesktopItem
   ];
 }

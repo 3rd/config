@@ -7,7 +7,7 @@
     ../layers/custom/private.nix
     ../layers/custom/vault.nix
     ../services/syncthing.private.nix
-    ../misc/remarkable.nix
+    ../programs/remarkable.nix
     ../programs/obs.nix
   ];
 

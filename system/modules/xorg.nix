@@ -8,12 +8,12 @@
     xsel
     wmctrl
     xdotool
-    xorg.xdpyinfo
-    xorg.xev
-    xorg.xhost
-    xorg.xkill
-    xorg.xmodmap
-    xorg.xwininfo
+    xdpyinfo
+    xev
+    xhost
+    xkill
+    xmodmap
+    xwininfo
   ];
 
   services = {

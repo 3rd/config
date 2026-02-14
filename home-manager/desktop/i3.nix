@@ -21,7 +21,7 @@ in {
   imports = [
     ./common.nix
     ../colors.nix
-    ../xresources.nix
+    ./xresources.nix
     ../services/polybar
     # ../services/dunst.nix
     ../services/picom.nix
@@ -234,24 +234,24 @@ in {
           {
             always = true;
             command =
-              "--no-startup-id ${pkgs.xorg.xmodmap}/bin/xmodmap ~/brain/config/dotfiles/xmodmap";
+              "--no-startup-id ${pkgs.xmodmap}/bin/xmodmap ~/brain/config/dotfiles/xmodmap";
           }
           {
             always = true;
-            command = "--no-startup-id ${pkgs.xorg.xset}/bin/xset -dpms";
+            command = "--no-startup-id ${pkgs.xset}/bin/xset -dpms";
           }
           {
             always = true;
             command =
-              "--no-startup-id ${pkgs.xorg.xset}/bin/xset r rate 200 50";
+              "--no-startup-id ${pkgs.xset}/bin/xset r rate 200 50";
           }
           {
             always = true;
-            command = "--no-startup-id ${pkgs.xorg.xset}/bin/xset s off";
+            command = "--no-startup-id ${pkgs.xset}/bin/xset s off";
           }
           {
             always = true;
-            command = "--no-startup-id ${pkgs.xorg.xset}/bin/xset m 0 0";
+            command = "--no-startup-id ${pkgs.xset}/bin/xset m 0 0";
           }
           {
             always = true;

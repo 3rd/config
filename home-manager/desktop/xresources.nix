@@ -1,7 +1,7 @@
 { config, lib, ... }:
 
 {
-  imports = [ ./colors.nix ];
+  imports = [ ../colors.nix ];
 
   xresources.properties = with config.colors; {
     # settings

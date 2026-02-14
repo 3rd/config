@@ -55,7 +55,7 @@
         "_GTK_FRAME_EXTENTS@:c"
       ];
 
-      use-damage = false;
+      # use-damage = false;
       transparent-clipping = false;
 
       window-shader-fg = "default";

@@ -6,6 +6,7 @@
     ../layers/file-management.nix
     ../layers/media.nix
     ../layers/password-management.nix
+    ../desktop/mime.nix
     ../desktop/xdg-desktop-entries.nix
     ../programs/bat.nix
     ../programs/chromium.nix
@@ -23,9 +24,9 @@
     ../programs/zathura.nix
     ../programs/zoxide.nix
     ../programs/mise.nix
-    ../apps.nix
-    ../gtk.nix
-    ../utilities.nix
+    ../desktop/apps.nix
+    ../desktop/gtk.nix
+    ../layers/utilities.nix
     # ../programs/ghostty.nix
   ];
 

@@ -12,7 +12,7 @@
     oci-containers.backend = "docker";
     docker = {
       enable = true;
-      enableOnBoot = true;
+      enableOnBoot = false;
       # new docker shitfest
       package = pkgs.docker_25;
       # package = pkgs.stable.docker;
