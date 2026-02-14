@@ -38,12 +38,12 @@ local setup_tree = function()
       timeout = 500,
     },
     view = {
-      -- width = 32,
+      width = 36,
       side = "left",
       number = false,
       relativenumber = false,
       signcolumn = "yes",
-      adaptive_size = true,
+      adaptive_size = false,
     },
     trash = {
       cmd = "trash",

@@ -67,11 +67,11 @@
         };
       };
     in {
-      overlays = import ./overlays { inherit inputs; };
+      overlays = import ./system/overlays { inherit inputs; };
 
       packages = forAllSystems (system: {
         qimgv =
-          nixpkgs.legacyPackages.${system}.callPackage ./modules/packages/qimgv
+          nixpkgs.legacyPackages.${system}.callPackage ./system/modules/packages/qimgv
           { };
       });
 

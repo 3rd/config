@@ -9,6 +9,6 @@ Many things are unpolished, and there are many references to things that are not
 - [Neovim configuration](dotfiles/nvim)
 - [Neovim setup](https://github.com/search?q=repo%3A3rd%2Fconfig%20syslang&type=code) for [Syslang](https://github.com/3rd/syslang), my custom document syntax
 - [Emacs configuration (dead)](dotfiles/emacs)
-- NixOS [modules](modules) and [roles](roles)
+- NixOS [modules](system/modules) and [roles](system/roles)
 - Home Manager [modules](home-manager)
 - [Scripts](bin)

@@ -137,5 +137,13 @@
     }
   ];
   systemd.user.extraConfig = "DefaultLimitNOFILE=999999";
+
+  # oom
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 2;
+    freeSwapThreshold = 100;
+    enableNotifications = true;
+  };
 }
 

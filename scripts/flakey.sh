@@ -19,9 +19,7 @@ copy_relevant_files_to_tmpdir() {
   include=(
     ./home-manager
     ./hosts
-    ./modules
-    ./overlays
-    ./roles
+    ./system
     ./flake.nix
     ./flake.lock
   )
