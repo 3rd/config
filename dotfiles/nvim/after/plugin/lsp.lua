@@ -3,6 +3,19 @@ vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagn
   severity_sort = true,
 })
 
+-- workaround: neovim 0.12 nightly crashes on dynamic registration of
+-- methods not in _request_name_to_server_capability (e.g. eslint custom methods).
+-- filter them out before they reach _register_dynamic. see neovim#37166
+local orig_register = vim.lsp.handlers["client/registerCapability"]
+vim.lsp.handlers["client/registerCapability"] = function(err, params, ctx)
+  local known = vim.lsp.protocol._request_name_to_server_capability
+  params.registrations = vim.tbl_filter(function(reg)
+    return known[reg.method] ~= nil
+  end, params.registrations)
+  if #params.registrations == 0 then return vim.NIL end
+  return orig_register(err, params, ctx)
+end
+
 vim.lsp.config("*", {
   root_markers = { ".root", ".git" },
   capabilities = require("blink.cmp").get_lsp_capabilities({
