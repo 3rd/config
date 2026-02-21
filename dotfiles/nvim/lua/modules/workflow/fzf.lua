@@ -74,14 +74,14 @@ local setup_fzf_lua = function()
       end
     end
     fzf.files({ cmd = fd_command })
+    -- require("fff").find_files()
   end, "Find file in project")
 
   lib.map.map("n", ";", "<cmd>lua require('fzf-lua').buffers()<CR>", "Find buffer")
 
   lib.map.map("n", "<c-f>", function()
     local opts = {}
-
-    -- nvim-tree search
+    -- nvim-tree
     if vim.bo.filetype == "NvimTree" then
       local ok, api = pcall(require, "nvim-tree.api")
       if ok then
@@ -95,11 +95,12 @@ local setup_fzf_lua = function()
         end
       end
     end
-
-    -- regular search
-    -- if not opts.filter then end
-
     fzf.grep_project(opts)
+    -- require("fff").live_grep({
+    --   grep = {
+    --     modes = { "fuzzy", "plain" },
+    --   },
+    -- })
   end, "Find text in project")
 
   lib.map.map("n", "<leader>l", "<cmd>lua require('fzf-lua').blines()<CR>", "Find line in buffer")
@@ -138,5 +139,33 @@ return lib.module.create({
       config = setup_fzf_lua,
     },
     { "vijaymarupudi/nvim-fzf", event = "VeryLazy" },
+    -- {
+    --   "dmtrKovalenko/fff.nvim",
+    --   -- build = "nix run .#release",
+    --   build = function()
+    --     require("fff.download").download_or_build_binary()
+    --   end,
+    --   opts = {
+    --     debug = {
+    --       enabled = false,
+    --       show_scores = false,
+    --     },
+    --     title = "Files",
+    --     layout = {
+    --       height = 0.9,
+    --       width = 1,
+    --       prompt_position = "bottom",
+    --       preview_position = "right",
+    --       preview_size = 0.5,
+    --       show_scrollbar = true,
+    --       path_shorten_strategy = "middle_number",
+    --     },
+    --     keymaps = {
+    --       move_up = { "<Up>", "<C-p>", "<C-k>" },
+    --       move_down = { "<Down>", "<C-n>", "<C-j>" },
+    --     },
+    --   },
+    --   lazy = false,
+    -- },
   },
 })

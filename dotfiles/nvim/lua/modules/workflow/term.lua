@@ -10,8 +10,16 @@ return lib.module.create({
     vim.api.nvim_command("autocmd TermOpen * setlocal nonumber")
     vim.api.nvim_command("autocmd TermEnter * setlocal signcolumn=no")
 
-    -- binds
-    vim.keymap.set("t", "<C-X>", "<C-\\><C-n>")
+    -- binds: exit terminal mode, but pass through to fzf buffers
+    vim.keymap.set("t", "<C-X>", function()
+      if vim.bo.filetype == "fzf" then
+        -- send raw ctrl-x to fzf process
+        local chan = vim.b.terminal_job_id
+        if chan then vim.fn.chansend(chan, "\24") end
+      else
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", true)
+      end
+    end)
 
     -- claude
     vim.api.nvim_create_autocmd("BufEnter", {

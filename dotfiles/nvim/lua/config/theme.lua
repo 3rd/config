@@ -499,6 +499,7 @@ local theme = lush(function(injected)
 
     -- misc
     sym("@namespace")({ sym("@type") }),
+    FloatBorder({ fg = colors.background.lighten(20) }),
 
     -- nvim-cmp
     CmpItemAbbr({ fg = colors.foreground }),
