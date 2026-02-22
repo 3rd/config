@@ -1,160 +1,3 @@
-#+TITLE: Ceci n'est pas une pipe
-
-* Documentation
-** Cheatsheet
-*** Core
-|--------------------------------+-----------------|
-| Action                         | Key             |
-|--------------------------------+-----------------|
-| Help                           | <C-?> or <C-M-? |
-| Command panel (CSP             | <C-S-p>         |
-| Switch to project              | <leader>p       |
-| Navigate to file               | <C-p>           |
-| Navigate to file (text search) | <C-f>           |
-| Navigate to buffer             | ;               |
-| Navigate to previous buffer    | DEL             |
-| Navigate to line in buffer     | <leader>l       |
-| Save buffer                    | <C-s>           |
-| Kill buffer                    | <C-w>           |
-| Edit configuration             | <leader>ee      |
-| Reload configuration           | <C-S-r>         |
-| Profiler                       | <leader>P       |
-| Explore top-level mappings     | <leader>?       |
-| Open / focus file manager      | -               |
-| Quit                           | <leader>q       |
-|--------------------------------+-----------------|
-*** Text editing
-|---------------------+-----------------|
-| Action              | Key             |
-|---------------------+-----------------|
-| Move line up / down | <M-k> and <M-j> |
-|---------------------+-----------------|
-*** Development
-|---------------------------+------------|
-| Action                    | Key        |
-|---------------------------+------------|
-| Go to definition          | gd         |
-| Go to next reference      | gr         |
-| Go to previous reference  | gR         |
-| Glance documentation      | K          |
-| Go to next diagnostic     | gp         |
-| Go to previous diagnostic | gP         |
-| Go to symbol in buffer    | <leader>r  |
-| Execute code action       | <leader>ac |
-| Rename symbol             | <leader>er |
-|---------------------------+------------|
-*** Org
-|-----------------------------------+----------|
-| Action                            | Key      |
-|-----------------------------------+----------|
-| Insert same-level item below      | <C-CR>   |
-| Insert same-level todo item below | <C-S-CR> |
-| Cycle item status                 | <C-SPC>  |
-|-----------------------------------+----------|
-*** Wiki
-|---------------------+---------|
-| Action              | Key     |
-|---------------------+---------|
-| Find node (default) | <M-n>   |
-| Find project node   | <M-p>   |
-| Insert link to node | <C-c>ni |
-| Capture             | <C-c>c  |
-| Refile              | <C-c>r  |
-| Archive             | <C-c>z  |
-|---------------------+---------|
-*** Agenda
-|-----------------------------------------+------------------------+-----------------+---------|
-| Action                                  | Key                    | Command         | Context |
-|-----------------------------------------+------------------------+-----------------+---------|
-| Agenda prefix                           | <C-c>a or <leader>a    | org-agenda      | Global  |
-| Open current agenda                     | <C-c>aa or <leader>aa  | org-agenda-list | Global  |
-| Open current agenda and todos           | <C-c>an  or <leader>an |                 | Global  |
-| Open todo list                          | <C-c>at  or <leader>at | org-todo-list   | Global  |
-| Schedule item (pick date: shift+arrows) | <C-c>s                 | org-schedule    | Org     |
-| Clock in                                | <C-c>i                 | org-clock-in    | Org     |
-| Clock out                               | <C-c>o                 | org-clock-out   | Org     |
-| Show clock stats                        | <C-c><C-x><C-c>        | org-columns     | Org     |
-|-----------------------------------------+------------------------+-----------------+---------|
-*** Journal
-|---------------+------------|
-| Action        | Key        |
-|---------------+------------|
-| Go to today   | <leader>dd |
-| Go to date    | <leader>dc |
-| Capture today | <leader>da |
-|---------------+------------|
-** Packages
-*** Package management
-Packages are managed by ~straight.el~.
-Commands:
-~straight-pull-all~ - update packags
-~straight-freeze-versions~ - lock package versions
-~straight-thaw-versions~ - restore to locked versions
-*** Hooks
-**** ~(with-eval-after-load 'library ...)~
-Evaluates body at the end of loading the ~library~, *each time* the library is loaded.
-If the library is already loaded, evaluates body right away.
-*** ~general.el~
-#+BEGIN_SRC emacs-lisp :tangle no
-;; Define mapping
-(general-def
-  "M-n" 'org-next-visible-heading)
-(general-def org-mode-map
-  "M-n" 'org-next-visible-heading)
-(general-def 'normal org-mode-map
-  "M-n" 'org-next-visible-heading)
-(general-def
-  :states '(normal motion emacs)
-  "M-n" 'org-next-visible-heading)
-
-;; Define for mode
-(general-define-key
- :states '(normal visual)
- :keymaps 'org-mode-map
- "M-n" 'org-next-visible-heading
- "M-p" 'org-previous-visible-heading)
-(general-evil-define-key
-    :states '(normal visual)
-  :keymaps 'org-mode-map
-  "M-n" 'org-next-visible-heading
-  "M-p" 'org-previous-visible-heading)
-
-;; Define for keymap
-(general-emacs-define-key org-mode-map
-  "M-n" 'org-next-visible-heading
-  "M-p" 'org-previous-visible-heading)
-(general-define-key
- :keymaps 'org-mode-map
- "M-n" 'org-next-visible-heading
- "M-p" 'org-previous-visible-heading)
-(with-eval-after-load 'org-mode
-  (define-key org-mode-map (kbd "M-n") 'org-next-visible-heading)
-  )
-
-;; Unbind
-(general-unbind 'insert
-  "C-v"
-  "C-k"
-  "C-y"
-  "C-e")
-#+END_SRC
-*** ~use-package~
-- ~:init~ - before loading
-- ~:config~ - after loading
-- ~:custom~ - set customizable variables
-- ~:bind~  - create binds after the module is loaded
-  : ("C-x c" . company-mode)
-  : :map isearch-mode-map
-  : ("C-x c" . company-mode)
-- ~:magic ("%PDF" . pdf-view-mode)~ - run on file header match
-- ~:after (...)~ - set loading order
-  : (:all foo bar) or just (foo bar)
-  : (:any foo bar)
-  : (:all (:any foo bar) (:any baz quux))
-
-* Core
-** No littering :pkg:
-#+BEGIN_SRC emacs-lisp
 (use-package no-littering
   :straight t
   :init
@@ -164,9 +7,7 @@ If the library is already loaded, evaluates body right away.
   (setq url-history-file (no-littering-expand-var-file-name "url/history"))
   (when (file-exists-p custom-file)
     (load custom-file nil 'nomessage)))
-#+END_SRC
-** Startup profiling
-#+BEGIN_SRC emacs-lisp
+
 (add-hook
  'emacs-startup-hook
  (lambda ()
@@ -175,10 +16,7 @@ If the library is already loaded, evaluates body right away.
     (format "%.2f seconds" (float-time
                             (time-subtract after-init-time before-init-time)))
     gcs-done)))
-#+END_SRC
-** Keyboard
-*** Setup evil and undo
-#+BEGIN_SRC emacs-lisp
+
 ;; (use-package undo-fu)
 (use-package evil
   :straight t
@@ -208,16 +46,12 @@ If the library is already loaded, evaluates body right away.
   (evil-global-set-key 'motion "gk" 'evil-previous-visual-line)
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal))
-#+END_SRC
-*** Setup general.el                                                    :pkg:
-#+BEGIN_SRC emacs-lisp
+
 (use-package general
   :straight t
   :config
   (general-evil-setup t))
-#+END_SRC
-*** Setup leader and provide ~lib/mapleader~
-#+BEGIN_SRC emacs-lisp
+
 (general-create-definer lib/mapleader
   :keymaps 'override
   :prefix "SPC"
@@ -230,10 +64,7 @@ If the library is already loaded, evaluates body right away.
 (general-create-definer imap
   :keymaps 'override
   :states '(insert))
-#+END_SRC
-*** Reset bindings
-https://github.com/emacs-evil/evil/blob/master/evil-maps.el
-#+BEGIN_SRC emacs-lisp
+
 ;; emacs
 (global-set-key (kbd "C-SPC") nil)
 
@@ -261,14 +92,10 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
   ;; fix tab
   (define-key evil-insert-state-map (kbd "TAB") 'tab-to-tab-stop)
   )
-#+END_SRC
-*** Remap help (~<C-?>~, ~<C-M-?>~)
-#+BEGIN_SRC emacs-lisp
+
 (global-set-key (kbd "C-?") 'help-command)
 (global-set-key (kbd "C-M-?") 'help-command)
-#+END_SRC
-*** Remap universal argument
-#+BEGIN_SRC emacs-lisp
+
 (general-def
   :keymaps 'universal-argument-map
   "M-u" 'universal-argument-more)
@@ -276,16 +103,12 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
   :keymaps 'override
   :states '(normal motion emacs insert visual)
   "M-u" 'universal-argument)
-#+END_SRC
-** Backups
-#+BEGIN_SRC emacs-lisp
+
 (setq make-backup-files nil)
 (setq auto-save-default nil)
 (setq create-lockfiles nil)
 (setq backup-inhibited t)
-#+END_SRC
-** Scrolling
-#+BEGIN_SRC  emacs-lisp
+
 (setq scroll-conservatively 101)
 (setq scroll-step 1)
 (setq scroll-preserve-screen-position t)
@@ -294,9 +117,7 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
 (setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
 (setq mouse-wheel-progressive-speed nil)
 (setq mouse-wheel-follow-mouse 't)
-#+END_SRC
-** Code style
-#+BEGIN_SRC emacs-lisp
+
 (setq tab-always-indent nil)
 (setq-default default-tab-width 2)
 (setq-default tab-width 2)
@@ -305,9 +126,7 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
 (setq-default evil-shift-width tab-width)
 (setq-default evil-indent-convert-tabs nil)
 (setq-default evil-shift-round nil)
-#+END_SRC
-** Misc settings
-#+BEGIN_SRC emacs-lisp
+
 (setq warning-minimum-level :warning)
 (setq enable-recursive-minibuffers t)
 (normal-erase-is-backspace-mode 1)
@@ -341,10 +160,7 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
 (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (setq x-underline-at-descent-line t)
-#+END_SRC
-** Utils
-*** ~lib/time "time begin|end"~
-#+BEGIN_SRC emacs-lisp
+
 (defun lib/log (string)
   "Print out STRING and calculate length of init."
   (message string)
@@ -370,29 +186,20 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
   (when (bound-and-true-p hl-line-mode) (hl-line-mode -1))
   (when (bound-and-true-p lsp-ui-mode) (lsp-ui-mode -1))
   (message "Performance mode enabled for buffer: %s" (buffer-name)))
-#+END_SRC
-** Init
-#+BEGIN_SRC emacs-lisp
+
 (cd "~/brain/wiki")
-#+END_SRC
-* Packages
-*** alert
-#+BEGIN_SRC emacs-lisp
+
 (use-package alert
   :straight t
   :commands alert
   :config
   (setq alert-default-style 'notifications))
-#+END_SRC
-*** all-the-icons
-#+BEGIN_SRC emacs-lisp
+
 (use-package all-the-icons
   :straight t
   :if (display-graphic-p))
 (use-package nerd-icons)
-#+END_SRC
-*** company
-#+BEGIN_SRC emacs-lisp
+
 (use-package company
   :straight t
   :init
@@ -434,9 +241,7 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
   :hook ((org-mode . (lambda ()
                        (setq-local company-backends '(company-org-block))
                        (company-mode +1)))))
-#+END_SRC
-*** consult
-#+BEGIN_SRC emacs-lisp
+
 (use-package consult
   :straight t
   :demand t
@@ -452,9 +257,7 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
   (consult-async-refresh-delay 0.1)
   (consult-async-input-throttle 0.1)
   (consult-async-input-debounce 0.1))
-#+END_SRC
-*** counsel
-#+BEGIN_SRC emacs-lisp
+
 ;; Used to prioritize commonly used counsel-M-x commands
 (use-package amx
   :straight t)
@@ -479,41 +282,29 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
     (add-to-list 'ivy-more-chars-alist '(counsel-ag . 0))
     ;; remap M-x
     (global-set-key (kbd "M-x") 'counsel-M-x)))
-#+END_SRC
-*** evil-nerd-commenter
-#+BEGIN_SRC emacs-lisp
+
 (use-package evil-nerd-commenter
   :straight t
   :bind ("C-/" . evilnc-comment-or-uncomment-lines))
-#+END_SRC
-*** doom-themes
-#+BEGIN_SRC emacs-lisp
+
 (use-package doom-themes :straight t)
-#+END_SRC
-*** evil-surround
-#+BEGIN_SRC emacs-lisp
+
 (use-package evil-surround
   :straight t
   :after evil
   :config
   (global-evil-surround-mode))
-#+END_SRC
-*** flx
-#+BEGIN_SRC emacs-lisp
+
 (use-package flx
   :straight t
   :after ivy
   :init
   (setq ivy-flx-limit 10000))
-#+END_SRC
-*** hl-todo
-#+BEGIN_SRC emacs-lisp
+
 (use-package hl-todo
   :straight t
   :hook (prog-mode . hl-todo-mode))
-#+END_SRC
-*** ivy
-#+BEGIN_SRC emacs-lisp
+
 (use-package ivy
   :straight t
   :after counsel
@@ -543,9 +334,7 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
   (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
   (ivy-mode 1)
   )
-#+END_SRC
-*** ivy-rich
-#+BEGIN_SRC emacs-lisp
+
 ;; (use-package ivy-rich
 ;;   :straight t
 ;;   :after ivy
@@ -582,23 +371,17 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
   (ivy-rich-path-style 'abbrev)
   :config
   (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line))
-#+END_SRC
-*** json-mode
-#+BEGIN_SRC emacs-lisp
+
 (use-package json-mode
   :straight t)
-#+END_SRC
-*** marginalia
-#+BEGIN_SRC emacs-lisp
+
 (use-package marginalia
   :straight t
   :custom
   (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
   :init
   (marginalia-mode))
-#+END_SRC
-*** neotree
-#+BEGIN_SRC emacs-lisp
+
 (use-package neotree
   :straight t
   :config
@@ -620,9 +403,7 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
                 (select-window (previous-window))
               (neotree-show))
             ))
-#+END_SRC
-*** org-superstar
-#+BEGIN_SRC emacs-lisp
+
 (use-package org-superstar
   :straight t
   :after org
@@ -631,40 +412,28 @@ https://github.com/emacs-evil/evil/blob/master/evil-maps.el
   (org-superstar-remove-leading-stars t)
   (org-superstar-prettify-item-bullets nil)
   (org-superstar-headline-bullets-list '("◉" "○" "●" "○" "●" "○" "●")))
-#+END_SRC
-*** paren
-Highligth matching braces.
-#+BEGIN_SRC emacs-lisp
+
 (use-package paren
   :straight nil
   :config
   (set-face-attribute 'show-paren-match-expression nil :background "#363e4a")
   (show-paren-mode 1))
-#+END_SRC
-*** rainbow-delimiters
-#+BEGIN_SRC emacs-lisp
+
 (use-package rainbow-delimiters
   :straight t
   :hook (prog-mode . rainbow-delimiters-mode))
-#+END_SRC
-*** savehist
-Preserve history.
-#+BEGIN_SRC emacs-lisp
+
 (use-package savehist
   :straight nil
   :init
   (setq history-length t)
   (setq history-delete-duplicates t)
   (savehist-mode t))
-#+END_SRC
-*** smartparens
-#+BEGIN_SRC emacs-lisp
+
 (use-package smartparens
   :straight t
   :hook (prog-mode . smartparens-mode))
-#+END_SRC
-*** which-key
-#+BEGIN_SRC emacs-lisp
+
 (use-package which-key
   :straight t
   :config
@@ -673,9 +442,7 @@ Preserve history.
   (which-key-mode)
   (which-key-setup-side-window-bottom)
   (set-face-attribute 'which-key-local-map-description-face nil :weight 'bold))
-#+END_SRC
-*** undo-tree
-#+BEGIN_SRC emacs-lisp
+
 (use-package undo-tree
   :straight t
   :init
@@ -696,9 +463,7 @@ Preserve history.
      (define-key undo-tree-map (kbd "C-S-z") 'undo-tree-redo)
      )
   )
-#+END_SRC
-*** projectile
-#+BEGIN_SRC emacs-lisp
+
 (use-package projectile
   :straight t
   :custom
@@ -718,9 +483,7 @@ Preserve history.
   :after projectile
   :config
   (counsel-projectile-mode))
-#+END_SRC
-*** rainbow-mode
-#+BEGIN_SRC emacs-lisp
+
 (use-package rainbow-mode
   :straight t
   :defer t
@@ -730,19 +493,12 @@ Preserve history.
          typescript-mode
          typescript-ts-mode
          js2-mode))
-#+END_SRC
-* Library
-** Development
-*** -log
-#+BEGIN_SRC emacs-lisp
+
 (defun -log (&rest args)
   (interactive)
   (apply #'message "%S" args)
   )
-#+END_SRC
-* Visual
-** Theme
-#+BEGIN_SRC emacs-lisp
+
 (with-eval-after-load 'doom-themes
   (setq
    doom-themes-padded-modeline 3
@@ -753,10 +509,7 @@ Preserve history.
 
   (load-theme 'doom-Iosvkem t)
   )
-#+END_SRC
-** Modeline
-Install icons: all-the-icons-install-fonts
-#+BEGIN_SRC emacs-lisp
+
 (use-package minions
   :straight t
   :hook (doom-modeline-mode . minions-mode))
@@ -783,9 +536,7 @@ Install icons: all-the-icons-install-fonts
   (line-number-mode 1)
   (column-number-mode 1)
   )
-#+END_SRC
-** Fonts
-#+BEGIN_SRC emacs-lisp
+
 (set-face-attribute 'default nil :font "BMono" :height 100 :weight 'normal)
 (set-face-attribute 'fixed-pitch nil :font "BMono" :height 94 :weight 'normal)
 (set-face-attribute 'variable-pitch nil :font "Fira Sans" :height 100 :weight 'normal)
@@ -799,9 +550,7 @@ Install icons: all-the-icons-install-fonts
 (bind-key "C-0" 'text-scale-adjust)
 
 (setq inhibit-compacting-font-caches t)
-#+END_SRC
-** Symbol substitution
-#+BEGIN_SRC emacs-lisp
+
 (setq-default prettify-symbols-alist '(("#+BEGIN_SRC" . "*")
                                        ("#+END_SRC" . "―")
                                        ("#+begin_src" . "*")
@@ -812,9 +561,7 @@ Install icons: all-the-icons-install-fonts
 
 ;; Hook org-mode
 (add-hook 'org-mode-hook 'prettify-symbols-mode)
-#+END_SRC
-** Horizontal margins :pkg:
-#+BEGIN_SRC emacs-lisp
+
 (use-package olivetti
   :straight t
   :init
@@ -828,14 +575,10 @@ Install icons: all-the-icons-install-fonts
       (olivetti-mode 1)))
   (add-hook 'text-mode-hook #'my/maybe-enable-olivetti)
   )
-#+END_SRC
-** Line numbers
-#+BEGIN_SRC emacs-lisp
+
 (dolist (mode '(prog-mode-hook conf-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 1))))
-#+END_SRC
-** Highlight trailing white space
-#+BEGIN_SRC emacs-lisp
+
 (setq-default show-trailing-whitespace nil)
 
 (defun my/maybe-enable-show-trailing-whitespace ()
@@ -846,19 +589,13 @@ Install icons: all-the-icons-install-fonts
 
 (add-hook 'prog-mode-hook #'my/maybe-enable-show-trailing-whitespace)
 (add-hook 'conf-mode-hook #'my/maybe-enable-show-trailing-whitespace)
-#+END_SRC
-** Highlight current line
-#+BEGIN_SRC emacs-lisp
+
 (require 'hl-line)
 (defun my/maybe-enable-hl-line ()
   (when (< (buffer-size) 500000)
     (hl-line-mode 1)))
 (add-hook 'prog-mode-hook #'my/maybe-enable-hl-line)
-#+END_SRC
-* Org
-** Setup
-*** Org hook
-#+BEGIN_SRC emacs-lisp
+
 (defun my/org-hook ()
   (auto-fill-mode 0)
   ;; Restore Org UX defaults while keeping logical-line motion for speed.
@@ -873,9 +610,7 @@ Install icons: all-the-icons-install-fonts
   (setq-local jit-lock-stealth-time 1.25)
   )
 (add-hook 'org-mode-hook #'my/org-hook)
-#+END_SRC
-*** evil-org
-#+BEGIN_SRC emacs-lisp
+
 ;; evil-org setup
 (use-package evil-org
   :straight t
@@ -907,9 +642,7 @@ Install icons: all-the-icons-install-fonts
     (kbd "<") 'my/evil-org-outdent
     ))
 (add-hook 'evil-org-mode-hook #'my/evil-org-hook)
-#+END_SRC
-*** General
-#+BEGIN_SRC emacs-lisp
+
 ;; Modern Org cache is significantly faster for many operations.
 (setq org-element-use-cache t)
 (setq org-startup-indented t)
@@ -984,9 +717,7 @@ Install icons: all-the-icons-install-fonts
 
 ;; agenda
 (setq calendar-week-start-day 1)
-#+END_SRC
-*** Fixed-pitch faces
-#+BEGIN_SRC emacs-lisp
+
 (custom-theme-set-faces
  'user
  '(org-block ((t (:inherit fixed-pitch))))
@@ -999,9 +730,7 @@ Install icons: all-the-icons-install-fonts
  '(org-table ((t (:inherit fixed-pitch))))
  '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
  '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
-#+END_SRC
-*** Headings
-#+BEGIN_SRC emacs-lisp
+
 (set-face-attribute 'org-document-title nil :weight 'bold :height 1.6)
 (dolist (face '((org-level-1 . 1.24)
                 (org-level-2 . 1.12)
@@ -1018,9 +747,7 @@ Install icons: all-the-icons-install-fonts
 (set-face-attribute 'org-column-title nil :background 'unspecified)
 
 (set-fontset-font "fontset-default" nil (font-spec :name "Symbola"))
-#+END_SRC
-*** Lists
-#+BEGIN_SRC emacs-lisp
+
 ;; list markers
 (font-lock-add-keywords 'org-mode
                         '(("^ *\\([-]\\) "
@@ -1028,9 +755,7 @@ Install icons: all-the-icons-install-fonts
 (font-lock-add-keywords 'org-mode
                         '(("^ *\\([+]\\) "
                            (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "◦"))))))
-#+END_SRC
-*** Todo
-#+BEGIN_SRC emacs-lisp
+
 (setq org-todo-keywords '((sequence
                            "TODO"
                            "NEXT"
@@ -1044,9 +769,7 @@ Install icons: all-the-icons-install-fonts
         ("BLOCKED" :foreground ,(doom-color 'red) :weight bold)
         ("DONE" :foreground ,(doom-color 'grey)  :weight bold)
         ))
-#+END_SRC
-*** Todo autoadjust
-#+BEGIN_SRC emacs-lisp
+
 (setq org-hierarchical-todo-statistics nil)
 
 (defun my/org-checkbox-todo ()
@@ -1081,9 +804,7 @@ Install icons: all-the-icons-install-fonts
     (org-todo (if (= n-not-done 0) "DONE" "TODO"))))
 
 (add-hook 'org-after-todo-statistics-hook 'org-summary-todo)
-#+END_SRC
-*** Code blocks
-#+BEGIN_SRC emacs-lisp
+
 (setq org-edit-src-content-indentation 0)
 (setq org-confirm-babel-evaluate nil)
 
@@ -1098,30 +819,22 @@ Install icons: all-the-icons-install-fonts
      (js . t)
      (typescript . t)
      )))
-#+END_SRC
-*** Checkboxes
-#+BEGIN_SRC emacs-lisp
+
 (add-hook 'org-mode-hook (lambda ()
                            (push '("[ ]" .  "󰄱") prettify-symbols-alist)
                            (push '("[X]" . "󰄲" ) prettify-symbols-alist)
                            (push '("[-]" . "⬚" ) prettify-symbols-alist)
                            (prettify-symbols-mode)))
-#+END_SRC
-*** Capture
-#+BEGIN_SRC emacs-lisp
+
 (setq org-capture-templates
       '(
         ("t" "TODO" entry (file "~/brain/wiki/inbox.org") "* TODO %i%?\n")
         ("c" "Consume" entry (file+headline "~/brain/wiki/consume.org" "2021") "* %i%?\n#+SOURCE:\n")
         ))
-#+END_SRC
-*** Refile
-#+BEGIN_SRC emacs-lisp
+
 (setq org-refile-targets (quote ((nil :maxlevel . 9)
                                  (org-agenda-files :maxlevel . 9))))
-#+END_SRC
-*** De-emphasize under cursor
-#+BEGIN_SRC emacs-lisp
+
 (use-package org-appear
   :straight t
   :custom
@@ -1134,20 +847,14 @@ Install icons: all-the-icons-install-fonts
   (org-appear-autoentities nil)
   (org-appear-autokeywords nil)
   :hook (org-mode . org-appear-mode))
-#+END_SRC
-*** Disable line numbers
-#+BEGIN_SRC emacs-lisp
+
 (dolist (mode '(org-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
-#+END_SRC
-*** org-variable-pitch
-#+BEGIN_SRC emacs-lisp
+
 ;; (require 'org-variable-pitch)
 ;; (set-face-attribute 'org-variable-pitch-fixed-face nil :family "BMono")
 ;; (add-hook 'org-mode-hook 'org-variable-pitch--enable)
-#+END_SRC
-** Agenda
-#+BEGIN_SRC emacs-lisp
+
 (load "org-agenda")
 (setq org-agenda-files (directory-files-recursively "~/brain/wiki" "\\.org$"))
 
@@ -1172,12 +879,7 @@ Install icons: all-the-icons-install-fonts
 (nmap "SPC SPC" 'my/org-agenda-open)
 ;; (general-define-key :keymaps 'org-agenda-map "SPC SPC" 'my/org-agenda-quit)
 (define-key org-agenda-keymap "q" 'my/org-agenda-quit)
-#+END_SRC
-** Roam
-Reference:
-- https://www.orgroam.com/manual.html
-*** Setup
-#+BEGIN_SRC emacs-lisp
+
 (use-package org-roam
   :straight t
   :custom
@@ -1187,25 +889,17 @@ Reference:
   (require 'org-roam-dailies)
   (org-roam-db-autosync-mode)
   )
-#+END_SRC
-*** Capture templates
-Reference: https://github.com/org-roam/org-roam/blob/master/org-roam-capture.el#L41
 
-#+BEGIN_SRC emacs-lisp
 (setq org-roam-capture-templates
       '(("d" "default" plain
          "%?"
          :if-new (file+head "${slug}.org" "#+title: ${title}\n#+date: %U\n")
          :unnarrowed t)))
-#+END_SRC
-*** Dailies capture templates
-#+BEGIN_SRC emacs-lisp
+
 (setq org-roam-dailies-capture-templates
       '(("d" "default" entry "* %<%I:%M %p>: %?"
          :if-new (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n#+filetags: :daily:\n"))))
-#+END_SRC
-*** Node find / insert handlers (with tag inclusion / exclusion)
-#+BEGIN_SRC emacs-lisp
+
 ;; https://org-roam.discourse.group/t/filter-org-roam-node-find-insert-using-tags-and-folders/1907
 (cl-defun my/org-roam-node--filter-by-tags (node &optional included-tags excluded-tags)
   "Filter org-roam-node by tags."
@@ -1235,9 +929,7 @@ Reference: https://github.com/org-roam/org-roam/blob/master/org-roam-capture.el#
   (interactive)
   (org-roam-node-insert
    (lambda (node) (my/org-roam-node--filter-by-tags node included-tags excluded-tags))))
-#+END_SRC
-*** Roam UI
-#+BEGIN_SRC emacs-lisp
+
 (use-package org-roam-ui
   :straight (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
   :after org-roam
@@ -1246,9 +938,7 @@ Reference: https://github.com/org-roam/org-roam/blob/master/org-roam-capture.el#
         org-roam-ui-follow t
         org-roam-ui-update-on-save t
         org-roam-ui-open-on-start t))
-#+END_SRC
-** Mappings
-#+BEGIN_SRC emacs-lisp
+
 ;; org-local
 (defun my/org-map-hook ()
   (evil-define-key 'normal 'evil-org-mode
@@ -1288,15 +978,9 @@ Reference: https://github.com/org-roam/org-roam/blob/master/org-roam-capture.el#
 (lib/mapleader "da" 'org-roam-dailies-capture-today)
 (lib/mapleader "dc" 'org-roam-dailies-goto-date)
 ;; (nmap "M-p" (lambda () (interactive) (counsel-find-file "~/plan")))
-#+END_SRC
-* Workflow
-** General
-*** Quit ~<leader>q~
-#+BEGIN_SRC emacs-lisp
+
 (lib/mapleader "q" 'evil-quit)
-#+END_SRC
-*** Custom ~<esc>~
-#+BEGIN_SRC emacs-lisp
+
 (with-eval-after-load 'evil-maps
   ;; esc
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -1307,37 +991,23 @@ Reference: https://github.com/org-roam/org-roam/blob/master/org-roam-capture.el#
                        (evil-force-normal-state)
                        ))
   )
-#+END_SRC
-*** Edit configuration ~<leader>ee~
-#+BEGIN_SRC emacs-lisp
+
 (lib/mapleader "ee" (lambda() (interactive)(find-file "~/.emacs.d/profiles/main/config.org")))
-#+END_SRC
-*** Reload configuration ~<C-S-r>~
-#+BEGIN_SRC emacs-lisp
+
 (nmap "C-S-r" (lambda() (interactive)(org-babel-load-file "~/.emacs.d/profiles/main/config.org")))
-#+END_SRC
-*** Profiler ~<leader>p~
-#+BEGIN_SRC emacs-lisp
+
 (lib/mapleader
   :infix "P"
   "" '(:which-key "profiler")
   "s" 'profiler-start
   "e" 'profiler-stop
   "p" 'profiler-report)
-#+END_SRC
-*** Which-key ~<leader>?~
-Mapped to ~<leader>?~.
-#+BEGIN_SRC emacs-lisp
+
 (lib/mapleader "?" 'which-key-show-top-level)
 (lib/mapleader "tp" 'my/performance-mode-buffer)
-#+END_SRC
-** Navigation
-*** Switch to project ~<leader>p~
-#+BEGIN_SRC emacs-lisp
+
 (lib/mapleader "p" 'counsel-projectile-switch-project)
-#+END_SRC
-*** Navigate to file ~<C-p>~
-#+BEGIN_SRC emacs-lisp
+
 ;; remove stupid empty state "match", default to prompt instead
 (ivy-configure 'counsel-fzf
   :occur #'counsel-fzf-occur
@@ -1378,9 +1048,7 @@ Mapped to ~<leader>?~.
 ;; map
 ;; (nmap "C-p" 'counsel-fzf)
 (nmap "C-p" 'counsel-projectile-find-file)
-#+END_SRC
-*** Navigate to text ~<C-f>~
-#+BEGIN_SRC emacs-lisp
+
 ;; actions
 (defun my/counsel-rg-open-vertical ()
   (interactive)
@@ -1413,30 +1081,18 @@ Mapped to ~<leader>?~.
 
 ;; map
 (nmap "C-f" 'counsel-rg)
-#+END_SRC
-*** Navigate to window ~<C-h|j|k|l>~
-#+BEGIN_SRC emacs-lisp
+
 (nmap "C-h" 'evil-window-left)
 (nmap "C-j" 'evil-window-down)
 (nmap "C-k" 'evil-window-up)
 (nmap "C-l" 'evil-window-right)
-#+END_SRC
-*** Navigate to buffer ~;~
-- TODO open in split ~<c-s>~ ~<c-v>~
-#+BEGIN_SRC emacs-lisp
+
 (nmap ";" 'counsel-switch-buffer)
-#+END_SRC
-*** Navigate to previous buffer (quickswitch) ~DEL~
-#+BEGIN_SRC emacs-lisp
+
 (nmap "DEL" 'mode-line-other-buffer)
-#+END_SRC
-*** Navigate to line in current buffer ~<leader>l~
-#+BEGIN_SRC emacs-lisp
+
 (lib/mapleader "l" 'swiper)
-#+END_SRC
-** Buffer
-*** Save current buffer ~<C-s>~
-#+BEGIN_SRC emacs-lisp
+
 (defun my/buffer-save ()
   (interactive)
   (company-abort)
@@ -1456,14 +1112,10 @@ Mapped to ~<leader>?~.
 (with-eval-after-load 'company
   (define-key company-active-map (kbd "C-s") 'my/buffer-save)
   )
-#+END_SRC
-*** Kill current buffer ~<C-w>~
-#+BEGIN_SRC emacs-lisp
+
 ;; (nmap "C-w" 'kill-current-buffer)
 (define-key evil-normal-state-map "\C-w" (concat ":bd" (kbd "RET")))
-#+END_SRC
-*** Rename current file ~[CSP]~
-#+BEGIN_SRC emacs-lisp
+
 ;; https://kundeveloper.com/blog/buffer-files/
 (defun my/rename-current-buffer-file ()
   "Renames current buffer and file it is visiting."
@@ -1481,9 +1133,7 @@ Mapped to ~<leader>?~.
           (set-buffer-modified-p nil)
           (message "File '%s' successfully renamed to '%s'"
                    name (file-name-nondirectory new-name)))))))
-#+END_SRC
-*** Delete current file ~[CSP]~
-#+BEGIN_SRC emacs-lisp
+
 ;; https://kundeveloper.com/blog/buffer-files/
 (defun my/delete-current-buffer-file ()
   "Removes file connected to current buffer and kills buffer."
@@ -1497,10 +1147,7 @@ Mapped to ~<leader>?~.
         (delete-file filename)
         (kill-buffer buffer)
         (message "File '%s' successfully removed" filename)))))
-#+END_SRC
-** Text editing
-*** Indent / outdent ~<~ ~>~
-#+BEGIN_SRC emacs-lisp
+
 ;; normal
 (with-eval-after-load 'evil-maps
   (define-key evil-normal-state-map (kbd "<") 'evil-shift-left-line)
@@ -1524,9 +1171,7 @@ Mapped to ~<leader>?~.
  "<" 'my/visual-evil-shift-left
  ">" 'my/visual-evil-shift-right
  )
-#+END_SRC
-*** Move up / down ~<M-k>~, ~<M-j>~
-#+BEGIN_SRC emacs-lisp
+
 (use-package drag-stuff
   :straight t
   :after evil
@@ -1535,16 +1180,7 @@ Mapped to ~<leader>?~.
   (define-key evil-normal-state-map (kbd "M-k") 'drag-stuff-up)
   (define-key evil-normal-state-map (kbd "M-j") 'drag-stuff-down)
   )
-#+END_SRC
-# *** Delete trailing whitespace on save (modified lines)
-# #+BEGIN_SRC emacs-lisp
-# (use-package ws-butler :hook (prog-mode . ws-butler-mode))
-# #+END_SRC
-** Development
-*** Language support
-**** LSP
-***** lsp-mode
-#+BEGIN_SRC emacs-lisp
+
 (use-package lsp-mode
   :straight t
   :commands lsp lsp-deferred
@@ -1586,13 +1222,9 @@ Mapped to ~<leader>?~.
   (setq lsp-enable-which-key-integration t)
   (setq lsp-prefer-flymake nil)
   )
-#+END_SRC
-***** lsp-ivy
-#+BEGIN_SRC emacs-lisp
+
 (use-package lsp-ivy :straight t)
-#+END_SRC
-***** lsp-ui
-#+BEGIN_SRC emacs-lisp
+
 (use-package lsp-ui
   :straight t
   :defer t
@@ -1621,9 +1253,7 @@ Mapped to ~<leader>?~.
                                               :slant italic
                                               :height 0.99))))
   )
-#+END_SRC
-**** Tree-sitter
-#+BEGIN_SRC emacs-lisp
+
 ;; Emacs 29+ ships native Tree-sitter integration via `*-ts-mode`.
 (when (and (boundp 'major-mode-remap-alist)
            (fboundp 'treesit-available-p)
@@ -1647,9 +1277,7 @@ Mapped to ~<leader>?~.
 (when (and (fboundp 'treesit-available-p)
            (treesit-available-p))
   (setq treesit-font-lock-level 2))
-#+END_SRC
-**** TypeScript
-#+BEGIN_SRC emacs-lisp
+
 (setenv "TSSERVER_LOG_FILE" "/tmp/tsserver.log")
 
 (use-package typescript-mode
@@ -1674,9 +1302,7 @@ Mapped to ~<leader>?~.
 ;; (use-package tide
 ;;   :straight t
 ;;   :hook (typescript-mode . my/hooks/tide))
-#+END_SRC
-**** Lua
-#+BEGIN_SRC emacs-lisp
+
 (defvar my/lua-fallback-font-lock-keywords
   (let ((keywords '("and" "break" "do" "else" "elseif" "end" "false"
                     "for" "function" "goto" "if" "in" "local" "nil"
@@ -1729,9 +1355,7 @@ Mapped to ~<leader>?~.
 
 (add-to-list 'auto-mode-alist '("\\.lua\\'" . my/lua-mode-dispatch))
 (add-to-list 'interpreter-mode-alist '("lua" . my/lua-mode-dispatch))
-#+END_SRC
-**** Vue
-#+BEGIN_SRC emacs-lisp
+
 (if (fboundp 'vue-ts-mode)
     (progn
       (add-to-list 'auto-mode-alist '("\\.vue\\'" . vue-ts-mode))
@@ -1744,9 +1368,7 @@ Mapped to ~<leader>?~.
     ;; fix indent https://github.com/AdamNiederer/vue-mode/issues/74
     (add-hook 'vue-mode-hook (lambda () (setq syntax-ppss-table nil)))))
 ;; (setq prettier-js-args '("--parser vue")))
-#+END_SRC
-**** Elisp
-#+BEGIN_SRC emacs-lisp
+
 (use-package helpful
   :straight t
   :custom
@@ -1766,45 +1388,33 @@ Mapped to ~<leader>?~.
 ;; (dw/leader-key-def
 ;;   :keymaps '(visual)
 ;;   "er" '(eval-region :which-key "eval region"))
-#+END_SRC
-**** Clojure
-#+BEGIN_SRC emacs-lisp
+
 (use-package cider
   :straight t
   :mode "\\.clj[sc]?\\'"
   :config
   (when (fboundp 'evil-collection-cider-setup)
     (evil-collection-cider-setup)))
-#+END_SRC
-**** Common Lisp
-#+BEGIN_SRC emacs-lisp
+
 (use-package slime
   :straight t
   :mode "\\.lisp\\'")
-#+END_SRC
-**** C/C++
-#+BEGIN_SRC emacs-lisp
+
 (use-package ccls
   :straight t
   :hook ((c-mode c++-mode objc-mode cuda-mode c-ts-mode c++-ts-mode) .
          (lambda () (require 'ccls) (lsp-deferred))))
-#+END_SRC
-**** Scheme
-#+BEGIN_SRC emacs-lisp
+
 (use-package scheme-mode
   :straight nil
   :mode "\\.sld\\'")
-#+END_SRC
-**** Nix
-#+BEGIN_SRC emacs-lisp
+
 (use-package nix-mode
   :straight t
   :mode "\\.nix\\'"
   :hook ((nix-mode . lsp-deferred)
          (nix-ts-mode . lsp-deferred)))
-#+END_SRC
-**** Golang
-#+BEGIN_SRC emacs-lisp
+
 (defun my/go-mode-hook ()
   (unless (string-match-p "\\bgo\\b" compile-command)
     (set (make-local-variable 'compile-command)
@@ -1821,9 +1431,7 @@ Mapped to ~<leader>?~.
          (go-ts-mode . my/go-mode-hook))
   :init
   (setq gofmt-command "goimports"))
-#+END_SRC
-**** Rust
-#+BEGIN_SRC emacs-lisp
+
 (use-package rust-mode
   :straight t
   :mode "\\.rs\\'"
@@ -1835,9 +1443,7 @@ Mapped to ~<leader>?~.
   :defer t
   :hook ((rust-mode . cargo-minor-mode)
          (rust-ts-mode . cargo-minor-mode)))
-#+END_SRC
-**** Zig
-#+BEGIN_SRC emacs-lisp
+
 (use-package zig-mode
   :after lsp-mode
   :straight t
@@ -1849,9 +1455,7 @@ Mapped to ~<leader>?~.
     :new-connection (lsp-stdio-connection "/usr/bin/env zls")
     :major-modes '(zig-mode)
     :server-id 'zls)))
-#+END_SRC
-**** Markdown
-#+BEGIN_SRC emacs-lisp
+
 (use-package markdown-mode
   :straight t
   :mode "\\.md\\'"
@@ -1869,17 +1473,13 @@ Mapped to ~<leader>?~.
     (dw/set-markdown-header-font-sizes))
 
   (add-hook 'markdown-mode-hook 'dw/markdown-mode-hook))
-#+END_SRC
-**** YAML
-#+BEGIN_SRC emacs-lisp
+
 (use-package yaml-mode
   :straight t
   :mode "\\.ya?ml\\'"
   :hook ((yaml-mode . lsp-deferred)
          (yaml-ts-mode . lsp-deferred)))
-#+END_SRC
-*** Development mappings
-#+BEGIN_SRC emacs-lisp
+
 (nmap "gd" 'xref-find-definitions)
 (nmap "gr" 'xref-find-references)
 (nmap "gR" 'xref-go-back)
@@ -1889,9 +1489,7 @@ Mapped to ~<leader>?~.
 (lib/mapleader "r" 'counsel-imenu)
 (lib/mapleader "ac" 'lsp-execute-code-action)
 (lib/mapleader "er" 'lsp-rename)
-#+END_SRC
-*** Formatting
-#+BEGIN_SRC emacs-lisp
+
 (defun my/hooks/on-save ()
   ;; lsp-format-buffer
   (when (bound-and-true-p lsp-mode)
@@ -1903,17 +1501,12 @@ Mapped to ~<leader>?~.
     (lsp-organize-imports)))
 
 (add-hook 'before-save-hook 'my/hooks/on-save)
-#+END_SRC
-*** Linting
-**** flycheck
-#+BEGIN_SRC emacs-lisp
+
 (use-package flycheck
   :straight t
   :defer t
   :hook (lsp-mode . flycheck-mode))
-#+END_SRC
-**** flyspell
-#+BEGIN_SRC emacs-lisp
+
 (setq ispell-dictionary "american")
 
 (defun my-american-dict ()
@@ -1922,31 +1515,12 @@ Mapped to ~<leader>?~.
   (setq ispell-local-dictionary "american")
   (flyspell-mode 1)
   (flyspell-buffer))
-#+END_SRC
-** Shell
-#+BEGIN_SRC emacs-lisp
+
 (use-package shell-pop
   :straight t
   :init
   (setq shell-pop-full-span t))
-#+END_SRC
-** Git
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package magit
-  :bind (("C-x g" . magit-status)
-         ("C-x M-g" . magit-dispatch)))
 
-(use-package git-commit
-  :hook (git-commit-mode . my-american-dict))
-
-(use-package git-messenger
-  :bind ("C-x G" . git-messenger:popup-message)
-  :config
-  (setq git-messenger:show-detail t
-        git-messenger:use-magit-popup t))
-#+END_SRC
-** Snippets
-#+BEGIN_SRC emacs-lisp
 (use-package yasnippet
   :straight t
   :commands (yas-minor-mode yas-minor-mode-on)
@@ -1959,19 +1533,14 @@ Mapped to ~<leader>?~.
         (cl-union yas-snippet-dirs
                   '("~/.emacs.d/snippets")))
   (yas-reload-all))
-#+END_SRC
-** CSP ~<C-S-p>~
-*** Setup
-#+BEGIN_SRC emacs-lisp
+
 (defun csp ()
   (interactive)
   (setq-local entries (mapcar 'car csp/commands))
   (ivy-read "Command: " entries :action (lambda (candidate) (funcall (cdr (assoc candidate csp/commands))))))
 
 (nmap "C-S-p" #'csp)
-#+END_SRC
-*** Handlers
-#+BEGIN_SRC emacs-lisp
+
 ;; index
 (setq csp/commands '(
                      ("Projectile: Switch project" . csp/fn/projectile-switch-project)
@@ -1996,4 +1565,3 @@ Mapped to ~<leader>?~.
   (interactive)
   (command-execute 'projectile-remove-known-project)
   )
-#+END_SRC
