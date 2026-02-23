@@ -22,7 +22,12 @@ return lib.module.create({
       opts = {
         keymap = {
           ["<C-space>"] = { "show" },
-          ["<C-e>"] = { "hide" },
+          ["<C-t>"] = {
+            function(cmp)
+              return cmp.show({ providers = { "files" } })
+            end,
+          },
+          ["<C-q>"] = { "hide" },
           ["<CR>"] = { "accept", "fallback" },
           ["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
           ["<S-Tab>"] = { "snippet_backward", "select_prev", "fallback" },

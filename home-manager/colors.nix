@@ -130,7 +130,7 @@ with lib;
     # background = "#1e1f29";
     # background = "#21222c";
     # background = "#23212c";
-    background = "#1E1D21";
+    background = "#201f25";
     # background = "#201e24";
     foreground = "#DCD9E4";
     cursor = "#f2b90d";

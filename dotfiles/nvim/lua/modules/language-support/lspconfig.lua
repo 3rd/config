@@ -1,6 +1,11 @@
 return lib.module.create({
   name = "language-support/lsp",
   hosts = "*",
+  setup = function()
+    vim.api.nvim_create_user_command("LspLog", function()
+      vim.cmd("tabnew " .. vim.lsp.log.get_filename())
+    end, { desc = "Open LSP log file in a new tab" })
+  end,
   plugins = {
     {
       "neovim/nvim-lspconfig",
@@ -20,6 +25,7 @@ return lib.module.create({
           "lua_ls",
           "nills",
           "rust_analyzer",
+          "basedpyright",
           "tailwindcss",
           "eslint",
           "ts_ls",

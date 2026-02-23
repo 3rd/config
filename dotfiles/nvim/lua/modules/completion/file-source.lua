@@ -12,6 +12,17 @@ function M:get_trigger_characters()
 end
 
 function M:should_show_items(context)
+  if
+    context
+    and context.trigger
+    and context.trigger.initial_kind == "manual"
+    and context.providers
+    and #context.providers == 1
+    and context.providers[1] == "files"
+  then
+    return true
+  end
+
   local line = context.line
   local cursor = context.cursor
 
