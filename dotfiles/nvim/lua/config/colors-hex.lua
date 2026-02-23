@@ -7,19 +7,19 @@ local colors = {
   common = {
     boolean = "#FF8170",
     builtin = "#EB806B",
-    comment = "#7A7788",
+    comment = "#7B7986",
     conditional = "#EF71C5",
     constant = "#FF8170",
     constructor = "#17CFCF",
     cword = "#363442",
-    delimiter = "#746F8B",
+    delimiter = "#777486",
     field = "#A5A0BA",
     ["function"] = "#7EBDFC",
-    identifier = "#C6C3D5",
-    keyword = "#918CAB",
-    macro = "#A798F0",
+    identifier = "#C8C6D2",
+    keyword = "#9491A6",
+    macro = "#A89AEF",
     number = "#FF8170",
-    operator = "#918CAB",
+    operator = "#9491A6",
     parameter = "#E3AC63",
     property = "#A5A0BA",
     ["repeat"] = "#EF71C5",
@@ -30,7 +30,7 @@ local colors = {
     type = "#17CFCF"
   },
   cyan = "#17CFCF",
-  foreground = "#C6C3D5",
+  foreground = "#C8C6D2",
   green = "#ACD35F",
   indigo = "#9485E0",
   magenta = "#F075D1",
@@ -52,7 +52,7 @@ local colors = {
     code = {
       block = {
         background = "#282631",
-        content = "#C6C3D5",
+        content = "#C8C6D2",
         language = "#5E5A72",
         marker = "#494659"
       },
@@ -60,7 +60,7 @@ local colors = {
     },
     datetime = "#FC824A",
     document = {
-      meta = "#7A7788",
+      meta = "#7B7986",
       meta_field = "#F075D1",
       meta_field_key = "#EC93D6",
       title = "#C0E774"
@@ -68,28 +68,28 @@ local colors = {
     headline = {
       five = {
         bg = "#414B53",
-        fg = "#C6C3D5"
+        fg = "#C8C6D2"
       },
       four = {
         bg = "#3D434D",
-        fg = "#C6C3D5"
+        fg = "#C8C6D2"
       },
-      marker = "#9B96B0",
+      marker = "#9D9AAC",
       one = {
         bg = "#2A2938",
-        fg = "#C6C3D5"
+        fg = "#C8C6D2"
       },
       six = {
         bg = "#48565B",
-        fg = "#C6C3D5"
+        fg = "#C8C6D2"
       },
       three = {
         bg = "#313749",
-        fg = "#C6C3D5"
+        fg = "#C8C6D2"
       },
       two = {
         bg = "#2F3042",
-        fg = "#C6C3D5"
+        fg = "#C8C6D2"
       }
     },
     label = "#E486CC",
@@ -100,8 +100,8 @@ local colors = {
     },
     list_item = {
       label = "#A294EB",
-      label_marker = "#7A7788",
-      marker = "#77767F"
+      label_marker = "#7B7986",
+      marker = "#79787D"
     },
     number = "#FF8170",
     outline = {
@@ -129,7 +129,7 @@ local colors = {
       active = "#17CFCF",
       cancelled = "#fa4040",
       completion = "#7378a5",
-      default = "#C6C3D5",
+      default = "#C8C6D2",
       done = "#62606C",
       recurrence = "#7378a5",
       schedule = "#7378a5",
@@ -141,10 +141,10 @@ local colors = {
     breadcrumbs = {
       normal = {
         bg = "#2F2D39",
-        fg = "#9B97AF"
+        fg = "#9E9CAB"
       },
       separator = {
-        fg = "#87829B"
+        fg = "#8A8797"
       }
     },
     line = {
@@ -167,15 +167,15 @@ local colors = {
     status = {
       a = {
         bg = "#3F3D4D",
-        fg = "#B1AEC2"
+        fg = "#B3B0BF"
       },
       b = {
         bg = "#363442",
-        fg = "#A6A2B9"
+        fg = "#A8A5B6"
       },
       c = {
         bg = "#2A2833",
-        fg = "#9B97AF"
+        fg = "#9E9CAB"
       }
     }
   },
