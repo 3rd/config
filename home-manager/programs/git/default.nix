@@ -3,16 +3,15 @@
 let
   scripts = {
     git-id = pkgs.writeShellScriptBin "git-id" (builtins.readFile ./git-id.sh);
-    git-branch =
-      pkgs.writeShellScriptBin "git-branch" (builtins.readFile ./git-branch.sh);
-    git-undo =
-      pkgs.writeShellScriptBin "git-undo" (builtins.readFile ./git-undo.sh);
-    git-status-deep = pkgs.writeShellScriptBin "git-status-deep"
-      (builtins.readFile ./git-status-deep.sh);
-    git-standup = pkgs.writeShellScriptBin "git-standup"
-      (builtins.readFile ./git-standup.sh);
+    git-branch = pkgs.writeShellScriptBin "git-branch" (builtins.readFile ./git-branch.sh);
+    git-undo = pkgs.writeShellScriptBin "git-undo" (builtins.readFile ./git-undo.sh);
+    git-status-deep = pkgs.writeShellScriptBin "git-status-deep" (
+      builtins.readFile ./git-status-deep.sh
+    );
+    git-standup = pkgs.writeShellScriptBin "git-standup" (builtins.readFile ./git-standup.sh);
   };
-in {
+in
+{
   imports = [ ./private.nix ];
 
   home.packages = with pkgs; [
@@ -59,15 +58,36 @@ in {
         renameLimit = 2048;
         renames = "copy";
       };
-      merge = { tool = "meld"; };
+      merge = {
+        tool = "meld";
+        conflictStyle = "zdiff3";
+      };
       mergetool.meld = {
-        cmd = ''
-          ${pkgs.meld}/bin/meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"'';
+        cmd = ''${pkgs.meld}/bin/meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"'';
       };
       # blame = { ignoreRevsFile = ".git-blame-ignore-revs"; };
-      pull = { rebase = true; };
-      push = { default = "simple"; };
-      rebase = { autoStash = true; };
+      fetch = {
+        prune = true;
+        pruneTags = true;
+        writeCommitGraph = true;
+      };
+      pull = {
+        rebase = true;
+      };
+      push = {
+        default = "simple";
+      };
+      rebase = {
+        autoStash = true;
+        updateRefs = true;
+        missingCommitsCheck = "error";
+      };
+      rerere = {
+        enabled = true;
+      };
+      maintenance = {
+        strategy = "incremental";
+      };
     };
   };
 
@@ -85,34 +105,72 @@ in {
   programs.difftastic = {
     enable = true;
     git.enable = true;
-    options = { background = "dark"; };
+    options = {
+      background = "dark";
+    };
   };
 
-  programs.fish.shellAliases = {
-    g = "git";
-    ga = "git add";
-    gc = "git commit";
-    gs = "git status -sb";
-    gd = "git diff";
-    gaa = "git add --all";
-    gac = "git add . && git commit";
-    clone = "git clone";
-    fetch = "git fetch";
-    pull = "git pull";
-    push = "git push";
-    rebase = "git rebase";
-    merge = "git merge";
-    stash = "git stash";
-    gl =
-      "git log --graph --pretty=format:'%Cred%h%Creset %s - %C(bold blue)%an%Creset %Cgreen(%cr)' --abbrev-commit";
-    gll = "git log --graph --abbrev-commit --decorate";
-    # gstandup = ''
-    #   git log  --all --author="$(git config user.email)" --pretty=format:'%h %ad %s | %an' --date=short -62 '';
-    # scripts
-    gid = "git-id";
-    gbr = "git-branch";
-    gstandup = "git-standup";
-    gsd = "git-status-deep";
+  programs.fish = {
+    functions = {
+      git-ignore-local = {
+        description = "Add a pattern to .git/info/exclude.";
+        body = ''
+          echo "$argv[1]" >> .git/info/exclude
+        '';
+      };
+      git-unignore-local = {
+        description = "Remove a pattern from .git/info/exclude.";
+        body = ''
+          if test (count $argv) -eq 0
+            echo "usage: git-unignore-local <pattern>"
+            return 1
+          end
+
+          if not test -f .git/info/exclude
+            echo "error: .git/info/exclude not found"
+            return 1
+          end
+
+          set -l pattern "$argv[1]"
+          set -l exclude_file .git/info/exclude
+          set -l tmp_file (mktemp)
+
+          grep -Fvx -- "$pattern" "$exclude_file" > "$tmp_file"
+          set -l grep_status $status
+          if test $grep_status -gt 1
+            rm -f "$tmp_file"
+            return $grep_status
+          end
+
+          mv "$tmp_file" "$exclude_file"
+        '';
+      };
+    };
+    shellAliases = {
+      g = "git";
+      ga = "git add";
+      gc = "git commit";
+      gs = "git status -sb";
+      gd = "git diff";
+      gaa = "git add --all";
+      gac = "git add . && git commit";
+      clone = "git clone";
+      fetch = "git fetch";
+      pull = "git pull";
+      push = "git push";
+      rebase = "git rebase";
+      merge = "git merge";
+      stash = "git stash";
+      gl = "git log --graph --pretty=format:'%Cred%h%Creset %s - %C(bold blue)%an%Creset %Cgreen(%cr)' --abbrev-commit";
+      gll = "git log --graph --abbrev-commit --decorate";
+      # gstandup = ''
+      #   git log  --all --author="$(git config user.email)" --pretty=format:'%h %ad %s | %an' --date=short -62 '';
+      # scripts
+      gid = "git-id";
+      gbr = "git-branch";
+      gstandup = "git-standup";
+      gsd = "git-status-deep";
+    };
+    shellAbbrs = { };
   };
-  programs.fish.shellAbbrs = { };
 }
