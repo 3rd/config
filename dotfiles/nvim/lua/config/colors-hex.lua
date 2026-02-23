@@ -2,7 +2,7 @@ local hostname = vim.loop.os_gethostname()
 
 -- base colors
 local colors = {
-  background = "#23222B",
+  background = "#211F28",
   blue = "#7EBDFC",
   common = {
     boolean = "#FF8170",
@@ -11,7 +11,7 @@ local colors = {
     conditional = "#EF71C5",
     constant = "#FF8170",
     constructor = "#17CFCF",
-    cword = "#383645",
+    cword = "#363442",
     delimiter = "#777486",
     field = "#A5A0BA",
     ["function"] = "#7EBDFC",
@@ -40,7 +40,7 @@ local colors = {
   plugins = {
     indent_guides = {
       chunk = "#9F3885",
-      indent = { "#383645" }
+      indent = { "#363442" }
     }
   },
   red = "#E02A06",
@@ -51,10 +51,10 @@ local colors = {
     },
     code = {
       block = {
-        background = "#2A2833",
+        background = "#282631",
         content = "#C8C6D2",
-        language = "#605C75",
-        marker = "#4B485B"
+        language = "#5E5A72",
+        marker = "#494659"
       },
       inline = "#ED9145"
     },
@@ -67,28 +67,28 @@ local colors = {
     },
     headline = {
       five = {
-        bg = "#434E56",
+        bg = "#414B53",
         fg = "#C8C6D2"
       },
       four = {
-        bg = "#3F4650",
+        bg = "#3D434D",
         fg = "#C8C6D2"
       },
       marker = "#9D9AAC",
       one = {
-        bg = "#2D2B3B",
+        bg = "#2A2938",
         fg = "#C8C6D2"
       },
       six = {
-        bg = "#4A595E",
+        bg = "#48565B",
         fg = "#C8C6D2"
       },
       three = {
-        bg = "#33394D",
+        bg = "#313749",
         fg = "#C8C6D2"
       },
       two = {
-        bg = "#313245",
+        bg = "#2F3042",
         fg = "#C8C6D2"
       }
     },
@@ -130,7 +130,7 @@ local colors = {
       cancelled = "#fa4040",
       completion = "#7378a5",
       default = "#C8C6D2",
-      done = "#64626F",
+      done = "#62606C",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
@@ -140,7 +140,7 @@ local colors = {
   ui = {
     breadcrumbs = {
       normal = {
-        bg = "#312F3C",
+        bg = "#2F2D39",
         fg = "#9E9CAB"
       },
       separator = {
@@ -149,32 +149,32 @@ local colors = {
     },
     line = {
       current_line = {
-        bg = "#2D2B36"
+        bg = "#2A2833"
       },
       current_line_nr = {
-        bg = "#383645",
-        fg = "#8B87A1"
+        bg = "#363442",
+        fg = "#89849F"
       },
       current_line_sign = {
-        bg = "#383645",
+        bg = "#363442",
         fg = "#EB9147"
       },
       line_nr = {
-        fg = "#4B485B"
+        fg = "#4D4A5E"
       }
     },
-    split = "#2D2B36",
+    split = "#363442",
     status = {
       a = {
-        bg = "#423F50",
+        bg = "#363442",
         fg = "#B3B0BF"
       },
       b = {
-        bg = "#383645",
+        bg = "#312F3C",
         fg = "#A8A5B6"
       },
       c = {
-        bg = "#2D2B36",
+        bg = "#282631",
         fg = "#9E9CAB"
       }
     }

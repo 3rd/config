@@ -78,19 +78,26 @@ colors.common = {
 }
 colors.ui = {
   line = {
-    line_nr = { fg = colors.background.lighten(20) },
-    current_line = { bg = colors.background.lighten(5) },
+    line_nr = {
+      fg = colors.background.lighten(22),
+    },
+    current_line = {
+      bg = colors.background.lighten(5),
+    },
     current_line_nr = {
       bg = colors.background.lighten(10),
       fg = colors.background.lighten(50),
     },
-    current_line_sign = { bg = colors.background.lighten(10), fg = colors.orange },
+    current_line_sign = {
+      bg = colors.background.lighten(10),
+      fg = colors.orange,
+    },
   },
-  split = colors.background.lighten(5),
+  split = colors.background.lighten(10),
   status = {
-    a = { bg = colors.background.lighten(15), fg = colors.foreground.darken(10).desaturate(20) },
-    b = { bg = colors.background.lighten(10), fg = colors.foreground.darken(15).desaturate(20) },
-    c = { bg = colors.background.lighten(5), fg = colors.foreground.darken(20).desaturate(30) },
+    a = { bg = colors.background.lighten(10), fg = colors.foreground.darken(10).desaturate(20) },
+    b = { bg = colors.background.lighten(8), fg = colors.foreground.darken(15).desaturate(20) },
+    c = { bg = colors.background.lighten(3), fg = colors.foreground.darken(20).desaturate(30) },
   },
   breadcrumbs = {
     normal = { bg = colors.background.lighten(7), fg = colors.foreground.darken(20).desaturate(30) },
