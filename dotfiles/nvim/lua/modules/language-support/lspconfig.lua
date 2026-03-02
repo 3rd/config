@@ -11,28 +11,7 @@ return lib.module.create({
       "neovim/nvim-lspconfig",
       lazy = false,
       config = function()
-        local servers = {
-          "ast_grep",
-          "bashls",
-          "clangd",
-          "csharp_ls",
-          "cssls",
-          "cssmodules_ls",
-          "dockerls",
-          "gopls",
-          "html",
-          "jsonls",
-          "lua_ls",
-          "nills",
-          "rust_analyzer",
-          "basedpyright",
-          "tailwindcss",
-          "eslint",
-          "ts_ls",
-          -- "vtsls",
-          "yamlls",
-          "zls",
-        }
+        local servers = require("config/lsp-servers")
 
         for _, server in ipairs(servers) do
           local config = vim.lsp.config[server]
@@ -47,7 +26,6 @@ return lib.module.create({
     },
     {
       "b0o/schemastore.nvim",
-      lazy = false,
     },
     {
       "dmmulroy/ts-error-translator.nvim",
@@ -91,14 +69,6 @@ return lib.module.create({
         "neovim/nvim-lspconfig",
       },
       opts = function(_, opts)
-        local root_pattern = require("lspconfig.util").root_pattern
-        -- local function root_pattern(...)
-        --   local patterns = { ... }
-        --   return function(startpath)
-        --     return vim.fs.root(startpath or vim.api.nvim_buf_get_name(0), patterns)
-        --   end
-        -- end
-
         -- override
         local eslintConfigOverride = nil
         local eslintResolveRelativeTo = nil
@@ -111,16 +81,18 @@ return lib.module.create({
 
         opts = vim.tbl_deep_extend("force", opts or {}, {
           -- debug = true,
-          root_dir = root_pattern(".root", "package.json", ".git") or vim.uv.cwd(),
+          root_dir = function(bufnr)
+            return vim.fs.root(bufnr, { ".root", "package.json", ".git" }) or vim.uv.cwd()
+          end,
           handlers = {
             ["eslint/noConfig"] = function(_, result)
               vim.notify(result.message, vim.log.levels.WARN)
               return {}
             end,
             ["workspace/diagnostic/refresh"] = function(_, _, ctx)
-              local ns = vim.lsp.diagnostic.get_namespace(ctx.client_id)
               local bufnr = vim.api.nvim_get_current_buf()
-              vim.diagnostic.reset(ns, bufnr)
+              local client = vim.lsp.get_client_by_id(ctx.client_id)
+              if client and client.namespace then vim.diagnostic.reset(client.namespace, bufnr) end
               return true
             end,
           },

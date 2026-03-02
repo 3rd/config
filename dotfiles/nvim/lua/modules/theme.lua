@@ -35,7 +35,7 @@ return lib.module.create({
         -- config/colors-hex.lua
         log("Writing colors...")
         local colors = require("config/theme").colors
-        local hostname = vim.loop.os_gethostname()
+        local hostname = vim.uv.os_gethostname()
 
         local function parse(part)
           local result = {}
@@ -53,7 +53,7 @@ return lib.module.create({
 
         local hex_colors = parse(colors)
         local template = [[
-local hostname = vim.loop.os_gethostname()
+local hostname = vim.uv.os_gethostname()
 
 -- base colors
 local colors = %s

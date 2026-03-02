@@ -16,7 +16,7 @@ local default_options = {
 ---@param rhs string|function
 ---@param optionsOrDescription? table<option, boolean>|string
 local map = function(mode, lhs, rhs, optionsOrDescription)
-  local opts = default_options
+  local opts = table.clone(default_options)
   if type(optionsOrDescription) == "table" then
     opts = table.merge(opts, optionsOrDescription)
   elseif type(optionsOrDescription) == "string" then

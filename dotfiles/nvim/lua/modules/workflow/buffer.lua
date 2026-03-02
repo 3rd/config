@@ -1,15 +1,48 @@
 local history = {}
+local max_history_per_window = 200
+
+---@param winid number
+---@param bufnr number
+local push_history = function(winid, bufnr)
+  local window_history = history[winid]
+  if not window_history then
+    history[winid] = { bufnr }
+    return
+  end
+
+  if window_history[#window_history] == bufnr then return end
+
+  table.insert(window_history, bufnr)
+  if #window_history > max_history_per_window then
+    table.remove(window_history, 1)
+  end
+end
 
 local setup = function()
+  local group = vim.api.nvim_create_augroup("buffer-alternate", { clear = true })
+
   vim.api.nvim_create_autocmd({ "BufEnter" }, {
-    group = vim.api.nvim_create_augroup("buffer-alternate", {}),
+    group = group,
     callback = function()
-      local winid = vim.api.nvim_get_current_win()
-      local bufnr = vim.api.nvim_get_current_buf()
-      if not history[winid] then
-        history[winid] = { bufnr }
-      else
-        table.insert(history[winid], bufnr)
+      push_history(vim.api.nvim_get_current_win(), vim.api.nvim_get_current_buf())
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "WinClosed" }, {
+    group = group,
+    callback = function(ev)
+      local winid = tonumber(ev.match)
+      if winid then history[winid] = nil end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "BufWipeout" }, {
+    group = group,
+    callback = function(ev)
+      for _, window_history in pairs(history) do
+        for i = #window_history, 1, -1 do
+          if window_history[i] == ev.buf then table.remove(window_history, i) end
+        end
       end
     end,
   })

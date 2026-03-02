@@ -7,25 +7,34 @@ return lib.module.create({
       event = "BufReadPre",
       opts = {
         filetypes = { "*" },
-        user_default_options = {
-          names = false,
-          RGB = true,
-          RGBA = true,
-          RRGGBB = true,
-          RRGGBBAA = true,
-          AARRGGBB = true,
-          rgb_fn = true,
-          hsl_fn = true,
-          oklch_fn = true,
-          tailwind = true,
-          tailwind_opts = {
-            update_names = true,
+        options = {
+          parsers = {
+            names = { enable = false },
+            hex = {
+              default = true,
+              rgb = true,
+              rgba = true,
+              rrggbb = true,
+              rrggbbaa = true,
+              aarrggbb = true,
+            },
+            rgb = { enable = true },
+            hsl = { enable = true },
+            oklch = { enable = true },
+            tailwind = {
+              enable = true,
+              update_names = true,
+            },
+            xterm = { enable = true },
           },
-          xterm = true,
-          mode = "background",
-          virtualtext = "■",
-          virtualtext_inline = false,
-          virtualtext_mode = "foreground",
+          display = {
+            mode = "background",
+            virtualtext = {
+              char = "■",
+              position = "eol",
+              hl_mode = "foreground",
+            },
+          },
           always_update = false,
         },
       },

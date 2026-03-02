@@ -69,7 +69,7 @@ local get_modules = function(opts)
   local modules_dir = string.format("%s/modules", lua_dir)
   local paths = vim.split(vim.fn.glob(string.format("%s/**/*.lua", modules_dir)), "\n", {})
 
-  local hostname = vim.loop.os_gethostname()
+  local hostname = vim.uv.os_gethostname()
 
   if is.table(opts.exclude) then
     for _, exclude in ipairs(opts.exclude) do

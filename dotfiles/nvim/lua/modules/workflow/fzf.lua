@@ -17,10 +17,10 @@ local setup_fzf_lua = function()
       fullscreen = true,
       preview = {
         default = "bat",
-        delay = 0,
+        delay = 15,
         layout = "horizontal",
         horizontal = "right:40%",
-        wrap = true,
+        wrap = false,
       },
       on_create = function()
         vim.api.nvim_buf_set_keymap(0, "t", "<C-j>", "<Down>", { silent = true })
@@ -62,7 +62,7 @@ local setup_fzf_lua = function()
 
   lib.map.map("n", "<c-p>", function()
     local fd_command = base_fd_command
-    if vim.fn.expand("%:p:h") ~= vim.loop.cwd() then
+    if vim.fn.expand("%:p:h") ~= vim.uv.cwd() then
       local prox = vim.fn.exepath("proximity-sort")
       if prox ~= nil and #prox > 0 then
         local libuv = require("fzf-lua.libuv")

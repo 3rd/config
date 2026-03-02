@@ -57,6 +57,8 @@ return {
     { "i", "(", "(<c-g>u" },
     { "i", "{", "{<c-g>u" },
     { "i", "[", "[<c-g>u" },
+    { "i", "!", "!<c-g>u" },
+    { "i", "?", "?<c-g>u" },
     -- emacsy insert & command mode
     { "i", "<C-a>", "<home>" },
     { "i", "<C-e>", "<end>" },
@@ -93,14 +95,22 @@ return {
     { "n", "<c-/>", "gcc", { remap = true, desc = "Toggle comment" } },
     { "v", "<c-/>", "gc", { remap = true, desc = "Toggle comment" } },
     -- diagnostics
-    { "n", "gp", "<cmd>lua vim.diagnostic.goto_next()<cr>", "LSP: Go to next diagnostic" },
-    { "n", "gP", "<cmd>lua vim.diagnostic.goto_prev()<cr>", "LSP: Go to previous diagnostic" },
-    -- undo
-    { "i", ",", ",<c-g>U" },
-    { "i", ".", ".<c-g>U" },
-    { "i", ";", ";<c-g>U" },
-    { "i", "!", "!<c-g>U" },
-    { "i", "?", "?<c-g>U" },
+    {
+      "n",
+      "gp",
+      function()
+        vim.diagnostic.jump({ count = 1 })
+      end,
+      "LSP: Go to next diagnostic",
+    },
+    {
+      "n",
+      "gP",
+      function()
+        vim.diagnostic.jump({ count = -1 })
+      end,
+      "LSP: Go to previous diagnostic",
+    },
     -- misc
     { "n", "Q", "@q", "Run @q macro" },
     -- experiments
@@ -147,13 +157,48 @@ return {
     --   end,
     --   "LSP: Go to definition (vsplit)",
     -- },
-    { "n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", "LSP: Go to declaration" },
-    { "n", "gr", "<cmd>lua require('fzf-lua').lsp_references()<CR>", "LSP: Go to references" },
-    { "n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>", "LSP: Go to implementation" },
-    { "n", "gt", "<cmd>lua vim.lsp.buf.type_definition()<CR>", "LSP: Go to type definition" },
+    {
+      "n",
+      "gD",
+      function()
+        vim.lsp.buf.declaration()
+      end,
+      "LSP: Go to declaration",
+    },
+    {
+      "n",
+      "gr",
+      function()
+        require("fzf-lua").lsp_references()
+      end,
+      "LSP: Go to references",
+    },
+    {
+      "n",
+      "gi",
+      function()
+        vim.lsp.buf.implementation()
+      end,
+      "LSP: Go to implementation",
+    },
+    {
+      "n",
+      "gt",
+      function()
+        vim.lsp.buf.type_definition()
+      end,
+      "LSP: Go to type definition",
+    },
     -- { "n", "gs", "<cmd>lua vim.lsp.buf.signature_help()<CR>", "LSP: Show signature help" },
     -- { { "n", "v" }, "<leader>ac", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP: Code action" },
-    { "n", "<leader>er", "<cmd>lua vim.lsp.buf.rename()<cr>", "LSP: Rename symbol" },
+    {
+      "n",
+      "<leader>er",
+      function()
+        vim.lsp.buf.rename()
+      end,
+      "LSP: Rename symbol",
+    },
     -- { "n", "<leader>r", "<cmd>lua require('fzf-lua').lsp_document_symbols()<CR>", "LSP: Show document symbols" },
     {
       "n",

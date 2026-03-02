@@ -1,4 +1,4 @@
-local hostname = vim.loop.os_gethostname()
+local hostname = vim.uv.os_gethostname()
 
 -- base colors
 local colors = {
@@ -176,6 +176,21 @@ local colors = {
       c = {
         bg = "#282631",
         fg = "#9E9CAB"
+      }
+    },
+    tabs = {
+      active = {
+        bg = "#312F3C",
+        fg = "#C8C6D2",
+        gui = "bold"
+      },
+      fill = {
+        bg = "#211F28",
+        fg = "#767481"
+      },
+      inactive = {
+        bg = "#282631",
+        fg = "#8A8797"
       }
     }
   },

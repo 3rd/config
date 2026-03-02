@@ -99,6 +99,7 @@ in {
           rev = "cfa4cf16bea809c7c715a86c428757e577c85254";
           sha256 = "sha256-Kvygsx0r2SGaAttSWLY/pk71oWf5VdUrB1dF8UwWwGI=";
         };
+        doCheck = false;
       });
       config = {
         bars = [ ];

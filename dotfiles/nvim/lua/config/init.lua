@@ -72,7 +72,7 @@ end
 
 -- plugins
 local plugins = table.join(
-  lib.module.get_module_plugins(),
+  lib.module.get_module_plugins(modules),
   table.map({
     { dir = "tslib", lazy = false },
     { dir = "testing.nvim" },

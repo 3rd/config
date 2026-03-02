@@ -65,7 +65,7 @@
       font-awesome
       inconsolata
       inter
-      jetbrains-mono
+
       # joypixels
       noto-fonts
       noto-fonts-color-emoji

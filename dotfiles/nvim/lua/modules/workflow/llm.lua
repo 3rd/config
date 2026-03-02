@@ -389,7 +389,7 @@ local function create_result_popup(content, filetype)
 
   local lines = vim.split(content, "\n", {})
   vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, lines)
-  vim.api.nvim_buf_set_option(popup.bufnr, "ft", filetype or "markdown")
+  vim.api.nvim_set_option_value("filetype", filetype or "markdown", { buf = popup.bufnr })
 
   popup:on(event.BufEnter, function()
     vim.cmd("normal! gg")
@@ -430,7 +430,7 @@ local function create_streaming_popup(title)
 
   -- set initial empty content and markdown filetype
   vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, { "" })
-  vim.api.nvim_buf_set_option(popup.bufnr, "ft", "markdown")
+  vim.api.nvim_set_option_value("filetype", "markdown", { buf = popup.bufnr })
 
   -- utility function to update popup content
   popup.update_content = function(content)

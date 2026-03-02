@@ -1,5 +1,5 @@
 local cwd = function()
-  return vim.loop.cwd()
+  return vim.uv.cwd()
 end
 
 ---@vararg string|string[]
@@ -32,12 +32,12 @@ local default_find_root_patterns = {
 local find_root = function(patterns)
   patterns = patterns or default_find_root_patterns
   local path = vim.fs.dirname(lib.buffer.current.get_path())
-  if path == "." then path = vim.loop.cwd() or "" end
+  if path == "." then path = vim.uv.cwd() or "" end
   if path == "" then return nil end
-  local match = vim.fs.find(default_find_root_patterns, {
+  local match = vim.fs.find(patterns, {
     path = path,
     upward = true,
-    stop = vim.loop.os_homedir(),
+    stop = vim.uv.os_homedir(),
   })[1] or nil
   if not match then return end
   return vim.fs.dirname(match) .. "/"

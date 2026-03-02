@@ -27,6 +27,23 @@ local setup = function()
       sources = { "nvim_diagnostic" },
       symbols = { error = " ", warn = " ", info = " ", hint = "󰌶 " },
     },
+    tabs = {
+      "tabs",
+      mode = 2, -- tab nr + tab name
+      path = 0,
+      tab_max_length = 32,
+      component_separators = { left = "", right = "" },
+      section_separators = { left = "", right = "" },
+      max_length = function()
+        return math.floor(vim.o.columns * 0.9)
+      end,
+      show_modified_status = true,
+      symbols = { modified = " ●" },
+      tabs_color = {
+        active = colors.ui.tabs.active,
+        inactive = colors.ui.tabs.inactive,
+      },
+    },
   }
 
   -- vim.api.nvim_create_augroup("lualine_augroup", { clear = true })
@@ -63,9 +80,26 @@ local setup = function()
     end
   end)()
 
+  local cursor_module = nil
+  local has_cursor_module = false
+  local cursor_module_checked = false
+  local get_cursor_module = function()
+    if not cursor_module_checked then
+      cursor_module_checked = true
+      local ok, module = pcall(require, "cursor")
+      if ok then
+        has_cursor_module = true
+        cursor_module = module
+      end
+    end
+
+    if has_cursor_module then return cursor_module end
+    return nil
+  end
+
   local cursor_status = function()
-    local ok, cursor = pcall(require, "cursor")
-    if not ok then return "" end
+    local cursor = get_cursor_module()
+    if not cursor then return "" end
     return cursor.status_icon()
   end
 
@@ -89,10 +123,13 @@ local setup = function()
       section_separators = { left = "", right = "" },
       disabled_filetypes = { "NvimTree" },
       globalstatus = true,
+      always_show_tabline = false,
     },
     sections = vim.deepcopy(sections),
     inactive_sections = vim.deepcopy(sections),
-    tabline = {},
+    tabline = {
+      lualine_a = { components.tabs },
+    },
     extensions = { "nvim-tree" },
   })
 end

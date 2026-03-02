@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-stable, ... }:
 
 let
   scripts = {
@@ -19,7 +19,7 @@ in
     git-crecord
     git-sizer
     gitstats
-    gource
+    pkgs-stable.gource
     lazygit
     meld
     sublime-merge

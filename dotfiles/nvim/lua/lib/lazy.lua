@@ -3,7 +3,7 @@ local env = require("lib/env")
 local lazy_plugin_path = env.dirs.vim.lazy.plugin
 
 local install = function()
-  if not vim.loop.fs_stat(lazy_plugin_path) then
+  if not vim.uv.fs_stat(lazy_plugin_path) then
     vim.fn.system({
       "git",
       "clone",

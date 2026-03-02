@@ -328,7 +328,7 @@ local setup_ufo = function()
 
   local close_all_folds = function()
     -- vim.schedule(function()
-    --   local timer = vim.loop.new_timer()
+    --   local timer = vim.uv.new_timer()
     --   timer:start(
     --     0,
     --     10,
@@ -401,18 +401,47 @@ local setup = function()
   vim.opt.foldopen:remove({ "search" }) -- no auto-open when searching, since the following snippet does that better
 
   vim.keymap.set("n", "/", "zn/", { desc = "Search & Pause Folds" })
-  vim.on_key(function(char)
-    local key = vim.fn.keytrans(char)
-    local searchKeys = { "n", "N", "*", "#", "/", "?" }
-    local searchConfirmed = (key == "<CR>" and vim.fn.getcmdtype():find("[/?]") ~= nil)
-    if not (searchConfirmed or vim.fn.mode() == "n") then return end
-    local searchKeyUsed = searchConfirmed or (vim.tbl_contains(searchKeys, key))
+  local set_auto_pause_folds_enabled = function(bufnr)
+    if not bufnr or bufnr <= 0 then return end
+    if not vim.api.nvim_buf_is_valid(bufnr) then return end
+    vim.b[bufnr]._auto_pause_folds_enabled = vim.bo[bufnr].buftype == ""
+  end
+  local auto_pause_folds_group = vim.api.nvim_create_augroup("auto_pause_folds", { clear = true })
+  vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "FileType" }, {
+    group = auto_pause_folds_group,
+    callback = function(args)
+      set_auto_pause_folds_enabled(args.buf)
+    end,
+  })
+  set_auto_pause_folds_enabled(vim.api.nvim_get_current_buf())
 
-    local pauseFold = vim.opt.foldenable:get() and searchKeyUsed
-    local unpauseFold = not (vim.opt.foldenable:get()) and not searchKeyUsed
-    if pauseFold then
+  local search_keys = {
+    n = true,
+    N = true,
+    ["*"] = true,
+    ["#"] = true,
+    ["/"] = true,
+    ["?"] = true,
+  }
+  vim.on_key(function(char)
+    local bufnr = vim.api.nvim_get_current_buf()
+    if vim.b[bufnr]._auto_pause_folds_enabled ~= true then return end
+
+    -- skip most non-normal-mode keys without running keytrans/getcmdtype
+    local mode = vim.api.nvim_get_mode().mode
+    if mode ~= "n" and char ~= "\r" then return end
+
+    local key = vim.fn.keytrans(char)
+    local search_confirmed = (key == "<CR>" and vim.fn.getcmdtype():find("[/?]") ~= nil)
+    if mode ~= "n" and not search_confirmed then return end
+    local search_key_used = search_confirmed or search_keys[key] == true
+
+    local folds_enabled = vim.opt.foldenable:get()
+    local pause_folds = folds_enabled and search_key_used
+    local unpause_folds = (not folds_enabled) and (not search_key_used)
+    if pause_folds then
       vim.opt.foldenable = false
-    elseif unpauseFold then
+    elseif unpause_folds then
       vim.opt.foldenable = true
       vim.cmd.normal("zv") -- after closing folds, keep the *current* fold open
     end

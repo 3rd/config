@@ -112,8 +112,8 @@ local actions = {
       require("notify")("Failed to create gist:\n" .. output, "error")
     end
   end,
-  ts_playground = function()
-    cmd(":TSPlaygroundToggle")
+  ts_inspect_tree = function()
+    cmd(":InspectTree")
   end,
   -- toggle show whitespace
   toggle_whitespace = function()
@@ -180,7 +180,7 @@ local commands = {
     -- ["Convert: To JSON"] = actions.to_json,
     -- ["Convert: To TOML"] = actions.to_toml,
     -- ["Hex: Toggle hex mode"] = actions.toggle_hex,
-    ["Treesitter: Open playground"] = actions.ts_playground,
+    ["Treesitter: Open inspect tree"] = actions.ts_inspect_tree,
     ["Toggle whitespace"] = actions.toggle_whitespace,
     ["Refactor"] = actions.refactor,
   },

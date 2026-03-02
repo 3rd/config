@@ -270,9 +270,9 @@ String = {fg = "#ACD35F"},
 ["@string.regex"] = {link = "String"},
 ["@text.literal"] = {link = "String"},
 ["@structure"] = {link = "Structure"},
-TabLine = {bg = "#211F28"},
-TabLineFill = {bg = "#211F28"},
-TabLineSel = {bg = "#211F28"},
+TabLine = {fg = "#8A8797", bg = "#282631"},
+TabLineFill = {fg = "#767481", bg = "#211F28"},
+TabLineSel = {fg = "#C8C6D2", bg = "#312F3C", bold = true},
 ["@tag"] = {link = "Tag"},
 Title = {fg = "#F075D1"},
 ["@text.title"] = {link = "Title"},
@@ -449,7 +449,7 @@ lCursor = {},
 }
 
 -- host-specific overrides
-local hostname = vim.loop.os_gethostname()
+local hostname = vim.uv.os_gethostname()
 -- if hostname == "death" then
 -- colors.CursorLine = {}
 -- colors.NvimTreeNormal = {}

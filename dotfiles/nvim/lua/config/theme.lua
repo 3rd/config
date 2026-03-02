@@ -99,6 +99,11 @@ colors.ui = {
     b = { bg = colors.background.lighten(8), fg = colors.foreground.darken(15).desaturate(20) },
     c = { bg = colors.background.lighten(3), fg = colors.foreground.darken(20).desaturate(30) },
   },
+  tabs = {
+    fill = { bg = colors.background, fg = colors.foreground.darken(40).desaturate(60) },
+    inactive = { bg = colors.background.lighten(3), fg = colors.foreground.darken(30).desaturate(40) },
+    active = { bg = colors.background.lighten(8), fg = colors.foreground, gui = "bold" },
+  },
   breadcrumbs = {
     normal = { bg = colors.background.lighten(7), fg = colors.foreground.darken(20).desaturate(30) },
     separator = { fg = colors.foreground.darken(30).desaturate(40) },
@@ -240,9 +245,9 @@ local theme = lush(function(injected)
     PmenuSbar({ bg = colors.background.lighten(20) }),
     PmenuThumb({ bg = colors.background.lighten(40) }),
     Winseparator({ VertSplit }), -- Separator between window splits. Inherts from |hl-VertSplit| by default, which it will replace eventually.
-    TabLine({ bg = colors.background }), -- Tab pages line, not active tab page label
-    TabLineFill({ bg = colors.background }), -- Tab pages line, where there are no labels
-    TabLineSel({ bg = colors.background }), -- Tab pages line, active tab page label
+    TabLine(colors.ui.tabs.inactive), -- Tab pages line, not active tab page label
+    TabLineFill(colors.ui.tabs.fill), -- Tab pages line, where there are no labels
+    TabLineSel(colors.ui.tabs.active), -- Tab pages line, active tab page label
     WarningMsg({}),
     WinBar({
       bg = colors.background.lighten(10).saturation(20),

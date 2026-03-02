@@ -16,7 +16,7 @@ return {
   visualbell = true,
   wrap = false,
   linebreak = true,
-  updatetime = 0,
+  updatetime = 200,
   laststatus = 3,
   scrolloff = 12,
   sidescrolloff = 16,

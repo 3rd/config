@@ -6,7 +6,7 @@ return lib.module.create({
       "mfussenegger/nvim-dap",
       event = "VeryLazy",
       dependencies = {
-        { "williamboman/mason.nvim" },
+        { "mason-org/mason.nvim" },
         { "jay-babu/mason-nvim-dap.nvim" },
         {
           "rcarriga/nvim-dap-ui",

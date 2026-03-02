@@ -45,18 +45,21 @@ local config = {
     enable = true,
     disable = function(lang, buf)
       -- bash injections, fucked again after https://github.com/neovim/neovim/issues/27078
-      for _, l in ipairs({ "bash" }) do
-        if lang == l then return true end
-      end
+      if lang == "bash" then return true end
+
       local max_filesize = 1024 * 1024
-      local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+      local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(buf))
       if ok and stats and stats.size > max_filesize then
         log("tree-sitter disabled due to large file")
         return true
       end
-      -- lush
-      local text = lib.buffer.get_text(buf)
-      if string.includes(text, "lush%(function") then return true end
+
+      -- only check lush sources for lua buffers
+      if vim.bo[buf].filetype == "lua" then
+        local text = lib.buffer.get_text(buf)
+        if string.includes(text, "lush%(function") then return true end
+      end
+
       return false
     end,
   },
@@ -166,28 +169,10 @@ local config = {
   indent = {
     enable = false,
   },
-  playground = {
-    enable = true,
-    disable = {},
-    updatetime = 25,
-    persist_queries = true,
-    keybindings = {
-      toggle_query_editor = "o",
-      toggle_hl_groups = "i",
-      toggle_injected_languages = "t",
-      toggle_anonymous_nodes = "a",
-      toggle_language_display = "I",
-      focus_language = "f",
-      unfocus_language = "F",
-      update = "R",
-      goto_node = "<cr>",
-      show_help = "?",
-    },
-  },
   query_linter = {
     enable = true,
     use_virtual_text = true,
-    lint_events = { "BufWrite", "CursorHold" },
+    lint_events = { "BufWrite" },
   },
   incremental_selection = {
     enable = false, -- handled by wildfire
@@ -231,10 +216,9 @@ return lib.module.create({
   plugins = {
     {
       "nvim-treesitter/nvim-treesitter",
+      lazy = false,
       branch = "master",
-      event = { "BufReadPre", "BufNewFile" },
       dependencies = {
-        "nvim-treesitter/playground",
         { "nvim-treesitter/nvim-treesitter-textobjects" },
         {
           "nvim-treesitter/nvim-treesitter-context",
