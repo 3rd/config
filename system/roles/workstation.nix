@@ -59,11 +59,14 @@
     s-tui
     memtester
     udiskie
-    (pkgs.buildFHSEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
-      name = "fhs";
-      profile = "export FHS=1";
-      runScript = "fish";
-    }))
+    (pkgs.buildFHSEnv (
+      pkgs.appimageTools.defaultFhsEnvArgs
+      // {
+        name = "fhs";
+        profile = "export FHS=1";
+        runScript = "fish";
+      }
+    ))
 
     libx11.dev
     libxcursor.dev
@@ -87,11 +90,13 @@
 
   programs.dconf.enable = true;
   programs.nm-applet.enable = true;
-  programs.light.enable = true;
 
   services.dbus = {
     enable = true;
-    packages = [ pkgs.gcr pkgs.gnome-keyring ];
+    packages = [
+      pkgs.gcr
+      pkgs.gnome-keyring
+    ];
   };
 
   services.gnome.gnome-keyring.enable = true;

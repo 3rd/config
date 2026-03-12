@@ -10,6 +10,10 @@
   # hardware.nvidia-container-toolkit.enable = true;
   virtualisation = {
     oci-containers.backend = "docker";
+    libvirtd = {
+      enable = true;
+      qemu.package = pkgs.qemu_kvm;
+    };
     docker = {
       enable = true;
       enableOnBoot = false;
@@ -18,15 +22,10 @@
       # package = pkgs.stable.docker;
       # extraOptions = "--default-runtime=nvidia";
     };
-    libvirtd = {
+    podman = {
       enable = true;
-      qemu.package = pkgs.qemu_kvm;
+      defaultNetwork.settings.dns_enabled = true;
     };
-    # virtualisation.podman = {
-    #   enable = true;
-    #   dockerCompat = true;
-    #   defaultNetwork.settings = { dns_enabled = true; };
-    # };
   };
 
 }

@@ -26,6 +26,14 @@
       # zoxide init fish | source
       # navi widget fish | source
     '';
+    shellInitLast = ''
+      if status is-interactive; and command -sq bun
+        # Carapace masks Bun's native script completion, so restore Bun's
+        # dynamic completion after Carapace has registered its handlers.
+        complete -e bun
+        bun completions fish | source
+      end
+    '';
     functions = {
       fish_greeting.body = "";
       path_add = {

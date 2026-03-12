@@ -1,7 +1,8 @@
 { pkgs, pkgs-stable, ... }:
 
 {
-  home.packages = with pkgs;
+  home.packages =
+    with pkgs;
     [
       # dev
       rust-petname
@@ -38,7 +39,6 @@
       duf
       d2
       delta
-      neofetch
       playerctl
 
       # system
@@ -83,7 +83,8 @@
       posting
       superfile
 
-    ] ++ [
+    ]
+    ++ [
       #
       pkgs-stable.miniserve # https://github.com/svenstaro/miniserve
       pkgs-stable.silicon
@@ -100,4 +101,3 @@
     cp = "xcp";
   };
 }
-
