@@ -10,17 +10,26 @@ return lib.module.create({
         local rainbow = require("rainbow-delimiters")
 
         -- https://github.com/HiPhish/rainbow-delimiters.nvim/issues/12
-        local get_strategy = function()
+        local get_strategy = function(bufnr)
           local max_errors = 100
           local count = 0
-          vim.treesitter.get_parser():for_each_tree(function(lt)
+          -- rainbow-delimiters passes the buffer being attached here.
+          local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
+          if not ok or not parser then return nil end
+          parser:for_each_tree(function(lt)
             if lt:root():has_error() then count = count + 1 end
           end)
           if count > max_errors then return nil end
           return rainbow.strategy["global"]
         end
 
+        local has_parser = function(bufnr)
+          local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
+          return ok and parser ~= nil
+        end
+
         require("rainbow-delimiters.setup").setup({
+          condition = has_parser,
           strategy = {
             [""] = get_strategy,
           },
