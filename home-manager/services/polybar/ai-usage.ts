@@ -1,0 +1,782 @@
+#!/usr/bin/env bun
+
+import {
+  closeSync,
+  constants as fsConstants,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { homedir } from "node:os";
+import { dirname } from "node:path";
+
+const CACHE_PATH = "/tmp/polybar-ai-usage.json";
+const LOCK_PATH = "/tmp/polybar-ai-usage.lock";
+const REFRESH_FLAG = "--refresh";
+
+const OPENAI_TOKEN_URL = "https://auth.openai.com/oauth/token";
+const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
+const ANTHROPIC_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
+
+const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
+const JSON_CONTENT_TYPE = "application/json";
+const USER_AGENT = "polybar-ai-usage";
+const ANTHROPIC_BETA = "oauth-2025-04-20";
+
+const HTTP_TIMEOUT_MS = 12_000;
+const LOCK_STALE_MS = 60_000;
+const LOCK_WAIT_TIMEOUT_MS = 30_000;
+const LOCK_WAIT_POLL_MS = 250;
+const ERROR_TTL_SECONDS = 30;
+const MINUTE_SECONDS = 60;
+const HOUR_SECONDS = 60 * MINUTE_SECONDS;
+const DAY_SECONDS = 24 * HOUR_SECONDS;
+
+const SEGMENT_GAP = "  ";
+const RESET_COLOR = "%{F-}";
+const VALUE_DIVIDER = "/";
+
+const PROVIDER_COLORS = {
+  critical: "#c2290a",
+  healthy: "#66b814",
+  icon: "#848095",
+  separator: "#4C495E",
+  unknown: "#848095",
+  warning: "#c2940a",
+} as const;
+
+type ProviderName = "claude" | "codex";
+type ProviderSource = "api";
+type ProviderErrorCode = "unavailable";
+type ResetAtValue = number | string | null;
+type JsonObject = Record<string, unknown>;
+
+const PROVIDER_LABELS = {
+  claude: "CC",
+  codex: "CX",
+} as const satisfies Record<ProviderName, string>;
+
+const PROVIDER_TTLS = {
+  claude: 300,
+  codex: 90,
+} as const satisfies Record<ProviderName, number>;
+
+const PROVIDER_ORDER = ["claude", "codex"] as const satisfies readonly ProviderName[];
+
+const CODEX_AUTH_PATHS = [
+  "~/.codex/auth.json",
+  "~/.config/codex/auth.json",
+] as const;
+
+const CODEX_PERCENT_HEADERS = {
+  session: "x-codex-primary-used-percent",
+  weekly: "x-codex-secondary-used-percent",
+} as const;
+
+const UNAUTHORIZED_STATUSES = new Set([401, 403]);
+
+interface HttpJsonResponse {
+  status: number;
+  headers: Headers;
+  payload: unknown;
+}
+
+interface ProviderEntry {
+  provider: ProviderName;
+  source: ProviderSource | null;
+  plan: string | null;
+  sessionUsed: number | null;
+  weeklyUsed: number | null;
+  remaining5h: number | null;
+  remaining7d: number | null;
+  sessionResetAt: ResetAtValue;
+  weeklyResetAt: ResetAtValue;
+  fetchedAt: number;
+  error: ProviderErrorCode | null;
+}
+
+interface CacheData {
+  claude?: ProviderEntry;
+  codex?: ProviderEntry;
+  updatedAt?: number;
+}
+
+interface BuildProviderEntryOptions {
+  provider: ProviderName;
+  source?: ProviderSource | null;
+  plan?: string | null;
+  sessionUsed?: number | null;
+  weeklyUsed?: number | null;
+  sessionResetAt?: ResetAtValue;
+  weeklyResetAt?: ResetAtValue;
+  fetchedAt?: number;
+  error?: ProviderErrorCode | null;
+}
+
+interface CodexTokensRecord extends JsonObject {
+  access_token?: unknown;
+  refresh_token?: unknown;
+  id_token?: unknown;
+  account_id?: unknown;
+}
+
+interface CodexAuthFile extends JsonObject {
+  tokens: CodexTokensRecord;
+  last_refresh?: unknown;
+}
+
+interface ClaudeOauthRecord extends JsonObject {
+  accessToken?: unknown;
+  subscriptionType?: unknown;
+}
+
+interface ClaudeCredentialsFile extends JsonObject {
+  claudeAiOauth: ClaudeOauthRecord;
+}
+
+interface ErrnoLikeError {
+  code?: string;
+}
+
+const homeDirectory = (): string => process.env.HOME ?? homedir();
+
+const configurePath = (): void => {
+  const home = homeDirectory();
+  const prefixes = [
+    `${home}/.nix-profile/bin`,
+    `${home}/.bun/bin`,
+    "/run/current-system/sw/bin",
+  ];
+  const existingPath = process.env.PATH ?? "";
+  process.env.PATH = [...prefixes, existingPath].filter(Boolean).join(":");
+};
+
+const nowEpoch = (): number => Math.floor(Date.now() / 1000);
+
+const isoNow = (): string => new Date().toISOString();
+
+const expandHomePath = (filePath: string): string =>
+  filePath.startsWith("~/") ? `${homeDirectory()}/${filePath.slice(2)}` : filePath;
+
+const isJsonObject = (value: unknown): value is JsonObject =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const isNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+const asString = (value: unknown): string | null => (typeof value === "string" ? value : null);
+
+const asNumber = (value: unknown): number | null => {
+  if (isNumber(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string" || value.trim() === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const asResetAtValue = (value: unknown): ResetAtValue => asNumber(value) ?? asString(value) ?? null;
+
+const asProviderSource = (value: unknown): ProviderSource | null => (value === "api" ? "api" : null);
+
+const asProviderError = (value: unknown): ProviderErrorCode | null =>
+  value === "unavailable" ? "unavailable" : null;
+
+const firstString = (value: unknown): string | null => {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  for (const item of value) {
+    if (typeof item === "string") {
+      return item;
+    }
+  }
+
+  return null;
+};
+
+const clampPercent = (value: unknown): number | null => {
+  const parsed = asNumber(value);
+  if (parsed === null) {
+    return null;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(parsed)));
+};
+
+const remainingPercent = (usedPercent: number | null): number | null =>
+  usedPercent === null ? null : Math.max(0, 100 - usedPercent);
+
+const parseJsonFile = (path: string): unknown | null => {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return null;
+  }
+};
+
+const decodeJwtPayload = (token: string | null): JsonObject | null => {
+  if (!token) {
+    return null;
+  }
+
+  const parts = token.split(".");
+  if (parts.length < 2) {
+    return null;
+  }
+
+  try {
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const payload = JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+    return isJsonObject(payload) ? payload : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeJsonAtomic = (path: string, payload: unknown): void => {
+  mkdirSync(dirname(path), { recursive: true });
+  const tempPath = `${path}.tmp`;
+  writeFileSync(tempPath, JSON.stringify(payload, null, 2));
+  renameSync(tempPath, path);
+};
+
+const buildProviderEntry = ({
+  provider,
+  source = null,
+  plan = null,
+  sessionUsed = null,
+  weeklyUsed = null,
+  sessionResetAt = null,
+  weeklyResetAt = null,
+  fetchedAt = nowEpoch(),
+  error = null,
+}: BuildProviderEntryOptions): ProviderEntry => ({
+  provider,
+  source,
+  plan,
+  sessionUsed,
+  weeklyUsed,
+  remaining5h: remainingPercent(sessionUsed),
+  remaining7d: remainingPercent(weeklyUsed),
+  sessionResetAt,
+  weeklyResetAt,
+  fetchedAt,
+  error,
+});
+
+const normalizeProviderEntry = (
+  provider: ProviderName,
+  value: unknown,
+): ProviderEntry | undefined => {
+  if (!isJsonObject(value)) {
+    return undefined;
+  }
+
+  const fetchedAt = asNumber(value.fetchedAt ?? value.fetched_at);
+  if (fetchedAt === null) {
+    return undefined;
+  }
+
+  return buildProviderEntry({
+    provider,
+    source: asProviderSource(value.source),
+    plan: asString(value.plan),
+    sessionUsed: clampPercent(value.sessionUsed ?? value.session_used),
+    weeklyUsed: clampPercent(value.weeklyUsed ?? value.weekly_used),
+    sessionResetAt: asResetAtValue(value.sessionResetAt ?? value.session_reset_at),
+    weeklyResetAt: asResetAtValue(value.weeklyResetAt ?? value.weekly_reset_at),
+    fetchedAt,
+    error: asProviderError(value.error),
+  });
+};
+
+const normalizeCacheData = (value: unknown): CacheData => {
+  if (!isJsonObject(value)) {
+    return {};
+  }
+
+  return {
+    claude: normalizeProviderEntry("claude", value.claude),
+    codex: normalizeProviderEntry("codex", value.codex),
+    updatedAt: asNumber(value.updatedAt ?? value.updated_at) ?? undefined,
+  };
+};
+
+const readCache = (): CacheData => normalizeCacheData(parseJsonFile(CACHE_PATH));
+
+const writeCache = (cache: CacheData): void => {
+  writeJsonAtomic(CACHE_PATH, cache);
+};
+
+const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
+  const entry = cache[provider];
+  if (!entry) {
+    return false;
+  }
+
+  const ttlSeconds = entry.error === null ? PROVIDER_TTLS[provider] : ERROR_TTL_SECONDS;
+  return Date.now() - entry.fetchedAt * 1000 < ttlSeconds * 1000;
+};
+
+const cacheNeedsRefresh = (cache: CacheData): boolean =>
+  PROVIDER_ORDER.some((provider) => !cacheIsFresh(cache, provider));
+
+const colorForRemaining = (value: number | null): string => {
+  if (value === null) {
+    return PROVIDER_COLORS.unknown;
+  }
+
+  if (value <= 20) {
+    return PROVIDER_COLORS.critical;
+  }
+
+  if (value <= 50) {
+    return PROVIDER_COLORS.warning;
+  }
+
+  return PROVIDER_COLORS.healthy;
+};
+
+const displayPercent = (value: number | null): string => (value === null ? "--" : String(value));
+
+const toResetEpochSeconds = (value: ResetAtValue): number | null => {
+  if (typeof value === "number") {
+    return value > 1_000_000_000_000 ? Math.floor(value / 1000) : Math.floor(value);
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
+};
+
+const formatRemainingTime = (resetAt: ResetAtValue): string | null => {
+  const resetEpochSeconds = toResetEpochSeconds(resetAt);
+  if (resetEpochSeconds === null) {
+    return null;
+  }
+
+  const remainingSeconds = Math.max(0, resetEpochSeconds - nowEpoch());
+  if (remainingSeconds >= DAY_SECONDS) {
+    return `${Math.ceil(remainingSeconds / DAY_SECONDS)}d`;
+  }
+
+  if (remainingSeconds >= HOUR_SECONDS) {
+    return `${Math.ceil(remainingSeconds / HOUR_SECONDS)}h`;
+  }
+
+  return `${Math.max(1, Math.ceil(remainingSeconds / MINUTE_SECONDS))}m`;
+};
+
+const formatWeeklyResetSuffix = (entry: ProviderEntry): string => {
+  const remainingTime = formatRemainingTime(entry.weeklyResetAt);
+  return remainingTime === null
+    ? ""
+    : ` %{F${PROVIDER_COLORS.separator}}${remainingTime}${RESET_COLOR}`;
+};
+
+const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): string => {
+  const label = `%{F${PROVIDER_COLORS.icon}}${PROVIDER_LABELS[provider]}${RESET_COLOR}`;
+  if (!entry) {
+    return `${label} %{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}${VALUE_DIVIDER}%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
+  }
+
+  const availableValues = [entry.remaining5h, entry.remaining7d].filter(isNumber);
+  if (availableValues.length === 0) {
+    return `${label} %{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}${VALUE_DIVIDER}%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
+  }
+
+  const sessionColor = colorForRemaining(entry.remaining5h);
+  const weeklyColor = colorForRemaining(entry.remaining7d);
+  return `${label} %{F${sessionColor}}${displayPercent(entry.remaining5h)}%{F${PROVIDER_COLORS.separator}}${VALUE_DIVIDER}%{F${weeklyColor}}${displayPercent(entry.remaining7d)}${RESET_COLOR}${formatWeeklyResetSuffix(entry)}`;
+};
+
+const formatOutput = (cache: CacheData): string =>
+  PROVIDER_ORDER.map((provider) => formatProviderOutput(provider, cache[provider])).join(SEGMENT_GAP);
+
+const unavailableEntry = (provider: ProviderName): ProviderEntry =>
+  buildProviderEntry({
+    provider,
+    error: "unavailable",
+  });
+
+const parseResponsePayload = (text: string): unknown => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+};
+
+const httpJson = async (url: string, init?: RequestInit): Promise<HttpJsonResponse> => {
+  const response = await fetch(url, {
+    ...init,
+    signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
+  });
+  const text = await response.text();
+
+  return {
+    status: response.status,
+    headers: response.headers,
+    payload: text === "" ? null : parseResponsePayload(text),
+  };
+};
+
+const httpForm = async (
+  url: string,
+  data: Record<string, string>,
+  headers?: HeadersInit,
+): Promise<HttpJsonResponse> =>
+  httpJson(url, {
+    method: "POST",
+    headers,
+    body: new URLSearchParams(data),
+  });
+
+const isCodexAuthFile = (value: unknown): value is CodexAuthFile =>
+  isJsonObject(value) && isJsonObject(value.tokens);
+
+const loadCodexAuth = (): { path: string; auth: CodexAuthFile } | null => {
+  for (const candidatePath of CODEX_AUTH_PATHS) {
+    const path = expandHomePath(candidatePath);
+    const file = parseJsonFile(path);
+    if (isCodexAuthFile(file)) {
+      return {
+        path,
+        auth: file,
+      };
+    }
+  }
+
+  return null;
+};
+
+const resolveCodexClientId = (tokens: CodexTokensRecord): string | null => {
+  const accessClaims = decodeJwtPayload(asString(tokens.access_token));
+  const idClaims = decodeJwtPayload(asString(tokens.id_token));
+
+  return (
+    asString(accessClaims?.client_id) ??
+    firstString(idClaims?.aud) ??
+    firstString(accessClaims?.aud)
+  );
+};
+
+const persistRefreshedCodexTokens = (
+  authPath: string,
+  auth: CodexAuthFile,
+  payload: JsonObject,
+): string | null => {
+  const accessToken = asString(payload.access_token);
+  if (!accessToken) {
+    return null;
+  }
+
+  auth.tokens.access_token = accessToken;
+
+  const refreshToken = asString(payload.refresh_token);
+  if (refreshToken) {
+    auth.tokens.refresh_token = refreshToken;
+  }
+
+  const idToken = asString(payload.id_token);
+  if (idToken) {
+    auth.tokens.id_token = idToken;
+  }
+
+  auth.last_refresh = isoNow();
+  writeJsonAtomic(authPath, auth);
+  return accessToken;
+};
+
+const refreshCodexAccessToken = async (
+  authPath: string,
+  auth: CodexAuthFile,
+): Promise<string | null> => {
+  const refreshToken = asString(auth.tokens.refresh_token);
+  const clientId = resolveCodexClientId(auth.tokens);
+  if (!refreshToken || !clientId) {
+    return null;
+  }
+
+  const response = await httpForm(
+    OPENAI_TOKEN_URL,
+    {
+      grant_type: "refresh_token",
+      client_id: clientId,
+      refresh_token: refreshToken,
+    },
+    {
+      "Content-Type": FORM_CONTENT_TYPE,
+    },
+  );
+
+  if (response.status !== 200 || !isJsonObject(response.payload)) {
+    return null;
+  }
+
+  return persistRefreshedCodexTokens(authPath, auth, response.payload);
+};
+
+const requestCodexUsage = async (
+  accessToken: string,
+  accountId: string | null,
+): Promise<HttpJsonResponse> =>
+  httpJson(OPENAI_USAGE_URL, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: JSON_CONTENT_TYPE,
+      "User-Agent": USER_AGENT,
+      ...(accountId ? { "ChatGPT-Account-Id": accountId } : {}),
+    },
+  });
+
+const buildCodexEntry = (payload: JsonObject, response: HttpJsonResponse): ProviderEntry => {
+  const rateLimit = isJsonObject(payload.rate_limit) ? payload.rate_limit : {};
+  const primaryWindow = isJsonObject(rateLimit.primary_window) ? rateLimit.primary_window : {};
+  const secondaryWindow = isJsonObject(rateLimit.secondary_window) ? rateLimit.secondary_window : {};
+
+  const sessionUsed = clampPercent(
+    response.headers.get(CODEX_PERCENT_HEADERS.session) ?? primaryWindow.used_percent,
+  );
+  const weeklyUsed = clampPercent(
+    response.headers.get(CODEX_PERCENT_HEADERS.weekly) ?? secondaryWindow.used_percent,
+  );
+
+  return buildProviderEntry({
+    provider: "codex",
+    source: "api",
+    plan: asString(payload.plan_type),
+    sessionUsed,
+    weeklyUsed,
+    sessionResetAt: asResetAtValue(primaryWindow.reset_at),
+    weeklyResetAt: asResetAtValue(secondaryWindow.reset_at),
+  });
+};
+
+const fetchCodexUsage = async (): Promise<ProviderEntry> => {
+  const codexAuth = loadCodexAuth();
+  if (!codexAuth) {
+    throw new Error("codex auth.json not found");
+  }
+
+  const accessToken = asString(codexAuth.auth.tokens.access_token);
+  const accountId = asString(codexAuth.auth.tokens.account_id);
+  if (!accessToken) {
+    throw new Error("codex access token missing");
+  }
+
+  let currentToken = accessToken;
+  let response = await requestCodexUsage(currentToken, accountId);
+
+  if (UNAUTHORIZED_STATUSES.has(response.status)) {
+    const refreshedToken = await refreshCodexAccessToken(codexAuth.path, codexAuth.auth);
+    if (refreshedToken) {
+      currentToken = refreshedToken;
+      response = await requestCodexUsage(currentToken, accountId);
+    }
+  }
+
+  if (response.status !== 200 || !isJsonObject(response.payload)) {
+    throw new Error(`codex usage request failed (${response.status})`);
+  }
+
+  return buildCodexEntry(response.payload, response);
+};
+
+const isClaudeCredentialsFile = (value: unknown): value is ClaudeCredentialsFile =>
+  isJsonObject(value) && isJsonObject(value.claudeAiOauth);
+
+const isErrnoLikeError = (value: unknown): value is ErrnoLikeError =>
+  isJsonObject(value) && (value.code === undefined || typeof value.code === "string");
+
+const loadClaudeCredentials = (): ClaudeCredentialsFile | null => {
+  const file = parseJsonFile(expandHomePath("~/.claude/.credentials.json"));
+  return isClaudeCredentialsFile(file) ? file : null;
+};
+
+const requestClaudeUsage = async (accessToken: string): Promise<HttpJsonResponse> =>
+  httpJson(ANTHROPIC_USAGE_URL, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: JSON_CONTENT_TYPE,
+      "Content-Type": JSON_CONTENT_TYPE,
+      "User-Agent": USER_AGENT,
+      "anthropic-beta": ANTHROPIC_BETA,
+    },
+  });
+
+const buildClaudeEntry = (
+  oauth: ClaudeOauthRecord,
+  payload: JsonObject,
+): ProviderEntry => {
+  const fiveHour = isJsonObject(payload.five_hour) ? payload.five_hour : {};
+  const sevenDay = isJsonObject(payload.seven_day) ? payload.seven_day : {};
+
+  return buildProviderEntry({
+    provider: "claude",
+    source: "api",
+    plan: asString(oauth.subscriptionType),
+    sessionUsed: clampPercent(fiveHour.utilization),
+    weeklyUsed: clampPercent(sevenDay.utilization),
+    sessionResetAt: asResetAtValue(fiveHour.resets_at),
+    weeklyResetAt: asResetAtValue(sevenDay.resets_at),
+  });
+};
+
+const fetchClaudeUsage = async (): Promise<ProviderEntry> => {
+  const credentials = loadClaudeCredentials();
+  if (!credentials) {
+    throw new Error("claude credentials not found");
+  }
+
+  const accessToken = asString(credentials.claudeAiOauth.accessToken);
+  if (!accessToken) {
+    throw new Error("claude access token missing");
+  }
+
+  const response = await requestClaudeUsage(accessToken);
+  if (response.status !== 200 || !isJsonObject(response.payload)) {
+    throw new Error(`claude usage request failed (${response.status})`);
+  }
+
+  return buildClaudeEntry(credentials.claudeAiOauth, response.payload);
+};
+
+const refreshProvider = async (
+  provider: ProviderName,
+  fetcher: () => Promise<ProviderEntry>,
+): Promise<ProviderEntry> => {
+  try {
+    return await fetcher();
+  } catch {
+    return unavailableEntry(provider);
+  }
+};
+
+const refreshCache = async (): Promise<CacheData> => {
+  const [claude, codex] = await Promise.all([
+    refreshProvider("claude", fetchClaudeUsage),
+    refreshProvider("codex", fetchCodexUsage),
+  ]);
+
+  const nextCache: CacheData = {
+    claude,
+    codex,
+    updatedAt: nowEpoch(),
+  };
+
+  writeCache(nextCache);
+  return nextCache;
+};
+
+const cleanupStaleLock = (): void => {
+  if (!existsSync(LOCK_PATH)) {
+    return;
+  }
+
+  try {
+    const stats = statSync(LOCK_PATH);
+    if (Date.now() - stats.mtimeMs > LOCK_STALE_MS) {
+      rmSync(LOCK_PATH, { force: true });
+    }
+  } catch {
+    return;
+  }
+};
+
+const acquireRefreshLock = (): number | null => {
+  cleanupStaleLock();
+
+  try {
+    return openSync(LOCK_PATH, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_RDWR, 0o644);
+  } catch (error) {
+    if (isErrnoLikeError(error) && error.code === "EEXIST") {
+      return null;
+    }
+
+    throw error;
+  }
+};
+
+const releaseRefreshLock = (fd: number | null): void => {
+  if (fd === null) {
+    return;
+  }
+
+  try {
+    closeSync(fd);
+  } finally {
+    try {
+      unlinkSync(LOCK_PATH);
+    } catch {
+      return;
+    }
+  }
+};
+
+const waitForUnlockedCache = async (): Promise<CacheData> => {
+  const startedAt = Date.now();
+  cleanupStaleLock();
+
+  while (existsSync(LOCK_PATH) && Date.now() - startedAt < LOCK_WAIT_TIMEOUT_MS) {
+    await Bun.sleep(LOCK_WAIT_POLL_MS);
+    cleanupStaleLock();
+  }
+
+  return readCache();
+};
+
+const withRefreshLock = async (work: () => Promise<CacheData>): Promise<CacheData> => {
+  const lockFd = acquireRefreshLock();
+  if (lockFd === null) {
+    return waitForUnlockedCache();
+  }
+
+  try {
+    return await work();
+  } finally {
+    releaseRefreshLock(lockFd);
+  }
+};
+
+const runRefresh = async (): Promise<number> => {
+  const cache = await withRefreshLock(refreshCache);
+  console.log(formatOutput(cache));
+  return 0;
+};
+
+const main = async (): Promise<number> => {
+  configurePath();
+
+  const cache = readCache();
+  if (process.argv.includes(REFRESH_FLAG) || cacheNeedsRefresh(cache)) {
+    return runRefresh();
+  }
+
+  console.log(formatOutput(cache));
+  return 0;
+};
+
+void main().then((exitCode) => {
+  process.exit(exitCode);
+});

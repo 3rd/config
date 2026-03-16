@@ -1,5 +1,8 @@
 { config, pkgs, pkgs-stable, lib, ... }:
 
+let
+  bunExe = lib.getExe pkgs.bun;
+in
 {
   imports = [ ../../colors.nix ];
 
@@ -23,6 +26,10 @@
     ".config/polybar/bci.sh" = {
       executable = true;
       source = ./bci.sh;
+    };
+    ".config/polybar/ai-usage.ts" = {
+      executable = true;
+      source = ./ai-usage.ts;
     };
   };
 
@@ -49,7 +56,7 @@
         modules-left = "i3";
         modules-center = "task";
         modules-right =
-          "vpn battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock";
+          "ai_usage separator vpn battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock";
         height = 28;
         fixed-center = true;
         tray-background = gray-darkest;
@@ -207,7 +214,7 @@
       };
       "module/bluetooth" = {
         type = "custom/script";
-        exec = "/home/rabbit/.config/polybar/bluetooth.sh";
+        exec = "$HOME/.config/polybar/bluetooth.sh";
         click-left = "exec /run/current-system/sw/bin/blueman-manager";
         # click-right = "";
         format-background = gray-darkest;
@@ -227,15 +234,24 @@
       };
       "module/vpn" = {
         type = "custom/script";
-        exec = "/home/rabbit/.config/polybar/vpn.sh";
+        exec = "$HOME/.config/polybar/vpn.sh";
         interval = 1;
         format-background = red-darker;
         format-foreground = foreground;
         format-padding = 2;
       };
+      "module/ai_usage" = {
+        type = "custom/script";
+        exec = "${bunExe} $HOME/.config/polybar/ai-usage.ts";
+        click-middle = "${bunExe} $HOME/.config/polybar/ai-usage.ts --refresh >/dev/null 2>&1 &";
+        interval = 15;
+        format-background = gray-darkest;
+        format-foreground = foreground;
+        format-padding = 2;
+      };
       # "module/core" = {
       #   type = "custom/script";
-      #   exec = "/home/rabbit/.config/polybar/core.sh";
+      #   exec = "$HOME/.config/polybar/core.sh";
       #   interval = 1;
       #   format-background = gray-darkest;
       #   format-foreground = foreground;
@@ -244,7 +260,7 @@
       "module/task" = {
         type = "custom/script";
         exec =
-          "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki /home/rabbit/.config/polybar/task.sh";
+          "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki $HOME/.config/polybar/task.sh";
         format-background = gray-dark;
         format-foreground = foreground;
         format-padding = 2;
@@ -252,7 +268,7 @@
       };
       # "module/bci" = {
       #   type = "custom/script";
-      #   exec = "/home/rabbit/.config/polybar/bci.sh";
+      #   exec = "$HOME/.config/polybar/bci.sh";
       #   interval = 1;
       #   format-background = gray-darker;
       #   format-foreground = foreground;
