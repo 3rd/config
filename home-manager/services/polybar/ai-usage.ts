@@ -14,11 +14,14 @@ import {
   writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 
 const CACHE_PATH = "/tmp/polybar-ai-usage.json";
 const LOCK_PATH = "/tmp/polybar-ai-usage.lock";
 const REFRESH_FLAG = "--refresh";
+const XDG_CACHE_FALLBACK_DIR = ".cache";
+const PERSISTENT_CACHE_DIR = "polybar-ai-usage";
+const CLAUDE_STATE_FILE = "claude.json";
 
 const OPENAI_TOKEN_URL = "https://auth.openai.com/oauth/token";
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
@@ -99,12 +102,19 @@ interface ProviderEntry {
   sessionResetAt: ResetAtValue;
   weeklyResetAt: ResetAtValue;
   fetchedAt: number;
+  retryAt: number | null;
   error: ProviderErrorCode | null;
 }
 
 interface CacheData {
   claude?: ProviderEntry;
   codex?: ProviderEntry;
+  updatedAt?: number;
+}
+
+interface ClaudePersistentState {
+  lastGood?: ProviderEntry;
+  retryAt?: number;
   updatedAt?: number;
 }
 
@@ -117,6 +127,7 @@ interface BuildProviderEntryOptions {
   sessionResetAt?: ResetAtValue;
   weeklyResetAt?: ResetAtValue;
   fetchedAt?: number;
+  retryAt?: number | null;
   error?: ProviderErrorCode | null;
 }
 
@@ -145,7 +156,30 @@ interface ErrnoLikeError {
   code?: string;
 }
 
+class UsageFetchError extends Error {
+  status: number | null;
+  retryAt: number | null;
+
+  constructor(
+    message: string,
+    options: {
+      status?: number | null;
+      retryAt?: number | null;
+    } = {},
+  ) {
+    super(message);
+    this.name = "UsageFetchError";
+    this.status = options.status ?? null;
+    this.retryAt = options.retryAt ?? null;
+  }
+}
+
 const homeDirectory = (): string => process.env.HOME ?? homedir();
+
+const xdgCacheHome = (): string =>
+  process.env.XDG_CACHE_HOME ?? join(homeDirectory(), XDG_CACHE_FALLBACK_DIR);
+
+const claudeStatePath = (): string => join(xdgCacheHome(), PERSISTENT_CACHE_DIR, CLAUDE_STATE_FILE);
 
 const configurePath = (): void => {
   const home = homeDirectory();
@@ -226,6 +260,8 @@ const remainingPercent = (usedPercent: number | null): number | null =>
 const providerHasValues = (entry: ProviderEntry | undefined): boolean =>
   entry !== undefined && (isNumber(entry.remaining5h) || isNumber(entry.remaining7d));
 
+const hasRetryWindow = (retryAt: number | null): boolean => retryAt !== null && retryAt > nowEpoch();
+
 const parseJsonFile = (path: string): unknown | null => {
   try {
     return JSON.parse(readFileSync(path, "utf8"));
@@ -270,6 +306,7 @@ const buildProviderEntry = ({
   sessionResetAt = null,
   weeklyResetAt = null,
   fetchedAt = nowEpoch(),
+  retryAt = null,
   error = null,
 }: BuildProviderEntryOptions): ProviderEntry => ({
   provider,
@@ -282,6 +319,7 @@ const buildProviderEntry = ({
   sessionResetAt,
   weeklyResetAt,
   fetchedAt,
+  retryAt,
   error,
 });
 
@@ -307,6 +345,7 @@ const normalizeProviderEntry = (
     sessionResetAt: asResetAtValue(value.sessionResetAt ?? value.session_reset_at),
     weeklyResetAt: asResetAtValue(value.weeklyResetAt ?? value.weekly_reset_at),
     fetchedAt,
+    retryAt: asNumber(value.retryAt ?? value.retry_at),
     error: asProviderError(value.error),
   });
 };
@@ -323,7 +362,76 @@ const normalizeCacheData = (value: unknown): CacheData => {
   };
 };
 
-const readCache = (): CacheData => normalizeCacheData(parseJsonFile(CACHE_PATH));
+const normalizeClaudePersistentState = (value: unknown): ClaudePersistentState => {
+  if (!isJsonObject(value)) {
+    return {};
+  }
+
+  return {
+    lastGood: normalizeProviderEntry("claude", value.lastGood ?? value.last_good),
+    retryAt: asNumber(value.retryAt ?? value.retry_at) ?? undefined,
+    updatedAt: asNumber(value.updatedAt ?? value.updated_at) ?? undefined,
+  };
+};
+
+const readClaudePersistentState = (): ClaudePersistentState =>
+  normalizeClaudePersistentState(parseJsonFile(claudeStatePath()));
+
+const writeClaudePersistentState = (state: ClaudePersistentState): void => {
+  try {
+    writeJsonAtomic(claudeStatePath(), state);
+  } catch {
+    return;
+  }
+};
+
+const toLastGoodEntry = (entry: ProviderEntry): ProviderEntry => ({
+  ...entry,
+  error: null,
+  retryAt: null,
+});
+
+const hydrateClaudeEntry = (
+  cacheEntry: ProviderEntry | undefined,
+  state: ClaudePersistentState,
+): ProviderEntry | undefined => {
+  const retryAt = state.retryAt ?? cacheEntry?.retryAt ?? null;
+  if (providerHasValues(cacheEntry)) {
+    return cacheEntry.retryAt === retryAt ? cacheEntry : { ...cacheEntry, retryAt };
+  }
+
+  if (providerHasValues(state.lastGood)) {
+    return {
+      ...state.lastGood,
+      fetchedAt: cacheEntry?.fetchedAt ?? state.lastGood.fetchedAt,
+      retryAt,
+      error: cacheEntry?.error ?? (retryAt === null ? state.lastGood.error : "unavailable"),
+    };
+  }
+
+  if (cacheEntry) {
+    return cacheEntry.retryAt === retryAt ? cacheEntry : { ...cacheEntry, retryAt };
+  }
+
+  if (retryAt === null && state.updatedAt === undefined) {
+    return undefined;
+  }
+
+  return buildProviderEntry({
+    provider: "claude",
+    fetchedAt: state.updatedAt ?? nowEpoch(),
+    retryAt,
+    error: "unavailable",
+  });
+};
+
+const readCache = (): CacheData => {
+  const cache = normalizeCacheData(parseJsonFile(CACHE_PATH));
+  return {
+    ...cache,
+    claude: hydrateClaudeEntry(cache.claude, readClaudePersistentState()),
+  };
+};
 
 const writeCache = (cache: CacheData): void => {
   writeJsonAtomic(CACHE_PATH, cache);
@@ -335,12 +443,22 @@ const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
     return false;
   }
 
+  if (hasRetryWindow(entry.retryAt)) {
+    return true;
+  }
+
   const ttlSeconds = entry.error === null ? PROVIDER_TTLS[provider] : ERROR_TTL_SECONDS;
   return Date.now() - entry.fetchedAt * 1000 < ttlSeconds * 1000;
 };
 
 const cacheNeedsRefresh = (cache: CacheData): boolean =>
   PROVIDER_ORDER.some((provider) => !cacheIsFresh(cache, provider));
+
+const shouldRefreshProvider = (
+  cache: CacheData,
+  provider: ProviderName,
+  forceRefresh: boolean,
+): boolean => forceRefresh || !cacheIsFresh(cache, provider);
 
 const colorForRemaining = (value: number | null): string => {
   if (value === null) {
@@ -417,9 +535,14 @@ const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): st
 const formatOutput = (cache: CacheData): string =>
   PROVIDER_ORDER.map((provider) => formatProviderOutput(provider, cache[provider])).join(SEGMENT_GAP);
 
-const unavailableEntry = (provider: ProviderName): ProviderEntry =>
+const unavailableEntry = (
+  provider: ProviderName,
+  options: Pick<BuildProviderEntryOptions, "fetchedAt" | "retryAt"> = {},
+): ProviderEntry =>
   buildProviderEntry({
     provider,
+    fetchedAt: options.fetchedAt,
+    retryAt: options.retryAt,
     error: "unavailable",
   });
 
@@ -429,6 +552,20 @@ const parseResponsePayload = (text: string): unknown => {
   } catch {
     return text;
   }
+};
+
+const retryAtFromHeader = (value: string | null): number | null => {
+  if (value === null) {
+    return null;
+  }
+
+  const seconds = asNumber(value);
+  if (seconds !== null) {
+    return nowEpoch() + Math.max(0, Math.ceil(seconds));
+  }
+
+  const parsedAt = Date.parse(value);
+  return Number.isFinite(parsedAt) ? Math.max(nowEpoch(), Math.floor(parsedAt / 1000)) : null;
 };
 
 const httpJson = async (url: string, init?: RequestInit): Promise<HttpJsonResponse> => {
@@ -650,48 +787,113 @@ const buildClaudeEntry = (
 const fetchClaudeUsage = async (): Promise<ProviderEntry> => {
   const credentials = loadClaudeCredentials();
   if (!credentials) {
-    throw new Error("claude credentials not found");
+    throw new UsageFetchError("claude credentials not found");
   }
 
   const accessToken = asString(credentials.claudeAiOauth.accessToken);
   if (!accessToken) {
-    throw new Error("claude access token missing");
+    throw new UsageFetchError("claude access token missing");
   }
 
   const response = await requestClaudeUsage(accessToken);
   if (response.status !== 200 || !isJsonObject(response.payload)) {
-    throw new Error(`claude usage request failed (${response.status})`);
+    throw new UsageFetchError(`claude usage request failed (${response.status})`, {
+      status: response.status,
+      retryAt: retryAtFromHeader(response.headers.get("retry-after")),
+    });
   }
 
   return buildClaudeEntry(credentials.claudeAiOauth, response.payload);
 };
 
-const refreshProvider = async (
+const readRetryAt = (error: unknown): number | null =>
+  error instanceof UsageFetchError ? error.retryAt : null;
+
+const recoverProviderEntry = (
   provider: ProviderName,
   previousEntry: ProviderEntry | undefined,
-  fetcher: () => Promise<ProviderEntry>,
-): Promise<ProviderEntry> => {
-  try {
-    return await fetcher();
-  } catch {
-    if (providerHasValues(previousEntry)) {
-      return {
-        ...previousEntry,
-        fetchedAt: nowEpoch(),
-        error: "unavailable",
-      };
-    }
-
-    return unavailableEntry(provider);
+  error: unknown,
+): ProviderEntry => {
+  const retryAt = readRetryAt(error);
+  if (providerHasValues(previousEntry)) {
+    return {
+      ...previousEntry,
+      fetchedAt: nowEpoch(),
+      retryAt,
+      error: "unavailable",
+    };
   }
+
+  return unavailableEntry(provider, {
+    retryAt,
+  });
 };
 
-const refreshCache = async (): Promise<CacheData> => {
+const persistClaudeSuccess = (entry: ProviderEntry): void => {
+  writeClaudePersistentState({
+    lastGood: toLastGoodEntry(entry),
+    updatedAt: nowEpoch(),
+  });
+};
+
+const persistClaudeFailure = (
+  state: ClaudePersistentState,
+  previousEntry: ProviderEntry | undefined,
+  retryAt: number | null,
+): void => {
+  const lastGood =
+    providerHasValues(state.lastGood)
+      ? toLastGoodEntry(state.lastGood)
+      : providerHasValues(previousEntry)
+        ? toLastGoodEntry(previousEntry)
+        : undefined;
+
+  if (lastGood === undefined && retryAt === null) {
+    return;
+  }
+
+  writeClaudePersistentState({
+    lastGood,
+    retryAt: retryAt ?? undefined,
+    updatedAt: nowEpoch(),
+  });
+};
+
+const refreshCache = async (
+  options: {
+    forceRefresh?: boolean;
+  } = {},
+): Promise<CacheData> => {
   const previousCache = readCache();
-  const [claude, codex] = await Promise.all([
-    refreshProvider("claude", previousCache.claude, fetchClaudeUsage),
-    refreshProvider("codex", previousCache.codex, fetchCodexUsage),
+  const previousClaudeState = readClaudePersistentState();
+  const forceRefresh = options.forceRefresh ?? false;
+  const claudeNeedsRefresh = shouldRefreshProvider(previousCache, "claude", forceRefresh);
+  const codexNeedsRefresh = shouldRefreshProvider(previousCache, "codex", forceRefresh);
+  const [claudeResult, codexResult] = await Promise.allSettled([
+    claudeNeedsRefresh
+      ? fetchClaudeUsage()
+      : Promise.resolve(previousCache.claude ?? unavailableEntry("claude")),
+    codexNeedsRefresh
+      ? fetchCodexUsage()
+      : Promise.resolve(previousCache.codex ?? unavailableEntry("codex")),
   ]);
+
+  const claude = claudeNeedsRefresh
+    ? claudeResult.status === "fulfilled"
+      ? claudeResult.value
+      : recoverProviderEntry("claude", previousCache.claude, claudeResult.reason)
+    : previousCache.claude ?? unavailableEntry("claude");
+  const codex = codexNeedsRefresh
+    ? codexResult.status === "fulfilled"
+      ? codexResult.value
+      : recoverProviderEntry("codex", previousCache.codex, codexResult.reason)
+    : previousCache.codex ?? unavailableEntry("codex");
+
+  if (claudeNeedsRefresh && claudeResult.status === "fulfilled") {
+    persistClaudeSuccess(claude);
+  } else if (claudeNeedsRefresh) {
+    persistClaudeFailure(previousClaudeState, previousCache.claude, readRetryAt(claudeResult.reason));
+  }
 
   const nextCache: CacheData = {
     claude,
@@ -773,8 +975,8 @@ const withRefreshLock = async (work: () => Promise<CacheData>): Promise<CacheDat
   }
 };
 
-const runRefresh = async (): Promise<number> => {
-  const cache = await withRefreshLock(refreshCache);
+const runRefresh = async (forceRefresh = false): Promise<number> => {
+  const cache = await withRefreshLock(() => refreshCache({ forceRefresh }));
   console.log(formatOutput(cache));
   return 0;
 };
@@ -783,8 +985,12 @@ const main = async (): Promise<number> => {
   configurePath();
 
   const cache = readCache();
-  if (process.argv.includes(REFRESH_FLAG) || cacheNeedsRefresh(cache)) {
-    return runRefresh();
+  if (process.argv.includes(REFRESH_FLAG)) {
+    return runRefresh(true);
+  }
+
+  if (cacheNeedsRefresh(cache)) {
+    return runRefresh(false);
   }
 
   console.log(formatOutput(cache));
