@@ -27,13 +27,14 @@ const ANTHROPIC_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 const JSON_CONTENT_TYPE = "application/json";
 const USER_AGENT = "polybar-ai-usage";
+const CLAUDE_USER_AGENT = "claude-code/unknown";
 const ANTHROPIC_BETA = "oauth-2025-04-20";
 
 const HTTP_TIMEOUT_MS = 12_000;
 const LOCK_STALE_MS = 60_000;
 const LOCK_WAIT_TIMEOUT_MS = 30_000;
 const LOCK_WAIT_POLL_MS = 250;
-const ERROR_TTL_SECONDS = 30;
+const ERROR_TTL_SECONDS = 300;
 const MINUTE_SECONDS = 60;
 const HOUR_SECONDS = 60 * MINUTE_SECONDS;
 const DAY_SECONDS = 24 * HOUR_SECONDS;
@@ -64,7 +65,7 @@ const PROVIDER_LABELS = {
 
 const PROVIDER_TTLS = {
   claude: 300,
-  codex: 90,
+  codex: 300,
 } as const satisfies Record<ProviderName, number>;
 
 const PROVIDER_ORDER = ["claude", "codex"] as const satisfies readonly ProviderName[];
@@ -221,6 +222,9 @@ const clampPercent = (value: unknown): number | null => {
 
 const remainingPercent = (usedPercent: number | null): number | null =>
   usedPercent === null ? null : Math.max(0, 100 - usedPercent);
+
+const providerHasValues = (entry: ProviderEntry | undefined): boolean =>
+  entry !== undefined && (isNumber(entry.remaining5h) || isNumber(entry.remaining7d));
 
 const parseJsonFile = (path: string): unknown | null => {
   try {
@@ -620,7 +624,7 @@ const requestClaudeUsage = async (accessToken: string): Promise<HttpJsonResponse
       Authorization: `Bearer ${accessToken}`,
       Accept: JSON_CONTENT_TYPE,
       "Content-Type": JSON_CONTENT_TYPE,
-      "User-Agent": USER_AGENT,
+      "User-Agent": CLAUDE_USER_AGENT,
       "anthropic-beta": ANTHROPIC_BETA,
     },
   });
@@ -664,19 +668,29 @@ const fetchClaudeUsage = async (): Promise<ProviderEntry> => {
 
 const refreshProvider = async (
   provider: ProviderName,
+  previousEntry: ProviderEntry | undefined,
   fetcher: () => Promise<ProviderEntry>,
 ): Promise<ProviderEntry> => {
   try {
     return await fetcher();
   } catch {
+    if (providerHasValues(previousEntry)) {
+      return {
+        ...previousEntry,
+        fetchedAt: nowEpoch(),
+        error: "unavailable",
+      };
+    }
+
     return unavailableEntry(provider);
   }
 };
 
 const refreshCache = async (): Promise<CacheData> => {
+  const previousCache = readCache();
   const [claude, codex] = await Promise.all([
-    refreshProvider("claude", fetchClaudeUsage),
-    refreshProvider("codex", fetchCodexUsage),
+    refreshProvider("claude", previousCache.claude, fetchClaudeUsage),
+    refreshProvider("codex", previousCache.codex, fetchCodexUsage),
   ]);
 
   const nextCache: CacheData = {
