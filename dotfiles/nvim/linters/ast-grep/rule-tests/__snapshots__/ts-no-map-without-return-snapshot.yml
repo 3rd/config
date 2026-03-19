@@ -1,0 +1,32 @@
+id: ts-no-map-without-return
+snapshots:
+  arr.map(fn):
+    labels:
+    - source: arr.map(fn)
+      style: primary
+      start: 0
+      end: 11
+    - source: arr.map(fn)
+      style: secondary
+      start: 0
+      end: 11
+  items.map(item => { process(item) }):
+    labels:
+    - source: items.map(item => { process(item) })
+      style: primary
+      start: 0
+      end: 36
+    - source: items.map(item => { process(item) })
+      style: secondary
+      start: 0
+      end: 36
+  users.map(u => sendEmail(u)):
+    labels:
+    - source: users.map(u => sendEmail(u))
+      style: primary
+      start: 0
+      end: 28
+    - source: users.map(u => sendEmail(u))
+      style: secondary
+      start: 0
+      end: 28

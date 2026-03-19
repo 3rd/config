@@ -1,0 +1,20 @@
+id: react-no-fake-custom-hook
+message: Custom hook calls no hooks, rename to a regular function
+severity: warning
+language: tsx
+rule:
+  any:
+    - pattern: "function $FUNC($$$ARGS) { $$$BODY }"
+    - pattern: "const $FUNC = ($$$ARGS) => { $$$BODY }"
+    - pattern: "const $FUNC = ($$$ARGS) => $EXPR"
+    - pattern: "const $FUNC = function($$$ARGS) { $$$BODY }"
+  not:
+    has:
+      stopBy: end
+      kind: call_expression
+      has:
+        field: function
+        regex: "use[A-Z]"
+constraints:
+  FUNC:
+    regex: "^use[A-Z]"

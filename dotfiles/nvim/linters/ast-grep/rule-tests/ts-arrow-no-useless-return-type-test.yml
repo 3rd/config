@@ -1,0 +1,57 @@
+id: ts-arrow-no-useless-return-type
+valid:
+  # no return type
+  - "const x = () => 'hello'"
+  # named type references
+  - "const x = (): ProperType => ({})"
+  - "const x = (): Foo.Bar => ({})"
+  # generic types (non-Promise)
+  - "const x = (): Promise<ProperType> => fetch()"
+  - "const x = (): Promise<Response> => fetch()"
+  - "const x = (): Map<string, number> => new Map()"
+  # contract types (any/unknown/never)
+  - "const x = (): never => { throw new Error() }"
+  - "const x = (): any => getValue()"
+  - "const x = (): unknown => getValue()"
+  # typeof expression
+  - "const x = (): typeof someVar => someVar"
+  # readonly (removing changes mutability)
+  - "const x = (): readonly string[] => []"
+  # union/intersection with named types
+  - "const x = (): MyType | string => 'hello'"
+  - "const x = (): Foo & Bar => ({})"
+  - "const x = (): Record<string, string> | undefined => ({})"
+  # array of named type
+  - "const x = (): FunctionDeclaration[] => []"
+  # Promise with named type inside union
+  - "const x = (): Promise<MyType | null> => fetch()"
+  # recursive arrow functions (TS7023: can't infer return type)
+  - "const fib = (n: number): number => n <= 1 ? n : fib(n - 1) + fib(n - 2)"
+  - "const walk = (v: unknown): string | undefined => typeof v === 'string' ? v : [v].map(walk).join('')"
+  # non-arrow contexts
+  - "interface Foo { bar(): string }"
+  - "type Fn = () => string"
+  - "function foo(): string { return 'hello' }"
+  # generic arrow with type param return
+  - "const x = <T>(arg: T): T => arg"
+invalid:
+  # primitive return types
+  - "const x = (): string => 'hello'"
+  - "const x = (): number => 42"
+  - "const x = (): boolean => true"
+  - "const x = (): void => {}"
+  # inline structural types
+  - "const x = (): { inline: string } => ({ inline: 'type' })"
+  - "const x = (): string[] => []"
+  - "const x = (): [string, number] => ['a', 1]"
+  - "const x = (): string | number => 'hello'"
+  # arrow with params
+  - "const x = (a: number): string => a.toString()"
+  # let declaration
+  - "let x = (): string => 'hello'"
+  # Promise wrapping inline types
+  - "const x = (): Promise<string> => fetch()"
+  - "const x = (): Promise<void> => {}"
+  - "const x = (): Promise<{ data: string }> => fetch()"
+  - "const x = (): Promise<string[]> => fetch()"
+  - "const x = (): Promise<string | number> => fetch()"

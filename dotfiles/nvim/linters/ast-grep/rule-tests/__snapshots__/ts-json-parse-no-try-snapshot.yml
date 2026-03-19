@@ -1,0 +1,33 @@
+id: ts-json-parse-no-try
+snapshots:
+  const data = JSON.parse(input):
+    labels:
+    - source: JSON.parse(input)
+      style: primary
+      start: 13
+      end: 30
+  ? |
+    function parse(s: string) {
+      return JSON.parse(s);
+    }
+  : labels:
+    - source: JSON.parse(s)
+      style: primary
+      start: 37
+      end: 50
+  process(JSON.parse(input)):
+    labels:
+    - source: JSON.parse(input)
+      style: primary
+      start: 8
+      end: 25
+  try { something() } catch (e) { JSON.parse(e.message) }:
+    labels:
+    - source: JSON.parse(e.message)
+      style: primary
+      start: 32
+      end: 53
+    - source: catch (e) { JSON.parse(e.message) }
+      style: secondary
+      start: 20
+      end: 55

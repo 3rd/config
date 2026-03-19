@@ -1,0 +1,19 @@
+id: ts-json-parse-no-try
+valid:
+  - "try { JSON.parse(input) } catch (e) {}"
+  - |
+    try {
+      const data = JSON.parse(input);
+      process(data);
+    } catch (e) {
+      handleError(e);
+    }
+invalid:
+  - "const data = JSON.parse(input)"
+  - "process(JSON.parse(input))"
+  - |
+    function parse(s: string) {
+      return JSON.parse(s);
+    }
+  # catch block is not protected
+  - "try { something() } catch (e) { JSON.parse(e.message) }"

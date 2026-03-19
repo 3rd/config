@@ -1,0 +1,28 @@
+id: ts-no-inferrable-type
+message: Unnecessary type annotation, TypeScript infers this type
+severity: warning
+language: tsx
+rule:
+  any:
+    - pattern:
+        context: "let $X: number = $V"
+        selector: variable_declarator
+    - pattern:
+        context: "let $X: string = $V"
+        selector: variable_declarator
+    - pattern:
+        context: "let $X: boolean = $V"
+        selector: variable_declarator
+    - pattern:
+        context: "let $X: RegExp = $V"
+        selector: variable_declarator
+constraints:
+  V:
+    any:
+      - kind: number
+      - kind: string
+      - kind: template_string
+      - kind: "true"
+      - kind: "false"
+      - kind: regex
+fix: "$X = $V"

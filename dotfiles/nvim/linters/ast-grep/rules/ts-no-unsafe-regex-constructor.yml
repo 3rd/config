@@ -1,0 +1,14 @@
+id: ts-no-unsafe-regex-constructor
+message: "new RegExp with variable input can crash or enable ReDoS"
+severity: warning
+language: tsx
+rule:
+  any:
+    - pattern: "new RegExp($INPUT)"
+    - pattern: "new RegExp($INPUT, $_)"
+constraints:
+  INPUT:
+    not:
+      any:
+        - kind: string
+        - kind: template_string

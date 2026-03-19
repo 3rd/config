@@ -1,0 +1,14 @@
+id: ts-no-void-map-callback
+valid:
+  - "items.map(item => item.toUpperCase())"
+  - "items.map(item => { return item.toUpperCase() })"
+  - "items.map(function(item) { return item.name })"
+  - "items.forEach(item => { process(item) })"
+invalid:
+  - "items.map(item => { item.toUpperCase() })"
+  - "items.map(item => { console.log(item) })"
+  - |
+    items.map(item => {
+      process(item);
+      transform(item);
+    })

@@ -1,0 +1,12 @@
+id: react-no-fake-custom-hook
+valid:
+  - "function useTheme() { return useContext(ThemeContext) }"
+  - "const useFoo = () => { const [x, setX] = useState(0); return x }"
+  - "const useFoo = () => useCallback(() => {}, [])"
+  - "function formatName(name: string) { return name.trim() }"
+  - "const getValue = (x: number) => x * 2"
+invalid:
+  - "function useFormatter(value: string) { return value.toUpperCase() }"
+  - "const useProxy = () => { return new Proxy({}, {}) }"
+  - "const useValue = (x: number) => x * 2"
+  - "const useNoop = () => {}"

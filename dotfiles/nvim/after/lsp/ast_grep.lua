@@ -1,6 +1,6 @@
 ---@type vim.lsp.Config
 return {
-  enabled = false,
+  -- enabled = false,
   cmd = { "ast-grep", "lsp" },
   single_file_support = false,
   root_markers = { "sgconfig.yml" },

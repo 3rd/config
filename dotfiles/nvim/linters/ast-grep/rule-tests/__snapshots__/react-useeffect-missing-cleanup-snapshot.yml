@@ -1,0 +1,66 @@
+id: react-useeffect-missing-cleanup
+snapshots:
+  ? |
+    useEffect(() => {
+      document.addEventListener("click", handler);
+    }, [])
+  : labels:
+    - source: |-
+        useEffect(() => {
+          document.addEventListener("click", handler);
+        }, [])
+      style: primary
+      start: 0
+      end: 71
+    - source: document.addEventListener("click", handler)
+      style: secondary
+      start: 20
+      end: 63
+  ? |
+    useEffect(() => {
+      setInterval(tick, 1000);
+    }, [])
+  : labels:
+    - source: |-
+        useEffect(() => {
+          setInterval(tick, 1000);
+        }, [])
+      style: primary
+      start: 0
+      end: 51
+    - source: setInterval(tick, 1000)
+      style: secondary
+      start: 20
+      end: 43
+  ? |
+    useEffect(() => {
+      socket.on("message", handler);
+    }, [])
+  : labels:
+    - source: |-
+        useEffect(() => {
+          socket.on("message", handler);
+        }, [])
+      style: primary
+      start: 0
+      end: 57
+    - source: socket.on("message", handler)
+      style: secondary
+      start: 20
+      end: 49
+  ? |
+    useEffect(() => {
+      window.addEventListener("resize", handler);
+    }, [])
+  : labels:
+    - source: |-
+        useEffect(() => {
+          window.addEventListener("resize", handler);
+        }, [])
+      style: primary
+      start: 0
+      end: 70
+    - source: window.addEventListener("resize", handler)
+      style: secondary
+      start: 20
+      end: 62

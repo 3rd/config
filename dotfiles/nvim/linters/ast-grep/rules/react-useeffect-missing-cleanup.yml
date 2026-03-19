@@ -1,0 +1,19 @@
+id: react-useeffect-missing-cleanup
+message: "addEventListener in useEffect without cleanup return causes memory leak"
+severity: warning
+language: tsx
+rule:
+  pattern: useEffect($CALLBACK, $$$DEPS)
+constraints:
+  CALLBACK:
+    has:
+      stopBy: end
+      any:
+        - pattern: $_.addEventListener($$$)
+        - pattern: setInterval($$$)
+        - pattern: $_.subscribe($$$)
+        - pattern: $_.on($$$)
+    not:
+      has:
+        kind: return_statement
+        stopBy: end

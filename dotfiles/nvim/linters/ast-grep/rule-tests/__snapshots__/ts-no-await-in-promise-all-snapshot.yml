@@ -1,0 +1,24 @@
+id: ts-no-await-in-promise-all
+snapshots:
+  Promise.all([await fetchA(), await fetchB()]):
+    fixed: Promise.all([fetchA(), await fetchB()])
+    labels:
+    - source: await fetchA()
+      style: primary
+      start: 13
+      end: 27
+    - source: Promise.all([await fetchA(), await fetchB()])
+      style: secondary
+      start: 0
+      end: 45
+  Promise.all([await fetchA(), fetchB()]):
+    fixed: Promise.all([fetchA(), fetchB()])
+    labels:
+    - source: await fetchA()
+      style: primary
+      start: 13
+      end: 27
+    - source: Promise.all([await fetchA(), fetchB()])
+      style: secondary
+      start: 0
+      end: 39

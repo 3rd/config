@@ -1,0 +1,7 @@
+id: ts-no-non-null-after-optional
+message: Non-null assertion (!) contradicts optional chaining (?.)
+severity: error
+language: tsx
+rule:
+  kind: non_null_expression
+  regex: "\\?\\."

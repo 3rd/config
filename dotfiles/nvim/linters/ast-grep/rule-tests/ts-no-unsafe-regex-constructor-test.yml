@@ -1,0 +1,10 @@
+id: ts-no-unsafe-regex-constructor
+valid:
+  - 'new RegExp("pattern")'
+  - "new RegExp('pattern', 'gi')"
+  - "new RegExp(`pattern`)"
+  - "/pattern/gi"
+invalid:
+  - "new RegExp(userInput)"
+  - "new RegExp(input, 'gi')"
+  - "new RegExp(getPattern())"

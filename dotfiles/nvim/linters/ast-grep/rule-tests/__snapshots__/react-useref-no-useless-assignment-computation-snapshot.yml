@@ -1,2 +1,14 @@
 id: react-useref-no-useless-assignment-computation
-snapshots: {}
+snapshots:
+  useRef(compute()):
+    labels:
+    - source: useRef(compute())
+      style: primary
+      start: 0
+      end: 17
+  useRef(compute(value)):
+    labels:
+    - source: useRef(compute(value))
+      style: primary
+      start: 0
+      end: 22

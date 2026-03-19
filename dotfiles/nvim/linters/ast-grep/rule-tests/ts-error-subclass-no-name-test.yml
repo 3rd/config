@@ -1,0 +1,27 @@
+id: ts-error-subclass-no-name
+valid:
+  - |
+    class MyError extends Error {
+      constructor() { super(); this.name = "MyError"; }
+    }
+  - |
+    class MyError extends Error {
+      constructor(msg: string) { super(msg); this.name = "MyError"; }
+    }
+  - "class MyClass extends BaseClass {}"
+  - |
+    class NotFoundError extends HttpError {
+      constructor() { super(); this.name = "NotFoundError"; }
+    }
+invalid:
+  - "class MyError extends Error {}"
+  - |
+    class MyError extends Error {
+      constructor(msg: string) { super(msg); }
+    }
+  - "class NotFoundError extends HttpError {}"
+  - "class TimeoutError extends Error {}"
+  # generic error subclass
+  - "class AppError<T> extends Error {}"
+  # abstract error subclass
+  - "abstract class BaseAppError extends Error {}"

@@ -1,0 +1,44 @@
+id: ts-error-subclass-no-name
+snapshots:
+  abstract class BaseAppError extends Error {}:
+    labels:
+    - source: abstract class BaseAppError extends Error {}
+      style: primary
+      start: 0
+      end: 44
+  class AppError<T> extends Error {}:
+    labels:
+    - source: class AppError<T> extends Error {}
+      style: primary
+      start: 0
+      end: 34
+  ? |
+    class MyError extends Error {
+      constructor(msg: string) { super(msg); }
+    }
+  : labels:
+    - source: |-
+        class MyError extends Error {
+          constructor(msg: string) { super(msg); }
+        }
+      style: primary
+      start: 0
+      end: 74
+  class MyError extends Error {}:
+    labels:
+    - source: class MyError extends Error {}
+      style: primary
+      start: 0
+      end: 30
+  class NotFoundError extends HttpError {}:
+    labels:
+    - source: class NotFoundError extends HttpError {}
+      style: primary
+      start: 0
+      end: 40
+  class TimeoutError extends Error {}:
+    labels:
+    - source: class TimeoutError extends Error {}
+      style: primary
+      start: 0
+      end: 35

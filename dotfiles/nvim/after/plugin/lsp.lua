@@ -15,9 +15,7 @@ if not vim.g._lsp_register_capability_filter_patched then
       end
 
       local known = vim.lsp.protocol and vim.lsp.protocol._request_name_to_server_capability
-      if type(known) ~= "table" then
-        return orig_register(err, params, ctx)
-      end
+      if type(known) ~= "table" then return orig_register(err, params, ctx) end
 
       local registrations = vim.tbl_filter(function(reg)
         return type(reg) == "table" and known[reg.method] ~= nil

@@ -1,0 +1,11 @@
+id: react-jsx-no-shortcircuit-render
+valid:
+  - "<div>{isReady ? <Child /> : null}</div>"
+  - "<div onClick={a && b}></div>"
+  - "<div>{children}</div>"
+  - "const x = a && b"
+invalid:
+  - "<div>{count && <Child />}</div>"
+  - "<div>{isReady && <Child />}</div>"
+  - "<div>{list.length && <List />}</div>"
+  - "<div>{enabled && 'text'}</div>"

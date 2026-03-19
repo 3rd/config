@@ -1,0 +1,15 @@
+id: ts-no-void-map-callback
+message: ".map() callback has no return, produces array of undefined"
+severity: error
+language: tsx
+rule:
+  pattern: $ARR.map($FN)
+constraints:
+  FN:
+    kind: arrow_function
+    has:
+      kind: statement_block
+    not:
+      has:
+        kind: return_statement
+        stopBy: end

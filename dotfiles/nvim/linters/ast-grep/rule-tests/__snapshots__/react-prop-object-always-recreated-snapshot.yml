@@ -1,0 +1,65 @@
+id: react-prop-object-always-recreated
+snapshots:
+  ? |
+    const Component = () => {
+      return <Button prop={[ 1 ]} />
+    }
+  : labels:
+    - source: '{[ 1 ]}'
+      style: primary
+      start: 48
+      end: 55
+    - source: Button
+      style: secondary
+      start: 36
+      end: 42
+    - source: <Button prop={[ 1 ]} />
+      style: secondary
+      start: 35
+      end: 58
+    - source: '[ 1 ]'
+      style: secondary
+      start: 49
+      end: 54
+  ? |
+    const Component = () => {
+      return <Button prop={{ value: 1 }} />
+    }
+  : labels:
+    - source: '{{ value: 1 }}'
+      style: primary
+      start: 48
+      end: 62
+    - source: Button
+      style: secondary
+      start: 36
+      end: 42
+    - source: '<Button prop={{ value: 1 }} />'
+      style: secondary
+      start: 35
+      end: 65
+    - source: '{ value: 1 }'
+      style: secondary
+      start: 49
+      end: 61
+  ? |
+    const Component = () => {
+      return <Button prop={{ value: 1 }}></Button>
+    }
+  : labels:
+    - source: '{{ value: 1 }}'
+      style: primary
+      start: 48
+      end: 62
+    - source: Button
+      style: secondary
+      start: 36
+      end: 42
+    - source: '<Button prop={{ value: 1 }}>'
+      style: secondary
+      start: 35
+      end: 63
+    - source: '{ value: 1 }'
+      style: secondary
+      start: 49
+      end: 61

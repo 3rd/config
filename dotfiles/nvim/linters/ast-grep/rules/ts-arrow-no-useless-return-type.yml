@@ -1,0 +1,82 @@
+id: ts-arrow-no-useless-return-type
+message: Unnecessary return type, TypeScript infers this from the function body
+severity: warning
+language: tsx
+rule:
+  all:
+    - kind: type_annotation
+    - inside:
+        field: return_type
+        kind: arrow_function
+    - not:
+        # recursive arrow functions need explicit return types (TS7023)
+        inside:
+          stopBy: end
+          kind: variable_declarator
+          all:
+            - has:
+                field: name
+                pattern: $FNAME
+            - has:
+                field: value
+                kind: arrow_function
+                has:
+                  stopBy: end
+                  pattern: $FNAME
+    - not:
+        has:
+          any:
+            # named type reference
+            - kind: type_identifier
+            - kind: nested_type_identifier
+            # typeof expression
+            - kind: type_query
+            # readonly wrapper (removing changes mutability contract)
+            - kind: readonly_type
+            # intentional contract types (any/unknown/never)
+            - all:
+                - kind: predefined_type
+                - regex: "^(any|unknown|never)$"
+            # generic type (except Promise<inline_type>)
+            - all:
+                - kind: generic_type
+                - any:
+                    # not Promise — exclude all other generics
+                    - not:
+                        has:
+                          kind: type_identifier
+                          regex: "^Promise$"
+                    # Promise<NamedType> — deep check for named types in args
+                    - has:
+                        kind: type_arguments
+                        has:
+                          stopBy: end
+                          any:
+                            - kind: type_identifier
+                            - kind: generic_type
+                            - kind: nested_type_identifier
+            # union containing named type member
+            - all:
+                - kind: union_type
+                - has:
+                    any:
+                      - kind: type_identifier
+                      - kind: generic_type
+                      - kind: nested_type_identifier
+            # intersection containing named type member
+            - all:
+                - kind: intersection_type
+                - has:
+                    any:
+                      - kind: type_identifier
+                      - kind: generic_type
+                      - kind: nested_type_identifier
+            # array of named type
+            - all:
+                - kind: array_type
+                - has:
+                    any:
+                      - kind: type_identifier
+                      - kind: generic_type
+                      - kind: nested_type_identifier
+fix: ""

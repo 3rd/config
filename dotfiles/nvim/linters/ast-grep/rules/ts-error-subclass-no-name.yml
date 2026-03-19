@@ -1,0 +1,17 @@
+id: ts-error-subclass-no-name
+message: Error subclass missing this.name, stack traces show wrong class
+severity: warning
+language: tsx
+rule:
+  any:
+    - pattern: "class $NAME extends $BASE { $$$BODY }"
+    - pattern: "class $NAME<$$$TYPES> extends $BASE { $$$BODY }"
+    - pattern: "abstract class $NAME extends $BASE { $$$BODY }"
+    - pattern: "abstract class $NAME<$$$TYPES> extends $BASE { $$$BODY }"
+  not:
+    has:
+      pattern: "this.name = $_"
+      stopBy: end
+constraints:
+  BASE:
+    regex: "Error$"

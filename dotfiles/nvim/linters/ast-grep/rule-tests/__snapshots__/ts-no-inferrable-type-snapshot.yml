@@ -1,0 +1,107 @@
+id: ts-no-inferrable-type
+snapshots:
+  'const x: RegExp = /pattern/':
+    fixed: const x = /pattern/
+    labels:
+    - source: 'x: RegExp = /pattern/'
+      style: primary
+      start: 6
+      end: 27
+  'const x: RegExp = /test/gi':
+    fixed: const x = /test/gi
+    labels:
+    - source: 'x: RegExp = /test/gi'
+      style: primary
+      start: 6
+      end: 26
+  'const x: boolean = false':
+    fixed: const x = false
+    labels:
+    - source: 'x: boolean = false'
+      style: primary
+      start: 6
+      end: 24
+  'const x: boolean = true':
+    fixed: const x = true
+    labels:
+    - source: 'x: boolean = true'
+      style: primary
+      start: 6
+      end: 23
+  'const x: number = 0':
+    fixed: const x = 0
+    labels:
+    - source: 'x: number = 0'
+      style: primary
+      start: 6
+      end: 19
+  'const x: number = 3.14':
+    fixed: const x = 3.14
+    labels:
+    - source: 'x: number = 3.14'
+      style: primary
+      start: 6
+      end: 22
+  'const x: number = 42':
+    fixed: const x = 42
+    labels:
+    - source: 'x: number = 42'
+      style: primary
+      start: 6
+      end: 20
+  'const x: string = "hello"':
+    fixed: const x = "hello"
+    labels:
+    - source: 'x: string = "hello"'
+      style: primary
+      start: 6
+      end: 25
+  'const x: string = ''hello''':
+    fixed: const x = 'hello'
+    labels:
+    - source: 'x: string = ''hello'''
+      style: primary
+      start: 6
+      end: 25
+  'const x: string = `template`':
+    fixed: const x = `template`
+    labels:
+    - source: 'x: string = `template`'
+      style: primary
+      start: 6
+      end: 28
+  'let x: boolean = true':
+    fixed: let x = true
+    labels:
+    - source: 'x: boolean = true'
+      style: primary
+      start: 4
+      end: 21
+  'let x: number = 42':
+    fixed: let x = 42
+    labels:
+    - source: 'x: number = 42'
+      style: primary
+      start: 4
+      end: 18
+  'let x: string = ''hello''':
+    fixed: let x = 'hello'
+    labels:
+    - source: 'x: string = ''hello'''
+      style: primary
+      start: 4
+      end: 23
+  'var x: number = 42':
+    fixed: var x = 42
+    labels:
+    - source: 'x: number = 42'
+      style: primary
+      start: 4
+      end: 18
+  'var x: string = ''hello''':
+    fixed: var x = 'hello'
+    labels:
+    - source: 'x: string = ''hello'''
+      style: primary
+      start: 4
+      end: 23

@@ -1,0 +1,11 @@
+id: ts-no-non-null-after-optional
+valid:
+  - "obj.foo.bar!"
+  - "obj?.foo.bar"
+  - "obj!.foo.bar"
+  - "getValue()!"
+invalid:
+  - "obj?.foo!"
+  - "obj?.foo.bar!"
+  - "obj?.foo?.bar!"
+  - "map?.get('key')!"

@@ -1,0 +1,27 @@
+id: ts-no-inferrable-type
+valid:
+  - "let x = 42"
+  - "let x: any = 42"
+  - "let x: unknown = 'hello'"
+  - "let x: string | null = 'hello'"
+  - "let x: number = parseInt('42')"
+  - "let x: number = someVar"
+  - "let x: string[] = ['a']"
+  - "const x: object = {}"
+  - "interface Foo { x: string }"
+invalid:
+  - "const x: number = 42"
+  - "const x: number = 3.14"
+  - "const x: number = 0"
+  - "const x: string = 'hello'"
+  - 'const x: string = "hello"'
+  - "const x: string = `template`"
+  - "const x: boolean = true"
+  - "const x: boolean = false"
+  - "const x: RegExp = /pattern/"
+  - "const x: RegExp = /test/gi"
+  - "let x: number = 42"
+  - "let x: string = 'hello'"
+  - "let x: boolean = true"
+  - "var x: number = 42"
+  - "var x: string = 'hello'"

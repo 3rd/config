@@ -1,0 +1,13 @@
+id: react-jsx-no-shortcircuit-render
+message: Avoid && in JSX, falsy values like 0 render on screen
+severity: warning
+language: tsx
+rule:
+  pattern: $A && $B
+  inside:
+    kind: jsx_expression
+  not:
+    inside:
+      kind: jsx_attribute
+      stopBy: end
+fix: "$A ? $B : null"

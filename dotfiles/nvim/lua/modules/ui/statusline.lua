@@ -103,11 +103,18 @@ local setup = function()
     return cursor.status_icon()
   end
 
+  local annotations_status = function()
+    local ok, annotations = pcall(require, "modules/workflow/annotations")
+    if not ok then return "" end
+    return annotations.exports.statusline()
+  end
+
   local sections = {
     lualine_a = { components.git_branch },
     lualine_b = { components.filename },
     lualine_c = { components.git_diff, components.diagnostics },
     lualine_x = {
+      annotations_status,
       cursor_status,
       copilot_status,
     },

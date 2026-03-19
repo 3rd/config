@@ -1,0 +1,33 @@
+id: react-useeffect-missing-cleanup
+valid:
+  - |
+    useEffect(() => {
+      window.addEventListener("resize", handler);
+      return () => window.removeEventListener("resize", handler);
+    }, [])
+  - |
+    useEffect(() => {
+      const id = setInterval(tick, 1000);
+      return () => clearInterval(id);
+    }, [])
+  - |
+    useEffect(() => {
+      fetchData();
+    }, [])
+invalid:
+  - |
+    useEffect(() => {
+      window.addEventListener("resize", handler);
+    }, [])
+  - |
+    useEffect(() => {
+      document.addEventListener("click", handler);
+    }, [])
+  - |
+    useEffect(() => {
+      setInterval(tick, 1000);
+    }, [])
+  - |
+    useEffect(() => {
+      socket.on("message", handler);
+    }, [])

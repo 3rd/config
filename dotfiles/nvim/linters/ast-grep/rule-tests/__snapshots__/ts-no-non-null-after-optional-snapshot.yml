@@ -1,0 +1,26 @@
+id: ts-no-non-null-after-optional
+snapshots:
+  map?.get('key')!:
+    labels:
+    - source: map?.get('key')!
+      style: primary
+      start: 0
+      end: 16
+  obj?.foo!:
+    labels:
+    - source: obj?.foo!
+      style: primary
+      start: 0
+      end: 9
+  obj?.foo.bar!:
+    labels:
+    - source: obj?.foo.bar!
+      style: primary
+      start: 0
+      end: 13
+  obj?.foo?.bar!:
+    labels:
+    - source: obj?.foo?.bar!
+      style: primary
+      start: 0
+      end: 14

@@ -1,0 +1,17 @@
+id: ts-json-parse-no-try
+message: JSON.parse can throw on invalid input, wrap in try/catch
+severity: warning
+language: tsx
+rule:
+  all:
+    - pattern: JSON.parse($INPUT)
+    - any:
+        # not inside any try/catch
+        - not:
+            inside:
+              kind: try_statement
+              stopBy: end
+        # inside catch block (not protected)
+        - inside:
+            kind: catch_clause
+            stopBy: end

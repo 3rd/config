@@ -1,0 +1,44 @@
+id: ts-no-void-map-callback
+snapshots:
+  ? |
+    items.map(item => {
+      process(item);
+      transform(item);
+    })
+  : labels:
+    - source: |-
+        items.map(item => {
+          process(item);
+          transform(item);
+        })
+      style: primary
+      start: 0
+      end: 58
+    - source: |-
+        {
+          process(item);
+          transform(item);
+        }
+      style: secondary
+      start: 18
+      end: 57
+  items.map(item => { console.log(item) }):
+    labels:
+    - source: items.map(item => { console.log(item) })
+      style: primary
+      start: 0
+      end: 40
+    - source: '{ console.log(item) }'
+      style: secondary
+      start: 18
+      end: 39
+  items.map(item => { item.toUpperCase() }):
+    labels:
+    - source: items.map(item => { item.toUpperCase() })
+      style: primary
+      start: 0
+      end: 41
+    - source: '{ item.toUpperCase() }'
+      style: secondary
+      start: 18
+      end: 40

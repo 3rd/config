@@ -1,4 +1,4 @@
-id: react-no-useless-effect-ref-assign
+id: react-useeffect-no-useless-ref-assignment
 snapshots:
   ? |
     useEffect(() => {

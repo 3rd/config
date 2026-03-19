@@ -1,0 +1,8 @@
+id: ts-no-await-in-promise-all
+valid:
+  - "Promise.all([fetchA(), fetchB()])"
+  - "await Promise.all([fetchA(), fetchB()])"
+  - "Promise.all([callback(async () => { await inner() })])"
+invalid:
+  - "Promise.all([await fetchA(), fetchB()])"
+  - "Promise.all([await fetchA(), await fetchB()])"

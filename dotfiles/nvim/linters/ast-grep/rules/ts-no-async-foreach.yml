@@ -1,0 +1,9 @@
+id: ts-no-async-foreach
+message: forEach ignores async return, promises are fire-and-forget
+severity: error
+language: tsx
+rule:
+  pattern: $ARR.forEach($FN)
+constraints:
+  FN:
+    regex: "^async\\b"

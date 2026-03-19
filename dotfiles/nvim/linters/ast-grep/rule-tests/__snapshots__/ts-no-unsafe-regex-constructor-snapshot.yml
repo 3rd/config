@@ -1,0 +1,20 @@
+id: ts-no-unsafe-regex-constructor
+snapshots:
+  new RegExp(getPattern()):
+    labels:
+    - source: new RegExp(getPattern())
+      style: primary
+      start: 0
+      end: 24
+  new RegExp(input, 'gi'):
+    labels:
+    - source: new RegExp(input, 'gi')
+      style: primary
+      start: 0
+      end: 23
+  new RegExp(userInput):
+    labels:
+    - source: new RegExp(userInput)
+      style: primary
+      start: 0
+      end: 21

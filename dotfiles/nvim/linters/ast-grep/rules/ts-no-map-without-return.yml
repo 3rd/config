@@ -1,0 +1,8 @@
+id: ts-no-map-without-return
+message: ".map() result discarded, use .forEach() for side effects"
+severity: warning
+language: tsx
+rule:
+  kind: expression_statement
+  has:
+    pattern: $ARR.map($$$ARGS)

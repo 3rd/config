@@ -1,0 +1,20 @@
+id: ts-no-async-foreach
+snapshots:
+  items.forEach(async (item) => await process(item)):
+    labels:
+    - source: items.forEach(async (item) => await process(item))
+      style: primary
+      start: 0
+      end: 50
+  items.forEach(async (item) => { await process(item) }):
+    labels:
+    - source: items.forEach(async (item) => { await process(item) })
+      style: primary
+      start: 0
+      end: 54
+  items.forEach(async function(item) { await process(item) }):
+    labels:
+    - source: items.forEach(async function(item) { await process(item) })
+      style: primary
+      start: 0
+      end: 59

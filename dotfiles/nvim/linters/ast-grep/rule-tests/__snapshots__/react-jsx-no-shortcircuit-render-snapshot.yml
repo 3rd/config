@@ -1,0 +1,46 @@
+id: react-jsx-no-shortcircuit-render
+snapshots:
+  <div>{count && <Child />}</div>:
+    fixed: '<div>{count ? <Child /> : null}</div>'
+    labels:
+    - source: count && <Child />
+      style: primary
+      start: 6
+      end: 24
+    - source: '{count && <Child />}'
+      style: secondary
+      start: 5
+      end: 25
+  <div>{enabled && 'text'}</div>:
+    fixed: '<div>{enabled ? ''text'' : null}</div>'
+    labels:
+    - source: enabled && 'text'
+      style: primary
+      start: 6
+      end: 23
+    - source: '{enabled && ''text''}'
+      style: secondary
+      start: 5
+      end: 24
+  <div>{isReady && <Child />}</div>:
+    fixed: '<div>{isReady ? <Child /> : null}</div>'
+    labels:
+    - source: isReady && <Child />
+      style: primary
+      start: 6
+      end: 26
+    - source: '{isReady && <Child />}'
+      style: secondary
+      start: 5
+      end: 27
+  <div>{list.length && <List />}</div>:
+    fixed: '<div>{list.length ? <List /> : null}</div>'
+    labels:
+    - source: list.length && <List />
+      style: primary
+      start: 6
+      end: 29
+    - source: '{list.length && <List />}'
+      style: secondary
+      start: 5
+      end: 30

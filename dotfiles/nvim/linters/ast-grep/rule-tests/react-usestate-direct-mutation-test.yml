@@ -1,0 +1,24 @@
+id: react-usestate-direct-mutation
+valid:
+  - |
+    const [items, setItems] = useState([]);
+    setItems([...items, newItem]);
+  - |
+    const arr = [1, 2, 3];
+    arr.push(4);
+  - |
+    const [items, setItems] = useState([]);
+    setItems(prev => [...prev, newItem]);
+invalid:
+  - |
+    const [items, setItems] = useState([]);
+    items.push(newItem);
+  - |
+    const [items, setItems] = useState([]);
+    items.sort();
+  - |
+    const [items, setItems] = useState([]);
+    items.reverse();
+  - |
+    const [items, setItems] = useState([]);
+    items.splice(0, 1);

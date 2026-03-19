@@ -1,0 +1,24 @@
+id: react-usestate-direct-mutation
+message: "Mutating state in place then calling setter won't trigger re-render"
+severity: error
+language: tsx
+rule:
+  all:
+    - any:
+        - pattern: $STATE.push($$$ARGS)
+        - pattern: $STATE.pop()
+        - pattern: $STATE.shift()
+        - pattern: $STATE.unshift($$$ARGS)
+        - pattern: $STATE.splice($$$ARGS)
+        - pattern: $STATE.sort($$$ARGS)
+        - pattern: $STATE.reverse()
+        - pattern: $STATE.fill($$$ARGS)
+    - inside:
+        stopBy:
+          any:
+            - kind: function_declaration
+            - kind: arrow_function
+            - kind: function_expression
+        has:
+          stopBy: end
+          pattern: "const [$STATE, $_] = useState($$$)"

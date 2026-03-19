@@ -1,0 +1,26 @@
+id: react-no-fake-custom-hook
+snapshots:
+  const useNoop = () => {}:
+    labels:
+    - source: const useNoop = () => {}
+      style: primary
+      start: 0
+      end: 24
+  const useProxy = () => { return new Proxy({}, {}) }:
+    labels:
+    - source: const useProxy = () => { return new Proxy({}, {}) }
+      style: primary
+      start: 0
+      end: 51
+  'const useValue = (x: number) => x * 2':
+    labels:
+    - source: 'const useValue = (x: number) => x * 2'
+      style: primary
+      start: 0
+      end: 37
+  'function useFormatter(value: string) { return value.toUpperCase() }':
+    labels:
+    - source: 'function useFormatter(value: string) { return value.toUpperCase() }'
+      style: primary
+      start: 0
+      end: 67

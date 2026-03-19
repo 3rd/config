@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+#/ Usage: astgrepfix [ast-grep scan args...]
+#/ Description: Apply ast-grep autofixes using the nearest sgconfig.yml or sgconfig.yaml.
+#/ Examples:
+#/   astgrepfix
+#/   astgrepfix apps/web
+#/   astgrepfix --filter ts-no-inferrable-type
+#/   astgrepfix -i apps/web
+#/ Options:
+#/   -h, --help: Display this help message
+
+usage() {
+  grep '^#/' "$0" | cut -c4-
+  exit 0
+}
+
+find_config() {
+  local dir
+  dir="${1:-$PWD}"
+
+  while [[ -n "$dir" && "$dir" != "/" ]]; do
+    if [[ -f "$dir/sgconfig.yml" ]]; then
+      printf '%s\n' "$dir/sgconfig.yml"
+      return 0
+    fi
+    if [[ -f "$dir/sgconfig.yaml" ]]; then
+      printf '%s\n' "$dir/sgconfig.yaml"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+
+  return 1
+}
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  usage
+fi
+
+if ! command -v ast-grep >/dev/null 2>&1; then
+  echo "astgrepfix: ast-grep not found in PATH" >&2
+  exit 1
+fi
+
+has_config_arg=0
+has_mode_arg=0
+has_report_style_arg=0
+has_json_arg=0
+
+for arg in "$@"; do
+  case "$arg" in
+    -c | --config | -c=* | --config=*)
+      has_config_arg=1
+      ;;
+    -i | --interactive | -U | --update-all)
+      has_mode_arg=1
+      ;;
+    --report-style | --report-style=*)
+      has_report_style_arg=1
+      ;;
+    --json | --json=*)
+      has_json_arg=1
+      ;;
+  esac
+done
+
+cmd=(ast-grep scan)
+
+if [[ "$has_config_arg" -eq 0 ]]; then
+  config_path="${AST_GREP_CONFIG:-$(find_config "$PWD" || true)}"
+  if [[ -z "${config_path:-}" ]]; then
+    echo "astgrepfix: no sgconfig.yml or sgconfig.yaml found in the current directory or its parents" >&2
+    exit 1
+  fi
+  cmd+=(-c "$config_path")
+fi
+
+if [[ "$has_mode_arg" -eq 0 ]]; then
+  cmd+=(-U)
+fi
+
+if [[ "$has_report_style_arg" -eq 0 && "$has_json_arg" -eq 0 ]]; then
+  cmd+=(--report-style medium)
+fi
+
+exec "${cmd[@]}" "$@"

@@ -1,0 +1,11 @@
+id: ts-no-map-without-return
+valid:
+  - "const names = users.map(u => u.name)"
+  - "return items.map(i => i.id)"
+  - "setItems(items.map(i => transform(i)))"
+  - "items.forEach(item => process(item))"
+  - "const result = arr.map(fn)"
+invalid:
+  - "users.map(u => sendEmail(u))"
+  - "items.map(item => { process(item) })"
+  - "arr.map(fn)"

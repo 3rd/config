@@ -1,0 +1,66 @@
+id: react-usestate-direct-mutation
+snapshots:
+  ? |
+    const [items, setItems] = useState([]);
+    items.push(newItem);
+  : labels:
+    - source: items.push(newItem)
+      style: primary
+      start: 40
+      end: 59
+    - source: const [items, setItems] = useState([]);
+      style: secondary
+      start: 0
+      end: 39
+    - source: const [items, setItems] = useState([]);
+      style: secondary
+      start: 0
+      end: 39
+  ? |
+    const [items, setItems] = useState([]);
+    items.reverse();
+  : labels:
+    - source: items.reverse()
+      style: primary
+      start: 40
+      end: 55
+    - source: const [items, setItems] = useState([]);
+      style: secondary
+      start: 0
+      end: 39
+    - source: const [items, setItems] = useState([]);
+      style: secondary
+      start: 0
+      end: 39
+  ? |
+    const [items, setItems] = useState([]);
+    items.sort();
+  : labels:
+    - source: items.sort()
+      style: primary
+      start: 40
+      end: 52
+    - source: const [items, setItems] = useState([]);
+      style: secondary
+      start: 0
+      end: 39
+    - source: const [items, setItems] = useState([]);
+      style: secondary
+      start: 0
+      end: 39
+  ? |
+    const [items, setItems] = useState([]);
+    items.splice(0, 1);
+  : labels:
+    - source: items.splice(0, 1)
+      style: primary
+      start: 40
+      end: 58
+    - source: const [items, setItems] = useState([]);
+      style: secondary
+      start: 0
+      end: 39
+    - source: const [items, setItems] = useState([]);
+      style: secondary
+      start: 0
+      end: 39

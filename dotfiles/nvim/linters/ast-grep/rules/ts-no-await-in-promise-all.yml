@@ -1,0 +1,14 @@
+id: ts-no-await-in-promise-all
+message: Unnecessary await inside Promise.all, prevents parallel execution
+severity: error
+language: tsx
+rule:
+  pattern: await $A
+  inside:
+    pattern: Promise.all($_)
+    stopBy:
+      not:
+        any:
+          - kind: array
+          - kind: arguments
+fix: $A

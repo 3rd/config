@@ -1,0 +1,167 @@
+id: ts-arrow-no-useless-return-type
+snapshots:
+  'const x = (): Promise<string | number> => fetch()':
+    fixed: const x = () => fetch()
+    labels:
+    - source: ': Promise<string | number>'
+      style: primary
+      start: 12
+      end: 38
+    - source: '(): Promise<string | number> => fetch()'
+      style: secondary
+      start: 10
+      end: 49
+  'const x = (): Promise<string> => fetch()':
+    fixed: const x = () => fetch()
+    labels:
+    - source: ': Promise<string>'
+      style: primary
+      start: 12
+      end: 29
+    - source: '(): Promise<string> => fetch()'
+      style: secondary
+      start: 10
+      end: 40
+  'const x = (): Promise<string[]> => fetch()':
+    fixed: const x = () => fetch()
+    labels:
+    - source: ': Promise<string[]>'
+      style: primary
+      start: 12
+      end: 31
+    - source: '(): Promise<string[]> => fetch()'
+      style: secondary
+      start: 10
+      end: 42
+  'const x = (): Promise<void> => {}':
+    fixed: const x = () => {}
+    labels:
+    - source: ': Promise<void>'
+      style: primary
+      start: 12
+      end: 27
+    - source: '(): Promise<void> => {}'
+      style: secondary
+      start: 10
+      end: 33
+  'const x = (): Promise<{ data: string }> => fetch()':
+    fixed: const x = () => fetch()
+    labels:
+    - source: ': Promise<{ data: string }>'
+      style: primary
+      start: 12
+      end: 39
+    - source: '(): Promise<{ data: string }> => fetch()'
+      style: secondary
+      start: 10
+      end: 50
+  'const x = (): [string, number] => [''a'', 1]':
+    fixed: const x = () => ['a', 1]
+    labels:
+    - source: ': [string, number]'
+      style: primary
+      start: 12
+      end: 30
+    - source: '(): [string, number] => [''a'', 1]'
+      style: secondary
+      start: 10
+      end: 42
+  'const x = (): boolean => true':
+    fixed: const x = () => true
+    labels:
+    - source: ': boolean'
+      style: primary
+      start: 12
+      end: 21
+    - source: '(): boolean => true'
+      style: secondary
+      start: 10
+      end: 29
+  'const x = (): number => 42':
+    fixed: const x = () => 42
+    labels:
+    - source: ': number'
+      style: primary
+      start: 12
+      end: 20
+    - source: '(): number => 42'
+      style: secondary
+      start: 10
+      end: 26
+  'const x = (): string => ''hello''':
+    fixed: const x = () => 'hello'
+    labels:
+    - source: ': string'
+      style: primary
+      start: 12
+      end: 20
+    - source: '(): string => ''hello'''
+      style: secondary
+      start: 10
+      end: 31
+  'const x = (): string | number => ''hello''':
+    fixed: const x = () => 'hello'
+    labels:
+    - source: ': string | number'
+      style: primary
+      start: 12
+      end: 29
+    - source: '(): string | number => ''hello'''
+      style: secondary
+      start: 10
+      end: 40
+  'const x = (): string[] => []':
+    fixed: const x = () => []
+    labels:
+    - source: ': string[]'
+      style: primary
+      start: 12
+      end: 22
+    - source: '(): string[] => []'
+      style: secondary
+      start: 10
+      end: 28
+  'const x = (): void => {}':
+    fixed: const x = () => {}
+    labels:
+    - source: ': void'
+      style: primary
+      start: 12
+      end: 18
+    - source: '(): void => {}'
+      style: secondary
+      start: 10
+      end: 24
+  'const x = (): { inline: string } => ({ inline: ''type'' })':
+    fixed: 'const x = () => ({ inline: ''type'' })'
+    labels:
+    - source: ': { inline: string }'
+      style: primary
+      start: 12
+      end: 32
+    - source: '(): { inline: string } => ({ inline: ''type'' })'
+      style: secondary
+      start: 10
+      end: 56
+  'const x = (a: number): string => a.toString()':
+    fixed: 'const x = (a: number) => a.toString()'
+    labels:
+    - source: ': string'
+      style: primary
+      start: 21
+      end: 29
+    - source: '(a: number): string => a.toString()'
+      style: secondary
+      start: 10
+      end: 45
+  'let x = (): string => ''hello''':
+    fixed: let x = () => 'hello'
+    labels:
+    - source: ': string'
+      style: primary
+      start: 10
+      end: 18
+    - source: '(): string => ''hello'''
+      style: secondary
+      start: 8
+      end: 29
