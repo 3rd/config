@@ -31,6 +31,8 @@ rule:
             - kind: nested_type_identifier
             # typeof expression
             - kind: type_query
+            # indexed access type (e.g. Foo["bar"])
+            - kind: lookup_type
             # readonly wrapper (removing changes mutability contract)
             - kind: readonly_type
             # intentional contract types (any/unknown/never)
@@ -55,6 +57,7 @@ rule:
                             - kind: type_identifier
                             - kind: generic_type
                             - kind: nested_type_identifier
+                            - kind: lookup_type
             # union containing named type member
             - all:
                 - kind: union_type
@@ -63,6 +66,7 @@ rule:
                       - kind: type_identifier
                       - kind: generic_type
                       - kind: nested_type_identifier
+                      - kind: lookup_type
             # intersection containing named type member
             - all:
                 - kind: intersection_type
@@ -71,6 +75,7 @@ rule:
                       - kind: type_identifier
                       - kind: generic_type
                       - kind: nested_type_identifier
+                      - kind: lookup_type
             # array of named type
             - all:
                 - kind: array_type
@@ -79,4 +84,5 @@ rule:
                       - kind: type_identifier
                       - kind: generic_type
                       - kind: nested_type_identifier
+                      - kind: lookup_type
 fix: ""

@@ -23,6 +23,9 @@ valid:
   - "const x = (): Record<string, string> | undefined => ({})"
   # array of named type
   - "const x = (): FunctionDeclaration[] => []"
+  # indexed access type (lookup_type)
+  - 'const normalizeSchema = (request: AnyRunRequest): NormalizedRunRequest["schema"] => ({})'
+  - 'const x = (): Config["options"]["timeout"] => 0'
   # Promise with named type inside union
   - "const x = (): Promise<MyType | null> => fetch()"
   # recursive arrow functions (TS7023: can't infer return type)

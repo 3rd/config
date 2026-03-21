@@ -67,8 +67,8 @@ const PROVIDER_LABELS = {
 } as const satisfies Record<ProviderName, string>;
 
 const PROVIDER_TTLS = {
-  claude: 300,
-  codex: 300,
+  claude: 60,
+  codex: 60,
 } as const satisfies Record<ProviderName, number>;
 
 const PROVIDER_ORDER = ["claude", "codex"] as const satisfies readonly ProviderName[];

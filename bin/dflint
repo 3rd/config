@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+#/ Usage: dflint [root]
+#/ Description: Run flint in every nested package.json directory
+#/ Examples:
+#/   dflint        # format and lint all package subdirectories from the current directory
+#/   dflint .      # format and lint all package subdirectories from the current directory
+#/   dflint apps   # format and lint all package subdirectories under ./apps
+#/ Options:
+#/   --help: Display this help message
+usage() {
+  grep '^#/' "$0" | cut -c4-
+  exit 0
+}
+expr "$*" : ".*--help" >/dev/null && usage
+
+ROOT="${1:-.}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RUNNER="${DFLINT_RUNNER:-$SCRIPT_DIR/flint}"
+
+if [ ! -d "$ROOT" ]; then
+  echo "❌ Root directory not found: $ROOT"
+  exit 1
+fi
+
+if [ ! -x "$RUNNER" ]; then
+  echo "❌ Flint runner not executable: $RUNNER"
+  exit 1
+fi
+
+FOUND=0
+FAILED=0
+
+while IFS= read -r package_file; do
+  package_dir="${package_file%/package.json}"
+
+  if [ "$package_dir" = "$ROOT" ]; then
+    continue
+  fi
+
+  FOUND=1
+  echo "🔍 flinting $package_dir"
+
+  if ! (
+    cd "$package_dir"
+    "$RUNNER"
+  ); then
+    echo "❌ flint failed in $package_dir"
+    FAILED=1
+  else
+    echo "✅ flint passed in $package_dir"
+  fi
+done < <(
+  find "$ROOT" \
+    -mindepth 2 \
+    -path '*/node_modules' -prune -o \
+    -type f -name 'package.json' -print | sort
+)
+
+if [ "$FOUND" -eq 0 ]; then
+  echo "⚠️ No nested package.json files found under $ROOT"
+  exit 1
+fi
+
+if [ "$FAILED" -ne 0 ]; then
+  exit 1
+fi
