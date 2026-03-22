@@ -20,6 +20,7 @@
     ../programs/neovim.nix
     ../programs/rofi.nix
     ../programs/starship.nix
+    ../programs/television
     ../programs/tmux
     ../programs/zathura.nix
     ../programs/zoxide.nix
@@ -49,4 +50,3 @@
   systemd.user.startServices = "sd-switch";
   home.stateVersion = "24.05";
 }
-

@@ -1,0 +1,22 @@
+["git-diff".metadata]
+name = "git-diff"
+description = "Select files changed relative to HEAD"
+requirements = ["git"]
+
+["git-diff".source]
+command = "git diff --name-only HEAD"
+
+["git-diff".preview]
+command = "git diff HEAD --color=always -- '{}'"
+
+["git-log".metadata]
+name = "git-log"
+description = "Browse recent git commits"
+requirements = ["git"]
+
+["git-log".source]
+command = 'git log --oneline --date=short --pretty="format:%h %s %an %cd" "$@"'
+output = "{split: :0}"
+
+["git-log".preview]
+command = "git show -p --stat --pretty=fuller --color=always '{0}'"
