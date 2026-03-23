@@ -39,6 +39,7 @@ return lib.module.create({
 				servers = {
 					"astro",
 					"svelte",
+					"tsgo",
 					"ts_ls",
 					"tsserver",
 					"typescript-tools",

@@ -58,8 +58,14 @@ return lib.module.create({
         local mason = require("mason")
         local mason_lspconfig = require("mason-lspconfig")
         local servers = require("config/lsp-servers")
-        local installable_servers = servers
-        local ensure_installed = servers
+        local local_servers = {
+          tsgo = true,
+        }
+        local managed_servers = vim.tbl_filter(function(server)
+          return not local_servers[server]
+        end, servers)
+        local installable_servers = managed_servers
+        local ensure_installed = managed_servers
 
         local dotnet_major = nil
         if vim.tbl_contains(servers, "csharp_ls") then
@@ -79,7 +85,7 @@ return lib.module.create({
             if not has_package then return false end
             if server == "csharp_ls" and not dotnet_major then return false end
             return true
-          end, servers)
+          end, managed_servers)
         end
 
         ensure_installed = vim.tbl_map(function(server)

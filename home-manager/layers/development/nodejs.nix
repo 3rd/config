@@ -1,10 +1,13 @@
 { lib, pkgs, pkgs-stable, ... }:
 
+let
+  nodejs = pkgs.nodejs_24;
+in
 {
 
   home.packages = with pkgs; [
     #
-    nodejs_22
+    nodejs
     electron
     pkgs-stable.quick-lint-js
     # bun
@@ -20,7 +23,7 @@
     };
     activation = {
       npm_set_prefix = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        ${pkgs.nodejs_latest}/bin/npm set prefix ~/.npm/global
+        ${nodejs}/bin/npm set prefix ~/.npm/global
       '';
     };
   };

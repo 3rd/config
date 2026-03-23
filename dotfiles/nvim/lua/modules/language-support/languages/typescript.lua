@@ -40,6 +40,7 @@ return lib.module.create({
         end, {})
 
         local twoslash_clients = {
+          "tsgo",
           "vtsls",
           "ts_ls",
         }

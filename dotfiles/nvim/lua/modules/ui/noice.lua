@@ -32,7 +32,8 @@ local setup_noice = function()
         ["^%s*(Return:)"] = "@text.title",
         ["^%s*(See also:)"] = "@text.title",
         ["{%S-}"] = "@parameter",
-        ["%[.-%]%((%S-)%)"] = "@macro",
+        -- avoid captures here; noice reuses the match as a lua pattern
+        ["%b[]%b()"] = "@macro",
       },
     },
     views = {

@@ -112,6 +112,9 @@ local actions = {
       require("notify")("Failed to create gist:\n" .. output, "error")
     end
   end,
+  copy_absolute_path = function()
+    require("modules/workflow/yank-location").exports.copy_absolute_path()
+  end,
   ts_inspect_tree = function()
     cmd(":InspectTree")
   end,
@@ -172,6 +175,7 @@ local commands = {
     ["File: New"] = actions.file_new,
     ["File: Rename"] = actions.file_rename,
     ["File: Delete"] = actions.file_delete,
+    ["File: Copy absolute path to current file"] = actions.copy_absolute_path,
     ["Buffer: Sort lines"] = actions.lines_sort,
     ["Buffer: Sort lines (desc)"] = actions.lines_sort_desc,
     ["Silicon: File"] = actions.silicon_normal,

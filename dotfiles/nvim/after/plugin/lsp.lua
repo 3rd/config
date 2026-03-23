@@ -52,7 +52,7 @@ vim.lsp.config("*", {
 local overrides = {
   formatting = {
     enable = { "eslint" },
-    disable = { "html", "vtsls", "ts_ls" },
+    disable = { "html", "vtsls", "ts_ls", "tsgo" },
   },
 }
 

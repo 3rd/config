@@ -76,4 +76,7 @@ return lib.module.create({
     { { "n", "v" }, "<leader>y", handle_smart_yank, { desc = "Yank location (smart)" } },
     { { "n", "v" }, "<leader>Y", handle_path_yank, { desc = "Yank location (path)" } },
   },
+  exports = {
+    copy_absolute_path = handle_path_yank,
+  },
 })

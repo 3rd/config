@@ -1,17 +1,19 @@
+local inlay_hints = {
+  parameterNames = { enabled = "literals", suppressWhenArgumentMatchesName = true },
+  parameterTypes = { enabled = true },
+  variableTypes = { enabled = true },
+  propertyDeclarationTypes = { enabled = true },
+  functionLikeReturnTypes = { enabled = true },
+  enumMemberValues = { enabled = true },
+}
+
 return {
-  -- cmd = { "tsgo", "--lsp", "--stdio" },
-  -- cmd = { "bunx", "@typescript/native-preview", "--lsp", "--stdio" },
-  root_dir = function(bufnr, on_dir)
-    local root_markers = { ".root", "package.json", "tsconfig.json", ".git" }
-    root_markers = vim.list_extend(root_markers, { ".git" })
-    flog("before")
-    local project_root = vim.fs.root(bufnr, root_markers) or vim.fn.getcwd()
-    flog("root:", project_root)
-    on_dir(project_root)
-  end,
   init_options = {
     hostInfo = "neovim",
     disableAutomaticTypingAcquisition = true,
+    tsserver = {
+      useSyntaxServer = "never",
+    },
     preferences = {
       allowIncompleteCompletions = true,
       includeCompletionsForModuleExports = true,
@@ -20,39 +22,23 @@ return {
       includePackageJsonAutoImports = "off",
       useAliasesForRenames = true,
     },
-    maxTsServerMemory = 2 * 4096,
   },
   settings = {
     javascript = {
       format = { enable = false },
       preferences = {
+        includePackageJsonAutoImports = "off",
         useAliasesForRenames = true,
       },
-      parameterNames = { enabled = "literals", suppressWhenArgumentMatchesName = true },
-      parameterTypes = { enabled = true },
-      variableTypes = { enabled = true },
-      propertyDeclarationTypes = { enabled = true },
-      functionLikeReturnTypes = { enabled = true },
-      enumMemberValues = { enabled = true },
+      inlayHints = inlay_hints,
     },
     typescript = {
       format = { enable = false },
-      tsserver = {
-        maxTsServerMemory = "auto",
-        experimental = { enableProjectDiagnostics = true },
-      },
       preferences = {
         includePackageJsonAutoImports = "off",
         useAliasesForRenames = true,
       },
-      inlayHints = {
-        parameterNames = { enabled = "literals" },
-        parameterTypes = { enabled = true },
-        variableTypes = { enabled = true },
-        propertyDeclarationTypes = { enabled = true },
-        functionLikeReturnTypes = { enabled = true },
-        enumMemberValues = { enabled = true },
-      },
+      inlayHints = inlay_hints,
       updateImportsOnFileMove = {
         enabled = "always",
       },

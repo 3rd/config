@@ -4,7 +4,7 @@ in
 {
   programs.television = {
     enable = true;
-    enableFishIntegration = true;
+    enableFishIntegration = false;
     inherit channels;
   };
 }
