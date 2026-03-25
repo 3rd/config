@@ -12,6 +12,7 @@ local colors = {
     constant = "#FF8170",
     constructor = "#17CFCF",
     cword = "#363442",
+    cword_current = "#444153",
     delimiter = "#777486",
     field = "#A5A0BA",
     ["function"] = "#7EBDFC",

@@ -56,6 +56,43 @@ local overrides = {
   },
 }
 
+local record_client_namespace = function(bufnr, client)
+  if type(bufnr) ~= "number" or bufnr <= 0 then return end
+  if not client or type(client.namespace) ~= "number" then return end
+
+  vim.b[bufnr]._lsp_client_namespaces = vim.b[bufnr]._lsp_client_namespaces or {}
+  vim.b[bufnr]._lsp_client_namespaces[client.id] = client.namespace
+end
+
+local get_recorded_client_namespace = function(bufnr, client_id)
+  local namespaces = vim.b[bufnr]._lsp_client_namespaces
+  if type(namespaces) ~= "table" then return nil end
+  return namespaces[client_id]
+end
+
+local clear_recorded_client_namespace = function(bufnr, client_id)
+  local namespaces = vim.b[bufnr]._lsp_client_namespaces
+  if type(namespaces) ~= "table" then return end
+
+  namespaces[client_id] = nil
+  if vim.tbl_isempty(namespaces) then vim.b[bufnr]._lsp_client_namespaces = nil end
+end
+
+local reset_client_diagnostics = function(bufnr, client_id)
+  if type(bufnr) ~= "number" or bufnr <= 0 then return end
+  if not vim.api.nvim_buf_is_valid(bufnr) then return end
+
+  local client = client_id and vim.lsp.get_client_by_id(client_id) or nil
+  local namespace = client and client.namespace or get_recorded_client_namespace(bufnr, client_id)
+  if type(namespace) ~= "number" then
+    clear_recorded_client_namespace(bufnr, client_id)
+    return
+  end
+
+  vim.diagnostic.reset(namespace, bufnr)
+  clear_recorded_client_namespace(bufnr, client_id)
+end
+
 local enabled_modules = lib.module.get_enabled_modules()
 local modules_with_capabilities = table.filter(enabled_modules, function(module)
   return ((module.hooks or {}).lsp or {}).capabilities ~= nil
@@ -105,6 +142,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
     if not client then return end
 
+    record_client_namespace(bufnr, client)
+
     -- hook.lsp.on_attach
     for _, module in ipairs(modules_with_on_attach) do
       module.hooks.lsp.on_attach(client, bufnr)
@@ -121,5 +160,15 @@ vim.api.nvim_create_autocmd("LspAttach", {
     elseif vim.tbl_contains(overrides.formatting.disable, client.name) then
       client.server_capabilities.documentFormattingProvider = false
     end
+  end,
+})
+
+vim.api.nvim_create_autocmd("LspDetach", {
+  callback = function(args)
+    local bufnr = args.buf
+    local client_id = args.data and args.data.client_id
+    if not client_id then return end
+
+    reset_client_diagnostics(bufnr, client_id)
   end,
 })

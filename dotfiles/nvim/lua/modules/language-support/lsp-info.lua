@@ -32,9 +32,9 @@ end
 
 local format_diagnostics = function(bufnr)
   local counts = vim.diagnostic.count(bufnr)
-  if type(counts) ~= "table" then return "E0 W0 I0 H0" end
-
   local severity = vim.diagnostic.severity
+  if type(counts) ~= "table" then counts = {} end
+
   return string.format(
     "E%d W%d I%d H%d",
     counts[severity.ERROR] or 0,
@@ -42,6 +42,63 @@ local format_diagnostics = function(bufnr)
     counts[severity.INFO] or 0,
     counts[severity.HINT] or 0
   )
+end
+
+local format_diagnostic_counts = function(counts)
+  local severity = vim.diagnostic.severity
+  if type(counts) ~= "table" then counts = {} end
+
+  return string.format(
+    "E%d W%d I%d H%d",
+    counts[severity.ERROR] or 0,
+    counts[severity.WARN] or 0,
+    counts[severity.INFO] or 0,
+    counts[severity.HINT] or 0
+  )
+end
+
+local count_namespace_diagnostics = function(bufnr, namespace)
+  local counts = {}
+  local severity = vim.diagnostic.severity
+
+  for _, diagnostic in ipairs(vim.diagnostic.get(bufnr, { namespace = namespace })) do
+    counts[diagnostic.severity] = (counts[diagnostic.severity] or 0) + 1
+  end
+
+  counts.total = (counts[severity.ERROR] or 0)
+    + (counts[severity.WARN] or 0)
+    + (counts[severity.INFO] or 0)
+    + (counts[severity.HINT] or 0)
+
+  return counts
+end
+
+local format_namespace_name = function(namespace)
+  if type(namespace) ~= "number" then return "-" end
+
+  local namespace_config = vim.diagnostic.get_namespaces()[namespace]
+  local name = type(namespace_config) == "table" and namespace_config.name or nil
+  if type(name) ~= "string" or name == "" then return tostring(namespace) end
+
+  local client_name = name:match("^nvim%.lsp%.([^.]+)%.%d+$")
+  if client_name then return client_name end
+
+  return name
+end
+
+local format_namespace_diagnostics = function(bufnr)
+  local parts = {}
+
+  for namespace in pairs(vim.diagnostic.get_namespaces()) do
+    local counts = count_namespace_diagnostics(bufnr, namespace)
+    if counts.total and counts.total > 0 then
+      parts[#parts + 1] = string.format("%s %s", format_namespace_name(namespace), format_diagnostic_counts(counts))
+    end
+  end
+
+  table.sort(parts)
+  if #parts == 0 then return "none" end
+  return table.concat(parts, "; ")
 end
 
 local format_attached_buffers = function(client)
@@ -104,6 +161,52 @@ local format_root_markers = function(root_markers)
   return table.concat(parts, ", ")
 end
 
+local format_workspace_folders = function(client)
+  local workspace_folders = client and client.workspace_folders or nil
+  if type(workspace_folders) ~= "table" or vim.tbl_isempty(workspace_folders) then return "-" end
+
+  local folders = {}
+  for _, folder in ipairs(workspace_folders) do
+    local uri = type(folder) == "table" and folder.uri or nil
+    if type(uri) == "string" and uri ~= "" then
+      local ok, path = pcall(vim.uri_to_fname, uri)
+      folders[#folders + 1] = ok and format_path(path) or uri
+    end
+  end
+
+  if #folders == 0 then return "-" end
+  return table.concat(folders, ", ")
+end
+
+local format_client_namespace = function(client)
+  if not client or type(client.namespace) ~= "number" then return "-" end
+  return string.format("%s (%d)", format_namespace_name(client.namespace), client.namespace)
+end
+
+local format_client_diagnostics = function(bufnr, client)
+  if not client or type(client.namespace) ~= "number" then return "-" end
+  return format_diagnostic_counts(count_namespace_diagnostics(bufnr, client.namespace))
+end
+
+local format_filetypes = function(filetypes)
+  if type(filetypes) ~= "table" or vim.tbl_isempty(filetypes) then return "-" end
+
+  local limit = 4
+  local items = {}
+  for index, filetype in ipairs(filetypes) do
+    if index > limit then break end
+    items[#items + 1] = tostring(filetype)
+  end
+
+  if #filetypes <= limit then return table.concat(items, ", ") end
+  return string.format("%s (+%d more)", table.concat(items, ", "), #filetypes - limit)
+end
+
+local format_workspace_required = function(value)
+  if value == nil then return "-" end
+  return value and "yes" or "no"
+end
+
 local supports_filetype = function(config, filetype)
   if filetype == nil or filetype == "" then return true end
   if type(config) ~= "table" or config.filetypes == nil then return true end
@@ -128,6 +231,8 @@ local build_lines = function()
         name = server,
         enabled = vim.lsp.is_enabled(server),
         root_markers = config.root_markers,
+        filetypes = config.filetypes,
+        workspace_required = config.workspace_required,
       }
     end
   end
@@ -144,6 +249,7 @@ local build_lines = function()
     string.format("- path: %s", format_path(buffer_path)),
     string.format("- filetype: %s", ft_label),
     string.format("- diagnostics: %s", format_diagnostics(bufnr)),
+    string.format("- diagnostic sources: %s", format_namespace_diagnostics(bufnr)),
     "",
     string.format("Attached clients (%d)", #attached_clients),
   }
@@ -155,7 +261,10 @@ local build_lines = function()
       lines[#lines + 1] = string.format("- %s (id %d)", client.name, client.id)
       lines[#lines + 1] = string.format("  root: %s", format_path(client.root_dir))
       lines[#lines + 1] = string.format("  cmd: %s", format_cmd((client.config or {}).cmd))
+      lines[#lines + 1] = string.format("  namespace: %s", format_client_namespace(client))
+      lines[#lines + 1] = string.format("  diagnostics: %s", format_client_diagnostics(bufnr, client))
       lines[#lines + 1] = string.format("  attached buffers: %s", format_attached_buffers(client))
+      lines[#lines + 1] = string.format("  workspace folders: %s", format_workspace_folders(client))
       lines[#lines + 1] = string.format("  pending requests: %s", format_pending_requests(client))
       lines[#lines + 1] = string.format("  work done: %s", format_progress(client))
       lines[#lines + 1] = string.format(
@@ -173,6 +282,8 @@ local build_lines = function()
     for _, item in ipairs(matching_configs) do
       lines[#lines + 1] = string.format("- %s [%s]", item.name, item.enabled and "enabled" or "disabled")
       lines[#lines + 1] = string.format("  root markers: %s", format_root_markers(item.root_markers))
+      lines[#lines + 1] = string.format("  filetypes: %s", format_filetypes(item.filetypes))
+      lines[#lines + 1] = string.format("  workspace required: %s", format_workspace_required(item.workspace_required))
     end
   end
 

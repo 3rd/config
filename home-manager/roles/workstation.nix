@@ -18,6 +18,7 @@
     ../programs/kitty.nix
     ../programs/navi.nix
     ../programs/neovim.nix
+    ../programs/newsboat
     ../programs/rofi.nix
     ../programs/starship.nix
     ../programs/television

@@ -17,7 +17,6 @@ return {
       reset = lazy_rtp_reset,
       paths = vim.g.lazy_rtp_paths or {},
       disabled_plugins = {
-        "matchit",
         "matchparen",
         "tutor",
         "gzip",

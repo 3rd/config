@@ -75,6 +75,7 @@ colors.common = {
   ret = builtin,
   constructor = colors.cyan,
   cword = colors.background.lighten(10),
+  cword_current = colors.background.lighten(18),
 }
 colors.ui = {
   line = {
@@ -729,6 +730,7 @@ local theme = lush(function(injected)
     SnacksProfilerHot01({ bg = colors.indigo.darken(86) }),
 
     CursorWord({ bg = colors.common.cword }),
+    CursorWordCurrent({ bg = colors.common.cword_current }),
 
     NotifyBackground({ bg = colors.background }),
 
