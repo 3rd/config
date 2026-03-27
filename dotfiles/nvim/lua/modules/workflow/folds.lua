@@ -438,7 +438,7 @@ local setup = function()
 
     local folds_enabled = vim.opt.foldenable:get()
     local pause_folds = folds_enabled and search_key_used
-    local unpause_folds = (not folds_enabled) and (not search_key_used)
+    local unpause_folds = (not folds_enabled) and not search_key_used
     if pause_folds then
       vim.opt.foldenable = false
     elseif unpause_folds then
@@ -459,7 +459,7 @@ return lib.module.create({
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "nvim-ufo"),
       ft = "syslang",
       dependencies = {
-        { "nvim-treesitter/nvim-treesitter", branch = "master" },
+        "nvim-treesitter/nvim-treesitter",
         "kevinhwang91/promise-async",
       },
       config = setup_ufo,

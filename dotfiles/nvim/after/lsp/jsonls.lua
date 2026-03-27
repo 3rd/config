@@ -1,8 +1,6 @@
 local schemas = {}
 local ok, schemastore = pcall(require, "schemastore")
-if ok then
-  schemas = schemastore.json.schemas()
-end
+if ok then schemas = schemastore.json.schemas() end
 
 return {
   filetypes = { "json", "jsonc" },

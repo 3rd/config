@@ -51,17 +51,34 @@ M.get_icon = function(type)
   return meta_config[type] and meta_config[type].icon or meta_config.document.icon
 end
 
+M.node_to_lsp_range = function(node)
+  if node == nil then return nil end
+
+  local start_row, start_col, end_row, end_col = node:range()
+  return {
+    start = {
+      line = start_row,
+      character = start_col,
+    },
+    ["end"] = {
+      line = end_row,
+      character = end_col,
+    },
+  }
+end
+
 M.get_root = function()
-  if vim.bo.filetype ~= "syslang" then
-    vim.notify("syslang: not in syslang filetype", vim.log.levels.WARN)
-    return
-  end
-  local parser = vim.treesitter.get_parser(0)
-  if parser:lang() ~= "syslang" then
-    vim.notify("syslang: not in syslang filetype", vim.log.levels.WARN)
-    return
-  end
-  return parser:parse()[1]:root()
+  if vim.bo.filetype ~= "syslang" then return end
+
+  local ok, parser = pcall(vim.treesitter.get_parser, 0, "syslang")
+  if not ok or parser == nil then return end
+
+  if parser:lang() ~= "syslang" then return end
+
+  local trees = parser:parse()
+  if trees == nil or trees[1] == nil then return end
+
+  return trees[1]:root()
 end
 
 M.get_document_meta = function()
@@ -72,6 +89,8 @@ M.get_document_meta = function()
   }
 
   local root = M.get_root()
+  if root == nil then return meta end
+
   local meta_node = lib.ts.find_child(root, "document_meta", true)
   if not meta_node then return meta end
 

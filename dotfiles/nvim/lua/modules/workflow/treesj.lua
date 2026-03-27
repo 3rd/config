@@ -5,7 +5,7 @@ return lib.module.create({
     {
       "Wansmer/treesj",
       dependencies = {
-        { "nvim-treesitter/nvim-treesitter", branch = "master" },
+        "nvim-treesitter/nvim-treesitter",
       },
       opts = {
         use_default_keymaps = false,

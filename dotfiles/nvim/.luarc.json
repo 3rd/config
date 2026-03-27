@@ -1,3 +1,8 @@
 {
-    "workspace.maxPreload": 3000
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "LuaJIT",
+  "workspace.checkThirdParty": "Disable",
+  "diagnostics.globals": ["vim", "describe", "it", "before_each", "after_each"],
+  "format.enable": false,
+  "workspace.maxPreload": 3000
 }

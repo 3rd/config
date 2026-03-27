@@ -1,6 +1,5 @@
 local folding = require("syslang/folding")
 local slib = require("syslang/lib")
-local ts_utils = require("nvim-treesitter.ts_utils")
 
 local setup_options = function()
   vim.opt_local.foldlevel = 999
@@ -114,7 +113,7 @@ local transition_task_active_to_done = function(task_node)
         local start_time = vim.treesitter.get_node_text(start_time_node, 0)
         local end_date = os.date("%Y.%m.%d")
         local end_time = os.date("%H:%M")
-        local range = ts_utils.node_to_lsp_range(datetime_node)
+        local range = slib.node_to_lsp_range(datetime_node)
         local text = string.format("%s %s - %s %s", start_date, start_time, end_date, end_time)
         if start_date == end_date then text = string.format("%s %s-%s", start_date, start_time, end_time) end
         local edit = { range = range, newText = text }
@@ -162,7 +161,7 @@ local transition_task_done_to_default = function(task_node)
       if #date_nodes == 2 then end_date = vim.treesitter.get_node_text(date_nodes[2], 0) end
       local end_time = vim.treesitter.get_node_text(time_nodes[#time_nodes], 0)
       if start_date == end_date and start_time == end_time then
-        local range = ts_utils.node_to_lsp_range(session_node)
+        local range = slib.node_to_lsp_range(session_node)
         range.start.line = range.start.line - line_offset
         range.start.character = 0
         range["end"].line = range["end"].line + 1 - line_offset
@@ -207,7 +206,7 @@ local function toggle_task(node, force_clear)
       local marker_node = node:child(0)
       if not marker_node then return end
       if marker_node:type() == task_node_type.marker then
-        local range = ts_utils.node_to_lsp_range(marker_node)
+        local range = slib.node_to_lsp_range(marker_node)
         local edit = { range = range, newText = task_node_type.next_text }
         local buf = vim.api.nvim_get_current_buf()
         vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
@@ -227,8 +226,8 @@ local is_task_node = function(node)
 end
 
 local handle_toggle_task = function(force_clear)
-  local parser = vim.treesitter.get_parser()
-  local root = parser:parse()[1]:root()
+  local root = slib.get_root()
+  if root == nil then return end
 
   local position = vim.api.nvim_win_get_cursor(0)
   local line_length = #vim.fn.getline(position[1])
@@ -266,8 +265,8 @@ local handle_set_schedule = function()
     local date = lib.node.chrono.to_schedule(input)
     if type(date) ~= "string" then return end
 
-    local parser = vim.treesitter.get_parser()
-    local root = parser:parse()[1]:root()
+    local root = slib.get_root()
+    if root == nil then return end
 
     local position = vim.api.nvim_win_get_cursor(0)
     local line_length = #vim.fn.getline(position[1])
@@ -283,7 +282,7 @@ local handle_set_schedule = function()
       -- edit existing schedule
       if node:type() == "task_schedule" then
         -- set the text of the whole session node
-        local range = ts_utils.node_to_lsp_range(node)
+        local range = slib.node_to_lsp_range(node)
         local edit = { range = range, newText = schedule_text }
         local buf = vim.api.nvim_get_current_buf()
         vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
@@ -327,8 +326,8 @@ local handle_set_schedule = function()
 end
 
 local handle_cr = function()
-  local parser = vim.treesitter.get_parser()
-  local root = parser:parse()[1]:root()
+  local root = slib.get_root()
+  if root == nil then return end
 
   local position = vim.api.nvim_win_get_cursor(0)
   local node = root:named_descendant_for_range(position[1] - 1, position[2], position[1] - 1, position[2])
@@ -412,8 +411,8 @@ end
 
 local function fold_tasks()
   local view = vim.fn.winsaveview()
-  local parser = vim.treesitter.get_parser()
-  local root = parser:parse()[1]:root()
+  local root = slib.get_root()
+  if root == nil then return end
 
   local task_node_types = {
     "task_default",
@@ -460,6 +459,7 @@ local setup = function()
   vim.b.slang_loaded = true
 
   setup_options()
+  pcall(vim.treesitter.start, 0, "syslang")
   setup_mappings()
   folding.setup()
 
@@ -467,7 +467,10 @@ local setup = function()
   pcall(fold_tasks)
   vim.fn.winrestview(view)
 
-  vim.opt_local.winbar = slib.get_document_title()
+  do
+    local ok, title = pcall(slib.get_document_title)
+    if ok and title then vim.opt_local.winbar = title end
+  end
   vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
     buffer = 0,
     callback = function()

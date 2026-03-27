@@ -23,10 +23,7 @@ return lib.module.create({
         "syslang",
         -- "markdown",
       },
-      dependencies = {
-        "nvim-treesitter/nvim-treesitter",
-        branch = "master",
-      },
+      dependencies = { "nvim-treesitter/nvim-treesitter" },
       config = function()
         local headlines = require("headlines")
 

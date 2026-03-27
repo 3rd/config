@@ -49,11 +49,10 @@ local toggle_session = function()
   log(session_file)
   local has_session = lib.fs.file.is_readable(session_file)
   if has_session then
-    autosession.DeleteSession()
+    autosession.delete_session()
     log("Deleted session")
   else
-    ---@diagnostic disable-next-line: missing-parameter
-    autosession.SaveSession()
+    autosession.save_session()
     log("Created session")
   end
 end

@@ -13,9 +13,7 @@ local push_history = function(winid, bufnr)
   if window_history[#window_history] == bufnr then return end
 
   table.insert(window_history, bufnr)
-  if #window_history > max_history_per_window then
-    table.remove(window_history, 1)
-  end
+  if #window_history > max_history_per_window then table.remove(window_history, 1) end
 end
 
 local setup = function()

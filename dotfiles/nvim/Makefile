@@ -26,9 +26,11 @@ endef
 
 DEV_FEEDKEYS=:e\n
 DEV_EXTRA_ARGS=init.lua
+STYLUA_CONFIG=$(SOURCE)/linters/stylua.toml
+FORMAT_LUA_TARGETS?=init.lua lua after colors plugins specs
 
 .DEFAULT_GOAL = help
-.PHONY: help clean dev profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup
+.PHONY: help clean dev format profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup
 
 help: ## help
 	@echo "🔥 ${YELLOW}nvim${RESET}"
@@ -36,6 +38,9 @@ help: ## help
 
 clean: ## clean-up profiling artifacts
 	@-rm .tmp.* 2>&1 >/dev/null
+
+format: ## format lua files
+	@stylua --config-path "$(STYLUA_CONFIG)" --respect-ignores $(FORMAT_LUA_TARGETS)
 
 dev: ## watch
 	@watchexec --stop-timeout=0 --no-process-group -e ".lua,.vim" -i "**/sandbox/**" -r -c clear "nvim -c \"call feedkeys(\\\"$(DEV_FEEDKEYS)\\\")\" $(DEV_EXTRA_ARGS)"
@@ -89,4 +94,3 @@ benchmark-startup: ## run startup benchmark
 	@rg Time < profile-bench-startup.log | awk '{print $$11}' | xargs -0 printf '│ • ${CYAN}User${RESET}: ${YELLOW}%s${RESET}'
 	@rg Time < profile-bench-startup.log | awk '{print $$14}'| xargs -0 printf '│ • ${CYAN}System${RESET}: ${YELLOW}%s${RESET}'
 	$(call print_mod_end)
-

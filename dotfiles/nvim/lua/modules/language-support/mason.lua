@@ -34,12 +34,10 @@ local get_dotnet_major_version = function()
   if vim.v.shell_error ~= 0 then return nil end
 
   local major = tonumber(version:match("^(%d+)"))
-  if major then
-    write_dotnet_version_cache({
-      key = key,
-      major = major,
-    })
-  end
+  if major then write_dotnet_version_cache({
+    key = key,
+    major = major,
+  }) end
   return major
 end
 
@@ -68,9 +66,7 @@ return lib.module.create({
         local ensure_installed = managed_servers
 
         local dotnet_major = nil
-        if vim.tbl_contains(servers, "csharp_ls") then
-          dotnet_major = get_dotnet_major_version()
-        end
+        if vim.tbl_contains(servers, "csharp_ls") then dotnet_major = get_dotnet_major_version() end
 
         local compatible_versions = {}
         if dotnet_major and dotnet_major < 10 then
