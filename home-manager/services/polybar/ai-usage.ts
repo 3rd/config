@@ -25,6 +25,7 @@ const CLAUDE_STATE_FILE = "claude.json";
 
 const OPENAI_TOKEN_URL = "https://auth.openai.com/oauth/token";
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
+const CLAUDE_TOKEN_URL = "https://platform.claude.com/v1/oauth/token";
 const ANTHROPIC_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 
 const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
@@ -32,11 +33,13 @@ const JSON_CONTENT_TYPE = "application/json";
 const USER_AGENT = "polybar-ai-usage";
 const CLAUDE_USER_AGENT = "claude-code/unknown";
 const ANTHROPIC_BETA = "oauth-2025-04-20";
+const CLAUDE_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 
 const HTTP_TIMEOUT_MS = 12_000;
 const LOCK_STALE_MS = 60_000;
 const LOCK_WAIT_TIMEOUT_MS = 30_000;
 const LOCK_WAIT_POLL_MS = 250;
+const CLAUDE_REFRESH_WINDOW_MS = 5 * 60 * 1000;
 const ERROR_TTL_SECONDS = 300;
 const MINUTE_SECONDS = 60;
 const HOUR_SECONDS = 60 * MINUTE_SECONDS;
@@ -76,6 +79,13 @@ const PROVIDER_ORDER = ["claude", "codex"] as const satisfies readonly ProviderN
 const CODEX_AUTH_PATHS = [
   "~/.codex/auth.json",
   "~/.config/codex/auth.json",
+] as const;
+const CLAUDE_CREDENTIALS_PATH = "~/.claude/.credentials.json";
+const CLAUDE_DEFAULT_SCOPES = [
+  "user:profile",
+  "user:inference",
+  "user:sessions:claude_code",
+  "user:mcp_servers",
 ] as const;
 
 const CODEX_PERCENT_HEADERS = {
@@ -145,6 +155,9 @@ interface CodexAuthFile extends JsonObject {
 
 interface ClaudeOauthRecord extends JsonObject {
   accessToken?: unknown;
+  expiresAt?: unknown;
+  refreshToken?: unknown;
+  scopes?: unknown;
   subscriptionType?: unknown;
 }
 
@@ -244,6 +257,9 @@ const firstString = (value: unknown): string | null => {
 
   return null;
 };
+
+const stringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 
 const clampPercent = (value: unknown): number | null => {
   const parsed = asNumber(value);
@@ -568,6 +584,26 @@ const retryAtFromHeader = (value: string | null): number | null => {
   return Number.isFinite(parsedAt) ? Math.max(nowEpoch(), Math.floor(parsedAt / 1000)) : null;
 };
 
+const toEpochMilliseconds = (value: unknown): number | null => {
+  const numeric = asNumber(value);
+  if (numeric !== null) {
+    return numeric > 1_000_000_000_000 ? Math.floor(numeric) : Math.floor(numeric * 1000);
+  }
+
+  const stringValue = asString(value);
+  if (stringValue === null) {
+    return null;
+  }
+
+  const parsed = Date.parse(stringValue);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const expiresWithinWindow = (value: unknown, windowMs: number): boolean => {
+  const expiresAt = toEpochMilliseconds(value);
+  return expiresAt !== null && Date.now() + windowMs >= expiresAt;
+};
+
 const httpJson = async (url: string, init?: RequestInit): Promise<HttpJsonResponse> => {
   const response = await fetch(url, {
     ...init,
@@ -750,9 +786,80 @@ const isClaudeCredentialsFile = (value: unknown): value is ClaudeCredentialsFile
 const isErrnoLikeError = (value: unknown): value is ErrnoLikeError =>
   isJsonObject(value) && (value.code === undefined || typeof value.code === "string");
 
-const loadClaudeCredentials = (): ClaudeCredentialsFile | null => {
-  const file = parseJsonFile(expandHomePath("~/.claude/.credentials.json"));
-  return isClaudeCredentialsFile(file) ? file : null;
+const loadClaudeCredentials = (): { path: string; credentials: ClaudeCredentialsFile } | null => {
+  const path = expandHomePath(CLAUDE_CREDENTIALS_PATH);
+  const file = parseJsonFile(path);
+  return isClaudeCredentialsFile(file)
+    ? {
+        path,
+        credentials: file,
+      }
+    : null;
+};
+
+const resolveClaudeScopes = (oauth: ClaudeOauthRecord): string[] => {
+  const scopes = stringArray(oauth.scopes).filter((scope) => scope.trim() !== "");
+  return scopes.length > 0 ? scopes : [...CLAUDE_DEFAULT_SCOPES];
+};
+
+const persistRefreshedClaudeTokens = (
+  credentialsPath: string,
+  credentials: ClaudeCredentialsFile,
+  payload: JsonObject,
+): string | null => {
+  const accessToken = asString(payload.access_token);
+  if (!accessToken) {
+    return null;
+  }
+
+  credentials.claudeAiOauth.accessToken = accessToken;
+
+  const refreshToken = asString(payload.refresh_token);
+  if (refreshToken) {
+    credentials.claudeAiOauth.refreshToken = refreshToken;
+  }
+
+  const expiresInSeconds = asNumber(payload.expires_in);
+  if (expiresInSeconds !== null) {
+    credentials.claudeAiOauth.expiresAt = Date.now() + Math.max(0, expiresInSeconds) * 1000;
+  }
+
+  const scope = asString(payload.scope);
+  if (scope) {
+    credentials.claudeAiOauth.scopes = scope.split(/\s+/).filter(Boolean);
+  }
+
+  writeJsonAtomic(credentialsPath, credentials);
+  return accessToken;
+};
+
+const refreshClaudeAccessToken = async (
+  credentialsPath: string,
+  credentials: ClaudeCredentialsFile,
+): Promise<string | null> => {
+  const refreshToken = asString(credentials.claudeAiOauth.refreshToken);
+  if (!refreshToken) {
+    return null;
+  }
+
+  const response = await httpJson(CLAUDE_TOKEN_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": JSON_CONTENT_TYPE,
+    },
+    body: JSON.stringify({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: CLAUDE_CLIENT_ID,
+      scope: resolveClaudeScopes(credentials.claudeAiOauth).join(" "),
+    }),
+  });
+
+  if (response.status !== 200 || !isJsonObject(response.payload)) {
+    return null;
+  }
+
+  return persistRefreshedClaudeTokens(credentialsPath, credentials, response.payload);
 };
 
 const requestClaudeUsage = async (accessToken: string): Promise<HttpJsonResponse> =>
@@ -785,17 +892,34 @@ const buildClaudeEntry = (
 };
 
 const fetchClaudeUsage = async (): Promise<ProviderEntry> => {
-  const credentials = loadClaudeCredentials();
-  if (!credentials) {
+  const claudeCredentials = loadClaudeCredentials();
+  if (!claudeCredentials) {
     throw new UsageFetchError("claude credentials not found");
   }
 
+  const { path, credentials } = claudeCredentials;
   const accessToken = asString(credentials.claudeAiOauth.accessToken);
   if (!accessToken) {
     throw new UsageFetchError("claude access token missing");
   }
 
-  const response = await requestClaudeUsage(accessToken);
+  let currentToken = accessToken;
+  if (expiresWithinWindow(credentials.claudeAiOauth.expiresAt, CLAUDE_REFRESH_WINDOW_MS)) {
+    const refreshedToken = await refreshClaudeAccessToken(path, credentials);
+    if (refreshedToken) {
+      currentToken = refreshedToken;
+    }
+  }
+
+  let response = await requestClaudeUsage(currentToken);
+  if (UNAUTHORIZED_STATUSES.has(response.status)) {
+    const refreshedToken = await refreshClaudeAccessToken(path, credentials);
+    if (refreshedToken) {
+      currentToken = refreshedToken;
+      response = await requestClaudeUsage(currentToken);
+    }
+  }
+
   if (response.status !== 200 || !isJsonObject(response.payload)) {
     throw new UsageFetchError(`claude usage request failed (${response.status})`, {
       status: response.status,
