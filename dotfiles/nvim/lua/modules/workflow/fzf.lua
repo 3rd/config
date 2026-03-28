@@ -33,6 +33,7 @@ local FFF_PREVIEW_BORDER = { " ", "─", " ", "", "", "", "", "" }
 local FFF_GREP_SEPARATOR = "  "
 local LAST_PICKER_BACKEND = nil
 local LAST_FFF_SESSION = nil
+local FFF_STICKY_CWD = nil
 local fff_query_has_uppercase
 local maybe_sync_fff_grep_mode
 local find_files
@@ -488,14 +489,21 @@ local get_rooter = function()
   return rooter.exports
 end
 
-local get_fff_project_cwd = function()
+local get_fff_sticky_cwd = function()
+  if FFF_STICKY_CWD then return FFF_STICKY_CWD end
+
   local rooter = get_rooter()
-  if rooter and rooter.get_cwd then return rooter.get_cwd() end
-  return vim.uv.cwd()
+  if rooter and rooter.get_cwd then
+    FFF_STICKY_CWD = rooter.get_cwd()
+    if FFF_STICKY_CWD then return FFF_STICKY_CWD end
+  end
+
+  FFF_STICKY_CWD = vim.uv.cwd()
+  return FFF_STICKY_CWD
 end
 
 local get_fff_find_files_opts = function()
-  local cwd = get_fff_context_cwd() or get_fff_project_cwd()
+  local cwd = get_fff_sticky_cwd()
   if not cwd then return {} end
 
   return { cwd = cwd }
@@ -509,7 +517,7 @@ local get_fff_live_grep_opts = function(opts)
     },
   }, opts or {})
 
-  local cwd = get_fff_context_cwd() or get_fff_project_cwd()
+  local cwd = get_fff_sticky_cwd()
   if cwd and grep_opts.cwd == nil then grep_opts.cwd = cwd end
 
   return grep_opts
@@ -547,8 +555,11 @@ maybe_sync_fff_grep_mode = function(picker_ui)
 end
 
 local setup_fff = function(_, opts)
+  local sticky_cwd = get_fff_sticky_cwd()
   local fff = require("fff")
-  fff.setup(opts)
+  fff.setup(vim.tbl_deep_extend("force", {
+    base_path = sticky_cwd,
+  }, opts or {}))
 
   patch_fff_picker_ui()
   patch_fff_grep_renderer()

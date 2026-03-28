@@ -28,6 +28,11 @@ local setup_tree = function()
       cmd = nil,
       args = {},
     },
+    actions = {
+      open_file = {
+        window_picker = {},
+      },
+    },
     filters = {
       dotfiles = false,
       custom = {},
