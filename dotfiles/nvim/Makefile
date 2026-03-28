@@ -30,7 +30,7 @@ STYLUA_CONFIG=$(SOURCE)/linters/stylua.toml
 FORMAT_LUA_TARGETS?=init.lua lua after colors plugins specs
 
 .DEFAULT_GOAL = help
-.PHONY: help clean dev format profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup
+.PHONY: help clean dev format profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup doctor doctor-tools doctor-runtime
 
 help: ## help
 	@echo "🔥 ${YELLOW}nvim${RESET}"
@@ -93,4 +93,40 @@ benchmark-startup: ## run startup benchmark
 	@rg Time < profile-bench-startup.log | awk '{print $$5}'| xargs -0 printf '│ • ${CYAN}Mean${RESET}: ${YELLOW}%s${RESET}'
 	@rg Time < profile-bench-startup.log | awk '{print $$11}' | xargs -0 printf '│ • ${CYAN}User${RESET}: ${YELLOW}%s${RESET}'
 	@rg Time < profile-bench-startup.log | awk '{print $$14}'| xargs -0 printf '│ • ${CYAN}System${RESET}: ${YELLOW}%s${RESET}'
+	$(call print_mod_end)
+
+doctor: doctor-tools doctor-runtime ## verify external tools and runtime smoke checks
+
+doctor-tools: ## verify external commands used by this config
+	$(call print_mod_start,${MAGENTA}Doctor:${RESET} tools)
+	@for cmd in nvim git rg fd bat curl tree-sitter cc xclip; do \
+		if command -v "$$cmd" >/dev/null; then \
+			printf '│ • ${CYAN}%-14s${RESET} ${GREEN}ok${RESET}\n' "$$cmd"; \
+		else \
+			printf '│ • ${CYAN}%-14s${RESET} ${RED}missing${RESET}\n' "$$cmd"; \
+			exit 1; \
+		fi; \
+	done
+	@for cmd in watchexec hyperfine; do \
+		if command -v "$$cmd" >/dev/null; then \
+			printf '│ • ${CYAN}%-14s${RESET} ${GREEN}ok${RESET} ${WHITE}(workflow)${RESET}\n' "$$cmd"; \
+		else \
+			printf '│ • ${CYAN}%-14s${RESET} ${YELLOW}missing${RESET} ${WHITE}(workflow)${RESET}\n' "$$cmd"; \
+		fi; \
+	done
+	@printf '│ • ${CYAN}%-14s${RESET} %s\n' "nvim" "$$(nvim --version | sed -n '1p')"
+	@printf '│ • ${CYAN}%-14s${RESET} %s\n' "tree-sitter" "$$(tree-sitter --version)"
+	$(call print_mod_end)
+
+doctor-runtime: ## run headless runtime smoke checks
+	$(call print_mod_start,${MAGENTA}Doctor:${RESET} runtime)
+	@nvim --headless --clean --cmd "set runtimepath^=$(SOURCE)" \
+		'+lua require("lib")' \
+		'+lua _G.__doctor_failures = 0' \
+		'+lua _G.__doctor_check = function(name, ok, detail) local status = ok and "ok" or "fail"; local suffix = detail and (" " .. detail) or ""; print(string.format("│ • %s %s%s", status, name, suffix)); if not ok then _G.__doctor_failures = _G.__doctor_failures + 1 end end' \
+		'+lua local search = require("modules/workflow/search").exports; __doctor_check("search.exports.find_files", type(search.find_files) == "function"); __doctor_check("search.exports.grep", type(search.grep) == "function"); __doctor_check("search.exports.resume", type(search.resume) == "function")' \
+		'+lua local site = vim.fn.stdpath("data") .. "/site"; local exists = function(path) return vim.uv.fs_stat(path) ~= nil end; __doctor_check("treesitter.parser.json", exists(site .. "/parser/json.so")); __doctor_check("treesitter.query.json", exists(site .. "/queries/json/highlights.scm")); __doctor_check("treesitter.parser.markdown", exists(site .. "/parser/markdown.so")); __doctor_check("treesitter.query.markdown", exists(site .. "/queries/markdown/highlights.scm")); __doctor_check("treesitter.parser.syslang", exists(site .. "/parser/syslang.so")); __doctor_check("treesitter.query.syslang", exists(site .. "/queries/syslang/highlights.scm"))' \
+		'+lua if _G.__doctor_failures > 0 then vim.cmd("cquit " .. _G.__doctor_failures) end' \
+		'+qa'
+	@printf '\n'
 	$(call print_mod_end)

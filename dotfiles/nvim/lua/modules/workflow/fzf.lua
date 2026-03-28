@@ -35,6 +35,14 @@ local LAST_PICKER_BACKEND = nil
 local LAST_FFF_SESSION = nil
 local fff_query_has_uppercase
 local maybe_sync_fff_grep_mode
+local find_files
+local live_grep
+local live_grep_selection
+local buffers
+local buffer_lines
+local lines
+local lsp_references
+local lsp_workspace_symbols
 
 local set_last_picker_backend = function(backend)
   LAST_PICKER_BACKEND = backend
@@ -326,6 +334,10 @@ local apply_fff_window_tweaks = function(picker_ui)
   set_fff_window_options(picker_ui.state.preview_win)
   set_fff_window_options(picker_ui.state.file_info_win)
 
+  if picker_ui.state.list_win and vim.api.nvim_win_is_valid(picker_ui.state.list_win) then
+    vim.api.nvim_set_option_value("signcolumn", "no", { win = picker_ui.state.list_win })
+  end
+
   set_fff_window_border(picker_ui.state.list_win, FFF_LIST_BORDER)
   set_fff_window_border(picker_ui.state.input_win, FFF_INPUT_BORDER)
   set_fff_window_border(picker_ui.state.preview_win, FFF_PREVIEW_BORDER)
@@ -394,7 +406,19 @@ local patch_fff_picker_ui = function()
     local original_update_results_sync = picker_ui.update_results_sync
     picker_ui.update_results_sync = function(...)
       maybe_sync_fff_grep_mode(picker_ui)
-      return original_update_results_sync(...)
+      local result = original_update_results_sync(...)
+      local state = picker_ui.state
+
+      if state and state.suggestion_source then
+        state.suggestion_items = nil
+        state.suggestion_source = nil
+        state.filtered_items = state.items or {}
+        state.cursor = #state.filtered_items > 0 and 1 or 1
+
+        if state.active then picker_ui.render_debounced() end
+      end
+
+      return result
     end
 
     picker_ui._fzf_update_results_sync_wrapped = true
@@ -458,8 +482,20 @@ local get_fff_context_cwd = function()
   return vim.fn.fnamemodify(node.absolute_path, ":h")
 end
 
+local get_rooter = function()
+  local ok, rooter = pcall(require, "modules/workflow/rooter")
+  if not ok or not rooter or not rooter.exports then return nil end
+  return rooter.exports
+end
+
+local get_fff_project_cwd = function()
+  local rooter = get_rooter()
+  if rooter and rooter.get_cwd then return rooter.get_cwd() end
+  return vim.uv.cwd()
+end
+
 local get_fff_find_files_opts = function()
-  local cwd = get_fff_context_cwd()
+  local cwd = get_fff_context_cwd() or get_fff_project_cwd()
   if not cwd then return {} end
 
   return { cwd = cwd }
@@ -473,7 +509,7 @@ local get_fff_live_grep_opts = function(opts)
     },
   }, opts or {})
 
-  local cwd = get_fff_context_cwd()
+  local cwd = get_fff_context_cwd() or get_fff_project_cwd()
   if cwd and grep_opts.cwd == nil then grep_opts.cwd = cwd end
 
   return grep_opts
@@ -610,13 +646,11 @@ local setup_fzf_lua = function()
   --   fzf.files({ cmd = fd_command })
   -- end, "Find file in project")
   lib.map.map("n", "<c-p>", function()
-    set_last_picker_backend("fff")
-    fff.find_files(get_fff_find_files_opts())
+    find_files()
   end, "Find file in project")
 
   lib.map.map("n", ";", function()
-    set_last_picker_backend("fzf_lua")
-    require("fzf-lua").buffers()
+    buffers()
   end, "Find buffer")
 
   -- lib.map.map("n", "<c-f>", function()
@@ -639,17 +673,14 @@ local setup_fzf_lua = function()
   --   fzf.grep_project(opts)
   -- end, "Find text in project")
   lib.map.map("n", "<c-f>", function()
-    set_last_picker_backend("fff")
-    fff.live_grep(get_fff_live_grep_opts())
+    live_grep()
   end, "Find text in project")
 
   lib.map.map("n", "<leader>l", function()
-    set_last_picker_backend("fzf_lua")
-    require("fzf-lua").blines()
+    buffer_lines()
   end, "Find line in buffer")
   lib.map.map("n", "<leader>L", function()
-    set_last_picker_backend("fzf_lua")
-    require("fzf-lua").lines()
+    lines()
   end, "Find line in open buffers")
   lib.map.map("n", "<leader>;", resume_last_picker, "Resume last picker")
 
@@ -671,12 +702,60 @@ local setup_fzf_lua = function()
   --   require("fzf-lua").grep_visual(opts)
   -- end, "Find selected text in project")
   lib.map.map("v", "<c-f>", function()
-    local query = normalize_fff_query(lib.buffer.current.get_selected_text())
-    if not query then return end
-
-    set_last_picker_backend("fff")
-    fff.live_grep(get_fff_live_grep_opts({ query = query }))
+    live_grep_selection()
   end, "Find selected text in project")
+end
+
+find_files = function(opts)
+  local fff = require("fff")
+  set_last_picker_backend("fff")
+  fff.find_files(vim.tbl_deep_extend("force", get_fff_find_files_opts(), opts or {}))
+end
+
+live_grep = function(opts)
+  local fff = require("fff")
+  set_last_picker_backend("fff")
+  fff.live_grep(get_fff_live_grep_opts(opts))
+end
+
+live_grep_selection = function()
+  local query = normalize_fff_query(lib.buffer.current.get_selected_text())
+  if not query then return end
+  live_grep({ query = query })
+end
+
+buffers = function(opts)
+  local fzf = require("fzf-lua")
+  set_last_picker_backend("fzf_lua")
+  fzf.buffers(opts or {})
+end
+
+buffer_lines = function(opts)
+  local fzf = require("fzf-lua")
+  set_last_picker_backend("fzf_lua")
+  fzf.blines(opts or {})
+end
+
+lines = function(opts)
+  local fzf = require("fzf-lua")
+  set_last_picker_backend("fzf_lua")
+  fzf.lines(opts or {})
+end
+
+lsp_references = function(opts)
+  local fzf = require("fzf-lua")
+  set_last_picker_backend("fzf_lua")
+  fzf.lsp_references(opts or {})
+end
+
+lsp_workspace_symbols = function(opts)
+  local fzf = require("fzf-lua")
+  set_last_picker_backend("fzf_lua")
+  fzf.lsp_workspace_symbols(vim.tbl_deep_extend("force", {
+    file_ignore_patterns = { "node_modules" },
+    no_header_i = true,
+    previewer = "builtin",
+  }, opts or {}))
 end
 
 return lib.module.create({
@@ -715,5 +794,16 @@ return lib.module.create({
       },
       lazy = false,
     },
+  },
+  exports = {
+    find_files = find_files,
+    live_grep = live_grep,
+    live_grep_selection = live_grep_selection,
+    buffers = buffers,
+    buffer_lines = buffer_lines,
+    lines = lines,
+    resume = resume_last_picker,
+    lsp_references = lsp_references,
+    lsp_workspace_symbols = lsp_workspace_symbols,
   },
 })

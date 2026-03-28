@@ -75,9 +75,7 @@ local handle_navigate_project = function()
 end
 
 local handle_navigate_search = function()
-  require("fzf-lua").grep_project({
-    cwd = vim.env.HOME .. "/brain/wiki",
-  })
+  require("modules/workflow/search").exports.wiki()
 end
 
 local handle_navigate_to_symbol = function()

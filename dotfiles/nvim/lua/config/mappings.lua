@@ -169,7 +169,7 @@ return {
       "n",
       "gr",
       function()
-        require("fzf-lua").lsp_references()
+        require("modules/workflow/search").exports.references()
       end,
       "LSP: Go to references",
     },
@@ -204,12 +204,7 @@ return {
       "n",
       "<leader>R",
       function()
-        require("fzf-lua").lsp_workspace_symbols({
-          -- async = false,
-          file_ignore_patterns = { "node_modules" },
-          no_header_i = true,
-          previewer = "builtin",
-        })
+        require("modules/workflow/search").exports.workspace_symbols()
       end,
       "LSP: Show workspace symbols",
     },
