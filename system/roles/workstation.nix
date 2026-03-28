@@ -89,6 +89,7 @@
   };
 
   programs.dconf.enable = true;
+  programs.firejail.enable = true;
   programs.nm-applet.enable = true;
 
   services.dbus = {

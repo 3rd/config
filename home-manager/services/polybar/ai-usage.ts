@@ -412,16 +412,28 @@ const hydrateClaudeEntry = (
   state: ClaudePersistentState,
 ): ProviderEntry | undefined => {
   const retryAt = state.retryAt ?? cacheEntry?.retryAt ?? null;
+  const lastGood = providerHasValues(state.lastGood) ? state.lastGood : undefined;
   if (providerHasValues(cacheEntry)) {
-    return cacheEntry.retryAt === retryAt ? cacheEntry : { ...cacheEntry, retryAt };
+    const sessionResetAt = cacheEntry.sessionResetAt ?? lastGood?.sessionResetAt ?? null;
+    const weeklyResetAt = cacheEntry.weeklyResetAt ?? lastGood?.weeklyResetAt ?? null;
+    return cacheEntry.retryAt === retryAt &&
+      cacheEntry.sessionResetAt === sessionResetAt &&
+      cacheEntry.weeklyResetAt === weeklyResetAt
+      ? cacheEntry
+      : {
+          ...cacheEntry,
+          retryAt,
+          sessionResetAt,
+          weeklyResetAt,
+        };
   }
 
-  if (providerHasValues(state.lastGood)) {
+  if (lastGood) {
     return {
-      ...state.lastGood,
-      fetchedAt: cacheEntry?.fetchedAt ?? state.lastGood.fetchedAt,
+      ...lastGood,
+      fetchedAt: cacheEntry?.fetchedAt ?? lastGood.fetchedAt,
       retryAt,
-      error: cacheEntry?.error ?? (retryAt === null ? state.lastGood.error : "unavailable"),
+      error: cacheEntry?.error ?? (retryAt === null ? lastGood.error : "unavailable"),
     };
   }
 

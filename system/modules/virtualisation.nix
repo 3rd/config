@@ -2,9 +2,9 @@
 
 {
   environment.systemPackages = with pkgs; [
-    #
     lazydocker
     distrobox
+    nerdctl
   ];
 
   # hardware.nvidia-container-toolkit.enable = true;
@@ -25,6 +25,9 @@
     podman = {
       enable = true;
       defaultNetwork.settings.dns_enabled = true;
+    };
+    incus = {
+      enable = true;
     };
   };
 
