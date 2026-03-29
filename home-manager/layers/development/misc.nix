@@ -1,13 +1,10 @@
-{ pkgs, pkgs-stable, ... }:
+{ pkgs, ... }:
 
 {
-  home.packages = with pkgs;
-    [
-      #
-      duckdb
-    ] ++ (with pkgs-stable;
-      [
-        #
-        postman
-      ]);
+  home.packages = with pkgs; [
+    rust-petname
+    tealdeer # https://github.com/dbrgn/tealdeer
+    rlwrap
+    tree-sitter
+  ];
 }

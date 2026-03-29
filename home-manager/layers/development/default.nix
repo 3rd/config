@@ -1,9 +1,13 @@
 {
   imports = [
     #
+    ./analysis.nix
+    ./api.nix
     ./bash.nix
     ./c.nix
     ./clojure.nix
+    ./data.nix
+    ./diagramming.nix
     ./dotnet.nix
     ./golang.nix
     ./java.nix
@@ -13,5 +17,6 @@
     ./nodejs.nix
     ./python.nix
     ./rust.nix
+    ./workflow.nix
   ];
 }

@@ -4,43 +4,6 @@
   home.packages =
     with pkgs;
     [
-      # dev
-      rust-petname
-      jq
-      jless
-      hyperfine # https://github.com/sharkdp/hyperfine
-      just # https://github.com/casey/just
-      k6 # https://github.com/grafana/k6
-      scc # https://github.com/boyter/scc
-      tealdeer # https://github.com/dbrgn/tealdeer
-      tokei # https://github.com/XAMPPRocky/tokei
-      watchexec # https://github.com/watchexec/watchexec
-      xh # https://github.com/ducaale/xh
-      fx # https://github.com/antonmedv/fx
-      # xsv # https://github.com/BurntSushi/xsv
-      sd # https://github.com/chmln/sd
-      grex # https://github.com/pemistahl/grex
-      execline
-      gron
-      sqlite
-      ast-grep
-      # flyctl
-      ngrok
-      rlwrap
-      socat
-      p7zip
-      sshfs
-      usbutils
-      virt-manager
-      dig
-      tree-sitter
-      inferno
-      plantuml
-      duf
-      d2
-      delta
-      playerctl
-
       # system
       htop
       dust # https://github.com/bootandy/dust
@@ -52,18 +15,25 @@
       evemu
       ncdu
       gparted
+      duf
+      dig
       brightnessctl
       dmidecode
       lsof
       tomato-c
       nix-du
+      usbutils
+      virt-manager
 
       # misc
       file
+      p7zip
+      sshfs
       eva # https://github.com/nerdypepper/eva
       slop
       mprocs
       scooter
+      playerctl
 
       # gui
       firefox
@@ -95,7 +65,6 @@
     ];
 
   programs.fish.shellAliases = {
-    http = "xh";
     serve = "miniserve";
     calc = "qalc";
     cp = "xcp";
