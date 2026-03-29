@@ -1,4 +1,5 @@
-{ inputs, lib, config, pkgs, ... }: {
+{ inputs, lib, config, pkgs, ... }:
+{
   imports = [
     ../layers/communication.nix
     ../layers/custom
@@ -29,6 +30,7 @@
     ../desktop/apps.nix
     ../desktop/gtk.nix
     ../layers/utilities.nix
+    ../services/nerdctl.nix
     # ../programs/ghostty.nix
   ];
 

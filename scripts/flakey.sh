@@ -14,16 +14,57 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
 #/   --nix: Build and switch to NixOS config
 #/   --update: Update flakes
 #/   --home: Build and switch to home-manager config
+#/   --list: List files flakey stages before they are copied to the store
 
-copy_relevant_files_to_tmpdir() {
+collect_relevant_paths() {
   include=(
     ./home-manager
-    ./hosts
     ./system
     ./flake.nix
     ./flake.lock
   )
-  command cp -r "${include[@]}" "$TMPDIR"
+
+  while IFS= read -r host_file; do
+    include+=("$host_file")
+  done < <(find "./hosts/$HOSTNAME" -type f -name '*.nix' | sort)
+
+  printf '%s\n' "${include[@]}"
+}
+
+list_relevant_files() {
+  local files=()
+
+  while IFS= read -r path; do
+    if [[ -d "$ROOT/$path" ]]; then
+      while IFS= read -r file; do
+        files+=("$file")
+      done < <(cd "$ROOT" && find "$path" -type f | sort)
+      continue
+    fi
+
+    files+=("$path")
+  done < <(collect_relevant_paths)
+
+  printf '%s\n' "${files[@]}"
+  echo
+  echo "Total files: ${#files[@]}"
+  (
+    cd "$ROOT"
+    du -ch "${files[@]}" 2>/dev/null | tail -n 1
+  )
+}
+
+copy_relevant_files_to_tmpdir() {
+  local include=()
+
+  while IFS= read -r path; do
+    include+=("$path")
+  done < <(collect_relevant_paths)
+
+  (
+    cd "$ROOT"
+    command cp -a --parents "${include[@]}" "$TMPDIR"
+  )
   echo "Copied relevant files to $TMPDIR"
 }
 
@@ -59,6 +100,8 @@ elif expr "$*" : ".*--update" >/dev/null; then
   nix_update
 elif expr "$*" : ".*--home" >/dev/null; then
   home_switch
+elif expr "$*" : ".*--list" >/dev/null; then
+  list_relevant_files
 else
   help
 fi

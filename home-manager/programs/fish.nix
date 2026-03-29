@@ -20,6 +20,7 @@
       # bun
       set -x BUN_INSTALL "$HOME/.bun"
       set -x PATH $BUN_INSTALL/bin $PATH
+      set -x BROWSER google-chrome-stable
 
       ulimit -n 999999
 

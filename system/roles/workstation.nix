@@ -5,6 +5,7 @@
     ../modules/base.nix
     ../modules/audio.nix
     ../modules/bluetooth.nix
+    ../modules/nerdctl.nix
     ../modules/xorg.nix
     ../modules/fonts.nix
     ../modules/virtualisation.nix
@@ -76,6 +77,8 @@
     lm_sensors
     socat
     bubblewrap
+    nsjail
+    pstree
   ];
   environment.variables.EDITOR = "vim";
 

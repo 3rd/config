@@ -9,7 +9,6 @@
     powerOnBoot = true;
     settings = {
       General = {
-        Enable = "Source,Sink,Media,Socket";
         ControllerMode = "bredr";
         FastConnectable = true;
         Experimental = true;
@@ -24,4 +23,3 @@
     SUBSYSTEM=="usb", ATTRS{idVendor}=="8087", ATTRS{idProduct}=="0029", ATTR{authorized}="0"
   '';
 }
-

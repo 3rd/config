@@ -40,7 +40,7 @@ define linkdot
 endef
 
 .DEFAULT_GOAL = help
-.PHONY: nix home check update clean swap help
+.PHONY: nix home check update clean swap flakey-list help
 
 nix: ## apply nixos configuration
 	@./scripts/flakey.sh --nix
@@ -51,13 +51,16 @@ home: ## apply home-manager configuration
 update: ## update flake.lock
 	@./scripts/flakey.sh --update
 
+flakey-list: ## list files flakey stages before copying to the store
+	@./scripts/flakey.sh --list
+
 check: ## check
 	@nix run github:DeterminateSystems/flake-checker
 
 clean: ## clean
 	@nix-store --gc --print-roots
-	@nix-collect-garbage --delete-older-than 14d
-	@sudo nix-collect-garbage --delete-older-than 14d
+	@nix-collect-garbage --delete-older-than 7d
+	@sudo nix-collect-garbage --delete-older-than 7d
 	@sudo nix-store --optimise
 
 cclean: ## clean (immediate)

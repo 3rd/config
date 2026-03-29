@@ -1,10 +1,11 @@
 { pkgs, ... }:
 
 {
+  networking.nftables.enable = true;
+
   environment.systemPackages = with pkgs; [
     lazydocker
     distrobox
-    nerdctl
   ];
 
   # hardware.nvidia-container-toolkit.enable = true;
@@ -26,9 +27,5 @@
       enable = true;
       defaultNetwork.settings.dns_enabled = true;
     };
-    incus = {
-      enable = true;
-    };
   };
-
 }

@@ -1,6 +1,7 @@
 { config, lib, pkgs, pkgs-stable, ... }:
 
 let
+  browserExe = lib.getExe config.programs.chromium.package;
   modifier = "Mod3";
   alt = "Mod1";
   monLeft = "DP-0";
@@ -205,7 +206,7 @@ in {
           # launchers
           "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
           "${modifier}+shift+Return" =
-            ''exec ulimit -n 999999 && /bin/sh -c "$BROWSER"'';
+            "exec ulimit -n 999999 && ${browserExe}";
           "${modifier}+p" = "exec ${pkgs-stable.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs-stable.flameshot}/bin/flameshot gui";
           "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
@@ -286,8 +287,8 @@ in {
         for_window [class="^.*"] border pixel 2
 
         bindcode ${modifier}+110 exec ${pkgs-stable.pcmanfm}/bin/pcmanfm
-        bindcode ${modifier}+118 exec ulimit -n 999999 && /bin/sh -c "$BROWSER"
-        bindcode ${modifier}+115 exec ulimit -n 999999 && /bin/sh -c "$BROWSER"
+        bindcode ${modifier}+118 exec ulimit -n 999999 && ${browserExe}
+        bindcode ${modifier}+115 exec ulimit -n 999999 && ${browserExe}
 
         # workspaces
         workspace "1: ${iconLeft} ${workspaces.one}" output ${monLeft}
@@ -346,7 +347,6 @@ in {
 
   xsession.profileExtra = ''
     systemctl --user import-environment
-    eval $(${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --start --components=secrets,pkcs11)
   '';
 
   systemd.user.services = {

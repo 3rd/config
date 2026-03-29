@@ -3,6 +3,9 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-master.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+    # https://github.com/NixOS/nixpkgs/issues/504370
+    nixpkgs-keyring.url =
+      "github:nixos/nixpkgs?rev=b40629efe5d6ec48dd1efba650c797ddbd39ace0";
     hardware.url = "github:nixos/nixos-hardware";
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -39,8 +42,8 @@
     # hyprland.url = "github:hyprwm/Hyprland";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-master, home-manager, wired
-    , nixpkgs-chromium, hardware, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-master, nixpkgs-keyring
+    , home-manager, wired, nixpkgs-chromium, hardware, ... }@inputs:
     let
       inherit (self) outputs;
       systems = [ "aarch64-linux" "x86_64-linux" ];
@@ -66,6 +69,10 @@
           };
         };
       };
+      keyringPinOverlay = final: prev: {
+        gnome-keyring =
+          inputs.nixpkgs-keyring.legacyPackages.${prev.system}.gnome-keyring;
+      };
     in {
       overlays = import ./system/overlays { inherit inputs; };
 
@@ -86,7 +93,7 @@
           };
           modules = [
             ./hosts/spaceship/configuration.nix
-            { nixpkgs.overlays = [ fixTextualOverlay ]; }
+            { nixpkgs.overlays = [ fixTextualOverlay keyringPinOverlay ]; }
           ];
         };
         macbook = nixpkgs.lib.nixosSystem {
@@ -250,4 +257,3 @@
       };
     };
 }
-

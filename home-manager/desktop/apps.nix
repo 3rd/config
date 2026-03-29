@@ -1,12 +1,12 @@
-{ pkgs, pkgs-stable, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 
 let
-  fhsEnv = pkgs.buildFHSEnv (pkgs.appimageTools.defaultFhsEnvArgs // {
-    name = "fhs";
-    profile = "export FHS=1";
-    runScript = ''fish -c "$@"'';
-  });
-  fhsBin = "${fhsEnv}/bin/fhs";
+  browserExe = lib.getExe config.programs.chromium.package;
   appLaunchScript = pkgs.writeScriptBin "app-launch" ''
     #! ${pkgs.bash}/bin/bash
     set -e
@@ -30,11 +30,15 @@ let
     echo "DEBUG: Found AppImage file(s): ''${files[*]}" >&2
     exec appimage-run ''${files[0]}
   '';
-  webWrapperDesktopItem = { name, url }:
+  webWrapperDesktopItem =
+    {
+      name,
+      desktopName ? name,
+      url,
+    }:
     pkgs.makeDesktopItem {
-      name = name;
-      desktopName = name;
-      exec = ''google-chrome-stable --app="'' + url + ''" %U'';
+      inherit name desktopName;
+      exec = ''${browserExe} --app="'' + url + ''" %U'';
       terminal = false;
     };
 
@@ -52,17 +56,47 @@ let
     terminal = false;
   };
 
+  heptabaseDesktopItem = pkgs.makeDesktopItem {
+    name = "heptabase";
+    desktopName = "Heptabase";
+    exec = "${appLaunchScript}/bin/app-launch heptabase";
+    terminal = false;
+  };
+
   excalidrawDesktopItem = webWrapperDesktopItem {
     name = "excalidraw";
+    desktopName = "Excalidraw";
     url = "https://app.excalidraw.com";
   };
 
-in {
+  ytmusicDesktopItem = webWrapperDesktopItem {
+    name = "ytmusic";
+    desktopName = "YouTube Music";
+    url = "https://music.youtube.com";
+  };
+
+  figmaDesktopItem = webWrapperDesktopItem {
+    name = "figma";
+    desktopName = "Figma";
+    url = "https://figma.com";
+  };
+
+  chefDesktopItem = webWrapperDesktopItem {
+    name = "chef";
+    desktopName = "CyberChef";
+    url = "https://gchq.github.io/CyberChef";
+  };
+
+in
+{
   home.packages = [
-    #
     appLaunchScript
     cursorDesktopItem
     handyDesktopItem
     excalidrawDesktopItem
+    ytmusicDesktopItem
+    figmaDesktopItem
+    chefDesktopItem
+    heptabaseDesktopItem
   ];
 }
