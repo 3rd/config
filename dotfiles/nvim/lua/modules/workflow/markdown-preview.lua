@@ -6,6 +6,10 @@ local is_markdown = function()
   return vim.bo.filetype == "markdown"
 end
 
+local has_mdreader = function()
+  return vim.fn.executable("mdreader") == 1
+end
+
 local has_bunx = function()
   return vim.fn.executable("bunx") == 1
 end
@@ -40,13 +44,15 @@ local start_preview = function()
     return
   end
 
-  if not has_bunx() then
-    vim.notify("bunx is required for markdown preview", vim.log.levels.ERROR)
+  if not has_mdreader() and not has_bunx() then
+    vim.notify("mdreader or bunx is required for markdown preview", vim.log.levels.ERROR)
     return
   end
 
   current_path = path
-  local cmd = { "bunx", "mdreader", path, "--watch", "--open" }
+  local cmd = has_mdreader()
+    and { "mdreader", path, "--watch", "--open" }
+    or { "bunx", "mdreader", path, "--watch", "--open" }
 
   job_id = vim.fn.jobstart(cmd, {
     on_exit = function()
