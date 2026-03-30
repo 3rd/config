@@ -4,8 +4,7 @@
     nixpkgs-master.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     # https://github.com/NixOS/nixpkgs/issues/504370
-    nixpkgs-keyring.url =
-      "github:nixos/nixpkgs?rev=b40629efe5d6ec48dd1efba650c797ddbd39ace0";
+    nixpkgs-keyring.url = "github:nixos/nixpkgs?rev=b40629efe5d6ec48dd1efba650c797ddbd39ace0";
     hardware.url = "github:nixos/nixos-hardware";
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -25,8 +24,7 @@
       url = "github:nix-community/browser-previews";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixpkgs-chromium.url =
-      "github:nixos/nixpkgs?rev=8dd2f1add978a4747a5962f2874b8ad20f86b01c";
+    nixpkgs-chromium.url = "github:nixos/nixpkgs?rev=8dd2f1add978a4747a5962f2874b8ad20f86b01c";
 
     wired.url = "github:Toqozz/wired-notify";
 
@@ -42,11 +40,25 @@
     # hyprland.url = "github:hyprwm/Hyprland";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-stable, nixpkgs-master, nixpkgs-keyring
-    , home-manager, wired, nixpkgs-chromium, hardware, ... }@inputs:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs-stable,
+      nixpkgs-master,
+      nixpkgs-keyring,
+      home-manager,
+      wired,
+      nixpkgs-chromium,
+      hardware,
+      ...
+    }@inputs:
     let
       inherit (self) outputs;
-      systems = [ "aarch64-linux" "x86_64-linux" ];
+      systems = [
+        "aarch64-linux"
+        "x86_64-linux"
+      ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
       disableHomeManagerNews = {
         config = {
@@ -58,58 +70,67 @@
       fixTextualOverlay = final: prev: {
         python313 = prev.python313.override {
           packageOverrides = python-self: python-super: {
-            textual = python-super.textual.overrideAttrs
-              (oldAttrs: { meta = oldAttrs.meta // { broken = false; }; });
+            textual = python-super.textual.overrideAttrs (oldAttrs: {
+              meta = oldAttrs.meta // {
+                broken = false;
+              };
+            });
           };
         };
         python3 = prev.python3.override {
           packageOverrides = python-self: python-super: {
-            textual = python-super.textual.overrideAttrs
-              (oldAttrs: { meta = oldAttrs.meta // { broken = false; }; });
+            textual = python-super.textual.overrideAttrs (oldAttrs: {
+              meta = oldAttrs.meta // {
+                broken = false;
+              };
+            });
           };
         };
       };
       keyringPinOverlay = final: prev: {
-        gnome-keyring =
-          inputs.nixpkgs-keyring.legacyPackages.${prev.system}.gnome-keyring;
+        gnome-keyring = inputs.nixpkgs-keyring.legacyPackages.${prev.system}.gnome-keyring;
       };
-    in {
+    in
+    {
       overlays = import ./system/overlays { inherit inputs; };
 
       packages = forAllSystems (system: {
-        qimgv =
-          nixpkgs.legacyPackages.${system}.callPackage ./system/pkgs/qimgv
-          { };
+        qimgv = nixpkgs.legacyPackages.${system}.callPackage ./system/pkgs/qimgv { };
       });
 
       nixosConfigurations = {
         spaceship = nixpkgs.lib.nixosSystem {
           specialArgs = {
             inherit inputs outputs;
-            pkgs-master =
-              import nixpkgs-master { config = { allowUnfree = true; }; };
-            pkgs-stable =
-              import nixpkgs-stable { config = { allowUnfree = true; }; };
+            pkgs-master = import nixpkgs-master {
+              config = {
+                allowUnfree = true;
+              };
+            };
+            pkgs-stable = import nixpkgs-stable {
+              config = {
+                allowUnfree = true;
+              };
+            };
           };
           modules = [
             ./hosts/spaceship/configuration.nix
-            { nixpkgs.overlays = [ fixTextualOverlay keyringPinOverlay ]; }
+            {
+              nixpkgs.overlays = [
+                fixTextualOverlay
+                keyringPinOverlay
+              ];
+            }
           ];
-        };
-        macbook = nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit inputs outputs;
-
-            pkgs-stable =
-              import nixpkgs-stable { config = { allowUnfree = true; }; };
-          };
-          modules = [ ./hosts/macbook/configuration.nix ];
         };
         death = nixpkgs.lib.nixosSystem {
           specialArgs = {
             inherit inputs outputs;
-            pkgs-stable =
-              import nixpkgs-stable { config = { allowUnfree = true; }; };
+            pkgs-stable = import nixpkgs-stable {
+              config = {
+                allowUnfree = true;
+              };
+            };
           };
           modules = [
             hardware.nixosModules.common-pc-laptop
@@ -119,141 +140,110 @@
             hardware.nixosModules.common-gpu-amd
             # hardware.nixosModules.common-gpu-nvidia
             ./hosts/death/configuration.nix
+            {
+              nixpkgs.overlays = [
+                fixTextualOverlay
+                keyringPinOverlay
+              ];
+            }
           ];
         };
       };
 
       homeConfigurations = {
-        "rabbit@spaceship" = let system = "x86_64-linux";
-        in home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [
-              wired.overlays.default
-              fixTextualOverlay
-              # inputs.ghostty.overlays.default
+        "rabbit@spaceship" =
+          let
+            system = "x86_64-linux";
+          in
+          home-manager.lib.homeManagerConfiguration {
+            pkgs = import nixpkgs {
+              inherit system;
+              overlays = [
+                wired.overlays.default
+                fixTextualOverlay
+                # inputs.ghostty.overlays.default
+              ];
+            };
+            extraSpecialArgs = {
+              inherit inputs outputs;
+              pkgs-stable = import nixpkgs-stable {
+                inherit system;
+                config = {
+                  allowUnfree = true;
+                };
+              };
+              pkgs-master = import nixpkgs-master {
+                inherit system;
+                config = {
+                  allowUnfree = true;
+                };
+              };
+            };
+            modules = [
+              ./home-manager/roles/battlestation.nix
+              ./hosts/spaceship/home.nix
+              disableHomeManagerNews
+
+              (_: {
+                home.packages = [
+                  #
+                  self.packages.${system}.qimgv
+                ];
+                services.wired = {
+                  enable = true;
+                  # config = ./wired.ron;
+                };
+
+                programs.neovim.package = inputs.neovim-nightly-overlay.packages.${system}.default;
+              })
+
+              wired.homeManagerModules.default
             ];
           };
-          extraSpecialArgs = {
-            inherit inputs outputs;
-            pkgs-stable = import nixpkgs-stable {
+        "rabbit@death" =
+          let
+            system = "x86_64-linux";
+          in
+          home-manager.lib.homeManagerConfiguration {
+            pkgs = import nixpkgs {
               inherit system;
-              config = { allowUnfree = true; };
+              overlays = [ wired.overlays.default ];
             };
-            pkgs-master = import nixpkgs-master {
-              inherit system;
-              config = { allowUnfree = true; };
-            };
-          };
-          modules = [
-            ./home-manager/roles/battlestation.nix
-            ./hosts/spaceship/home.nix
-            disableHomeManagerNews
-
-            (_: {
-              home.packages = [
-                #
-                self.packages.${system}.qimgv
-              ];
-              services.wired = {
-                enable = true;
-                # config = ./wired.ron;
+            extraSpecialArgs = {
+              inherit inputs outputs;
+              pkgs-stable = import nixpkgs-stable {
+                inherit system;
+                config = {
+                  allowUnfree = true;
+                };
               };
-
-              programs.neovim.package =
-                inputs.neovim-nightly-overlay.packages.${system}.default;
-            })
-
-            wired.homeManagerModules.default
-          ];
-        };
-        "rabbit@macbook" = let system = "aarch64-linux";
-        in home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ wired.overlays.default ];
-          };
-          extraSpecialArgs = {
-            inherit inputs outputs;
-            pkgs-stable = import nixpkgs-stable {
-              inherit system;
-              config = { allowUnfree = true; };
-            };
-            pkgs-master = import nixpkgs-master {
-              inherit system;
-              config = { allowUnfree = true; };
-            };
-            pkgs-chromium = import nixpkgs-chromium {
-              inherit system;
-              config = { allowUnfree = true; };
-            };
-          };
-          modules = [
-            {
-              nixpkgs.overlays =
-                [ inputs.neovim-nightly-overlay.overlays.default ];
-            }
-            ./home-manager/roles/battlestation.nix
-            ./hosts/macbook/home.nix
-            disableHomeManagerNews
-
-            wired.homeManagerModules.default
-
-            (_: {
-              home.packages = [
-                #
-                self.packages.${system}.qimgv
-              ];
-
-              services.wired = {
-                enable = true;
-                # config = ./wired.ron;
+              pkgs-master = import nixpkgs-master {
+                inherit system;
+                config = {
+                  allowUnfree = true;
+                };
               };
-
-              programs.neovim.package =
-                inputs.neovim-nightly-overlay.packages.${system}.default;
-            })
-          ];
-        };
-        "rabbit@death" = let system = "x86_64-linux";
-        in home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ wired.overlays.default ];
-          };
-          extraSpecialArgs = {
-            inherit inputs outputs;
-            pkgs-stable = import nixpkgs-stable {
-              inherit system;
-              config = { allowUnfree = true; };
             };
-            pkgs-master = import nixpkgs-master {
-              inherit system;
-              config = { allowUnfree = true; };
-            };
+            modules = [
+              {
+                nixpkgs.overlays = [ inputs.neovim-nightly-overlay.overlays.default ];
+              }
+              ./home-manager/roles/battlestation.nix
+              ./hosts/death/home.nix
+              disableHomeManagerNews
+
+              wired.homeManagerModules.default
+
+              (_: {
+                services.wired = {
+                  enable = true;
+                  # config = ./wired.ron;
+                };
+
+                programs.neovim.package = inputs.neovim-nightly-overlay.packages.${system}.default;
+              })
+            ];
           };
-          modules = [
-            {
-              nixpkgs.overlays =
-                [ inputs.neovim-nightly-overlay.overlays.default ];
-            }
-            ./home-manager/roles/battlestation.nix
-            ./hosts/death/home.nix
-            disableHomeManagerNews
-
-            wired.homeManagerModules.default
-
-            (_: {
-              services.wired = {
-                enable = true;
-                # config = ./wired.ron;
-              };
-
-              programs.neovim.package =
-                inputs.neovim-nightly-overlay.packages.${system}.default;
-            })
-          ];
-        };
       };
     };
 }

@@ -76,10 +76,7 @@ const PROVIDER_TTLS = {
 
 const PROVIDER_ORDER = ["claude", "codex"] as const satisfies readonly ProviderName[];
 
-const CODEX_AUTH_PATHS = [
-  "~/.codex/auth.json",
-  "~/.config/codex/auth.json",
-] as const;
+const CODEX_AUTH_PATHS = ["~/.codex/auth.json", "~/.config/codex/auth.json"] as const;
 const CLAUDE_CREDENTIALS_PATH = "~/.claude/.credentials.json";
 const CLAUDE_DEFAULT_SCOPES = [
   "user:profile",
@@ -196,11 +193,7 @@ const claudeStatePath = (): string => join(xdgCacheHome(), PERSISTENT_CACHE_DIR,
 
 const configurePath = (): void => {
   const home = homeDirectory();
-  const prefixes = [
-    `${home}/.nix-profile/bin`,
-    `${home}/.bun/bin`,
-    "/run/current-system/sw/bin",
-  ];
+  const prefixes = [`${home}/.nix-profile/bin`, `${home}/.bun/bin`, "/run/current-system/sw/bin"];
   const existingPath = process.env.PATH ?? "";
   process.env.PATH = [...prefixes, existingPath].filter(Boolean).join(":");
 };
@@ -215,8 +208,7 @@ const expandHomePath = (filePath: string): string =>
 const isJsonObject = (value: unknown): value is JsonObject =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
-const isNumber = (value: unknown): value is number =>
-  typeof value === "number" && Number.isFinite(value);
+const isNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 
 const asString = (value: unknown): string | null => (typeof value === "string" ? value : null);
 
@@ -339,10 +331,7 @@ const buildProviderEntry = ({
   error,
 });
 
-const normalizeProviderEntry = (
-  provider: ProviderName,
-  value: unknown,
-): ProviderEntry | undefined => {
+const normalizeProviderEntry = (provider: ProviderName, value: unknown): ProviderEntry | undefined => {
   if (!isJsonObject(value)) {
     return undefined;
   }
@@ -416,10 +405,12 @@ const hydrateClaudeEntry = (
   if (providerHasValues(cacheEntry)) {
     const sessionResetAt = cacheEntry.sessionResetAt ?? lastGood?.sessionResetAt ?? null;
     const weeklyResetAt = cacheEntry.weeklyResetAt ?? lastGood?.weeklyResetAt ?? null;
-    return cacheEntry.retryAt === retryAt &&
-      cacheEntry.sessionResetAt === sessionResetAt &&
-      cacheEntry.weeklyResetAt === weeklyResetAt
-      ? cacheEntry
+    return (
+        cacheEntry.retryAt === retryAt &&
+          cacheEntry.sessionResetAt === sessionResetAt &&
+          cacheEntry.weeklyResetAt === weeklyResetAt
+      ) ?
+        cacheEntry
       : {
           ...cacheEntry,
           retryAt,
@@ -482,11 +473,8 @@ const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
 const cacheNeedsRefresh = (cache: CacheData): boolean =>
   PROVIDER_ORDER.some((provider) => !cacheIsFresh(cache, provider));
 
-const shouldRefreshProvider = (
-  cache: CacheData,
-  provider: ProviderName,
-  forceRefresh: boolean,
-): boolean => forceRefresh || !cacheIsFresh(cache, provider);
+const shouldRefreshProvider = (cache: CacheData, provider: ProviderName, forceRefresh: boolean): boolean =>
+  forceRefresh || !cacheIsFresh(cache, provider);
 
 const colorForRemaining = (value: number | null): string => {
   if (value === null) {
@@ -537,11 +525,9 @@ const formatRemainingTime = (resetAt: ResetAtValue): string | null => {
   return `${Math.max(1, Math.ceil(remainingSeconds / MINUTE_SECONDS))}m`;
 };
 
-const formatWeeklyResetSuffix = (entry: ProviderEntry): string => {
-  const remainingTime = formatRemainingTime(entry.weeklyResetAt);
-  return remainingTime === null
-    ? ""
-    : ` %{F${PROVIDER_COLORS.separator}}${remainingTime}${RESET_COLOR}`;
+const formatResetSuffix = (resetAt: ResetAtValue): string => {
+  const remainingTime = formatRemainingTime(resetAt);
+  return remainingTime === null ? "" : `%{F${PROVIDER_COLORS.separator}}${remainingTime}`;
 };
 
 const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): string => {
@@ -557,7 +543,9 @@ const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): st
 
   const sessionColor = colorForRemaining(entry.remaining5h);
   const weeklyColor = colorForRemaining(entry.remaining7d);
-  return `${label} %{F${sessionColor}}${displayPercent(entry.remaining5h)}%{F${PROVIDER_COLORS.separator}}${VALUE_DIVIDER}%{F${weeklyColor}}${displayPercent(entry.remaining7d)}${RESET_COLOR}${formatWeeklyResetSuffix(entry)}`;
+  const sessionReset = formatResetSuffix(entry.sessionResetAt);
+  const weeklyReset = formatResetSuffix(entry.weeklyResetAt);
+  return `${label} %{F${sessionColor}}${displayPercent(entry.remaining5h)}${sessionReset}%{F${PROVIDER_COLORS.separator}}${VALUE_DIVIDER}%{F${weeklyColor}}${displayPercent(entry.remaining7d)}${weeklyReset}${RESET_COLOR}`;
 };
 
 const formatOutput = (cache: CacheData): string =>
@@ -663,11 +651,7 @@ const resolveCodexClientId = (tokens: CodexTokensRecord): string | null => {
   const accessClaims = decodeJwtPayload(asString(tokens.access_token));
   const idClaims = decodeJwtPayload(asString(tokens.id_token));
 
-  return (
-    asString(accessClaims?.client_id) ??
-    firstString(idClaims?.aud) ??
-    firstString(accessClaims?.aud)
-  );
+  return asString(accessClaims?.client_id) ?? firstString(idClaims?.aud) ?? firstString(accessClaims?.aud);
 };
 
 const persistRefreshedCodexTokens = (
@@ -697,10 +681,7 @@ const persistRefreshedCodexTokens = (
   return accessToken;
 };
 
-const refreshCodexAccessToken = async (
-  authPath: string,
-  auth: CodexAuthFile,
-): Promise<string | null> => {
+const refreshCodexAccessToken = async (authPath: string, auth: CodexAuthFile): Promise<string | null> => {
   const refreshToken = asString(auth.tokens.refresh_token);
   const clientId = resolveCodexClientId(auth.tokens);
   if (!refreshToken || !clientId) {
@@ -726,10 +707,7 @@ const refreshCodexAccessToken = async (
   return persistRefreshedCodexTokens(authPath, auth, response.payload);
 };
 
-const requestCodexUsage = async (
-  accessToken: string,
-  accountId: string | null,
-): Promise<HttpJsonResponse> =>
+const requestCodexUsage = async (accessToken: string, accountId: string | null): Promise<HttpJsonResponse> =>
   httpJson(OPENAI_USAGE_URL, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -801,8 +779,8 @@ const isErrnoLikeError = (value: unknown): value is ErrnoLikeError =>
 const loadClaudeCredentials = (): { path: string; credentials: ClaudeCredentialsFile } | null => {
   const path = expandHomePath(CLAUDE_CREDENTIALS_PATH);
   const file = parseJsonFile(path);
-  return isClaudeCredentialsFile(file)
-    ? {
+  return isClaudeCredentialsFile(file) ?
+      {
         path,
         credentials: file,
       }
@@ -885,10 +863,7 @@ const requestClaudeUsage = async (accessToken: string): Promise<HttpJsonResponse
     },
   });
 
-const buildClaudeEntry = (
-  oauth: ClaudeOauthRecord,
-  payload: JsonObject,
-): ProviderEntry => {
+const buildClaudeEntry = (oauth: ClaudeOauthRecord, payload: JsonObject): ProviderEntry => {
   const fiveHour = isJsonObject(payload.five_hour) ? payload.five_hour : {};
   const sevenDay = isJsonObject(payload.seven_day) ? payload.seven_day : {};
 
@@ -978,11 +953,9 @@ const persistClaudeFailure = (
   retryAt: number | null,
 ): void => {
   const lastGood =
-    providerHasValues(state.lastGood)
-      ? toLastGoodEntry(state.lastGood)
-      : providerHasValues(previousEntry)
-        ? toLastGoodEntry(previousEntry)
-        : undefined;
+    providerHasValues(state.lastGood) ? toLastGoodEntry(state.lastGood)
+    : providerHasValues(previousEntry) ? toLastGoodEntry(previousEntry)
+    : undefined;
 
   if (lastGood === undefined && retryAt === null) {
     return;
@@ -1006,24 +979,24 @@ const refreshCache = async (
   const claudeNeedsRefresh = shouldRefreshProvider(previousCache, "claude", forceRefresh);
   const codexNeedsRefresh = shouldRefreshProvider(previousCache, "codex", forceRefresh);
   const [claudeResult, codexResult] = await Promise.allSettled([
-    claudeNeedsRefresh
-      ? fetchClaudeUsage()
-      : Promise.resolve(previousCache.claude ?? unavailableEntry("claude")),
-    codexNeedsRefresh
-      ? fetchCodexUsage()
-      : Promise.resolve(previousCache.codex ?? unavailableEntry("codex")),
+    claudeNeedsRefresh ? fetchClaudeUsage() : (
+      Promise.resolve(previousCache.claude ?? unavailableEntry("claude"))
+    ),
+    codexNeedsRefresh ? fetchCodexUsage() : Promise.resolve(previousCache.codex ?? unavailableEntry("codex")),
   ]);
 
-  const claude = claudeNeedsRefresh
-    ? claudeResult.status === "fulfilled"
-      ? claudeResult.value
+  const claude =
+    claudeNeedsRefresh ?
+      claudeResult.status === "fulfilled" ?
+        claudeResult.value
       : recoverProviderEntry("claude", previousCache.claude, claudeResult.reason)
-    : previousCache.claude ?? unavailableEntry("claude");
-  const codex = codexNeedsRefresh
-    ? codexResult.status === "fulfilled"
-      ? codexResult.value
+    : (previousCache.claude ?? unavailableEntry("claude"));
+  const codex =
+    codexNeedsRefresh ?
+      codexResult.status === "fulfilled" ?
+        codexResult.value
       : recoverProviderEntry("codex", previousCache.codex, codexResult.reason)
-    : previousCache.codex ?? unavailableEntry("codex");
+    : (previousCache.codex ?? unavailableEntry("codex"));
 
   if (claudeNeedsRefresh && claudeResult.status === "fulfilled") {
     persistClaudeSuccess(claude);
