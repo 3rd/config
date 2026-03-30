@@ -45,6 +45,37 @@ local lines
 local lsp_references
 local lsp_workspace_symbols
 
+local read_file = function(path)
+  local fd = vim.uv.fs_open(path, "r", 438)
+  if not fd then return nil end
+
+  local stat = vim.uv.fs_fstat(fd)
+  if not stat then
+    vim.uv.fs_close(fd)
+    return nil
+  end
+
+  local content = vim.uv.fs_read(fd, stat.size, 0)
+  vim.uv.fs_close(fd)
+  return content
+end
+
+local is_nixos = function()
+  if vim.uv.fs_stat("/etc/NIXOS") ~= nil then return true end
+
+  local os_release = read_file("/etc/os-release")
+  if not os_release then return false end
+
+  return os_release:match("^ID=nixos\n") ~= nil or os_release:match("\nID=nixos\n") ~= nil
+end
+
+local get_fff_build = function()
+  if is_nixos() then return "nix run .#release" end
+  return function()
+    require("fff.download").download_or_build_binary()
+  end
+end
+
 local set_last_picker_backend = function(backend)
   LAST_PICKER_BACKEND = backend
 end
@@ -64,7 +95,9 @@ local get_fff_session_cwd = function(state)
     if current and current.base_path then return current.base_path end
   end
 
-  if state and state.config and state.config.cwd then return vim.fn.fnamemodify(vim.fn.expand(state.config.cwd), ":p") end
+  if state and state.config and state.config.cwd then
+    return vim.fn.fnamemodify(vim.fn.expand(state.config.cwd), ":p")
+  end
 
   return vim.uv.cwd()
 end
@@ -785,10 +818,8 @@ return lib.module.create({
     { "vijaymarupudi/nvim-fzf", event = "VeryLazy" },
     {
       "dmtrKovalenko/fff.nvim",
-      -- build = "nix run .#release",
-      build = function()
-        require("fff.download").download_or_build_binary()
-      end,
+      -- commit = "eb577ea4f39f7b9296ff8c6b4bf2b2899d017ded",
+      build = get_fff_build(),
       config = setup_fff,
       opts = {
         debug = {
