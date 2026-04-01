@@ -1,7 +1,7 @@
 { config, lib, pkgs, pkgs-stable, ... }:
 
 let
-  browserExe = lib.getExe config.programs.chromium.package;
+  browserExe = config.programs.chromium.finalPackage.meta.mainProgram or "chromium";
   modifier = "Mod3";
   alt = "Mod1";
   monLeft = "DP-0";

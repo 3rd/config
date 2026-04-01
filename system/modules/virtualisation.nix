@@ -1,10 +1,27 @@
 { pkgs, ... }:
 
+let
+  lazydocker_0_24_4 = pkgs.lazydocker.overrideAttrs (_oldAttrs: rec {
+    version = "0.24.4";
+    src = pkgs.fetchFromGitHub {
+      owner = "jesseduffield";
+      repo = "lazydocker";
+      rev = "v${version}";
+      sha256 = "sha256-cW90/yblSLBkcR4ZdtcSI9MXFjOUxyEectjRn9vZwvg=";
+    };
+    ldflags = [
+      "-s"
+      "-w"
+      "-X main.version=${version}"
+    ];
+  });
+in
 {
   networking.nftables.enable = true;
 
   environment.systemPackages = with pkgs; [
-    lazydocker
+    # TODO: until project view bug is fixed
+    lazydocker_0_24_4
     distrobox
   ];
 

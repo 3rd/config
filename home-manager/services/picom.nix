@@ -17,9 +17,6 @@
     backend = lib.mkDefault "glx";
     vSync = false;
     settings = {
-      glx-no-stencil = true;
-      glx-no-rebind-pixmap = true;
-
       shadow-radius = 12;
       shadow-offset-x = -12;
       shadow-offset-y = -12;
@@ -52,13 +49,11 @@
         "class_g = 'slop'"
         "class_g = 'Firefox' && argb"
         "name = 'rofi - Global Search'"
-        "_GTK_FRAME_EXTENTS@:c"
+        "_GTK_FRAME_EXTENTS"
       ];
 
       # use-damage = false;
       transparent-clipping = false;
-
-      window-shader-fg = "default";
 
       # fade = true;
       # fadeSteps = [ 0.1 0.1 ];
@@ -136,7 +131,7 @@
       };
     };
 
-    opacityRules = [ "0:_NET_WM_STATE@:32a *= '_NET_WM_STATE_HIDDEN'" ];
+    opacityRules = [ "0:_NET_WM_STATE *= '_NET_WM_STATE_HIDDEN'" ];
     shadow = true;
     shadowExclude = [
       # "bounding_shaped && !rounded_corners"
@@ -148,7 +143,7 @@
       "class_g = 'Polybar'"
       "name = 'Polybar tray window'"
       "name = 'Notification'"
-      "_GTK_FRAME_EXTENTS@:c"
+      "_GTK_FRAME_EXTENTS"
     ];
   };
 

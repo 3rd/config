@@ -2,7 +2,6 @@
 
 {
   environment.systemPackages = with pkgs; [
-    pulseaudioFull
     pavucontrol
     alsa-utils
     sox

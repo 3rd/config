@@ -6,7 +6,7 @@
 }:
 
 let
-  browserExe = lib.getExe config.programs.chromium.package;
+  browserExe = config.programs.chromium.finalPackage.meta.mainProgram or "chromium";
   appLaunchScript = pkgs.writeScriptBin "app-launch" ''
     #! ${pkgs.bash}/bin/bash
     set -e

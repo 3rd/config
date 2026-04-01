@@ -18,6 +18,7 @@ import { dirname, join } from "node:path";
 
 const CACHE_PATH = "/tmp/polybar-ai-usage.json";
 const LOCK_PATH = "/tmp/polybar-ai-usage.lock";
+const CLAUDE_STATUSLINE_CACHE_PATH = "/tmp/polybar-ai-usage-claude-statusline.json";
 const REFRESH_FLAG = "--refresh";
 const XDG_CACHE_FALLBACK_DIR = ".cache";
 const PERSISTENT_CACHE_DIR = "polybar-ai-usage";
@@ -44,10 +45,11 @@ const ERROR_TTL_SECONDS = 300;
 const MINUTE_SECONDS = 60;
 const HOUR_SECONDS = 60 * MINUTE_SECONDS;
 const DAY_SECONDS = 24 * HOUR_SECONDS;
+const CLAUDE_STATUSLINE_MAX_AGE_SECONDS = 8 * DAY_SECONDS;
 
-const SEGMENT_GAP = "  ";
+const SEGMENT_GAP = " 🞄 ";
 const RESET_COLOR = "%{F-}";
-const VALUE_DIVIDER = "/";
+const VALUE_DIVIDER = " ";
 
 const PROVIDER_COLORS = {
   critical: "#c2290a",
@@ -58,15 +60,22 @@ const PROVIDER_COLORS = {
   warning: "#c2940a",
 } as const;
 
+const PROVIDER_ICON_FONT_INDEX = 4;
+
 type ProviderName = "claude" | "codex";
-type ProviderSource = "api";
+type ProviderSource = "api" | "statusline";
 type ProviderErrorCode = "unavailable";
 type ResetAtValue = number | string | null;
 type JsonObject = Record<string, unknown>;
 
-const PROVIDER_LABELS = {
-  claude: "CC",
-  codex: "CX",
+const PROVIDER_ICONS = {
+  claude: "\u{e861}",
+  codex: "\u{e7cf}",
+} as const satisfies Record<ProviderName, string>;
+
+const PROVIDER_ICON_COLORS = {
+  claude: "#C46849",
+  codex: "#E6E6E6",
 } as const satisfies Record<ProviderName, string>;
 
 const PROVIDER_TTLS = {
@@ -123,6 +132,17 @@ interface ClaudePersistentState {
   lastGood?: ProviderEntry;
   retryAt?: number;
   updatedAt?: number;
+}
+
+interface ClaudeStatuslineWindowCache {
+  resetsAt: ResetAtValue;
+  usedPercentage: number | null;
+}
+
+interface ClaudeStatuslineCache {
+  fiveHour?: ClaudeStatuslineWindowCache;
+  sevenDay?: ClaudeStatuslineWindowCache;
+  updatedAt: number;
 }
 
 interface BuildProviderEntryOptions {
@@ -227,7 +247,8 @@ const asNumber = (value: unknown): number | null => {
 
 const asResetAtValue = (value: unknown): ResetAtValue => asNumber(value) ?? asString(value) ?? null;
 
-const asProviderSource = (value: unknown): ProviderSource | null => (value === "api" ? "api" : null);
+const asProviderSource = (value: unknown): ProviderSource | null =>
+  value === "api" || value === "statusline" ? value : null;
 
 const asProviderError = (value: unknown): ProviderErrorCode | null =>
   value === "unavailable" ? "unavailable" : null;
@@ -265,8 +286,23 @@ const clampPercent = (value: unknown): number | null => {
 const remainingPercent = (usedPercent: number | null): number | null =>
   usedPercent === null ? null : Math.max(0, 100 - usedPercent);
 
+const toResetEpochSeconds = (value: ResetAtValue): number | null => {
+  if (typeof value === "number") {
+    return value > 1_000_000_000_000 ? Math.floor(value / 1000) : Math.floor(value);
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
+};
+
+const hasProviderEntry = (entry: ProviderEntry | undefined): entry is ProviderEntry => entry !== undefined;
+
 const providerHasValues = (entry: ProviderEntry | undefined): boolean =>
-  entry !== undefined && (isNumber(entry.remaining5h) || isNumber(entry.remaining7d));
+  hasProviderEntry(entry) && (isNumber(entry.remaining5h) || isNumber(entry.remaining7d));
 
 const hasRetryWindow = (retryAt: number | null): boolean => retryAt !== null && retryAt > nowEpoch();
 
@@ -331,6 +367,28 @@ const buildProviderEntry = ({
   error,
 });
 
+const sanitizeProviderEntry = (entry: ProviderEntry): ProviderEntry => {
+  const sessionExpired = (toResetEpochSeconds(entry.sessionResetAt) ?? Infinity) <= nowEpoch();
+  const weeklyExpired = (toResetEpochSeconds(entry.weeklyResetAt) ?? Infinity) <= nowEpoch();
+
+  if (!sessionExpired && !weeklyExpired) {
+    return entry;
+  }
+
+  const sessionUsed = sessionExpired ? null : entry.sessionUsed;
+  const weeklyUsed = weeklyExpired ? null : entry.weeklyUsed;
+
+  return {
+    ...entry,
+    sessionUsed,
+    weeklyUsed,
+    remaining5h: remainingPercent(sessionUsed),
+    remaining7d: remainingPercent(weeklyUsed),
+    sessionResetAt: sessionExpired ? null : entry.sessionResetAt,
+    weeklyResetAt: weeklyExpired ? null : entry.weeklyResetAt,
+  };
+};
+
 const normalizeProviderEntry = (provider: ProviderName, value: unknown): ProviderEntry | undefined => {
   if (!isJsonObject(value)) {
     return undefined;
@@ -341,18 +399,71 @@ const normalizeProviderEntry = (provider: ProviderName, value: unknown): Provide
     return undefined;
   }
 
-  return buildProviderEntry({
-    provider,
-    source: asProviderSource(value.source),
-    plan: asString(value.plan),
-    sessionUsed: clampPercent(value.sessionUsed ?? value.session_used),
-    weeklyUsed: clampPercent(value.weeklyUsed ?? value.weekly_used),
-    sessionResetAt: asResetAtValue(value.sessionResetAt ?? value.session_reset_at),
-    weeklyResetAt: asResetAtValue(value.weeklyResetAt ?? value.weekly_reset_at),
-    fetchedAt,
-    retryAt: asNumber(value.retryAt ?? value.retry_at),
-    error: asProviderError(value.error),
-  });
+  return sanitizeProviderEntry(
+    buildProviderEntry({
+      provider,
+      source: asProviderSource(value.source),
+      plan: asString(value.plan),
+      sessionUsed: clampPercent(value.sessionUsed ?? value.session_used),
+      weeklyUsed: clampPercent(value.weeklyUsed ?? value.weekly_used),
+      sessionResetAt: asResetAtValue(value.sessionResetAt ?? value.session_reset_at),
+      weeklyResetAt: asResetAtValue(value.weeklyResetAt ?? value.weekly_reset_at),
+      fetchedAt,
+      retryAt: asNumber(value.retryAt ?? value.retry_at),
+      error: asProviderError(value.error),
+    }),
+  );
+};
+
+const normalizeClaudeStatuslineWindowCache = (value: unknown): ClaudeStatuslineWindowCache | undefined => {
+  if (!isJsonObject(value)) {
+    return undefined;
+  }
+
+  return {
+    usedPercentage: clampPercent(value.usedPercentage ?? value.used_percentage),
+    resetsAt: asResetAtValue(value.resetsAt ?? value.resets_at),
+  };
+};
+
+const normalizeClaudeStatuslineCache = (value: unknown): ClaudeStatuslineCache | undefined => {
+  if (!isJsonObject(value)) {
+    return undefined;
+  }
+
+  const updatedAt = asNumber(value.updatedAt ?? value.updated_at);
+  if (updatedAt === null) {
+    return undefined;
+  }
+
+  return {
+    updatedAt,
+    fiveHour: normalizeClaudeStatuslineWindowCache(value.fiveHour ?? value.five_hour),
+    sevenDay: normalizeClaudeStatuslineWindowCache(value.sevenDay ?? value.seven_day),
+  };
+};
+
+const readClaudeStatuslineEntry = (): ProviderEntry | undefined => {
+  const cache = normalizeClaudeStatuslineCache(parseJsonFile(CLAUDE_STATUSLINE_CACHE_PATH));
+  if (!cache) {
+    return undefined;
+  }
+
+  if (Date.now() - cache.updatedAt * 1000 > CLAUDE_STATUSLINE_MAX_AGE_SECONDS * 1000) {
+    return undefined;
+  }
+
+  return sanitizeProviderEntry(
+    buildProviderEntry({
+      provider: "claude",
+      source: "statusline",
+      sessionUsed: cache.fiveHour?.usedPercentage ?? null,
+      weeklyUsed: cache.sevenDay?.usedPercentage ?? null,
+      sessionResetAt: cache.fiveHour?.resetsAt ?? null,
+      weeklyResetAt: cache.sevenDay?.resetsAt ?? null,
+      fetchedAt: cache.updatedAt,
+    }),
+  );
 };
 
 const normalizeCacheData = (value: unknown): CacheData => {
@@ -401,8 +512,9 @@ const hydrateClaudeEntry = (
   state: ClaudePersistentState,
 ): ProviderEntry | undefined => {
   const retryAt = state.retryAt ?? cacheEntry?.retryAt ?? null;
-  const lastGood = providerHasValues(state.lastGood) ? state.lastGood : undefined;
-  if (providerHasValues(cacheEntry)) {
+  const lastGood =
+    hasProviderEntry(state.lastGood) && providerHasValues(state.lastGood) ? state.lastGood : undefined;
+  if (hasProviderEntry(cacheEntry) && providerHasValues(cacheEntry)) {
     const sessionResetAt = cacheEntry.sessionResetAt ?? lastGood?.sessionResetAt ?? null;
     const weeklyResetAt = cacheEntry.weeklyResetAt ?? lastGood?.weeklyResetAt ?? null;
     return (
@@ -446,9 +558,10 @@ const hydrateClaudeEntry = (
 
 const readCache = (): CacheData => {
   const cache = normalizeCacheData(parseJsonFile(CACHE_PATH));
+  const claudeStatuslineEntry = readClaudeStatuslineEntry();
   return {
     ...cache,
-    claude: hydrateClaudeEntry(cache.claude, readClaudePersistentState()),
+    claude: claudeStatuslineEntry ?? hydrateClaudeEntry(cache.claude, readClaudePersistentState()),
   };
 };
 
@@ -460,6 +573,10 @@ const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
   const entry = cache[provider];
   if (!entry) {
     return false;
+  }
+
+  if (provider === "claude" && entry.source === "statusline") {
+    return true;
   }
 
   if (hasRetryWindow(entry.retryAt)) {
@@ -494,19 +611,6 @@ const colorForRemaining = (value: number | null): string => {
 
 const displayPercent = (value: number | null): string => (value === null ? "--" : String(value));
 
-const toResetEpochSeconds = (value: ResetAtValue): number | null => {
-  if (typeof value === "number") {
-    return value > 1_000_000_000_000 ? Math.floor(value / 1000) : Math.floor(value);
-  }
-
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const parsed = Date.parse(value);
-  return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
-};
-
 const formatRemainingTime = (resetAt: ResetAtValue): string | null => {
   const resetEpochSeconds = toResetEpochSeconds(resetAt);
   if (resetEpochSeconds === null) {
@@ -525,27 +629,28 @@ const formatRemainingTime = (resetAt: ResetAtValue): string | null => {
   return `${Math.max(1, Math.ceil(remainingSeconds / MINUTE_SECONDS))}m`;
 };
 
-const formatResetSuffix = (resetAt: ResetAtValue): string => {
-  const remainingTime = formatRemainingTime(resetAt);
-  return remainingTime === null ? "" : `%{F${PROVIDER_COLORS.separator}}${remainingTime}`;
-};
-
 const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): string => {
-  const label = `%{F${PROVIDER_COLORS.icon}}${PROVIDER_LABELS[provider]}${RESET_COLOR}`;
-  if (!entry) {
-    return `${label} %{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}${VALUE_DIVIDER}%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
-  }
+  const label = `%{F${PROVIDER_ICON_COLORS[provider]}}%{T${PROVIDER_ICON_FONT_INDEX}}${PROVIDER_ICONS[provider]}%{T-}${RESET_COLOR}`;
+  const unknownPair = `%{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}/%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
+
+  if (!entry) return `${label} ${unknownPair}`;
 
   const availableValues = [entry.remaining5h, entry.remaining7d].filter(isNumber);
-  if (availableValues.length === 0) {
-    return `${label} %{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}${VALUE_DIVIDER}%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
-  }
+  if (availableValues.length === 0) return `${label} ${unknownPair}`;
 
   const sessionColor = colorForRemaining(entry.remaining5h);
   const weeklyColor = colorForRemaining(entry.remaining7d);
-  const sessionReset = formatResetSuffix(entry.sessionResetAt);
-  const weeklyReset = formatResetSuffix(entry.weeklyResetAt);
-  return `${label} %{F${sessionColor}}${displayPercent(entry.remaining5h)}${sessionReset}%{F${PROVIDER_COLORS.separator}}${VALUE_DIVIDER}%{F${weeklyColor}}${displayPercent(entry.remaining7d)}${weeklyReset}${RESET_COLOR}`;
+  const remainingPart = `%{F${sessionColor}}${displayPercent(entry.remaining5h)}%{F${PROVIDER_COLORS.separator}}/%{F${weeklyColor}}${displayPercent(entry.remaining7d)}`;
+
+  const sessionTime = formatRemainingTime(entry.sessionResetAt);
+  const weeklyTime = formatRemainingTime(entry.weeklyResetAt);
+  if (sessionTime === null && weeklyTime === null) {
+    return `${label} ${remainingPart}${RESET_COLOR}`;
+  }
+
+  const showTime = (time: string | null): string => time ?? "--";
+  const timePart = `%{F${PROVIDER_COLORS.separator}}${showTime(sessionTime)}/${showTime(weeklyTime)}`;
+  return `${label} ${remainingPart}${VALUE_DIVIDER}${timePart}${RESET_COLOR}`;
 };
 
 const formatOutput = (cache: CacheData): string =>
@@ -621,7 +726,7 @@ const httpJson = async (url: string, init?: RequestInit): Promise<HttpJsonRespon
 const httpForm = async (
   url: string,
   data: Record<string, string>,
-  headers?: HeadersInit,
+  headers?: RequestInit["headers"],
 ): Promise<HttpJsonResponse> =>
   httpJson(url, {
     method: "POST",
@@ -926,7 +1031,7 @@ const recoverProviderEntry = (
   error: unknown,
 ): ProviderEntry => {
   const retryAt = readRetryAt(error);
-  if (providerHasValues(previousEntry)) {
+  if (hasProviderEntry(previousEntry) && providerHasValues(previousEntry)) {
     return {
       ...previousEntry,
       fetchedAt: nowEpoch(),
@@ -953,8 +1058,8 @@ const persistClaudeFailure = (
   retryAt: number | null,
 ): void => {
   const lastGood =
-    providerHasValues(state.lastGood) ? toLastGoodEntry(state.lastGood)
-    : providerHasValues(previousEntry) ? toLastGoodEntry(previousEntry)
+    hasProviderEntry(state.lastGood) && providerHasValues(state.lastGood) ? toLastGoodEntry(state.lastGood)
+    : hasProviderEntry(previousEntry) && providerHasValues(previousEntry) ? toLastGoodEntry(previousEntry)
     : undefined;
 
   if (lastGood === undefined && retryAt === null) {
@@ -986,21 +1091,19 @@ const refreshCache = async (
   ]);
 
   const claude =
-    claudeNeedsRefresh ?
-      claudeResult.status === "fulfilled" ?
-        claudeResult.value
-      : recoverProviderEntry("claude", previousCache.claude, claudeResult.reason)
-    : (previousCache.claude ?? unavailableEntry("claude"));
+    !claudeNeedsRefresh ? (previousCache.claude ?? unavailableEntry("claude"))
+    : claudeResult.status === "fulfilled" ? claudeResult.value
+    : recoverProviderEntry("claude", previousCache.claude, claudeResult.reason);
   const codex =
-    codexNeedsRefresh ?
-      codexResult.status === "fulfilled" ?
-        codexResult.value
-      : recoverProviderEntry("codex", previousCache.codex, codexResult.reason)
-    : (previousCache.codex ?? unavailableEntry("codex"));
+    !codexNeedsRefresh ? (previousCache.codex ?? unavailableEntry("codex"))
+    : codexResult.status === "fulfilled" ? codexResult.value
+    : recoverProviderEntry("codex", previousCache.codex, codexResult.reason);
 
-  if (claudeNeedsRefresh && claudeResult.status === "fulfilled") {
-    persistClaudeSuccess(claude);
-  } else if (claudeNeedsRefresh) {
+  if (!claudeNeedsRefresh) {
+    // nothing to persist
+  } else if (claudeResult.status === "fulfilled") {
+    persistClaudeSuccess(claudeResult.value);
+  } else {
     persistClaudeFailure(previousClaudeState, previousCache.claude, readRetryAt(claudeResult.reason));
   }
 

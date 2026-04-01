@@ -1,4 +1,10 @@
-{ config, pkgs, pkgs-stable, lib, ... }:
+{
+  config,
+  pkgs,
+  pkgs-stable,
+  lib,
+  ...
+}:
 
 let
   bunExe = lib.getExe pkgs.bun;
@@ -50,13 +56,13 @@ in
         font-0 = lib.mkDefault "Fira Sans Mono:size=12;3";
         font-1 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-2 = lib.mkDefault "Symbols Nerd Font:size=12;3";
+        font-3 = lib.mkDefault "Font Awesome 7 Brands:size=12;3";
       };
       "bar/top" = {
         "inherit" = "bar/common";
         modules-left = "i3";
         modules-center = "task";
-        modules-right =
-          "ai_usage separator vpn battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock";
+        modules-right = "ai_usage separator battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock";
         height = 28;
         fixed-center = true;
         tray-background = gray-darkest;
@@ -232,19 +238,19 @@ in
         format-foreground = foreground;
         format-padding = 1;
       };
-      "module/vpn" = {
-        type = "custom/script";
-        exec = "$HOME/.config/polybar/vpn.sh";
-        interval = 1;
-        format-background = red-darker;
-        format-foreground = foreground;
-        format-padding = 2;
-      };
+      # "module/vpn" = {
+      #   type = "custom/script";
+      #   exec = "$HOME/.config/polybar/vpn.sh";
+      #   interval = 1;
+      #   format-background = red-darker;
+      #   format-foreground = foreground;
+      #   format-padding = 2;
+      # };
       "module/ai_usage" = {
         type = "custom/script";
         exec = "${bunExe} $HOME/.config/polybar/ai-usage.ts";
         click-middle = "${bunExe} $HOME/.config/polybar/ai-usage.ts --refresh >/dev/null 2>&1 &";
-        interval = 15;
+        interval = 5;
         format-background = gray-darkest;
         format-foreground = foreground;
         format-padding = 2;
@@ -259,8 +265,7 @@ in
       # };
       "module/task" = {
         type = "custom/script";
-        exec =
-          "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki $HOME/.config/polybar/task.sh";
+        exec = "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki $HOME/.config/polybar/task.sh";
         format-background = gray-dark;
         format-foreground = foreground;
         format-padding = 2;

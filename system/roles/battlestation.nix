@@ -11,4 +11,5 @@
   environment.systemPackages = with pkgs; [ ];
 
   services.avahi.enable = true;
+  users.groups.netdev = { };
 }
