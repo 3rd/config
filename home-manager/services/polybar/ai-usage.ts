@@ -47,7 +47,7 @@ const HOUR_SECONDS = 60 * MINUTE_SECONDS;
 const DAY_SECONDS = 24 * HOUR_SECONDS;
 const CLAUDE_STATUSLINE_MAX_AGE_SECONDS = 8 * DAY_SECONDS;
 
-const SEGMENT_GAP = " 🞄 ";
+const SEGMENT_GAP = "   ";
 const RESET_COLOR = "%{F-}";
 const VALUE_DIVIDER = " ";
 
