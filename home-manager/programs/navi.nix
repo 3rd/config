@@ -1,6 +1,9 @@
 {
   programs.navi = {
     enable = true;
+    enableBashIntegration = false;
+    enableFishIntegration = false;
+    enableZshIntegration = false;
     settings.cheats.paths = [ "~/brain/config/navi" ];
   };
 
