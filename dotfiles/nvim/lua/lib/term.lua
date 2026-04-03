@@ -1,7 +1,9 @@
 --- awesomeness from https://www.youtube.com/watch?v=rerTvidyz-0
 
 ---@class TermOpenOpts
----@field cmd string
+---@field cmd string|string[]
+---@field cwd string|nil
+---@field on_exit fun(...: any)|nil
 
 ---@param opts TermOpenOpts
 local open = function(opts)
@@ -21,8 +23,12 @@ local open = function(opts)
   })
   vim.api.nvim_set_current_win(win)
 
-  vim.fn.termopen({ opts.cmd }, {
-    on_exit = function()
+  local cmd = type(opts.cmd) == "table" and opts.cmd or { opts.cmd }
+
+  vim.fn.termopen(cmd, {
+    cwd = opts.cwd,
+    on_exit = function(...)
+      if type(opts.on_exit) == "function" then opts.on_exit(...) end
       if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
     end,
   })
