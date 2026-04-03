@@ -46,14 +46,14 @@ local toggle_session = function()
     vim.fn.fnamemodify(vim.v.this_session, ":t:r")
     -- autosession_lib.get_session_display_name(vim.fn.getcwd())
   )
-  log(session_file)
+  -- log(session_file)
   local has_session = lib.fs.file.is_readable(session_file)
   if has_session then
     autosession.delete_session()
-    log("Deleted session")
+    -- log("Deleted session")
   else
     autosession.save_session()
-    log("Created session")
+    -- log("Created session")
   end
 end
 

@@ -203,6 +203,64 @@ colors.slang = {
   label_line = colors.cyan.desaturate(10),
 }
 
+local create_slang_heading_colors = function(accent)
+  return {
+    marker = accent.darken(18).desaturate(20),
+    text = accent.lighten(6).desaturate(8),
+  }
+end
+
+local slang_heading_colors = {
+  one = create_slang_heading_colors(colors.slang.outline.one),
+  two = create_slang_heading_colors(colors.slang.outline.two),
+  three = create_slang_heading_colors(colors.slang.outline.three),
+  four = create_slang_heading_colors(colors.slang.outline.four),
+  five = create_slang_heading_colors(colors.slang.outline.five),
+  six = create_slang_heading_colors(colors.slang.outline.six),
+}
+
+local create_slang_headline_background = function(accent)
+  return accent.darken(70).desaturate(84)
+end
+
+local slang_headline_backgrounds = {
+  one = create_slang_headline_background(colors.slang.outline.one),
+  two = create_slang_headline_background(colors.slang.outline.two),
+  three = create_slang_headline_background(colors.slang.outline.three),
+  four = create_slang_headline_background(colors.slang.outline.four),
+  five = create_slang_headline_background(colors.slang.outline.five),
+  six = create_slang_headline_background(colors.slang.outline.six),
+}
+
+local create_slang_margin_highlight = function(bg)
+  return {
+    bg = bg,
+    fg = colors.ui.line.line_nr.fg.lighten(12),
+  }
+end
+
+local slang_margin = {
+  fg = colors.ui.line.line_nr.fg.lighten(12),
+}
+
+local slang_headline_margins = {
+  one = create_slang_margin_highlight(slang_headline_backgrounds.one),
+  two = create_slang_margin_highlight(slang_headline_backgrounds.two),
+  three = create_slang_margin_highlight(slang_headline_backgrounds.three),
+  four = create_slang_margin_highlight(slang_headline_backgrounds.four),
+  five = create_slang_margin_highlight(slang_headline_backgrounds.five),
+  six = create_slang_margin_highlight(slang_headline_backgrounds.six),
+}
+
+local slang_section_highlight = {
+  fg = colors.yellow.desaturate(14).darken(6),
+}
+
+local slang_label_line_highlight = {
+  fg = colors.orange.saturate(6).lighten(4),
+  gui = "bold",
+}
+
 ---@diagnostic disable: undefined-global
 local theme = lush(function(injected)
   local sym = injected.sym
@@ -613,21 +671,29 @@ local theme = lush(function(injected)
     sym("@slang.outline_6.text")({ fg = colors.slang.outline.six, gui = "bold" }),
     sym("@slang.outline_done")({ fg = colors.slang.task.done, gui = "bold" }),
 
-    sym("@slang.heading_1.marker")({ fg = colors.slang.headline.marker }),
-    sym("@slang.heading_2.marker")({ fg = colors.slang.headline.marker }),
-    sym("@slang.heading_3.marker")({ fg = colors.slang.headline.marker }),
-    sym("@slang.heading_4.marker")({ fg = colors.slang.headline.marker }),
-    sym("@slang.heading_5.marker")({ fg = colors.slang.headline.marker }),
-    sym("@slang.heading_6.marker")({ fg = colors.slang.headline.marker }),
+    sym("@slang.heading_1")({ fg = slang_heading_colors.one.text, gui = "bold" }),
+    sym("@slang.heading_2")({ fg = slang_heading_colors.two.text, gui = "bold" }),
+    sym("@slang.heading_3")({ fg = slang_heading_colors.three.text, gui = "bold" }),
+    sym("@slang.heading_4")({ fg = slang_heading_colors.four.text, gui = "bold" }),
+    sym("@slang.heading_5")({ fg = slang_heading_colors.five.text, gui = "bold" }),
+    sym("@slang.heading_6")({ fg = slang_heading_colors.six.text, gui = "bold" }),
 
-    sym("@slang.heading_1.text")({ fg = colors.slang.headline.one.fg, gui = "bold" }),
-    sym("@slang.heading_2.text")({ fg = colors.slang.headline.two.fg, gui = "bold" }),
-    sym("@slang.heading_3.text")({ fg = colors.slang.headline.three.fg, gui = "bold" }),
-    sym("@slang.heading_4.text")({ fg = colors.slang.headline.four.fg, gui = "bold" }),
-    sym("@slang.heading_5.text")({ fg = colors.slang.headline.five.fg, gui = "bold" }),
-    sym("@slang.heading_6.text")({ fg = colors.slang.headline.six.fg, gui = "bold" }),
+    sym("@slang.heading_1.marker")({ fg = slang_heading_colors.one.marker }),
+    sym("@slang.heading_2.marker")({ fg = slang_heading_colors.two.marker }),
+    sym("@slang.heading_3.marker")({ fg = slang_heading_colors.three.marker }),
+    sym("@slang.heading_4.marker")({ fg = slang_heading_colors.four.marker }),
+    sym("@slang.heading_5.marker")({ fg = slang_heading_colors.five.marker }),
+    sym("@slang.heading_6.marker")({ fg = slang_heading_colors.six.marker }),
+
+    sym("@slang.heading_1.text")({ fg = slang_heading_colors.one.text, gui = "bold" }),
+    sym("@slang.heading_2.text")({ fg = slang_heading_colors.two.text, gui = "bold" }),
+    sym("@slang.heading_3.text")({ fg = slang_heading_colors.three.text, gui = "bold" }),
+    sym("@slang.heading_4.text")({ fg = slang_heading_colors.four.text, gui = "bold" }),
+    sym("@slang.heading_5.text")({ fg = slang_heading_colors.five.text, gui = "bold" }),
+    sym("@slang.heading_6.text")({ fg = slang_heading_colors.six.text, gui = "bold" }),
 
     sym("@slang.section")({ fg = colors.slang.section }),
+    sym("@slang.section.syslang")(slang_section_highlight),
     sym("@slang.banner")({
       bg = colors.slang.banner.bg,
       fg = colors.slang.banner.fg,
@@ -659,6 +725,7 @@ local theme = lush(function(injected)
     sym("@slang.code_block_end")({ fg = colors.slang.code.block.marker, gui = "italic" }),
     sym("@slang.label")({ fg = colors.slang.label }),
     sym("@slang.label_line")({ fg = colors.slang.label_line }),
+    sym("@slang.label_line.syslang")(slang_label_line_highlight),
     sym("@slang.list_item")({ fg = colors.slang.list_item.item }),
     sym("@slang.list_item_marker")({ fg = colors.slang.list_item.marker }),
     sym("@slang.list_item_label")({ fg = colors.slang.list_item.label }),
@@ -673,6 +740,19 @@ local theme = lush(function(injected)
     sym("Headline4")({ bg = colors.slang.headline.four.bg }),
     sym("Headline5")({ bg = colors.slang.headline.five.bg }),
     sym("Headline6")({ bg = colors.slang.headline.six.bg }),
+    sym("SyslangHeadline1")({ bg = slang_headline_backgrounds.one }),
+    sym("SyslangHeadline2")({ bg = slang_headline_backgrounds.two }),
+    sym("SyslangHeadline3")({ bg = slang_headline_backgrounds.three }),
+    sym("SyslangHeadline4")({ bg = slang_headline_backgrounds.four }),
+    sym("SyslangHeadline5")({ bg = slang_headline_backgrounds.five }),
+    sym("SyslangHeadline6")({ bg = slang_headline_backgrounds.six }),
+    sym("SyslangMargin")(slang_margin),
+    sym("SyslangHeadlineMargin1")(slang_headline_margins.one),
+    sym("SyslangHeadlineMargin2")(slang_headline_margins.two),
+    sym("SyslangHeadlineMargin3")(slang_headline_margins.three),
+    sym("SyslangHeadlineMargin4")(slang_headline_margins.four),
+    sym("SyslangHeadlineMargin5")(slang_headline_margins.five),
+    sym("SyslangHeadlineMargin6")(slang_headline_margins.six),
     sym("Quote")({ fg = colors.slang.banner.bg, gui = "bold" }),
     sym("CodeBlock")({ bg = colors.slang.code.block.background }),
 

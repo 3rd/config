@@ -210,10 +210,10 @@ in
         type = "internal/pulseaudio";
         click-right = "/run/current-system/sw/bin/pavucontrol &";
         format-volume = "󰖀 <label-volume>";
-        format-volume-background = gray-darkest;
+        # format-volume-background = gray-darkest;
         format-volume-foreground = gray-lighter;
         format-volume-padding = 1;
-        label-muted-background = gray-darkest;
+        # label-muted-background = gray-darkest;
         label-muted-foreground = red-light;
         label-muted-padding = 1;
         label-muted = "󰖁";
@@ -251,7 +251,7 @@ in
         exec = "${bunExe} $HOME/.config/polybar/ai-usage.ts";
         click-middle = "${bunExe} $HOME/.config/polybar/ai-usage.ts --refresh >/dev/null 2>&1 &";
         interval = 5;
-        format-background = gray-darkest;
+        # format-background = gray-darkest;
         format-foreground = foreground;
         format-padding = 2;
       };

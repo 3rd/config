@@ -3,7 +3,13 @@
   hardware.nvidia-container-toolkit.suppressNvidiaDriverAssertion = true;
 
   environment.systemPackages = with pkgs;
-    [ (pkgs.ollama.override { acceleration = "cuda"; }) ];
+    [
+      (pkgs.ollama.override ({
+        acceleration = "cuda";
+      } // (if config.networking.hostName == "spaceship" then {
+        cudaArches = [ "sm_120" ];
+      } else { })))
+    ];
 
   services.open-webui = {
     package = pkgs.open-webui;

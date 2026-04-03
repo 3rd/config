@@ -1,10 +1,18 @@
 local folding = require("syslang/folding")
 local slib = require("syslang/lib")
 
+_G.SyslangHeadlineGutterRows = _G.SyslangHeadlineGutterRows or {}
+
+local get_syslang_headline_gutter_rows = function()
+  _G.SyslangHeadlineGutterRows = _G.SyslangHeadlineGutterRows or {}
+  return _G.SyslangHeadlineGutterRows
+end
+
 local setup_options = function()
   vim.opt_local.foldlevel = 999
   vim.opt_local.wrap = false
   vim.opt_local.signcolumn = "yes:1"
+  vim.opt_local.statuscolumn = "%{%v:lua.SyslangStatuscolumn()%}"
   vim.opt_local.number = false
   vim.opt_local.breakindent = true
   vim.opt_local.linebreak = true
@@ -17,6 +25,26 @@ local setup_options = function()
   vim.opt_local.cinwords = "*,-"
   vim.opt_local.textwidth = 130
   vim.opt_local.concealcursor = "nc"
+end
+
+_G.SyslangStatuscolumn = function()
+  local row = vim.v.lnum
+  local bufnr = vim.api.nvim_get_current_buf()
+  local gutter_rows = get_syslang_headline_gutter_rows()[bufnr] or {}
+  local gutter = gutter_rows[row]
+  local fill_char = " "
+  local fill_highlight = "SignColumn"
+  local margin_char = " "
+  local margin_highlight = "SyslangMargin"
+
+  if type(gutter) == "table" then
+    fill_char = gutter.char
+    fill_highlight = gutter.hl
+    margin_char = gutter.margin_char or margin_char
+    margin_highlight = gutter.margin_hl or margin_highlight
+  end
+
+  return "%#" .. fill_highlight .. "#" .. fill_char .. "%#" .. margin_highlight .. "#" .. margin_char .. "%*"
 end
 
 -- it takes a while for the fold info to be updated by ts on its own
@@ -504,5 +532,6 @@ local setup = function()
 end
 
 return {
+  render_statuscolumn = _G.SyslangStatuscolumn,
   setup = setup,
 }
