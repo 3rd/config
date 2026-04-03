@@ -8,6 +8,18 @@
 
 let
   bunExe = lib.getExe pkgs.bun;
+  cpuTempScript = pkgs.writeShellScriptBin "polybar-cpu-temp" ''
+    for hwmon in /sys/class/hwmon/hwmon*; do
+      read -r hwmonName < "$hwmon/name"
+      [ "$hwmonName" = "k10temp" ] || continue
+
+      read -r tempMilliC < "$hwmon/temp1_input"
+      printf "%d.%01d°C\n" "$((tempMilliC / 1000))" "$(((tempMilliC % 1000) / 100))"
+      exit 0
+    done
+
+    printf "n/a\n"
+  '';
 in
 {
   imports = [ ../../colors.nix ];
@@ -57,6 +69,7 @@ in
         font-1 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-2 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-3 = lib.mkDefault "Font Awesome 7 Brands:size=12;3";
+        font-4 = lib.mkDefault "Font Awesome 7 Free Solid:size=12;3";
       };
       "bar/top" = {
         "inherit" = "bar/common";
@@ -179,10 +192,9 @@ in
         label = "%percentage:2%%";
       };
       "module/cpu_temp" = {
-        type = "internal/temperature";
+        type = "custom/script";
+        exec = lib.getExe cpuTempScript;
         interval = 1;
-        hwmon-path = "/sys/devices/platform/it87.2656/hwmon/hwmon2/temp1_input";
-        label = "%temperature-c%";
         format-background = gray-darkest;
         format-foreground = foreground;
       };

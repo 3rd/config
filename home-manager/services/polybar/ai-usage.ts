@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import {
+  accessSync,
   closeSync,
   constants as fsConstants,
   existsSync,
@@ -28,6 +29,7 @@ const OPENAI_TOKEN_URL = "https://auth.openai.com/oauth/token";
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const CLAUDE_TOKEN_URL = "https://platform.claude.com/v1/oauth/token";
 const ANTHROPIC_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
+const FACTORY_USAGE_URL = "https://app.factory.ai/api/organization/subscription/usage";
 
 const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 const JSON_CONTENT_TYPE = "application/json";
@@ -60,9 +62,7 @@ const PROVIDER_COLORS = {
   warning: "#c2940a",
 } as const;
 
-const PROVIDER_ICON_FONT_INDEX = 4;
-
-type ProviderName = "claude" | "codex";
+type ProviderName = "claude" | "codex" | "droid";
 type ProviderSource = "api" | "statusline";
 type ProviderErrorCode = "unavailable";
 type ResetAtValue = number | string | null;
@@ -71,22 +71,37 @@ type JsonObject = Record<string, unknown>;
 const PROVIDER_ICONS = {
   claude: "\u{e861}",
   codex: "\u{e7cf}",
+  droid: "\u{f544}",
 } as const satisfies Record<ProviderName, string>;
+
+const PROVIDER_ICON_FONT_INDICES = {
+  claude: 4,
+  codex: 4,
+  droid: 5,
+} as const satisfies Record<ProviderName, number>;
 
 const PROVIDER_ICON_COLORS = {
   claude: "#C46849",
   codex: "#E6E6E6",
+  droid: "#B8B8B8",
 } as const satisfies Record<ProviderName, string>;
 
 const PROVIDER_TTLS = {
   claude: 60,
   codex: 60,
+  droid: 60,
 } as const satisfies Record<ProviderName, number>;
 
-const PROVIDER_ORDER = ["claude", "codex"] as const satisfies readonly ProviderName[];
+const PROVIDER_ORDER = ["claude", "codex", "droid"] as const satisfies readonly ProviderName[];
+const PROVIDER_COMMANDS = {
+  claude: "claude",
+  codex: "codex",
+  droid: "droid",
+} as const satisfies Record<ProviderName, string>;
 
 const CODEX_AUTH_PATHS = ["~/.codex/auth.json", "~/.config/codex/auth.json"] as const;
 const CLAUDE_CREDENTIALS_PATH = "~/.claude/.credentials.json";
+const FACTORY_AUTH_PATH = "~/.factory/auth.json";
 const CLAUDE_DEFAULT_SCOPES = [
   "user:profile",
   "user:inference",
@@ -117,6 +132,8 @@ interface ProviderEntry {
   remaining7d: number | null;
   sessionResetAt: ResetAtValue;
   weeklyResetAt: ResetAtValue;
+  tokensUsed: number | null;
+  tokensLimit: number | null;
   fetchedAt: number;
   retryAt: number | null;
   error: ProviderErrorCode | null;
@@ -125,6 +142,7 @@ interface ProviderEntry {
 interface CacheData {
   claude?: ProviderEntry;
   codex?: ProviderEntry;
+  droid?: ProviderEntry;
   updatedAt?: number;
 }
 
@@ -153,6 +171,8 @@ interface BuildProviderEntryOptions {
   weeklyUsed?: number | null;
   sessionResetAt?: ResetAtValue;
   weeklyResetAt?: ResetAtValue;
+  tokensUsed?: number | null;
+  tokensLimit?: number | null;
   fetchedAt?: number;
   retryAt?: number | null;
   error?: ProviderErrorCode | null;
@@ -180,6 +200,11 @@ interface ClaudeOauthRecord extends JsonObject {
 
 interface ClaudeCredentialsFile extends JsonObject {
   claudeAiOauth: ClaudeOauthRecord;
+}
+
+interface FactoryAuthFile extends JsonObject {
+  access_token?: unknown;
+  refresh_token?: unknown;
 }
 
 interface ErrnoLikeError {
@@ -213,10 +238,32 @@ const claudeStatePath = (): string => join(xdgCacheHome(), PERSISTENT_CACHE_DIR,
 
 const configurePath = (): void => {
   const home = homeDirectory();
-  const prefixes = [`${home}/.nix-profile/bin`, `${home}/.bun/bin`, "/run/current-system/sw/bin"];
+  const prefixes = [
+    `${home}/.local/bin`,
+    `${home}/.nix-profile/bin`,
+    `${home}/.bun/bin`,
+    "/run/current-system/sw/bin",
+  ];
   const existingPath = process.env.PATH ?? "";
   process.env.PATH = [...prefixes, existingPath].filter(Boolean).join(":");
 };
+
+const commandExists = (command: string): boolean => {
+  const pathEntries = (process.env.PATH ?? "").split(":").filter(Boolean);
+  for (const pathEntry of pathEntries) {
+    try {
+      accessSync(join(pathEntry, command), fsConstants.X_OK);
+      return true;
+    } catch {
+      continue;
+    }
+  }
+
+  return false;
+};
+
+const availableProviders = (): ProviderName[] =>
+  PROVIDER_ORDER.filter((provider) => commandExists(PROVIDER_COMMANDS[provider]));
 
 const nowEpoch = (): number => Math.floor(Date.now() / 1000);
 
@@ -302,7 +349,10 @@ const toResetEpochSeconds = (value: ResetAtValue): number | null => {
 const hasProviderEntry = (entry: ProviderEntry | undefined): entry is ProviderEntry => entry !== undefined;
 
 const providerHasValues = (entry: ProviderEntry | undefined): boolean =>
-  hasProviderEntry(entry) && (isNumber(entry.remaining5h) || isNumber(entry.remaining7d));
+  hasProviderEntry(entry) &&
+  (isNumber(entry.remaining5h) ||
+    isNumber(entry.remaining7d) ||
+    (isNumber(entry.tokensUsed) && isNumber(entry.tokensLimit)));
 
 const hasRetryWindow = (retryAt: number | null): boolean => retryAt !== null && retryAt > nowEpoch();
 
@@ -349,6 +399,8 @@ const buildProviderEntry = ({
   weeklyUsed = null,
   sessionResetAt = null,
   weeklyResetAt = null,
+  tokensUsed = null,
+  tokensLimit = null,
   fetchedAt = nowEpoch(),
   retryAt = null,
   error = null,
@@ -362,6 +414,8 @@ const buildProviderEntry = ({
   remaining7d: remainingPercent(weeklyUsed),
   sessionResetAt,
   weeklyResetAt,
+  tokensUsed,
+  tokensLimit,
   fetchedAt,
   retryAt,
   error,
@@ -408,6 +462,8 @@ const normalizeProviderEntry = (provider: ProviderName, value: unknown): Provide
       weeklyUsed: clampPercent(value.weeklyUsed ?? value.weekly_used),
       sessionResetAt: asResetAtValue(value.sessionResetAt ?? value.session_reset_at),
       weeklyResetAt: asResetAtValue(value.weeklyResetAt ?? value.weekly_reset_at),
+      tokensUsed: asNumber(value.tokensUsed ?? value.tokens_used),
+      tokensLimit: asNumber(value.tokensLimit ?? value.tokens_limit),
       fetchedAt,
       retryAt: asNumber(value.retryAt ?? value.retry_at),
       error: asProviderError(value.error),
@@ -474,6 +530,7 @@ const normalizeCacheData = (value: unknown): CacheData => {
   return {
     claude: normalizeProviderEntry("claude", value.claude),
     codex: normalizeProviderEntry("codex", value.codex),
+    droid: normalizeProviderEntry("droid", value.droid),
     updatedAt: asNumber(value.updatedAt ?? value.updated_at) ?? undefined,
   };
 };
@@ -588,7 +645,7 @@ const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
 };
 
 const cacheNeedsRefresh = (cache: CacheData): boolean =>
-  PROVIDER_ORDER.some((provider) => !cacheIsFresh(cache, provider));
+  availableProviders().some((provider) => !cacheIsFresh(cache, provider));
 
 const shouldRefreshProvider = (cache: CacheData, provider: ProviderName, forceRefresh: boolean): boolean =>
   forceRefresh || !cacheIsFresh(cache, provider);
@@ -611,6 +668,60 @@ const colorForRemaining = (value: number | null): string => {
 
 const displayPercent = (value: number | null): string => (value === null ? "--" : String(value));
 
+const formatScaledCompactNumber = (value: number, divisor = 1): string => {
+  const scaledValue = value / divisor;
+  const text = scaledValue.toFixed(Math.abs(scaledValue) >= 100 ? 0 : 1);
+  return text.endsWith(".0") ? text.slice(0, -2) : text;
+};
+
+const formatCompactNumber = (value: number): string => {
+  const absValue = Math.abs(value);
+  if (absValue >= 1_000_000_000) {
+    return `${formatScaledCompactNumber(value, 1_000_000_000)}b`;
+  }
+
+  if (absValue >= 1_000_000) {
+    return `${formatScaledCompactNumber(value, 1_000_000)}m`;
+  }
+
+  if (absValue >= 1_000) {
+    return `${formatScaledCompactNumber(value, 1_000)}k`;
+  }
+
+  return String(Math.round(value));
+};
+
+const formatCompactNumberPair = (
+  left: number,
+  right: number,
+): {
+  left: string;
+  right: string;
+  suffix: string;
+} => {
+  const sharedUnits = [
+    { threshold: 1_000_000_000, divisor: 1_000_000_000, suffix: "b" },
+    { threshold: 1_000_000, divisor: 1_000_000, suffix: "m" },
+    { threshold: 1_000, divisor: 1_000, suffix: "k" },
+  ] as const;
+
+  for (const unit of sharedUnits) {
+    if (Math.abs(left) >= unit.threshold && Math.abs(right) >= unit.threshold) {
+      return {
+        left: formatScaledCompactNumber(left, unit.divisor),
+        right: formatScaledCompactNumber(right, unit.divisor),
+        suffix: unit.suffix,
+      };
+    }
+  }
+
+  return {
+    left: formatCompactNumber(left),
+    right: formatCompactNumber(right),
+    suffix: "",
+  };
+};
+
 const formatRemainingTime = (resetAt: ResetAtValue): string | null => {
   const resetEpochSeconds = toResetEpochSeconds(resetAt);
   if (resetEpochSeconds === null) {
@@ -630,10 +741,28 @@ const formatRemainingTime = (resetAt: ResetAtValue): string | null => {
 };
 
 const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): string => {
-  const label = `%{F${PROVIDER_ICON_COLORS[provider]}}%{T${PROVIDER_ICON_FONT_INDEX}}${PROVIDER_ICONS[provider]}%{T-}${RESET_COLOR}`;
+  const label = `%{F${PROVIDER_ICON_COLORS[provider]}}%{T${PROVIDER_ICON_FONT_INDICES[provider]}}${PROVIDER_ICONS[provider]}%{T-}${RESET_COLOR}`;
   const unknownPair = `%{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}/%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
 
   if (!entry) return `${label} ${unknownPair}`;
+
+  if (provider === "droid") {
+    if (!isNumber(entry.tokensUsed) || !isNumber(entry.tokensLimit) || entry.tokensLimit <= 0) {
+      return `${label} ${unknownPair}`;
+    }
+
+    const remainingTokens = Math.max(0, entry.tokensLimit - entry.tokensUsed);
+    const remainingPercent = Math.round((remainingTokens / entry.tokensLimit) * 100);
+    const remainingColor = colorForRemaining(remainingPercent);
+    const compactTokens = formatCompactNumberPair(remainingTokens, entry.tokensLimit);
+    const usagePart = `%{F${remainingColor}}${compactTokens.left}%{F${PROVIDER_COLORS.separator}}/%{F${PROVIDER_COLORS.unknown}}${compactTokens.right}${compactTokens.suffix}`;
+    const resetTime = formatRemainingTime(entry.sessionResetAt);
+    if (resetTime === null) {
+      return `${label} ${usagePart}${RESET_COLOR}`;
+    }
+
+    return `${label} ${usagePart}${VALUE_DIVIDER}%{F${PROVIDER_COLORS.separator}}${resetTime}${RESET_COLOR}`;
+  }
 
   const availableValues = [entry.remaining5h, entry.remaining7d].filter(isNumber);
   if (availableValues.length === 0) return `${label} ${unknownPair}`;
@@ -654,7 +783,9 @@ const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): st
 };
 
 const formatOutput = (cache: CacheData): string =>
-  PROVIDER_ORDER.map((provider) => formatProviderOutput(provider, cache[provider])).join(SEGMENT_GAP);
+  availableProviders()
+    .map((provider) => formatProviderOutput(provider, cache[provider]))
+    .join(SEGMENT_GAP);
 
 const unavailableEntry = (
   provider: ProviderName,
@@ -878,6 +1009,8 @@ const fetchCodexUsage = async (): Promise<ProviderEntry> => {
 const isClaudeCredentialsFile = (value: unknown): value is ClaudeCredentialsFile =>
   isJsonObject(value) && isJsonObject(value.claudeAiOauth);
 
+const isFactoryAuthFile = (value: unknown): value is FactoryAuthFile => isJsonObject(value);
+
 const isErrnoLikeError = (value: unknown): value is ErrnoLikeError =>
   isJsonObject(value) && (value.code === undefined || typeof value.code === "string");
 
@@ -895,6 +1028,17 @@ const loadClaudeCredentials = (): { path: string; credentials: ClaudeCredentials
 const resolveClaudeScopes = (oauth: ClaudeOauthRecord): string[] => {
   const scopes = stringArray(oauth.scopes).filter((scope) => scope.trim() !== "");
   return scopes.length > 0 ? scopes : [...CLAUDE_DEFAULT_SCOPES];
+};
+
+const loadFactoryAuth = (): FactoryAuthFile | null => {
+  const path = expandHomePath(FACTORY_AUTH_PATH);
+  const file = parseJsonFile(path);
+  return isFactoryAuthFile(file) ? file : null;
+};
+
+const resolveFactoryUserId = (auth: FactoryAuthFile): string | null => {
+  const claims = decodeJwtPayload(asString(auth.access_token));
+  return asString(claims?.id) ?? asString(claims?.sub);
 };
 
 const persistRefreshedClaudeTokens = (
@@ -968,6 +1112,21 @@ const requestClaudeUsage = async (accessToken: string): Promise<HttpJsonResponse
     },
   });
 
+const requestDroidUsage = async (accessToken: string, userId: string): Promise<HttpJsonResponse> =>
+  httpJson(FACTORY_USAGE_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: JSON_CONTENT_TYPE,
+      "Content-Type": JSON_CONTENT_TYPE,
+      "User-Agent": USER_AGENT,
+    },
+    body: JSON.stringify({
+      useCache: true,
+      userId,
+    }),
+  });
+
 const buildClaudeEntry = (oauth: ClaudeOauthRecord, payload: JsonObject): ProviderEntry => {
   const fiveHour = isJsonObject(payload.five_hour) ? payload.five_hour : {};
   const sevenDay = isJsonObject(payload.seven_day) ? payload.seven_day : {};
@@ -980,6 +1139,77 @@ const buildClaudeEntry = (oauth: ClaudeOauthRecord, payload: JsonObject): Provid
     weeklyUsed: clampPercent(sevenDay.utilization),
     sessionResetAt: asResetAtValue(fiveHour.resets_at),
     weeklyResetAt: asResetAtValue(sevenDay.resets_at),
+  });
+};
+
+const resolveDroidUserScopedLimit = (payload: JsonObject): number | null => {
+  const usage = isJsonObject(payload.usage) ? payload.usage : {};
+  const standard = isJsonObject(usage.standard) ? usage.standard : {};
+  const directUserLimit = asNumber(standard.userLimit);
+  if (directUserLimit !== null && directUserLimit > 0) {
+    return directUserLimit;
+  }
+
+  const globalLimit = isJsonObject(payload.globalLimit) ? payload.globalLimit : {};
+  const globalStandardLimit = asNumber(globalLimit.standard);
+  if (globalStandardLimit !== null && globalStandardLimit > 0) {
+    return globalStandardLimit;
+  }
+
+  const userId = asString(payload.userId);
+  const userLimits = isJsonObject(payload.userLimits) ? payload.userLimits : {};
+  const userLimitEntry = userId === null ? undefined : userLimits[userId];
+  if (isJsonObject(userLimitEntry)) {
+    const nestedLimit = asNumber(userLimitEntry.standard);
+    if (nestedLimit !== null && nestedLimit > 0) {
+      return nestedLimit;
+    }
+  }
+
+  const flatUserLimit = asNumber(userLimitEntry);
+  if (flatUserLimit !== null && flatUserLimit > 0) {
+    return flatUserLimit;
+  }
+
+  return null;
+};
+
+const resolveDroidOrgScopedLimit = (payload: JsonObject): number | null => {
+  const usage = isJsonObject(payload.usage) ? payload.usage : {};
+  const standard = isJsonObject(usage.standard) ? usage.standard : {};
+
+  const totalAllowance = asNumber(standard.totalAllowance);
+  if (totalAllowance !== null && totalAllowance > 0) {
+    return totalAllowance;
+  }
+
+  const basicAllowance = asNumber(standard.basicAllowance);
+  return basicAllowance !== null && basicAllowance > 0 ? basicAllowance : null;
+};
+
+const resolveDroidUsedTokens = (payload: JsonObject, useUserScopedUsage: boolean): number | null => {
+  const usage = isJsonObject(payload.usage) ? payload.usage : {};
+  const standard = isJsonObject(usage.standard) ? usage.standard : {};
+  const userTokens = asNumber(standard.userTokens);
+  if (useUserScopedUsage) {
+    return userTokens;
+  }
+
+  return asNumber(standard.orgTotalTokensUsed) ?? userTokens;
+};
+
+const buildDroidEntry = (payload: JsonObject): ProviderEntry => {
+  const usage = isJsonObject(payload.usage) ? payload.usage : {};
+  const userScopedLimit = resolveDroidUserScopedLimit(payload);
+  const tokensLimit = userScopedLimit ?? resolveDroidOrgScopedLimit(payload);
+  const tokensUsed = resolveDroidUsedTokens(payload, userScopedLimit !== null);
+
+  return buildProviderEntry({
+    provider: "droid",
+    source: "api",
+    sessionResetAt: asResetAtValue(usage.endDate),
+    tokensUsed,
+    tokensLimit,
   });
 };
 
@@ -1020,6 +1250,26 @@ const fetchClaudeUsage = async (): Promise<ProviderEntry> => {
   }
 
   return buildClaudeEntry(credentials.claudeAiOauth, response.payload);
+};
+
+const fetchDroidUsage = async (): Promise<ProviderEntry> => {
+  const factoryAuth = loadFactoryAuth();
+  if (!factoryAuth) {
+    throw new Error("factory auth.json not found");
+  }
+
+  const accessToken = asString(factoryAuth.access_token);
+  const userId = resolveFactoryUserId(factoryAuth);
+  if (!accessToken || !userId) {
+    throw new Error("factory access token or user id missing");
+  }
+
+  const response = await requestDroidUsage(accessToken, userId);
+  if (response.status !== 200 || !isJsonObject(response.payload)) {
+    throw new Error(`factory usage request failed (${response.status})`);
+  }
+
+  return buildDroidEntry(response.payload);
 };
 
 const readRetryAt = (error: unknown): number | null =>
@@ -1080,14 +1330,20 @@ const refreshCache = async (
 ): Promise<CacheData> => {
   const previousCache = readCache();
   const previousClaudeState = readClaudePersistentState();
+  const enabledProviders = availableProviders();
   const forceRefresh = options.forceRefresh ?? false;
-  const claudeNeedsRefresh = shouldRefreshProvider(previousCache, "claude", forceRefresh);
-  const codexNeedsRefresh = shouldRefreshProvider(previousCache, "codex", forceRefresh);
-  const [claudeResult, codexResult] = await Promise.allSettled([
+  const claudeNeedsRefresh =
+    enabledProviders.includes("claude") && shouldRefreshProvider(previousCache, "claude", forceRefresh);
+  const codexNeedsRefresh =
+    enabledProviders.includes("codex") && shouldRefreshProvider(previousCache, "codex", forceRefresh);
+  const droidNeedsRefresh =
+    enabledProviders.includes("droid") && shouldRefreshProvider(previousCache, "droid", forceRefresh);
+  const [claudeResult, codexResult, droidResult] = await Promise.allSettled([
     claudeNeedsRefresh ? fetchClaudeUsage() : (
       Promise.resolve(previousCache.claude ?? unavailableEntry("claude"))
     ),
     codexNeedsRefresh ? fetchCodexUsage() : Promise.resolve(previousCache.codex ?? unavailableEntry("codex")),
+    droidNeedsRefresh ? fetchDroidUsage() : Promise.resolve(previousCache.droid ?? unavailableEntry("droid")),
   ]);
 
   const claude =
@@ -1098,6 +1354,10 @@ const refreshCache = async (
     !codexNeedsRefresh ? (previousCache.codex ?? unavailableEntry("codex"))
     : codexResult.status === "fulfilled" ? codexResult.value
     : recoverProviderEntry("codex", previousCache.codex, codexResult.reason);
+  const droid =
+    !droidNeedsRefresh ? (previousCache.droid ?? unavailableEntry("droid"))
+    : droidResult.status === "fulfilled" ? droidResult.value
+    : recoverProviderEntry("droid", previousCache.droid, droidResult.reason);
 
   if (!claudeNeedsRefresh) {
     // nothing to persist
@@ -1110,6 +1370,7 @@ const refreshCache = async (
   const nextCache: CacheData = {
     claude,
     codex,
+    droid,
     updatedAt: nowEpoch(),
   };
 

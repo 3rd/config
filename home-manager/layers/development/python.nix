@@ -6,8 +6,7 @@
     #
     conda
     uv
-    (python3.withPackages (python-pkgs: with python-pkgs; [ pandas requests ]))
+    (python314.withPackages (python-pkgs: with python-pkgs; [ pandas requests ]))
   ];
 
 }
-
