@@ -1,11 +1,15 @@
 local lazy_root_path = lib.env.dirs.vim.lazy.root
 local lazy_rtp_reset = vim.g.lazy_rtp_reset
+
 if lazy_rtp_reset == nil then lazy_rtp_reset = true end
 
 return {
   root = lazy_root_path,
   defaults = { lazy = true },
-  git = { log = { "-5" } },
+  git = {
+    log = { "-5" },
+    timeout = 10 * 60,
+  },
   ui = { border = "rounded" },
   change_detection = {
     enabled = false,

@@ -10,7 +10,7 @@ end
 
 local setup_options = function()
   vim.opt_local.foldlevel = 999
-  vim.opt_local.wrap = false
+  vim.opt_local.wrap = true
   vim.opt_local.signcolumn = "yes:1"
   vim.opt_local.statuscolumn = "%{%v:lua.SyslangStatuscolumn()%}"
   vim.opt_local.number = false

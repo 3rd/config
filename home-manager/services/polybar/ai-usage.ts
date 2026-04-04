@@ -748,20 +748,18 @@ const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): st
 
   if (provider === "droid") {
     if (!isNumber(entry.tokensUsed) || !isNumber(entry.tokensLimit) || entry.tokensLimit <= 0) {
-      return `${label} ${unknownPair}`;
+      return `${label} %{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
     }
 
     const remainingTokens = Math.max(0, entry.tokensLimit - entry.tokensUsed);
-    const remainingPercent = Math.round((remainingTokens / entry.tokensLimit) * 100);
-    const remainingColor = colorForRemaining(remainingPercent);
-    const compactTokens = formatCompactNumberPair(remainingTokens, entry.tokensLimit);
-    const usagePart = `%{F${remainingColor}}${compactTokens.left}%{F${PROVIDER_COLORS.separator}}/%{F${PROVIDER_COLORS.unknown}}${compactTokens.right}${compactTokens.suffix}`;
+    const droidRemainingPercent = Math.round((remainingTokens / entry.tokensLimit) * 100);
+    const remainingColor = colorForRemaining(droidRemainingPercent);
     const resetTime = formatRemainingTime(entry.sessionResetAt);
     if (resetTime === null) {
-      return `${label} ${usagePart}${RESET_COLOR}`;
+      return `${label} %{F${remainingColor}}${droidRemainingPercent}${RESET_COLOR}`;
     }
 
-    return `${label} ${usagePart}${VALUE_DIVIDER}%{F${PROVIDER_COLORS.separator}}${resetTime}${RESET_COLOR}`;
+    return `${label} %{F${remainingColor}}${droidRemainingPercent}${VALUE_DIVIDER}%{F${PROVIDER_COLORS.separator}}${resetTime}${RESET_COLOR}`;
   }
 
   const availableValues = [entry.remaining5h, entry.remaining7d].filter(isNumber);
