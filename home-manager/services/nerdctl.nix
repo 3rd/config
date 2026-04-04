@@ -1,14 +1,16 @@
 { config, pkgs, ... }:
 let
   homeDir = config.home.homeDirectory;
-  runtimeDir = "/run/user/1000";
+  runtimeDir = "$XDG_RUNTIME_DIR";
+  systemdRuntimeDir = "%t";
   containerdNamespace = "default";
   containerdAddress = "unix://${runtimeDir}/containerd/containerd.sock";
   buildkitAddress = "unix://${runtimeDir}/buildkit-${containerdNamespace}/buildkitd.sock";
+  buildkitSystemdAddress = "unix://${systemdRuntimeDir}/buildkit-${containerdNamespace}/buildkitd.sock";
   xdgConfigHome = "${homeDir}/.config";
   xdgDataHome = "${homeDir}/.local/share";
   containerdRootlessConfig = ''
-    version = 2
+    version = 3
     disabled_plugins = ["io.containerd.nri.v1.nri"]
   '';
   containerdRootless = pkgs.writeShellApplication {
@@ -34,7 +36,15 @@ let
 
       : "''${XDG_CONFIG_HOME:=${xdgConfigHome}}"
       : "''${XDG_DATA_HOME:=${xdgDataHome}}"
-      : "''${XDG_RUNTIME_DIR:=${runtimeDir}}"
+      if [ -z "''${XDG_RUNTIME_DIR:-}" ]; then
+        echo "XDG_RUNTIME_DIR needs to be set for rootless containerd" >&2
+        exit 1
+      fi
+
+      if ! [ -w "$XDG_RUNTIME_DIR" ]; then
+        echo "XDG_RUNTIME_DIR needs to be writable for rootless containerd" >&2
+        exit 1
+      fi
 
       if [ -z "''${_CONTAINERD_ROOTLESS_CHILD:-}" ]; then
         exec rootlesskit \
@@ -82,7 +92,12 @@ let
     runtimeInputs = [ pkgs.util-linux ];
     text = ''
       set -euo pipefail
-      : "''${XDG_RUNTIME_DIR:=${runtimeDir}}"
+
+      if [ -z "''${XDG_RUNTIME_DIR:-}" ]; then
+        echo "XDG_RUNTIME_DIR needs to be set for containerd-nsenter" >&2
+        exit 1
+      fi
+
       pid=$(<"$XDG_RUNTIME_DIR/containerd-rootless/child_pid")
       exec nsenter \
         --no-fork \
@@ -157,7 +172,7 @@ in
           --oci-worker=false \
           --containerd-worker=true \
           --containerd-worker-rootless=true \
-          --addr ${buildkitAddress} \
+          --addr ${buildkitSystemdAddress} \
           --root ${xdgDataHome}/buildkit-${containerdNamespace} \
           --containerd-worker-namespace=${containerdNamespace} \
           --containerd-worker-net=host

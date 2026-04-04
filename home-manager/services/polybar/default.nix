@@ -196,7 +196,7 @@ in
         exec = lib.getExe cpuTempScript;
         interval = 1;
         format-background = gray-darkest;
-        format-foreground = foreground;
+        format-foreground = gray-lighter;
       };
       "module/mem" = {
         type = "internal/memory";

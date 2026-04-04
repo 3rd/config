@@ -2,7 +2,7 @@ local hostname = vim.uv.os_gethostname()
 
 -- base colors
 local colors = {
-  background = "#211F28",
+  background = "#212027",
   blue = "#7EBDFC",
   common = {
     boolean = "#FF8170",
@@ -11,8 +11,8 @@ local colors = {
     conditional = "#EF71C5",
     constant = "#FF8170",
     constructor = "#17CFCF",
-    cword = "#363442",
-    cword_current = "#444153",
+    cword = "#373541",
+    cword_current = "#454351",
     delimiter = "#777486",
     field = "#A5A0BA",
     ["function"] = "#7EBDFC",
@@ -41,7 +41,7 @@ local colors = {
   plugins = {
     indent_guides = {
       chunk = "#9F3885",
-      indent = { "#363442" }
+      indent = { "#373541" }
     }
   },
   red = "#E02A06",
@@ -52,10 +52,10 @@ local colors = {
     },
     code = {
       block = {
-        background = "#282631",
+        background = "#282730",
         content = "#C8C6D2",
-        language = "#5E5A72",
-        marker = "#494659"
+        language = "#5F5C70",
+        marker = "#4A4757"
       },
       inline = "#ED9145"
     },
@@ -68,28 +68,28 @@ local colors = {
     },
     headline = {
       five = {
-        bg = "#414B53",
+        bg = "#434B51",
         fg = "#C8C6D2"
       },
       four = {
-        bg = "#3D434D",
+        bg = "#3E444C",
         fg = "#C8C6D2"
       },
       marker = "#9D9AAC",
       one = {
-        bg = "#2A2938",
+        bg = "#2B2A37",
         fg = "#C8C6D2"
       },
       six = {
-        bg = "#48565B",
+        bg = "#49565A",
         fg = "#C8C6D2"
       },
       three = {
-        bg = "#313749",
+        bg = "#323848",
         fg = "#C8C6D2"
       },
       two = {
-        bg = "#2F3042",
+        bg = "#303141",
         fg = "#C8C6D2"
       }
     },
@@ -131,7 +131,7 @@ local colors = {
       cancelled = "#fa4040",
       completion = "#7378a5",
       default = "#C8C6D2",
-      done = "#62606C",
+      done = "#63616B",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
@@ -141,7 +141,7 @@ local colors = {
   ui = {
     breadcrumbs = {
       normal = {
-        bg = "#2F2D39",
+        bg = "#302E38",
         fg = "#9E9CAB"
       },
       separator = {
@@ -150,47 +150,47 @@ local colors = {
     },
     line = {
       current_line = {
-        bg = "#2A2833"
+        bg = "#2B2932"
       },
       current_line_nr = {
-        bg = "#363442",
-        fg = "#89849F"
+        bg = "#373541",
+        fg = "#8A869C"
       },
       current_line_sign = {
-        bg = "#363442",
+        bg = "#373541",
         fg = "#EB9147"
       },
       line_nr = {
-        fg = "#4D4A5E"
+        fg = "#4F4C5D"
       }
     },
-    split = "#363442",
+    split = "#373541",
     status = {
       a = {
-        bg = "#363442",
+        bg = "#373541",
         fg = "#B3B0BF"
       },
       b = {
-        bg = "#312F3C",
+        bg = "#32303B",
         fg = "#A8A5B6"
       },
       c = {
-        bg = "#282631",
+        bg = "#282730",
         fg = "#9E9CAB"
       }
     },
     tabs = {
       active = {
-        bg = "#312F3C",
+        bg = "#32303B",
         fg = "#C8C6D2",
         gui = "bold"
       },
       fill = {
-        bg = "#211F28",
+        bg = "#212027",
         fg = "#767481"
       },
       inactive = {
-        bg = "#282631",
+        bg = "#282730",
         fg = "#8A8797"
       }
     }

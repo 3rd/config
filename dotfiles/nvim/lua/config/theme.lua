@@ -12,7 +12,7 @@ local hsl = lush.hsl
 
 local colors = {
   none = "NONE",
-  background = hsl(250, 12, 14),
+  background = hsl(250, 10, 14),
   foreground = hsl(250, 12, 80),
   blue = hsl(210, 95, 74),
   cyan = hsl(180, 80, 45),
@@ -309,8 +309,8 @@ local theme = lush(function(injected)
     TabLineSel(colors.ui.tabs.active), -- Tab pages line, active tab page label
     WarningMsg({}),
     WinBar({
-      bg = colors.background.lighten(10).saturation(20),
-      fg = colors.cyan.saturation(60),
+      bg = colors.background.lighten(7),
+      fg = colors.orange,
       gui = "bold",
     }),
     WinBarNC({ WinBar }),
