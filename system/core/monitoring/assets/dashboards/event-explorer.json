@@ -1,0 +1,237 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "{component=\"audit_exec\"} | json | __error__=\"\" | kind=\"audit_exec_event\" | exe!~\"^[0-9A-Fa-f]{16,}$\" | cmdline!~\".*core-monitoring.*\" | cmdline!~\".*ausearch --input-logs.*\" | comm=~\"$process_filter\" | line_format `exe={{.exe}} comm={{.comm}} pid={{.pid}} argv={{.argv}} cmdline={{.cmdline}} uid={{.uid}} auid={{.auid}} success={{.success}}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Exec Events",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "{component=\"audit_net\"} | json | __error__=\"\" | kind=\"audit_net_event\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_target=~\"$endpoint_filter\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm=~\"$process_filter\" | line_format `exe={{.exe}} comm={{.comm}} pid={{.pid}} target={{.dest_target}} ip={{.dest_ip}} port={{.dest_port}} location={{.country_name}} cc={{.country_code}} success={{.success}} cmdline={{.cmdline}}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Outbound Connections",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 3,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "{component=\"audit_fs\"} | json | __error__=\"\" | kind=\"audit_fs_event\" | scope=~\"$scope_filter\" | watched_root!=\"\" | path=~\"$path_filter\" | comm!~\"^(alloy|auditd|ausearch|core-monitoring.*|grafana|loki)$\" | comm=~\"$process_filter\" | line_format `scope={{.scope}} exe={{.exe}} comm={{.comm}} pid={{.pid}} root={{.watched_root}} path={{.path}} nametype={{.nametype}} success={{.success}} cmdline={{.cmdline}}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Watched-Path Writes",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [
+    "core",
+    "monitoring",
+    "events"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Process Regex",
+        "name": "process_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Path Regex",
+        "name": "path_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Endpoint Regex",
+        "name": "endpoint_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Scope Regex",
+        "name": "scope_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Event Explorer",
+  "uid": "core-monitoring-event-explorer",
+  "version": 1,
+  "weekStart": ""
+}

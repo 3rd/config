@@ -1,0 +1,967 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(sum_over_time({component=\"audit_exec_summary\",summary_kind=\"window_total\"} | json | __error__=\"\" | unwrap count [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Exec Events",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(sum_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm=~\"$process_filter\" | unwrap count [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Remote Connects",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(sum_over_time({component=\"audit_fs_summary\",summary_kind=\"by_path_process\"} | json | __error__=\"\" | watched_root!=\"\" | path=~\"$path_filter\" | comm!~\"^(alloy|auditd|ausearch|core-monitoring.*|grafana|loki)$\" | comm=~\"$process_filter\" | unwrap count [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "File Writes",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (exe) (max_over_time({component=\"audit_exec_summary\",summary_kind=\"by_exe\"} | json | __error__=\"\" | exe!=\"\" | exe!~\"^[0-9A-Fa-f]{16,}$\" | cmdline!~\".*core-monitoring.*\" | cmdline!~\".*ausearch --input-logs.*\" | comm=~\"$process_filter\" | unwrap count [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Unique Executables",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "count(sum by (dest_target) (max_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm=~\"$process_filter\" | unwrap count [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Unique Remote Endpoints",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({component=\"anomaly\"}[$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Anomalies",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "core-monitoring-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "CPU %"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 4
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "CPU %",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "host": true,
+              "host_class": true,
+              "instance": true,
+              "job": true
+            },
+            "indexByName": {
+              "exe": 0,
+              "cmd": 1,
+              "comm": 2,
+              "Value": 3
+            },
+            "renameByName": {
+              "cmd": "Command",
+              "exe": "Executable",
+              "comm": "Comm",
+              "Value": "CPU %"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "core-monitoring-prometheus"
+          },
+          "editorMode": "code",
+          "expr": "topk(100, max by (cmd, exe, comm) (last_over_time(core_monitoring_process_cpu_percent{comm=~\"$process_filter\", exe=~\".+\"}[$__range])))",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Top CPU Processes",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Connects"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 4
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Connects",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "exe": 0,
+              "Value #A": 1
+            },
+            "renameByName": {
+              "exe": "Executable",
+              "Value #A": "Connects"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(100, sum by (exe) (sum_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | exe!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm!~\"^[0-9A-Fa-f]{6,}$\" | comm=~\"$process_filter\" | unwrap count [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Connecting Processes",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Writes"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 4
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Writes",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "exe": 0,
+              "Value #A": 1
+            },
+            "renameByName": {
+              "exe": "Executable",
+              "Value #A": "Writes"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(100, sum by (exe) (sum_over_time({component=\"audit_fs_summary\",summary_kind=\"by_path_process\"} | json | __error__=\"\" | watched_root!=\"\" | exe!=\"\" | path=~\"$path_filter\" | comm!~\"^(alloy|auditd|ausearch|core-monitoring.*|grafana|loki)$\" | comm=~\"$process_filter\" | unwrap count [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Writing Processes",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "core-monitoring-prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "core-monitoring-prometheus"
+          },
+          "editorMode": "code",
+          "expr": "topk(5, max by (exe, cmd) (last_over_time(core_monitoring_process_cpu_percent{comm=~\"$process_filter\", exe=~\".+\"}[1m])))",
+          "legendFormat": "{{cmd}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Leaders Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 12
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(5, sum by (exe) (last_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | exe!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm!~\"^[0-9A-Fa-f]{6,}$\" | comm=~\"$process_filter\" | unwrap count [1m])))",
+          "legendFormat": "{{exe}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Outbound Connections Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (scope) (last_over_time({component=\"audit_fs_summary\",summary_kind=\"by_path_process\"} | json | __error__=\"\" | watched_root!=\"\" | path=~\"$path_filter\" | comm!~\"^(alloy|auditd|ausearch|core-monitoring.*|grafana|loki)$\" | comm=~\"$process_filter\" | unwrap count [1m]))",
+          "legendFormat": "{{scope}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Write Activity By Scope",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 0,
+        "y": 20
+      },
+      "id": 13,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "{component=\"anomaly\"} | json | __error__=\"\" | line_format `{{.anomaly_type}} severity={{.severity}} source={{.source_component}} message={{.message}} exe={{.exe}} cmd={{.cmd}} comm={{.comm}} pid={{.pid}}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Abnormal And New Processes",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 8,
+        "y": 20
+      },
+      "id": 14,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "{component=\"audit_net\"} | json | __error__=\"\" | kind=\"audit_net_event\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm=~\"$process_filter\" | line_format `exe={{.exe}} comm={{.comm}} pid={{.pid}} target={{.dest_target}} ip={{.dest_ip}} port={{.dest_port}} family={{.family}} success={{.success}} cmdline={{.cmdline}}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Outbound Connections",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 16,
+        "y": 20
+      },
+      "id": 15,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "{component=\"audit_fs\"} | json | __error__=\"\" | kind=\"audit_fs_event\" | watched_root!=\"\" | path=~\"$path_filter\" | comm!~\"^(alloy|auditd|ausearch|core-monitoring.*|grafana|loki)$\" | comm=~\"$process_filter\" | line_format `scope={{.scope}} exe={{.exe}} comm={{.comm}} pid={{.pid}} root={{.watched_root}} path={{.path}} nametype={{.nametype}} success={{.success}} cmdline={{.cmdline}}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Watched-Path Writes",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [
+    "core",
+    "monitoring",
+    "triage"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Process Regex",
+        "name": "process_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Path Regex",
+        "name": "path_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Triage",
+  "uid": "core-monitoring-overview",
+  "version": 6,
+  "weekStart": ""
+}

@@ -1,0 +1,710 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Connects"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Connects",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "dest_target": 0,
+              "dest_ip": 1,
+              "dest_port": 2,
+              "country_name": 3,
+              "country_code": 4,
+              "Value #A": 5
+            },
+            "renameByName": {
+              "Value #A": "Connects",
+              "country_code": "CC",
+              "country_name": "Location",
+              "dest_ip": "IP",
+              "dest_port": "Port",
+              "dest_target": "Host / Target"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(100, sum by (dest_target, dest_ip, dest_port, country_name, country_code) (sum_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_target=~\"$endpoint_filter\" | dest_ip!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm!~\"^[0-9A-Fa-f]{6,}$\" | comm=~\"$process_filter\" | unwrap count [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Remote Endpoints",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Connects"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Connects",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "exe": 0,
+              "Value #A": 1
+            },
+            "renameByName": {
+              "exe": "Executable",
+              "Value #A": "Connects"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(100, sum by (exe) (sum_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_target=~\"$endpoint_filter\" | exe!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm!~\"^[0-9A-Fa-f]{6,}$\" | comm=~\"$process_filter\" | unwrap count [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Connecting Processes",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Peak KiB/s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Peak KiB/s",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "cmd": 0,
+              "Value #A": 1
+            },
+            "renameByName": {
+              "Value #A": "Peak KiB/s"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(100, max by (cmd) (max_over_time({component=\"net_usage\"} | json | __error__=\"\" | cmd=~\"$process_filter\" | unwrap total_kib_s [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Network Traffic Processes",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Connects"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Connects",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "country_name": 0,
+              "country_code": 1,
+              "Value #A": 2
+            },
+            "renameByName": {
+              "Value #A": "Connects",
+              "country_code": "CC",
+              "country_name": "Country"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(100, sum by (country_name, country_code) (sum_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_target=~\"$endpoint_filter\" | dest_ip!=\"\" | country_code!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm=~\"$process_filter\" | unwrap count [$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Destination Countries",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(5, sum by (exe) (last_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_target=~\"$endpoint_filter\" | exe!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm!~\"^[0-9A-Fa-f]{6,}$\" | comm=~\"$process_filter\" | unwrap count [1m])))",
+          "legendFormat": "{{exe}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Connect Rate By Process",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(5, max by (cmd) (last_over_time({component=\"net_usage\"} | json | __error__=\"\" | cmd=~\"$process_filter\" | unwrap total_kib_s [1m])))",
+          "legendFormat": "{{cmd}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Network Traffic Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, sum by (dest_target) (last_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_target=~\"$endpoint_filter\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm!~\"^[0-9A-Fa-f]{6,}$\" | comm=~\"$process_filter\" | unwrap count [1m])))",
+          "legendFormat": "{{dest_target}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Remote Endpoints Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "basemap": {
+          "config": {},
+          "name": "Layer 0",
+          "type": "default"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showMeasure": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": false,
+              "style": {
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.5,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "field": "Connects",
+                  "fixed": 5,
+                  "max": 24,
+                  "min": 4
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "text": {
+                  "field": "country_code",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "A"
+            },
+            "location": {
+              "gazetteer": "public/gazetteer/countries.json",
+              "lookup": "country_code",
+              "mode": "lookup"
+            },
+            "name": "Destination countries",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": true,
+          "id": "coords",
+          "lat": 20,
+          "lon": 0,
+          "zoom": 1.2
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Value #A": "Connects"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "sum by (country_code, country_name) (sum_over_time({component=\"audit_net_summary\",summary_kind=\"by_endpoint_process\"} | json | __error__=\"\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_target=~\"$endpoint_filter\" | dest_ip!=\"\" | country_code!=\"\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm=~\"$process_filter\" | unwrap count [$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Destination Country Map",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "core-monitoring-loki"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 7,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "core-monitoring-loki"
+          },
+          "editorMode": "code",
+          "expr": "{component=\"audit_net\"} | json | __error__=\"\" | kind=\"audit_net_event\" | family=~\"^inet.*$\" | dest_target!=\"\" | dest_target=~\"$endpoint_filter\" | dest_ip!~\"^(::ffff:)?(127[.].*|10[.].*|100[.](6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])[.].*|169[.]254[.].*|172[.](1[6-9]|2[0-9]|3[0-1])[.].*|192[.]168[.].*|0[.]0[.]0[.]0)$|^::1$\" | dest_port!=\"\" | dest_port!=\"0\" | dest_port!=\"65535\" | comm!~\"^[0-9A-Fa-f]{6,}$\" | comm=~\"$process_filter\" | line_format `exe={{.exe}} comm={{.comm}} pid={{.pid}} target={{.dest_target}} ip={{.dest_ip}} port={{.dest_port}} location={{.country_name}} cc={{.country_code}} success={{.success}} cmdline={{.cmdline}}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Outbound Connections",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [
+    "core",
+    "monitoring",
+    "network"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Process Regex",
+        "name": "process_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Endpoint Regex",
+        "name": "endpoint_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Network",
+  "uid": "core-monitoring-exec",
+  "version": 6,
+  "weekStart": ""
+}
