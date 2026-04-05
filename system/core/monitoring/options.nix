@@ -150,6 +150,24 @@ in {
         example = [ "-a always,exit -F arch=b64 -S bind -k net_bind" ];
         description = "Extra raw audit rules appended after the generated rules.";
       };
+
+      dispatcherQueueDepth = mkOption {
+        type = types.ints.positive;
+        default = 16384;
+        description = ''
+          Queue depth passed to audisp-af_unix for the live audit dispatcher socket.
+          Raise this on noisy hosts so short audit bursts do not overflow the socket queue.
+        '';
+      };
+
+      streamChannelCapacity = mkOption {
+        type = types.ints.positive;
+        default = 16384;
+        description = ''
+          In-process channel capacity for buffering live audit events before normalization.
+          Raise this on noisy hosts so the exporter can absorb short bursts without dropping events.
+        '';
+      };
     };
 
     thresholds = {

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net"
 	"net/http"
@@ -68,6 +69,7 @@ const (
 
 	auditDispatcherSocketPath = "/run/audit/audispd_events"
 	auditBackfillSeconds      = 3600
+	auditSpoolPollInterval    = time.Second
 	geoLookupTimeout          = 2 * time.Second
 	geoNegativeCacheTTL       = 15 * time.Minute
 	geoPositiveCacheTTL       = 24 * time.Hour
@@ -102,11 +104,16 @@ func fatalf(format string, args ...any) {
 	os.Exit(1)
 }
 
+func infof(format string, args ...any) {
+	fmt.Fprintf(os.Stderr, format+"\n", args...)
+}
+
 type auditConfig struct {
-	watchPaths     []string
-	homeWatchPaths map[string]struct{}
-	mmdbLookupBin  string
-	countryDB      string
+	watchPaths            []string
+	homeWatchPaths        map[string]struct{}
+	mmdbLookupBin         string
+	countryDB             string
+	streamChannelCapacity int
 }
 
 func runAuditNormalize(args []string) error {
@@ -190,6 +197,8 @@ type auditStreamExporter struct {
 	netSeen         map[string]float64
 	seenExecutables map[string]float64
 	geoResolver     *auditGeoResolver
+	spoolOffsets    map[string]int64
+	spoolMu         sync.RWMutex
 }
 
 type auditGeoResolver struct {
@@ -206,6 +215,12 @@ type geoRecord struct {
 	CountryName  string  `json:"country_name"`
 	Host         string  `json:"host"`
 	LastResolved float64 `json:"last_resolved,omitempty"`
+}
+
+type auditRawEventGroup struct {
+	Serial    int
+	Timestamp float64
+	Lines     []string
 }
 
 func runAuditStreamExporter(args []string) error {
@@ -284,6 +299,7 @@ func runAuditStreamExporter(args []string) error {
 		netSeen:         map[string]float64{},
 		seenExecutables: map[string]float64{},
 		geoResolver:     newAuditGeoResolver(cfg),
+		spoolOffsets:    map[string]int64{},
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -308,21 +324,48 @@ func (exporter *auditStreamExporter) run(ctx context.Context, now time.Time) err
 		return err
 	}
 
+	rawEvents := make(chan auditRawEventGroup, 256)
 	events := make(chan auditEvent, 256)
-	go exporter.streamAuditEvents(ctx, events)
+	if exporter.cfg.streamChannelCapacity > 0 {
+		rawEvents = make(chan auditRawEventGroup, exporter.cfg.streamChannelCapacity)
+		events = make(chan auditEvent, exporter.cfg.streamChannelCapacity)
+	}
+	normalizerErrors := make(chan error, 1)
+	go exporter.streamAuditEvents(ctx, rawEvents)
+	go exporter.normalizeSpoolLoop(ctx, events, normalizerErrors)
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
+	stateTicker := time.NewTicker(5 * time.Second)
+	defer stateTicker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			// don't flush on shutdown; next start backfills from the last durable timestamp
-			return nil
+			return exporter.saveState()
+		case err := <-normalizerErrors:
+			if err != nil {
+				return err
+			}
+		case rawEvent := <-rawEvents:
+			if err := exporter.appendRawAuditEventGroup(rawEvent); err != nil {
+				return err
+			}
+			if err := exporter.drainRawAuditEvents(rawEvents, 256); err != nil {
+				return err
+			}
 		case event := <-events:
 			exporter.enqueueEvent(event)
 		case now := <-ticker.C:
+			if err := exporter.drainRawAuditEvents(rawEvents, exporter.cfg.streamChannelCapacity); err != nil {
+				return err
+			}
 			if err := exporter.flushDue(now.UTC()); err != nil {
+				return err
+			}
+		case <-stateTicker.C:
+			if err := exporter.saveState(); err != nil {
 				return err
 			}
 		}
@@ -411,7 +454,10 @@ func appendAusearchRaw(ctx context.Context, output *os.File, ausearchBin string,
 	return fmt.Errorf("ausearch %s failed: %w", key, err)
 }
 
-func (exporter *auditStreamExporter) streamAuditEvents(ctx context.Context, output chan<- auditEvent) {
+func (exporter *auditStreamExporter) streamAuditEvents(ctx context.Context, output chan<- auditRawEventGroup) {
+	wasConnected := false
+	lastDialError := ""
+
 	for {
 		if ctx.Err() != nil {
 			return
@@ -419,21 +465,37 @@ func (exporter *auditStreamExporter) streamAuditEvents(ctx context.Context, outp
 
 		conn, err := net.Dial("unix", auditDispatcherSocketPath)
 		if err != nil {
+			errText := err.Error()
+			if wasConnected || errText != lastDialError {
+				infof("audit stream connect failed: %v", err)
+			}
+			wasConnected = false
+			lastDialError = errText
 			if !sleepContext(ctx, time.Second) {
 				return
 			}
 			continue
 		}
 
-		_ = exporter.readAuditStream(ctx, conn, output)
+		if !wasConnected {
+			infof("audit stream connected: %s", auditDispatcherSocketPath)
+		}
+		wasConnected = true
+		lastDialError = ""
+
+		err = exporter.readAuditStream(ctx, conn, output)
 		_ = conn.Close()
+		if err != nil && ctx.Err() == nil {
+			infof("audit stream disconnected: %v", err)
+			wasConnected = false
+		}
 		if !sleepContext(ctx, time.Second) {
 			return
 		}
 	}
 }
 
-func (exporter *auditStreamExporter) readAuditStream(ctx context.Context, conn net.Conn, output chan<- auditEvent) error {
+func (exporter *auditStreamExporter) readAuditStream(ctx context.Context, conn net.Conn, output chan<- auditRawEventGroup) error {
 	closeOnDone := make(chan struct{})
 	defer close(closeOnDone)
 	go func() {
@@ -451,16 +513,17 @@ func (exporter *auditStreamExporter) readAuditStream(ctx context.Context, conn n
 	scanner := bufio.NewScanner(conn)
 	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
 
-	var current *auditEventGroup
+	var current *auditRawEventGroup
 	for scanner.Scan() {
-		parsed, ok := parseAuditLine(scanner.Text())
+		rawLine := scanner.Text()
+		parsed, ok := parseAuditLine(rawLine)
 		if !ok {
 			continue
 		}
 
 		if current != nil && parsed.Serial != current.Serial {
 			select {
-			case output <- normalizeAuditEvent(*current):
+			case output <- *current:
 			case <-ctx.Done():
 				return nil
 			}
@@ -468,18 +531,19 @@ func (exporter *auditStreamExporter) readAuditStream(ctx context.Context, conn n
 		}
 
 		if current == nil {
-			current = &auditEventGroup{
+			current = &auditRawEventGroup{
 				Serial:    parsed.Serial,
 				Timestamp: parsed.Timestamp,
+				Lines:     make([]string, 0, 4),
 			}
 		}
 		current.Timestamp = parsed.Timestamp
-		current.Records = append(current.Records, parsed)
+		current.Lines = append(current.Lines, rawLine)
 	}
 
 	if current != nil {
 		select {
-		case output <- normalizeAuditEvent(*current):
+		case output <- *current:
 		case <-ctx.Done():
 		}
 	}
@@ -593,6 +657,14 @@ func (exporter *auditStreamExporter) stateFilePath() string {
 	return filepath.Join(exporter.stateDir, "audit-stream-last-ts")
 }
 
+func (exporter *auditStreamExporter) spoolDirPath() string {
+	return filepath.Join(exporter.stateDir, "spool")
+}
+
+func (exporter *auditStreamExporter) spoolOffsetsPath() string {
+	return filepath.Join(exporter.stateDir, "audit-spool-offsets.json")
+}
+
 func (exporter *auditStreamExporter) saveState() error {
 	if err := os.MkdirAll(exporter.stateDir, 0o750); err != nil {
 		return fmt.Errorf("mkdir %s: %w", exporter.stateDir, err)
@@ -620,6 +692,9 @@ func (exporter *auditStreamExporter) saveState() error {
 		return err
 	}
 	if err := saveJSON(exporter.seenExecPath(), exporter.seenExecutables); err != nil {
+		return err
+	}
+	if err := saveJSON(exporter.spoolOffsetsPath(), exporter.snapshotSpoolOffsets()); err != nil {
 		return err
 	}
 	if cache, dirty := exporter.geoResolver.snapshotDirty(); dirty {
@@ -666,6 +741,9 @@ func (exporter *auditStreamExporter) loadRuntimeState(now time.Time) error {
 	if exporter.seenExecutables, err = loadTimestampMap(exporter.seenExecPath()); err != nil {
 		return err
 	}
+	if exporter.spoolOffsets, err = loadOffsetMap(exporter.spoolOffsetsPath()); err != nil {
+		return err
+	}
 	cache, err := loadGeoCache(exporter.geoCachePath())
 	if err != nil {
 		return err
@@ -679,6 +757,178 @@ func (exporter *auditStreamExporter) loadRuntimeState(now time.Time) error {
 	pruneTimestampMap(exporter.netSeen, dedupeCutoff)
 	pruneTimestampMap(exporter.seenExecutables, nowTS-float64(exporter.lookbackDays*86400))
 	exporter.geoResolver.prune(now)
+	return nil
+}
+
+func (exporter *auditStreamExporter) drainRawAuditEvents(input <-chan auditRawEventGroup, limit int) error {
+	if limit <= 0 {
+		return nil
+	}
+	for drained := 0; drained < limit; drained++ {
+		select {
+		case event := <-input:
+			if err := exporter.appendRawAuditEventGroup(event); err != nil {
+				return err
+			}
+		default:
+			return nil
+		}
+	}
+	return nil
+}
+
+func (exporter *auditStreamExporter) normalizeSpoolLoop(ctx context.Context, output chan<- auditEvent, errors chan<- error) {
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+		if err := exporter.processSpool(ctx, output); err != nil {
+			select {
+			case errors <- err:
+			case <-ctx.Done():
+			}
+			return
+		}
+		if !sleepContext(ctx, auditSpoolPollInterval) {
+			return
+		}
+	}
+}
+
+func (exporter *auditStreamExporter) processSpool(ctx context.Context, output chan<- auditEvent) error {
+	paths, err := exporter.spoolPaths()
+	if err != nil {
+		return err
+	}
+
+	for _, path := range paths {
+		offset := exporter.spoolOffset(path)
+		events, newOffset, err := collectAuditEventsDelta(path, offset)
+		if err != nil {
+			return err
+		}
+		if newOffset > offset {
+			exporter.setSpoolOffset(path, newOffset)
+		}
+		for _, event := range normalizeAuditEvents(events) {
+			select {
+			case output <- event:
+			case <-ctx.Done():
+				return nil
+			}
+		}
+	}
+
+	return exporter.pruneProcessedSpoolFiles()
+}
+
+func (exporter *auditStreamExporter) appendRawAuditEventGroup(group auditRawEventGroup) error {
+	if len(group.Lines) == 0 {
+		return nil
+	}
+
+	path := exporter.spoolPathForTimestamp(group.Timestamp)
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		return fmt.Errorf("mkdir %s: %w", filepath.Dir(path), err)
+	}
+
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o640)
+	if err != nil {
+		return fmt.Errorf("open raw audit spool: %w", err)
+	}
+	defer file.Close()
+
+	payload := strings.Join(group.Lines, "\n") + "\n"
+	if _, err := file.WriteString(payload); err != nil {
+		return fmt.Errorf("append raw audit spool: %w", err)
+	}
+	return nil
+}
+
+func (exporter *auditStreamExporter) spoolPathForTimestamp(timestamp float64) string {
+	date := time.Unix(int64(timestamp), 0).UTC().Format("20060102")
+	return filepath.Join(exporter.spoolDirPath(), fmt.Sprintf("audit-live-%s.log", date))
+}
+
+func (exporter *auditStreamExporter) spoolPaths() ([]string, error) {
+	entries, err := os.ReadDir(exporter.spoolDirPath())
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read spool dir: %w", err)
+	}
+
+	paths := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if !strings.HasPrefix(entry.Name(), "audit-live-") || !strings.HasSuffix(entry.Name(), ".log") {
+			continue
+		}
+		paths = append(paths, filepath.Join(exporter.spoolDirPath(), entry.Name()))
+	}
+	sort.Strings(paths)
+	return paths, nil
+}
+
+func (exporter *auditStreamExporter) spoolOffset(path string) int64 {
+	exporter.spoolMu.RLock()
+	defer exporter.spoolMu.RUnlock()
+	return exporter.spoolOffsets[path]
+}
+
+func (exporter *auditStreamExporter) setSpoolOffset(path string, offset int64) {
+	exporter.spoolMu.Lock()
+	defer exporter.spoolMu.Unlock()
+	exporter.spoolOffsets[path] = offset
+}
+
+func (exporter *auditStreamExporter) removeSpoolOffset(path string) {
+	exporter.spoolMu.Lock()
+	defer exporter.spoolMu.Unlock()
+	delete(exporter.spoolOffsets, path)
+}
+
+func (exporter *auditStreamExporter) snapshotSpoolOffsets() map[string]int64 {
+	exporter.spoolMu.RLock()
+	defer exporter.spoolMu.RUnlock()
+
+	snapshot := make(map[string]int64, len(exporter.spoolOffsets))
+	for path, offset := range exporter.spoolOffsets {
+		snapshot[path] = offset
+	}
+	return snapshot
+}
+
+func (exporter *auditStreamExporter) pruneProcessedSpoolFiles() error {
+	paths, err := exporter.spoolPaths()
+	if err != nil {
+		return err
+	}
+
+	currentPath := exporter.spoolPathForTimestamp(float64(time.Now().UTC().Unix()))
+	for _, path := range paths {
+		if path == currentPath {
+			continue
+		}
+		info, err := os.Stat(path)
+		if errors.Is(err, os.ErrNotExist) {
+			exporter.removeSpoolOffset(path)
+			continue
+		}
+		if err != nil {
+			return fmt.Errorf("stat spool file: %w", err)
+		}
+		if exporter.spoolOffset(path) < info.Size() {
+			continue
+		}
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove spool file: %w", err)
+		}
+		exporter.removeSpoolOffset(path)
+	}
 	return nil
 }
 
@@ -1222,9 +1472,10 @@ func sleepContext(ctx context.Context, delay time.Duration) bool {
 
 func loadAuditConfigFromEnv() (auditConfig, error) {
 	cfg := auditConfig{
-		homeWatchPaths: map[string]struct{}{},
-		mmdbLookupBin:  os.Getenv("CORE_MONITORING_MMDBLOOKUP_BIN"),
-		countryDB:      os.Getenv("CORE_MONITORING_COUNTRY_DB"),
+		homeWatchPaths:        map[string]struct{}{},
+		mmdbLookupBin:         os.Getenv("CORE_MONITORING_MMDBLOOKUP_BIN"),
+		countryDB:             os.Getenv("CORE_MONITORING_COUNTRY_DB"),
+		streamChannelCapacity: 256,
 	}
 
 	var watchPaths []string
@@ -1241,6 +1492,17 @@ func loadAuditConfigFromEnv() (auditConfig, error) {
 	}
 	for _, path := range homeWatchPaths {
 		cfg.homeWatchPaths[filepath.Clean(path)] = struct{}{}
+	}
+
+	if raw := strings.TrimSpace(os.Getenv("CORE_MONITORING_STREAM_CHANNEL_CAPACITY")); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil {
+			return auditConfig{}, fmt.Errorf("parse stream channel capacity: %w", err)
+		}
+		if value <= 0 {
+			return auditConfig{}, fmt.Errorf("parse stream channel capacity: must be positive")
+		}
+		cfg.streamChannelCapacity = value
 	}
 
 	return cfg, nil
@@ -1327,6 +1589,67 @@ func collectAuditEvents(inputPath string) ([]auditEventGroup, error) {
 		events = append(events, *current)
 	}
 	return events, nil
+}
+
+func collectAuditEventsDelta(inputPath string, startOffset int64) ([]auditEventGroup, int64, error) {
+	file, err := os.Open(inputPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, startOffset, nil
+	}
+	if err != nil {
+		return nil, startOffset, fmt.Errorf("open audit input: %w", err)
+	}
+	defer file.Close()
+
+	if _, err := file.Seek(startOffset, io.SeekStart); err != nil {
+		return nil, startOffset, fmt.Errorf("seek audit input: %w", err)
+	}
+
+	reader := bufio.NewReader(file)
+	offset := startOffset
+	var events []auditEventGroup
+	var current *auditEventGroup
+	lastReadEndedWithNewline := true
+
+	for {
+		line, err := reader.ReadString('\n')
+		if line != "" {
+			completeLine := strings.HasSuffix(line, "\n")
+			lastReadEndedWithNewline = completeLine
+			if completeLine {
+				offset += int64(len(line))
+				parsed, ok := parseAuditLine(strings.TrimRight(line, "\r\n"))
+				if ok {
+					if current != nil && parsed.Serial != current.Serial {
+						events = append(events, *current)
+						current = nil
+					}
+
+					if current == nil {
+						current = &auditEventGroup{
+							Serial:    parsed.Serial,
+							Timestamp: parsed.Timestamp,
+						}
+					}
+					current.Timestamp = parsed.Timestamp
+					current.Records = append(current.Records, parsed)
+				}
+			}
+		}
+
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, startOffset, fmt.Errorf("scan audit input: %w", err)
+		}
+	}
+
+	if current != nil && lastReadEndedWithNewline {
+		events = append(events, *current)
+	}
+
+	return events, offset, nil
 }
 
 func parseAuditLine(line string) (parsedAuditLine, bool) {
@@ -2202,6 +2525,22 @@ func loadGeoCache(path string) (map[string]geoRecord, error) {
 		return map[string]geoRecord{}, nil
 	}
 	return cache, nil
+}
+
+func loadOffsetMap(path string) (map[string]int64, error) {
+	data, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return map[string]int64{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+
+	offsets := map[string]int64{}
+	if err := json.Unmarshal(data, &offsets); err != nil {
+		return map[string]int64{}, nil
+	}
+	return offsets, nil
 }
 
 func saveJSON(path string, payload any) error {

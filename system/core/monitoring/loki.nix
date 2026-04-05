@@ -17,5 +17,10 @@ in lib.mkIf cfg.enable {
     User = lib.mkForce "root";
     Group = lib.mkForce "root";
     TimeoutStopSec = "15s";
+    Nice = 10;
+    IOSchedulingClass = "idle";
+    IOSchedulingPriority = 7;
+    CPUWeight = 10;
+    IOWeight = 10;
   };
 }

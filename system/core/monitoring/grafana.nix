@@ -86,4 +86,12 @@ in lib.mkIf (cfg.enable && cfg.ui.enable) {
       head -c 32 /dev/urandom | base64 > /var/lib/grafana/secret_key
     fi
   '';
+
+  systemd.services.grafana.serviceConfig = {
+    Nice = 10;
+    IOSchedulingClass = "idle";
+    IOSchedulingPriority = 7;
+    CPUWeight = 10;
+    IOWeight = 10;
+  };
 }

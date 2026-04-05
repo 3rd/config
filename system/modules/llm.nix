@@ -1,29 +1,31 @@
 {
   config,
   pkgs,
+  pkgs-master ? pkgs,
   pkgs-stable,
   options,
   ...
 }:
+let
+  ollamaPackage = pkgs-master.ollama.override (
+    {
+      acceleration = "cuda";
+    }
+    // (
+      if config.networking.hostName == "spaceship" then
+        {
+          cudaArches = [ "sm_120" ];
+        }
+      else
+        { }
+    )
+  );
+in
 {
 
   hardware.nvidia-container-toolkit.suppressNvidiaDriverAssertion = true;
 
-  environment.systemPackages = with pkgs; [
-    (pkgs.ollama.override (
-      {
-        acceleration = "cuda";
-      }
-      // (
-        if config.networking.hostName == "spaceship" then
-          {
-            cudaArches = [ "sm_120" ];
-          }
-        else
-          { }
-      )
-    ))
-  ];
+  environment.systemPackages = [ ollamaPackage ];
 
   services.open-webui = {
     package = pkgs.open-webui;

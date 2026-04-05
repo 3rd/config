@@ -12,6 +12,13 @@ let
   stateDir = "/var/lib/core-monitoring";
   statePath = "${stateDir}/state";
   monitoringTools = pkgs.callPackage ./tools.nix { };
+  backgroundServiceConfig = {
+    Nice = 10;
+    IOSchedulingClass = "idle";
+    IOSchedulingPriority = 7;
+    CPUWeight = 10;
+    IOWeight = 10;
+  };
 
   networkUsageExport = pkgs.writeShellApplication {
     name = "core-monitoring-network-usage-export";
@@ -94,7 +101,7 @@ let
           Type = "oneshot";
           User = "root";
           Group = "root";
-        };
+        } // backgroundServiceConfig;
         script = lib.getExe script;
       };
 
@@ -142,6 +149,7 @@ lib.mkIf cfg.enable (
           CORE_MONITORING_MMDBLOOKUP_BIN = mmdblookupBin;
           CORE_MONITORING_COUNTRY_DB = dbipCountryDbPath;
           CORE_MONITORING_AUSEARCH_BIN = ausearchBin;
+          CORE_MONITORING_STREAM_CHANNEL_CAPACITY = toString cfg.audit.streamChannelCapacity;
         };
       };
     }

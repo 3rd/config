@@ -35,6 +35,14 @@ lib.mkIf cfg.enable {
     ];
   };
 
+  systemd.services.prometheus.serviceConfig = {
+    Nice = 10;
+    IOSchedulingClass = "idle";
+    IOSchedulingPriority = 7;
+    CPUWeight = 10;
+    IOWeight = 10;
+  };
+
   systemd.services.core-monitoring-process-metrics-exporter = {
     description = "Export top process metrics for Prometheus";
     wantedBy = [ "multi-user.target" ];
@@ -47,6 +55,11 @@ lib.mkIf cfg.enable {
       RestartSec = "2s";
       TimeoutStopSec = "5s";
       ExecStart = "${lib.getExe monitoringTools} process-metrics-exporter";
+      Nice = 10;
+      IOSchedulingClass = "idle";
+      IOSchedulingPriority = 7;
+      CPUWeight = 10;
+      IOWeight = 10;
     };
     environment = {
       CORE_MONITORING_EXPORTER_PORT = toString exporterPort;

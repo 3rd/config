@@ -4,10 +4,11 @@ return {
     ["nil"] = {
       nix = {
         binary = "nix",
-        maxMemoryMB = vim.NIL,
+        maxMemoryMB = 8 * 1024,
         flake = {
           autoEvalInputs = true,
           autoArchive = true,
+          nixpkgsInputName = vim.NIL,
         },
       },
     },

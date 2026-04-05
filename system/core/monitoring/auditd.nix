@@ -8,7 +8,7 @@ in lib.mkIf cfg.enable {
   security.audit = {
     enable = true;
     failureMode = "printk";
-    backlogLimit = 8192;
+    backlogLimit = 65536;
     rateLimit = 0;
     rules = mkAuditRules {
       watchPaths = cfg.paths.watch;
@@ -48,6 +48,7 @@ in lib.mkIf cfg.enable {
           "0640"
           "/run/audit/audispd_events"
           "string"
+          (toString cfg.audit.dispatcherQueueDepth)
         ];
         format = "binary";
       };
