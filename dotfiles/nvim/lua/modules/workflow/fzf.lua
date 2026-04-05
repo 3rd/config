@@ -818,7 +818,7 @@ return lib.module.create({
     { "vijaymarupudi/nvim-fzf", event = "VeryLazy" },
     {
       "dmtrKovalenko/fff.nvim",
-      -- commit = "eb577ea4f39f7b9296ff8c6b4bf2b2899d017ded",
+      commit = "bb6f32a2ada380711f08bb11ba49e6fab23f191b",
       build = get_fff_build(),
       config = setup_fff,
       opts = {
