@@ -1,4 +1,10 @@
-{ config, lib, pkgs, pkgs-stable, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  pkgs-stable,
+  ...
+}:
 
 let
   browserExe = config.programs.chromium.finalPackage.meta.mainProgram or "chromium";
@@ -18,7 +24,8 @@ let
   iconLeft = "◧";
   iconCenter = "▣";
   iconRight = "◨";
-in {
+in
+{
   imports = [
     ./common.nix
     ../colors.nix
@@ -46,6 +53,70 @@ in {
         ${pkgs.imagemagick}/bin/convert -resize "$SIZE^" -extent "$SIZE" -gravity center "$IMAGE" /tmp/lock.png
         ${pkgs.i3lock}/bin/i3lock -i /tmp/lock.png
         ${pkgs.i3}/bin/i3 mode default
+      '';
+      alt-tab-scratchpad = super.writeScriptBin "alt-tab-scratchpad" ''
+        #!${pkgs.bash}/bin/bash
+
+        set -eu
+
+        MARK="alt-tab"
+        I3_MSG="${pkgs.i3}/bin/i3-msg"
+        JQ="${pkgs.jq}/bin/jq"
+        ACTION="''${1:-toggle}"
+
+        tree_json="$("$I3_MSG" -t get_tree)"
+
+        focused_id="$(printf '%s\n' "$tree_json" | "$JQ" -r '[.. | objects | select(.focused == true and (.window? != null)) | .id][0] // empty')"
+        marked_id="$(printf '%s\n' "$tree_json" | "$JQ" -r --arg mark "$MARK" '[.. | objects | select(((.marks // []) | index($mark)) != null and (.window? != null)) | .id][0] // empty')"
+        marked_visible="$(printf '%s\n' "$tree_json" | "$JQ" -r --arg mark "$MARK" '[.. | objects | select(((.marks // []) | index($mark)) != null and (.window? != null)) | .visible][0] // false')"
+
+        eject_marked() {
+          [ -n "$marked_id" ] || return 0
+
+          current_workspace="$(
+            "$I3_MSG" -t get_outputs | "$JQ" -r '
+              [.[] | select(.active == true and .focused == true) | .current_workspace][0]
+              // empty
+            '
+          )"
+
+          if [ -z "$current_workspace" ]; then
+            current_workspace="$("$I3_MSG" -t get_workspaces | "$JQ" -r '[.[] | select(.focused == true) | .name][0] // empty')"
+          fi
+
+          [ -n "$current_workspace" ] || return 0
+          "$I3_MSG" "[con_id=$marked_id] move container to workspace \"$current_workspace\"; [con_id=$marked_id] floating disable; [con_id=$marked_id] unmark $MARK" >/dev/null
+        }
+
+        toggle() {
+          [ -n "$marked_id" ] || exit 0
+
+          if [ "$marked_visible" = "true" ]; then
+            "$I3_MSG" "[con_mark=\"^$MARK$\"] scratchpad show" >/dev/null
+            exit 0
+          fi
+
+          "$I3_MSG" "[con_mark=\"^$MARK$\"] scratchpad show; [con_mark=\"^$MARK$\"] move position center" >/dev/null
+        }
+
+        store() {
+          [ -n "$focused_id" ] || exit 0
+
+          if [ "$focused_id" = "$marked_id" ]; then
+            eject_marked
+            exit 0
+          fi
+
+          eject_marked
+
+          "$I3_MSG" "[con_id=$focused_id] mark --replace $MARK; [con_id=$focused_id] move scratchpad" >/dev/null
+        }
+
+        case "$ACTION" in
+          store) store ;;
+          toggle) toggle ;;
+          *) exit 1 ;;
+        esac
       '';
       screen-cycle = super.writeScriptBin "screen-cycle" ''
         #!${pkgs.bash}/bin/bash
@@ -84,8 +155,17 @@ in {
     })
   ];
 
-  home.packages = with pkgs;
-    [ lock i3lock scrot feh screen-cycle xmousepasteblock ]
+  home.packages =
+    with pkgs;
+    [
+      lock
+      i3lock
+      scrot
+      feh
+      alt-tab-scratchpad
+      screen-cycle
+      xmousepasteblock
+    ]
     ++ (with pkgs-stable; [ xss-lock ]);
 
   xsession = {
@@ -205,13 +285,13 @@ in {
           "${modifier}+x" = "mode power";
           # launchers
           "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
-          "${modifier}+shift+Return" =
-            "exec ulimit -n 999999 && ${browserExe}";
+          "${modifier}+shift+Return" = "exec ulimit -n 999999 && ${browserExe}";
           "${modifier}+p" = "exec ${pkgs-stable.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs-stable.flameshot}/bin/flameshot gui";
+          "${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad toggle";
+          "ctrl+${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad store";
           "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
-          "ctrl+${alt}+space" =
-            "exec ${pkgs.rofi}/bin/rofi -show window -dpi 120";
+          "ctrl+${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show window -dpi 120";
         };
         floating = {
           inherit modifier;
@@ -226,8 +306,7 @@ in {
         startup = [
           {
             always = true;
-            command =
-              "--no-startup-id ${pkgs-stable.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
+            command = "--no-startup-id ${pkgs-stable.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
           }
           { command = "--no-startup-id ${pkgs-stable.copyq}/bin/copyq"; }
           {
@@ -235,8 +314,7 @@ in {
           }
           {
             always = true;
-            command =
-              "--no-startup-id ${pkgs.xmodmap}/bin/xmodmap ~/brain/config/dotfiles/xmodmap";
+            command = "--no-startup-id ${pkgs.xmodmap}/bin/xmodmap ~/brain/config/dotfiles/xmodmap";
           }
           {
             always = true;
@@ -244,8 +322,7 @@ in {
           }
           {
             always = true;
-            command =
-              "--no-startup-id ${pkgs.xset}/bin/xset r rate 200 50";
+            command = "--no-startup-id ${pkgs.xset}/bin/xset r rate 200 50";
           }
           {
             always = true;
@@ -257,19 +334,16 @@ in {
           }
           {
             always = true;
-            command =
-              "--no-startup-id ${pkgs.systemd}/bin/systemctl --user restart polybar";
+            command = "--no-startup-id ${pkgs.systemd}/bin/systemctl --user restart polybar";
           }
           {
             always = true;
-            command =
-              "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/.config/wallpaper";
+            command = "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/.config/wallpaper";
             # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/assets/wallpaper";
           }
           {
             always = true;
-            command =
-              "--no-startup-id ${pkgs.xmousepasteblock}/bin/xmousepasteblock";
+            command = "--no-startup-id ${pkgs.xmousepasteblock}/bin/xmousepasteblock";
           }
         ];
       };
