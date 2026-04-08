@@ -2,6 +2,11 @@
 let
   cfg = config.core.monitoring;
   auditPackage = config.security.auditd.package;
+  enabledAuditModes = lib.filter (mode: mode != null) [
+    (if cfg.collectors.auditFs.enable then "fs" else null)
+    (if cfg.collectors.auditExec.enable then "exec" else null)
+    (if cfg.collectors.auditNet.enable then "net" else null)
+  ];
   watchPathsJson = builtins.toJSON cfg.paths.watch;
   homeWatchPathsJson = builtins.toJSON (builtins.filter (path: lib.hasPrefix "/home/" path) cfg.paths.watch);
   dbipCountryDbPath = pkgs.dbip-country-lite.mmdb;
@@ -146,9 +151,11 @@ lib.mkIf cfg.enable (
         environment = {
           CORE_MONITORING_WATCH_PATHS_JSON = watchPathsJson;
           CORE_MONITORING_HOME_WATCH_PATHS_JSON = homeWatchPathsJson;
+          CORE_MONITORING_ENABLED_AUDIT_MODES = builtins.toJSON enabledAuditModes;
           CORE_MONITORING_MMDBLOOKUP_BIN = mmdblookupBin;
           CORE_MONITORING_COUNTRY_DB = dbipCountryDbPath;
           CORE_MONITORING_AUSEARCH_BIN = ausearchBin;
+          CORE_MONITORING_STATE_SYNC_INTERVAL_SECONDS = "30";
           CORE_MONITORING_STREAM_CHANNEL_CAPACITY = toString cfg.audit.streamChannelCapacity;
         };
       };

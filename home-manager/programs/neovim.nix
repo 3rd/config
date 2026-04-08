@@ -8,6 +8,8 @@
     defaultEditor = true;
     extraPackages = with pkgs; [ imagemagick gcc ];
     withNodeJs = true;
+    withPython3 = false;
+    withRuby = false;
   };
 
   # prevent home-manager from generating init.lua
@@ -17,4 +19,3 @@
     v = "/home/rabbit/.nix-profile/bin/with-vendors nvim";
   };
 }
-

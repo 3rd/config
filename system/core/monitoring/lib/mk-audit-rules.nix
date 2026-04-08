@@ -2,6 +2,7 @@
 {
   watchPaths,
   excludePaths ? [ ],
+  enableFs ? true,
   enableExec ? true,
   enableConnect ? true,
   extraRules ? [ ],
@@ -43,8 +44,10 @@ in
       "-a always,exit -F arch=b64 -S connect -k net_connect"
       "-a always,exit -F arch=b32 -S connect -k net_connect"
     ])
-    ++ (lib.concatMap (
-      path: mkDirRules "always" path (if isHomePath path then "fs_home" else "fs_system")
-    ) filteredWatchPaths)
+    ++ (lib.optionals enableFs (
+      lib.concatMap (
+        path: mkDirRules "always" path (if isHomePath path then "fs_home" else "fs_system")
+      ) filteredWatchPaths
+    ))
     ++ [ extraRules ]
   )

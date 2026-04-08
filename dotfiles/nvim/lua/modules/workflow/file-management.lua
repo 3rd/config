@@ -24,10 +24,6 @@ local setup_tree = function()
       update_cwd = false,
       ignore_list = {},
     },
-    system_open = {
-      cmd = nil,
-      args = {},
-    },
     actions = {
       open_file = {
         window_picker = {},

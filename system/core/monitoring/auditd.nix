@@ -13,6 +13,7 @@ in lib.mkIf cfg.enable {
     rules = mkAuditRules {
       watchPaths = cfg.paths.watch;
       excludePaths = cfg.paths.exclude;
+      enableFs = cfg.collectors.auditFs.enable;
       enableExec = cfg.audit.enableExec;
       enableConnect = cfg.audit.enableConnect;
       extraRules = cfg.audit.extraRules;

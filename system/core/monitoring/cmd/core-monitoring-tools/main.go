@@ -70,6 +70,8 @@ const (
 	auditDispatcherSocketPath = "/run/audit/audispd_events"
 	auditBackfillSeconds      = 3600
 	auditSpoolPollInterval    = time.Second
+	defaultStateSyncInterval  = 30 * time.Second
+	defaultFullStateInterval  = 5 * time.Minute
 	geoLookupTimeout          = 2 * time.Second
 	geoNegativeCacheTTL       = 15 * time.Minute
 	geoPositiveCacheTTL       = 24 * time.Hour
@@ -108,12 +110,56 @@ func infof(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, format+"\n", args...)
 }
 
+func parseAuditMode(value string) (auditMode, bool) {
+	switch strings.TrimSpace(value) {
+	case string(auditModeFS):
+		return auditModeFS, true
+	case string(auditModeExec):
+		return auditModeExec, true
+	case string(auditModeNet):
+		return auditModeNet, true
+	default:
+		return "", false
+	}
+}
+
+func auditModeKeys(mode auditMode) []string {
+	switch mode {
+	case auditModeFS:
+		return []string{"fs_home", "fs_system"}
+	case auditModeExec:
+		return []string{"exec"}
+	case auditModeNet:
+		return []string{"net_connect"}
+	default:
+		return nil
+	}
+}
+
 type auditConfig struct {
 	watchPaths            []string
 	homeWatchPaths        map[string]struct{}
 	mmdbLookupBin         string
 	countryDB             string
+	enabledModes          map[auditMode]struct{}
+	stateSyncInterval     time.Duration
+	fullStateInterval     time.Duration
 	streamChannelCapacity int
+}
+
+func (cfg auditConfig) modeEnabled(mode auditMode) bool {
+	_, ok := cfg.enabledModes[mode]
+	return ok
+}
+
+func (cfg auditConfig) enabledModesList() []auditMode {
+	modes := make([]auditMode, 0, 3)
+	for _, mode := range []auditMode{auditModeFS, auditModeExec, auditModeNet} {
+		if cfg.modeEnabled(mode) {
+			modes = append(modes, mode)
+		}
+	}
+	return modes
 }
 
 func runAuditNormalize(args []string) error {
@@ -199,6 +245,9 @@ type auditStreamExporter struct {
 	geoResolver     *auditGeoResolver
 	spoolOffsets    map[string]int64
 	spoolMu         sync.RWMutex
+	stateDirty      bool
+	heavyStateDirty bool
+	lastFullSave    time.Time
 }
 
 type auditGeoResolver struct {
@@ -259,7 +308,46 @@ func runAuditStreamExporter(args []string) error {
 	}
 
 	now := time.Now().UTC()
-	maxIntervalSeconds := maxInt(fsIntervalSeconds, maxInt(execIntervalSeconds, netIntervalSeconds))
+	maxIntervalSeconds := 1
+	buffers := map[auditMode]*auditModeBuffer{}
+	if cfg.modeEnabled(auditModeFS) {
+		buffers[auditModeFS] = &auditModeBuffer{
+			mode:           auditModeFS,
+			interval:       time.Duration(fsIntervalSeconds) * time.Second,
+			threshold:      fsThreshold,
+			summaryGroups:  map[string]*groupedAuditSummary{},
+			processGroups:  map[string]*groupedProcessCount{},
+			flushedThrough: float64(now.Unix()),
+			lastFlush:      now,
+		}
+		maxIntervalSeconds = maxInt(maxIntervalSeconds, fsIntervalSeconds)
+	}
+	if cfg.modeEnabled(auditModeExec) {
+		buffers[auditModeExec] = &auditModeBuffer{
+			mode:           auditModeExec,
+			interval:       time.Duration(execIntervalSeconds) * time.Second,
+			summaryGroups:  map[string]*groupedAuditSummary{},
+			flushedThrough: float64(now.Unix()),
+			lastFlush:      now,
+		}
+		maxIntervalSeconds = maxInt(maxIntervalSeconds, execIntervalSeconds)
+	}
+	if cfg.modeEnabled(auditModeNet) {
+		buffers[auditModeNet] = &auditModeBuffer{
+			mode:           auditModeNet,
+			interval:       time.Duration(netIntervalSeconds) * time.Second,
+			threshold:      netThreshold,
+			summaryGroups:  map[string]*groupedAuditSummary{},
+			processGroups:  map[string]*groupedProcessCount{},
+			flushedThrough: float64(now.Unix()),
+			lastFlush:      now,
+		}
+		maxIntervalSeconds = maxInt(maxIntervalSeconds, netIntervalSeconds)
+	}
+	if len(buffers) == 0 {
+		return fmt.Errorf("audit-stream-exporter requires at least one enabled mode")
+	}
+
 	exporter := &auditStreamExporter{
 		cfg:             cfg,
 		logDir:          args[0],
@@ -267,39 +355,14 @@ func runAuditStreamExporter(args []string) error {
 		lookbackDays:    lookbackDays,
 		ausearchBin:     os.Getenv("CORE_MONITORING_AUSEARCH_BIN"),
 		dedupeRetention: time.Duration(maxInt(2*auditBackfillSeconds, 2*maxIntervalSeconds)) * time.Second,
-		buffers: map[auditMode]*auditModeBuffer{
-			auditModeFS: {
-				mode:           auditModeFS,
-				interval:       time.Duration(fsIntervalSeconds) * time.Second,
-				threshold:      fsThreshold,
-				summaryGroups:  map[string]*groupedAuditSummary{},
-				processGroups:  map[string]*groupedProcessCount{},
-				flushedThrough: float64(now.Unix()),
-				lastFlush:      now,
-			},
-			auditModeExec: {
-				mode:           auditModeExec,
-				interval:       time.Duration(execIntervalSeconds) * time.Second,
-				summaryGroups:  map[string]*groupedAuditSummary{},
-				flushedThrough: float64(now.Unix()),
-				lastFlush:      now,
-			},
-			auditModeNet: {
-				mode:           auditModeNet,
-				interval:       time.Duration(netIntervalSeconds) * time.Second,
-				threshold:      netThreshold,
-				summaryGroups:  map[string]*groupedAuditSummary{},
-				processGroups:  map[string]*groupedProcessCount{},
-				flushedThrough: float64(now.Unix()),
-				lastFlush:      now,
-			},
-		},
+		buffers:         buffers,
 		fsSeen:          map[string]float64{},
 		execSeen:        map[string]float64{},
 		netSeen:         map[string]float64{},
 		seenExecutables: map[string]float64{},
 		geoResolver:     newAuditGeoResolver(cfg),
 		spoolOffsets:    map[string]int64{},
+		lastFullSave:    now,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -313,6 +376,9 @@ func runAuditStreamExporter(args []string) error {
 
 func (exporter *auditStreamExporter) run(ctx context.Context, now time.Time) error {
 	if err := exporter.loadRuntimeState(now); err != nil {
+		return err
+	}
+	if err := exporter.cleanupDisabledModeState(); err != nil {
 		return err
 	}
 	exporter.geoResolver.start(ctx)
@@ -336,7 +402,7 @@ func (exporter *auditStreamExporter) run(ctx context.Context, now time.Time) err
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
-	stateTicker := time.NewTicker(5 * time.Second)
+	stateTicker := time.NewTicker(exporter.cfg.stateSyncInterval)
 	defer stateTicker.Stop()
 
 	for {
@@ -349,7 +415,7 @@ func (exporter *auditStreamExporter) run(ctx context.Context, now time.Time) err
 				return err
 			}
 		case rawEvent := <-rawEvents:
-			if err := exporter.appendRawAuditEventGroup(rawEvent); err != nil {
+			if err := exporter.handleLiveRawAuditEventGroup(rawEvent); err != nil {
 				return err
 			}
 			if err := exporter.drainRawAuditEvents(rawEvents, 256); err != nil {
@@ -365,7 +431,7 @@ func (exporter *auditStreamExporter) run(ctx context.Context, now time.Time) err
 				return err
 			}
 		case <-stateTicker.C:
-			if err := exporter.saveState(); err != nil {
+			if err := exporter.saveStateIfDirty(); err != nil {
 				return err
 			}
 		}
@@ -374,17 +440,13 @@ func (exporter *auditStreamExporter) run(ctx context.Context, now time.Time) err
 
 func (exporter *auditStreamExporter) backfill(ctx context.Context, now time.Time) error {
 	startTs := exporter.loadStateStart(now)
-	events, err := exporter.collectBackfillEvents(ctx, startTs)
+	count, err := exporter.collectBackfillEvents(ctx, startTs)
 	if err != nil {
 		return err
 	}
-	if len(events) == 0 {
+	if count == 0 {
 		exporter.setAllFlushedThrough(float64(now.Unix()))
 		return nil
-	}
-
-	for _, event := range normalizeAuditEvents(events) {
-		exporter.enqueueEvent(event)
 	}
 	return exporter.flushAll(now)
 }
@@ -405,28 +467,42 @@ func (exporter *auditStreamExporter) loadStateStart(now time.Time) int64 {
 	return parsed
 }
 
-func (exporter *auditStreamExporter) collectBackfillEvents(ctx context.Context, startTs int64) ([]auditEventGroup, error) {
+func (exporter *auditStreamExporter) collectBackfillEvents(ctx context.Context, startTs int64) (int, error) {
 	if exporter.ausearchBin == "" {
-		return nil, nil
+		return 0, nil
 	}
 
 	file, err := os.CreateTemp("", "core-monitoring-audit-backfill-*.log")
 	if err != nil {
-		return nil, fmt.Errorf("create audit backfill temp file: %w", err)
+		return 0, fmt.Errorf("create audit backfill temp file: %w", err)
 	}
 	defer os.Remove(file.Name())
 	defer file.Close()
 
-	for _, key := range []string{"fs_home", "fs_system", "exec", "net_connect"} {
-		if err := appendAusearchRaw(ctx, file, exporter.ausearchBin, key, startTs); err != nil {
-			return nil, err
+	for _, mode := range exporter.cfg.enabledModesList() {
+		for _, key := range auditModeKeys(mode) {
+			if err := appendAusearchRaw(ctx, file, exporter.ausearchBin, key, startTs); err != nil {
+				return 0, err
+			}
 		}
 	}
 
 	if _, err := file.Seek(0, 0); err != nil {
-		return nil, fmt.Errorf("rewind audit backfill temp file: %w", err)
+		return 0, fmt.Errorf("rewind audit backfill temp file: %w", err)
 	}
-	return collectAuditEvents(file.Name())
+	count := 0
+	if err := exporter.streamAuditGroups(file, func(wrapper auditEventGroup) error {
+		event, _, ok := exporter.normalizeEnabledAuditEvent(wrapper)
+		if !ok {
+			return nil
+		}
+		count++
+		exporter.enqueueEvent(event)
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func appendAusearchRaw(ctx context.Context, output *os.File, ausearchBin string, key string, startTs int64) error {
@@ -650,6 +726,7 @@ func (exporter *auditStreamExporter) flushMode(mode auditMode, now time.Time) er
 	if flushedThrough > buffer.flushedThrough {
 		buffer.flushedThrough = flushedThrough
 	}
+	exporter.markStateDirty()
 	return nil
 }
 
@@ -666,41 +743,71 @@ func (exporter *auditStreamExporter) spoolOffsetsPath() string {
 }
 
 func (exporter *auditStreamExporter) saveState() error {
-	if err := os.MkdirAll(exporter.stateDir, 0o750); err != nil {
-		return fmt.Errorf("mkdir %s: %w", exporter.stateDir, err)
-	}
-
-	safeTs := exporter.safeTimestamp()
-	if err := os.WriteFile(exporter.stateFilePath(), []byte(strconv.FormatInt(int64(safeTs), 10)+"\n"), 0o640); err != nil {
+	if err := exporter.saveCheckpoint(); err != nil {
 		return err
 	}
 
 	nowTS := float64(time.Now().UTC().Unix())
 	dedupeCutoff := nowTS - exporter.dedupeRetention.Seconds()
-	pruneTimestampMap(exporter.fsSeen, dedupeCutoff)
-	pruneTimestampMap(exporter.execSeen, dedupeCutoff)
-	pruneTimestampMap(exporter.netSeen, dedupeCutoff)
-	pruneTimestampMap(exporter.seenExecutables, nowTS-float64(exporter.lookbackDays*86400))
-
-	if err := saveJSON(exporter.fsSeenPath(), exporter.fsSeen); err != nil {
-		return err
+	if exporter.cfg.modeEnabled(auditModeFS) {
+		pruneTimestampMap(exporter.fsSeen, dedupeCutoff)
+		if err := saveJSON(exporter.fsSeenPath(), exporter.fsSeen); err != nil {
+			return err
+		}
 	}
-	if err := saveJSON(exporter.execSeenPath(), exporter.execSeen); err != nil {
-		return err
+	if exporter.cfg.modeEnabled(auditModeExec) {
+		pruneTimestampMap(exporter.execSeen, dedupeCutoff)
+		pruneTimestampMap(exporter.seenExecutables, nowTS-float64(exporter.lookbackDays*86400))
+		if err := saveJSON(exporter.execSeenPath(), exporter.execSeen); err != nil {
+			return err
+		}
+		if err := saveJSON(exporter.seenExecPath(), exporter.seenExecutables); err != nil {
+			return err
+		}
 	}
-	if err := saveJSON(exporter.netSeenPath(), exporter.netSeen); err != nil {
-		return err
-	}
-	if err := saveJSON(exporter.seenExecPath(), exporter.seenExecutables); err != nil {
-		return err
-	}
-	if err := saveJSON(exporter.spoolOffsetsPath(), exporter.snapshotSpoolOffsets()); err != nil {
-		return err
+	if exporter.cfg.modeEnabled(auditModeNet) {
+		pruneTimestampMap(exporter.netSeen, dedupeCutoff)
+		if err := saveJSON(exporter.netSeenPath(), exporter.netSeen); err != nil {
+			return err
+		}
 	}
 	if cache, dirty := exporter.geoResolver.snapshotDirty(); dirty {
 		if err := saveJSON(exporter.geoCachePath(), cache); err != nil {
 			return err
 		}
+	}
+	exporter.heavyStateDirty = false
+	exporter.lastFullSave = time.Now().UTC()
+	return nil
+}
+
+func (exporter *auditStreamExporter) saveCheckpoint() error {
+	if err := os.MkdirAll(exporter.stateDir, 0o750); err != nil {
+		return fmt.Errorf("mkdir %s: %w", exporter.stateDir, err)
+	}
+
+	safeTs := exporter.safeTimestamp()
+	if err := writeFileAtomic(exporter.stateFilePath(), []byte(strconv.FormatInt(int64(safeTs), 10)+"\n"), 0o640); err != nil {
+		return err
+	}
+	if err := saveJSON(exporter.spoolOffsetsPath(), exporter.snapshotSpoolOffsets()); err != nil {
+		return err
+	}
+	exporter.stateDirty = false
+	return nil
+}
+
+func (exporter *auditStreamExporter) saveStateIfDirty() error {
+	if !exporter.stateDirty && !exporter.heavyStateDirty && !exporter.geoResolver.isDirty() {
+		return nil
+	}
+	if exporter.heavyStateDirty || exporter.geoResolver.isDirty() {
+		if time.Since(exporter.lastFullSave) >= exporter.cfg.fullStateInterval {
+			return exporter.saveState()
+		}
+	}
+	if exporter.stateDirty {
+		return exporter.saveCheckpoint()
 	}
 	return nil
 }
@@ -725,21 +832,35 @@ func (exporter *auditStreamExporter) setAllFlushedThrough(ts float64) {
 		buffer.flushedThrough = ts
 		buffer.lastFlush = time.Now().UTC()
 	}
+	exporter.markStateDirty()
 }
 
 func (exporter *auditStreamExporter) loadRuntimeState(now time.Time) error {
 	var err error
-	if exporter.fsSeen, err = loadTimestampMap(exporter.fsSeenPath()); err != nil {
-		return err
+	if exporter.cfg.modeEnabled(auditModeFS) {
+		if exporter.fsSeen, err = loadTimestampMap(exporter.fsSeenPath()); err != nil {
+			return err
+		}
+	} else {
+		exporter.fsSeen = map[string]float64{}
 	}
-	if exporter.execSeen, err = loadTimestampMap(exporter.execSeenPath()); err != nil {
-		return err
+	if exporter.cfg.modeEnabled(auditModeExec) {
+		if exporter.execSeen, err = loadTimestampMap(exporter.execSeenPath()); err != nil {
+			return err
+		}
+		if exporter.seenExecutables, err = loadTimestampMap(exporter.seenExecPath()); err != nil {
+			return err
+		}
+	} else {
+		exporter.execSeen = map[string]float64{}
+		exporter.seenExecutables = map[string]float64{}
 	}
-	if exporter.netSeen, err = loadTimestampMap(exporter.netSeenPath()); err != nil {
-		return err
-	}
-	if exporter.seenExecutables, err = loadTimestampMap(exporter.seenExecPath()); err != nil {
-		return err
+	if exporter.cfg.modeEnabled(auditModeNet) {
+		if exporter.netSeen, err = loadTimestampMap(exporter.netSeenPath()); err != nil {
+			return err
+		}
+	} else {
+		exporter.netSeen = map[string]float64{}
 	}
 	if exporter.spoolOffsets, err = loadOffsetMap(exporter.spoolOffsetsPath()); err != nil {
 		return err
@@ -752,11 +873,20 @@ func (exporter *auditStreamExporter) loadRuntimeState(now time.Time) error {
 
 	nowTS := float64(now.Unix())
 	dedupeCutoff := nowTS - exporter.dedupeRetention.Seconds()
-	pruneTimestampMap(exporter.fsSeen, dedupeCutoff)
-	pruneTimestampMap(exporter.execSeen, dedupeCutoff)
-	pruneTimestampMap(exporter.netSeen, dedupeCutoff)
-	pruneTimestampMap(exporter.seenExecutables, nowTS-float64(exporter.lookbackDays*86400))
+	if exporter.cfg.modeEnabled(auditModeFS) {
+		pruneTimestampMap(exporter.fsSeen, dedupeCutoff)
+	}
+	if exporter.cfg.modeEnabled(auditModeExec) {
+		pruneTimestampMap(exporter.execSeen, dedupeCutoff)
+		pruneTimestampMap(exporter.seenExecutables, nowTS-float64(exporter.lookbackDays*86400))
+	}
+	if exporter.cfg.modeEnabled(auditModeNet) {
+		pruneTimestampMap(exporter.netSeen, dedupeCutoff)
+	}
 	exporter.geoResolver.prune(now)
+	exporter.stateDirty = false
+	exporter.heavyStateDirty = false
+	exporter.lastFullSave = now
 	return nil
 }
 
@@ -767,7 +897,7 @@ func (exporter *auditStreamExporter) drainRawAuditEvents(input <-chan auditRawEv
 	for drained := 0; drained < limit; drained++ {
 		select {
 		case event := <-input:
-			if err := exporter.appendRawAuditEventGroup(event); err != nil {
+			if err := exporter.handleLiveRawAuditEventGroup(event); err != nil {
 				return err
 			}
 		default:
@@ -802,52 +932,103 @@ func (exporter *auditStreamExporter) processSpool(ctx context.Context, output ch
 	}
 
 	for _, path := range paths {
+		mode, ok := spoolModeFromPath(path)
+		if !ok {
+			if err := exporter.dropSpoolFile(path); err != nil {
+				return err
+			}
+			continue
+		}
+		if !exporter.cfg.modeEnabled(mode) {
+			if err := exporter.dropSpoolFile(path); err != nil {
+				return err
+			}
+			continue
+		}
 		offset := exporter.spoolOffset(path)
-		events, newOffset, err := collectAuditEventsDelta(path, offset)
+		newOffset, err := exporter.streamAuditGroupsAtOffset(path, offset, func(wrapper auditEventGroup) error {
+			event, _, ok := exporter.normalizeEnabledAuditEvent(wrapper)
+			if !ok {
+				return nil
+			}
+			select {
+			case output <- event:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+			return nil
+		})
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return nil
+			}
 			return err
 		}
 		if newOffset > offset {
 			exporter.setSpoolOffset(path, newOffset)
-		}
-		for _, event := range normalizeAuditEvents(events) {
-			select {
-			case output <- event:
-			case <-ctx.Done():
-				return nil
-			}
 		}
 	}
 
 	return exporter.pruneProcessedSpoolFiles()
 }
 
-func (exporter *auditStreamExporter) appendRawAuditEventGroup(group auditRawEventGroup) error {
+func (exporter *auditStreamExporter) handleLiveRawAuditEventGroup(group auditRawEventGroup) error {
 	if len(group.Lines) == 0 {
 		return nil
 	}
+	event, mode, ok := exporter.normalizeEnabledRawAuditEventGroup(group)
+	if !ok {
+		return nil
+	}
+	path, offset, err := exporter.writeRawAuditEventGroup(mode, group)
+	if err != nil {
+		return err
+	}
+	exporter.enqueueEvent(event)
+	exporter.setSpoolOffset(path, offset)
+	return nil
+}
 
-	path := exporter.spoolPathForTimestamp(group.Timestamp)
+func (exporter *auditStreamExporter) writeRawAuditEventGroup(mode auditMode, group auditRawEventGroup) (string, int64, error) {
+	path := exporter.spoolPathForTimestamp(mode, group.Timestamp)
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
-		return fmt.Errorf("mkdir %s: %w", filepath.Dir(path), err)
+		return "", 0, fmt.Errorf("mkdir %s: %w", filepath.Dir(path), err)
 	}
 
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o640)
 	if err != nil {
-		return fmt.Errorf("open raw audit spool: %w", err)
+		return "", 0, fmt.Errorf("open raw audit spool: %w", err)
 	}
 	defer file.Close()
 
 	payload := strings.Join(group.Lines, "\n") + "\n"
-	if _, err := file.WriteString(payload); err != nil {
-		return fmt.Errorf("append raw audit spool: %w", err)
+	startOffset, err := file.Seek(0, io.SeekEnd)
+	if err != nil {
+		return "", 0, fmt.Errorf("seek raw audit spool: %w", err)
 	}
-	return nil
+	if _, err := file.WriteString(payload); err != nil {
+		return "", 0, fmt.Errorf("append raw audit spool: %w", err)
+	}
+	exporter.markStateDirty()
+	return path, startOffset + int64(len(payload)), nil
 }
 
-func (exporter *auditStreamExporter) spoolPathForTimestamp(timestamp float64) string {
+func (exporter *auditStreamExporter) spoolPathForTimestamp(mode auditMode, timestamp float64) string {
 	date := time.Unix(int64(timestamp), 0).UTC().Format("20060102")
-	return filepath.Join(exporter.spoolDirPath(), fmt.Sprintf("audit-live-%s.log", date))
+	return filepath.Join(exporter.spoolDirPath(), fmt.Sprintf("audit-live-%s-%s.log", mode, date))
+}
+
+func spoolModeFromPath(path string) (auditMode, bool) {
+	name := filepath.Base(path)
+	if !strings.HasPrefix(name, "audit-live-") || !strings.HasSuffix(name, ".log") {
+		return "", false
+	}
+	trimmed := strings.TrimSuffix(strings.TrimPrefix(name, "audit-live-"), ".log")
+	parts := strings.Split(trimmed, "-")
+	if len(parts) < 2 {
+		return "", false
+	}
+	return parseAuditMode(parts[0])
 }
 
 func (exporter *auditStreamExporter) spoolPaths() ([]string, error) {
@@ -873,6 +1054,44 @@ func (exporter *auditStreamExporter) spoolPaths() ([]string, error) {
 	return paths, nil
 }
 
+func (exporter *auditStreamExporter) cleanupDisabledModeState() error {
+	disabledPaths := []string{}
+	if !exporter.cfg.modeEnabled(auditModeFS) {
+		disabledPaths = append(disabledPaths, exporter.fsSeenPath())
+	}
+	if !exporter.cfg.modeEnabled(auditModeExec) {
+		disabledPaths = append(disabledPaths, exporter.execSeenPath(), exporter.seenExecPath())
+	}
+	if !exporter.cfg.modeEnabled(auditModeNet) {
+		disabledPaths = append(disabledPaths, exporter.netSeenPath())
+	}
+	for _, path := range disabledPaths {
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove disabled state %s: %w", path, err)
+		}
+	}
+	spoolPaths, err := exporter.spoolPaths()
+	if err != nil {
+		return err
+	}
+	for _, path := range spoolPaths {
+		mode, ok := spoolModeFromPath(path)
+		if !ok {
+			if err := exporter.dropSpoolFile(path); err != nil {
+				return err
+			}
+			continue
+		}
+		if exporter.cfg.modeEnabled(mode) {
+			continue
+		}
+		if err := exporter.dropSpoolFile(path); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (exporter *auditStreamExporter) spoolOffset(path string) int64 {
 	exporter.spoolMu.RLock()
 	defer exporter.spoolMu.RUnlock()
@@ -882,13 +1101,21 @@ func (exporter *auditStreamExporter) spoolOffset(path string) int64 {
 func (exporter *auditStreamExporter) setSpoolOffset(path string, offset int64) {
 	exporter.spoolMu.Lock()
 	defer exporter.spoolMu.Unlock()
+	if current, ok := exporter.spoolOffsets[path]; ok && current == offset {
+		return
+	}
 	exporter.spoolOffsets[path] = offset
+	exporter.stateDirty = true
 }
 
 func (exporter *auditStreamExporter) removeSpoolOffset(path string) {
 	exporter.spoolMu.Lock()
 	defer exporter.spoolMu.Unlock()
+	if _, ok := exporter.spoolOffsets[path]; !ok {
+		return
+	}
 	delete(exporter.spoolOffsets, path)
+	exporter.stateDirty = true
 }
 
 func (exporter *auditStreamExporter) snapshotSpoolOffsets() map[string]int64 {
@@ -908,9 +1135,13 @@ func (exporter *auditStreamExporter) pruneProcessedSpoolFiles() error {
 		return err
 	}
 
-	currentPath := exporter.spoolPathForTimestamp(float64(time.Now().UTC().Unix()))
+	currentPaths := map[string]struct{}{}
+	nowTS := float64(time.Now().UTC().Unix())
+	for _, mode := range exporter.cfg.enabledModesList() {
+		currentPaths[exporter.spoolPathForTimestamp(mode, nowTS)] = struct{}{}
+	}
 	for _, path := range paths {
-		if path == currentPath {
+		if _, ok := currentPaths[path]; ok {
 			continue
 		}
 		info, err := os.Stat(path)
@@ -929,6 +1160,14 @@ func (exporter *auditStreamExporter) pruneProcessedSpoolFiles() error {
 		}
 		exporter.removeSpoolOffset(path)
 	}
+	return nil
+}
+
+func (exporter *auditStreamExporter) dropSpoolFile(path string) error {
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("remove spool file: %w", err)
+	}
+	exporter.removeSpoolOffset(path)
 	return nil
 }
 
@@ -1045,6 +1284,7 @@ func (exporter *auditStreamExporter) processFSEvent(buffer *auditModeBuffer, eve
 			continue
 		}
 		exporter.fsSeen[dedupeKey] = event.Timestamp
+		exporter.markHeavyStateDirty()
 
 		scope := "system"
 		if _, ok := exporter.cfg.homeWatchPaths[watchedRoot]; ok {
@@ -1089,6 +1329,7 @@ func (exporter *auditStreamExporter) processExecEvent(buffer *auditModeBuffer, e
 		return
 	}
 	exporter.execSeen[dedupeKey] = event.Timestamp
+	exporter.markHeavyStateDirty()
 
 	record := baseProcessRecord(event)
 	record["kind"] = "audit_exec_event"
@@ -1117,6 +1358,7 @@ func (exporter *auditStreamExporter) processExecEvent(buffer *auditModeBuffer, e
 		return
 	}
 	exporter.seenExecutables[exe] = event.Timestamp
+	exporter.markHeavyStateDirty()
 	buffer.anomalies = append(buffer.anomalies, buildAnomaly(
 		anyToString(record["event_time"]),
 		"new_executable",
@@ -1138,6 +1380,7 @@ func (exporter *auditStreamExporter) processNetEvent(buffer *auditModeBuffer, ev
 		return
 	}
 	exporter.netSeen[dedupeKey] = event.Timestamp
+	exporter.markHeavyStateDirty()
 
 	sockaddr := map[string]string{}
 	for _, item := range event.SockAddrs {
@@ -1325,6 +1568,12 @@ func (resolver *auditGeoResolver) snapshotDirty() (map[string]geoRecord, bool) {
 	return snapshot, true
 }
 
+func (resolver *auditGeoResolver) isDirty() bool {
+	resolver.mu.RLock()
+	defer resolver.mu.RUnlock()
+	return resolver.dirty
+}
+
 func (resolver *auditGeoResolver) prune(now time.Time) {
 	resolver.mu.Lock()
 	defer resolver.mu.Unlock()
@@ -1391,6 +1640,65 @@ func maxInt(left int, right int) int {
 	return right
 }
 
+func (exporter *auditStreamExporter) markStateDirty() {
+	exporter.stateDirty = true
+}
+
+func (exporter *auditStreamExporter) markHeavyStateDirty() {
+	exporter.heavyStateDirty = true
+	exporter.stateDirty = true
+}
+
+func normalizeRawAuditEventGroup(group auditRawEventGroup) (auditEvent, bool) {
+	wrapper := auditEventGroup{
+		Serial:    group.Serial,
+		Timestamp: group.Timestamp,
+		Records:   make([]parsedAuditLine, 0, len(group.Lines)),
+	}
+	for _, line := range group.Lines {
+		parsed, ok := parseAuditLine(line)
+		if !ok {
+			continue
+		}
+		wrapper.Timestamp = parsed.Timestamp
+		wrapper.Records = append(wrapper.Records, parsed)
+	}
+	if len(wrapper.Records) == 0 {
+		return auditEvent{}, false
+	}
+	return normalizeAuditEvent(wrapper), true
+}
+
+func (exporter *auditStreamExporter) normalizeEnabledRawAuditEventGroup(group auditRawEventGroup) (auditEvent, auditMode, bool) {
+	event, ok := normalizeRawAuditEventGroup(group)
+	if !ok {
+		return auditEvent{}, "", false
+	}
+	mode := eventMode(event)
+	if mode == "" || !exporter.cfg.modeEnabled(mode) {
+		return auditEvent{}, "", false
+	}
+	return event, mode, true
+}
+
+func (exporter *auditStreamExporter) normalizeEnabledAuditEvent(wrapper auditEventGroup) (auditEvent, auditMode, bool) {
+	event := normalizeAuditEvent(wrapper)
+	mode := eventMode(event)
+	if mode == "" || !exporter.cfg.modeEnabled(mode) {
+		return auditEvent{}, "", false
+	}
+	return event, mode, true
+}
+
+func (exporter *auditStreamExporter) streamAuditGroups(reader io.Reader, onGroup func(auditEventGroup) error) error {
+	scanner := bufio.NewScanner(reader)
+	return scanAuditEventGroups(scanner, onGroup)
+}
+
+func (exporter *auditStreamExporter) streamAuditGroupsAtOffset(path string, startOffset int64, onGroup func(auditEventGroup) error) (int64, error) {
+	return scanAuditEventGroupsAtOffset(path, startOffset, onGroup)
+}
+
 func loadTimestampMap(path string) (map[string]float64, error) {
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -1402,6 +1710,7 @@ func loadTimestampMap(path string) (map[string]float64, error) {
 
 	result := map[string]float64{}
 	if err := json.Unmarshal(data, &result); err != nil {
+		quarantineCorruptFile(path, err)
 		return map[string]float64{}, nil
 	}
 	return result, nil
@@ -1472,9 +1781,16 @@ func sleepContext(ctx context.Context, delay time.Duration) bool {
 
 func loadAuditConfigFromEnv() (auditConfig, error) {
 	cfg := auditConfig{
-		homeWatchPaths:        map[string]struct{}{},
+		homeWatchPaths: map[string]struct{}{},
+		enabledModes: map[auditMode]struct{}{
+			auditModeFS:   {},
+			auditModeExec: {},
+			auditModeNet:  {},
+		},
 		mmdbLookupBin:         os.Getenv("CORE_MONITORING_MMDBLOOKUP_BIN"),
 		countryDB:             os.Getenv("CORE_MONITORING_COUNTRY_DB"),
+		stateSyncInterval:     defaultStateSyncInterval,
+		fullStateInterval:     defaultFullStateInterval,
 		streamChannelCapacity: 256,
 	}
 
@@ -1503,6 +1819,42 @@ func loadAuditConfigFromEnv() (auditConfig, error) {
 			return auditConfig{}, fmt.Errorf("parse stream channel capacity: must be positive")
 		}
 		cfg.streamChannelCapacity = value
+	}
+
+	if raw := strings.TrimSpace(os.Getenv("CORE_MONITORING_ENABLED_AUDIT_MODES")); raw != "" {
+		var enabledModes []string
+		if err := json.Unmarshal([]byte(raw), &enabledModes); err != nil {
+			return auditConfig{}, fmt.Errorf("parse enabled audit modes: %w", err)
+		}
+		cfg.enabledModes = map[auditMode]struct{}{}
+		for _, value := range enabledModes {
+			mode, ok := parseAuditMode(value)
+			if !ok {
+				return auditConfig{}, fmt.Errorf("parse enabled audit modes: unsupported mode %q", value)
+			}
+			cfg.enabledModes[mode] = struct{}{}
+		}
+	}
+
+	if raw := strings.TrimSpace(os.Getenv("CORE_MONITORING_STATE_SYNC_INTERVAL_SECONDS")); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil {
+			return auditConfig{}, fmt.Errorf("parse state sync interval: %w", err)
+		}
+		if value <= 0 {
+			return auditConfig{}, fmt.Errorf("parse state sync interval: must be positive")
+		}
+		cfg.stateSyncInterval = time.Duration(value) * time.Second
+	}
+	if raw := strings.TrimSpace(os.Getenv("CORE_MONITORING_FULL_STATE_SYNC_INTERVAL_SECONDS")); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil {
+			return auditConfig{}, fmt.Errorf("parse full state sync interval: %w", err)
+		}
+		if value <= 0 {
+			return auditConfig{}, fmt.Errorf("parse full state sync interval: must be positive")
+		}
+		cfg.fullStateInterval = time.Duration(value) * time.Second
 	}
 
 	return cfg, nil
@@ -1557,11 +1909,40 @@ func collectAuditEvents(inputPath string) ([]auditEventGroup, error) {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
-
 	var events []auditEventGroup
+	if err := scanAuditEventGroups(bufio.NewScanner(file), func(group auditEventGroup) error {
+		events = append(events, group)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func collectAuditEventsDelta(inputPath string, startOffset int64) ([]auditEventGroup, int64, error) {
+	var events []auditEventGroup
+	offset, err := scanAuditEventGroupsAtOffset(inputPath, startOffset, func(group auditEventGroup) error {
+		events = append(events, group)
+		return nil
+	})
+	if err != nil {
+		return nil, startOffset, err
+	}
+	return events, offset, nil
+}
+
+func scanAuditEventGroups(scanner *bufio.Scanner, onGroup func(auditEventGroup) error) error {
+	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
 	var current *auditEventGroup
+	emitCurrent := func() error {
+		if current == nil {
+			return nil
+		}
+		group := *current
+		current = nil
+		return onGroup(group)
+	}
+
 	for scanner.Scan() {
 		parsed, ok := parseAuditLine(scanner.Text())
 		if !ok {
@@ -1569,8 +1950,9 @@ func collectAuditEvents(inputPath string) ([]auditEventGroup, error) {
 		}
 
 		if current != nil && parsed.Serial != current.Serial {
-			events = append(events, *current)
-			current = nil
+			if err := emitCurrent(); err != nil {
+				return err
+			}
 		}
 
 		if current == nil {
@@ -1583,33 +1965,37 @@ func collectAuditEvents(inputPath string) ([]auditEventGroup, error) {
 		current.Records = append(current.Records, parsed)
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("scan audit input: %w", err)
+		return fmt.Errorf("scan audit input: %w", err)
 	}
-	if current != nil {
-		events = append(events, *current)
-	}
-	return events, nil
+	return emitCurrent()
 }
 
-func collectAuditEventsDelta(inputPath string, startOffset int64) ([]auditEventGroup, int64, error) {
+func scanAuditEventGroupsAtOffset(inputPath string, startOffset int64, onGroup func(auditEventGroup) error) (int64, error) {
 	file, err := os.Open(inputPath)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil, startOffset, nil
+		return startOffset, nil
 	}
 	if err != nil {
-		return nil, startOffset, fmt.Errorf("open audit input: %w", err)
+		return startOffset, fmt.Errorf("open audit input: %w", err)
 	}
 	defer file.Close()
 
 	if _, err := file.Seek(startOffset, io.SeekStart); err != nil {
-		return nil, startOffset, fmt.Errorf("seek audit input: %w", err)
+		return startOffset, fmt.Errorf("seek audit input: %w", err)
 	}
 
 	reader := bufio.NewReader(file)
 	offset := startOffset
-	var events []auditEventGroup
 	var current *auditEventGroup
 	lastReadEndedWithNewline := true
+	emitCurrent := func() error {
+		if current == nil {
+			return nil
+		}
+		group := *current
+		current = nil
+		return onGroup(group)
+	}
 
 	for {
 		line, err := reader.ReadString('\n')
@@ -1621,8 +2007,9 @@ func collectAuditEventsDelta(inputPath string, startOffset int64) ([]auditEventG
 				parsed, ok := parseAuditLine(strings.TrimRight(line, "\r\n"))
 				if ok {
 					if current != nil && parsed.Serial != current.Serial {
-						events = append(events, *current)
-						current = nil
+						if err := emitCurrent(); err != nil {
+							return startOffset, err
+						}
 					}
 
 					if current == nil {
@@ -1641,15 +2028,17 @@ func collectAuditEventsDelta(inputPath string, startOffset int64) ([]auditEventG
 			break
 		}
 		if err != nil {
-			return nil, startOffset, fmt.Errorf("scan audit input: %w", err)
+			return startOffset, fmt.Errorf("scan audit input: %w", err)
 		}
 	}
 
 	if current != nil && lastReadEndedWithNewline {
-		events = append(events, *current)
+		if err := emitCurrent(); err != nil {
+			return startOffset, err
+		}
 	}
 
-	return events, offset, nil
+	return offset, nil
 }
 
 func parseAuditLine(line string) (parsedAuditLine, bool) {
@@ -2522,6 +2911,7 @@ func loadGeoCache(path string) (map[string]geoRecord, error) {
 
 	cache := map[string]geoRecord{}
 	if err := json.Unmarshal(data, &cache); err != nil {
+		quarantineCorruptFile(path, err)
 		return map[string]geoRecord{}, nil
 	}
 	return cache, nil
@@ -2538,9 +2928,45 @@ func loadOffsetMap(path string) (map[string]int64, error) {
 
 	offsets := map[string]int64{}
 	if err := json.Unmarshal(data, &offsets); err != nil {
+		quarantineCorruptFile(path, err)
 		return map[string]int64{}, nil
 	}
 	return offsets, nil
+}
+
+func quarantineCorruptFile(path string, err error) {
+	corruptPath := fmt.Sprintf("%s.corrupt-%d", path, time.Now().UTC().UnixNano())
+	if renameErr := os.Rename(path, corruptPath); renameErr != nil {
+		infof("discarding corrupt state %s after parse error: %v (quarantine failed: %v)", path, err, renameErr)
+		return
+	}
+	infof("discarding corrupt state %s after parse error: %v (moved to %s)", path, err, corruptPath)
+}
+
+func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
+	dir := filepath.Dir(path)
+	file, err := os.CreateTemp(dir, filepath.Base(path)+".tmp-*")
+	if err != nil {
+		return fmt.Errorf("create temp %s: %w", path, err)
+	}
+	tempPath := file.Name()
+	defer os.Remove(tempPath)
+
+	if err := file.Chmod(perm); err != nil {
+		file.Close()
+		return fmt.Errorf("chmod temp %s: %w", path, err)
+	}
+	if _, err := file.Write(data); err != nil {
+		file.Close()
+		return fmt.Errorf("write temp %s: %w", path, err)
+	}
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("close temp %s: %w", path, err)
+	}
+	if err := os.Rename(tempPath, path); err != nil {
+		return fmt.Errorf("rename temp %s: %w", path, err)
+	}
+	return nil
 }
 
 func saveJSON(path string, payload any) error {
@@ -2551,7 +2977,7 @@ func saveJSON(path string, payload any) error {
 	if err != nil {
 		return fmt.Errorf("marshal %s: %w", path, err)
 	}
-	return os.WriteFile(path, data, 0o640)
+	return writeFileAtomic(path, data, 0o640)
 }
 
 func appendNDJSON(path string, records []map[string]any) error {

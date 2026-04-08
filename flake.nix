@@ -90,6 +90,18 @@
       keyringPinOverlay = final: prev: {
         gnome-keyring = inputs.nixpkgs-keyring.legacyPackages.${prev.system}.gnome-keyring;
       };
+      fixWiredOverlay = final: prev: {
+        wired = prev.symlinkJoin {
+          name = prev.wired.name;
+          paths = [ prev.wired ];
+          nativeBuildInputs = [ prev.makeWrapper ];
+          postBuild = ''
+            wrapProgram $out/bin/wired \
+              --prefix LD_LIBRARY_PATH : ${prev.lib.makeLibraryPath [ prev.libxkbcommon ]}
+          '';
+          meta = prev.wired.meta;
+        };
+      };
     in
     {
       overlays = import ./system/overlays { inherit inputs; };
@@ -160,6 +172,7 @@
               inherit system;
               overlays = [
                 wired.overlays.default
+                fixWiredOverlay
                 fixTextualOverlay
                 # inputs.ghostty.overlays.default
               ];
@@ -207,7 +220,10 @@
           home-manager.lib.homeManagerConfiguration {
             pkgs = import nixpkgs {
               inherit system;
-              overlays = [ wired.overlays.default ];
+              overlays = [
+                wired.overlays.default
+                fixWiredOverlay
+              ];
             };
             extraSpecialArgs = {
               inherit inputs outputs;
