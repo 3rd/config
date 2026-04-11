@@ -35,6 +35,14 @@ in
 
   programs.git = {
     enable = true;
+    ignores = [
+      "node_modules"
+      ".private"
+      "eslinter.yml"
+      "**/.claude/settings.local.json"
+      "**/.eslintcache"
+      ".codex"
+    ];
     settings = {
       alias = {
         undo = ''

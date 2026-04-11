@@ -1,0 +1,90 @@
+id: ts-arrow-no-multiline-expression-body-async
+message: Multiline concise async arrow function should use a block body
+severity: warning
+language: tsx
+note: When a concise async arrow expression spans more than 2 body lines, rewrite it to a block body with an explicit return unless the body is a single direct, member, or optional call, or a tagged-template call. The autofix preserves generic type parameters and explicit return types; a formatter can normalize indentation afterward.
+rule:
+  all:
+    - kind: arrow_function
+    - not:
+        has:
+          field: body
+          kind: statement_block
+    - not:
+        has:
+          field: body
+          any:
+            - all:
+                - kind: call_expression
+                - not:
+                    has:
+                      field: function
+                      stopBy: end
+                      any:
+                        - kind: call_expression
+                        - kind: new_expression
+    - regex: "^async\\b"
+    - any:
+        - all:
+            - has:
+                field: type_parameters
+                pattern: $TYPE_PARAMS
+            - has:
+                field: return_type
+                pattern: $RETURN
+            - has:
+                field: parameters
+                pattern: $PARAMS
+            - has:
+                field: body
+                pattern: $BODY
+        - all:
+            - has:
+                field: type_parameters
+                pattern: $TYPE_PARAMS
+            - not:
+                has:
+                  field: return_type
+                  kind: type_annotation
+            - has:
+                field: parameters
+                pattern: $PARAMS
+            - has:
+                field: body
+                pattern: $BODY
+        - all:
+            - not:
+                has:
+                  field: type_parameters
+                  kind: type_parameters
+            - has:
+                field: return_type
+                pattern: $RETURN
+            - has:
+                field: parameters
+                pattern: $PARAMS
+            - has:
+                field: body
+                pattern: $BODY
+        - all:
+            - not:
+                has:
+                  field: type_parameters
+                  kind: type_parameters
+            - not:
+                has:
+                  field: return_type
+                  kind: type_annotation
+            - has:
+                field: parameters
+                pattern: $PARAMS
+            - has:
+                field: body
+                pattern: $BODY
+constraints:
+  BODY:
+    regex: "(?s)(?:.*\\n){2,}.*"
+fix: |-
+  async $TYPE_PARAMS$PARAMS$RETURN => {
+    return $BODY
+  }

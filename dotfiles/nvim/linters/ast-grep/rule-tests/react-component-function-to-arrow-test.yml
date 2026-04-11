@@ -1,0 +1,51 @@
+id: react-component-function-to-arrow
+valid:
+  - |
+      function helper() {
+        return <div />
+      }
+  - |
+      function ExampleBad<T>(props: ExampleBadProps<T>) {
+        return <div />
+      }
+  - |
+      export default function ExampleBad(props: ExampleBadProps) {
+        return <div />
+      }
+  - |
+      function ExampleBad() {
+        return notJsx()
+      }
+  - |
+      function helperWrapper() {
+        function Child() {
+          return <div />
+        }
+
+        return <Child />
+      }
+invalid:
+  - |
+      function ExampleBad(props: ExampleBadProps) {
+        return <div />
+      }
+  - |
+      export function ExampleBad(props: ExampleBadProps) {
+        return <div />
+      }
+  - |
+      function ExampleBad(
+        props: ExampleBadProps,
+      ): React.JSX.Element {
+        // keep comment
+        return <div />
+      }
+  - |
+      function ExampleBad() {
+        const value = useThing()
+        return null
+      }
+  - |
+      function ExampleBad(props: ExampleBadProps) {
+        return React.createElement("div", null, props.label)
+      }

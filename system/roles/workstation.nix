@@ -45,6 +45,7 @@
     graphviz
     # imhex
     inotify-tools
+    iotop
     libfaketime
     libnotify
     moreutils
@@ -94,6 +95,7 @@
   programs.dconf.enable = true;
   programs.firejail.enable = true;
   programs.nm-applet.enable = true;
+  programs.sysdig.enable = true;
 
   services.dbus = {
     enable = true;

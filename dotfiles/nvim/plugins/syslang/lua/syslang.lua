@@ -253,13 +253,352 @@ local is_task_node = function(node)
   return false
 end
 
-local handle_toggle_task = function(force_clear)
+local is_list_item_node = function(node)
+  return node:type() == "list_item"
+end
+
+local is_section_node = function(node)
+  return node:type() == "section"
+end
+
+local is_outline_node = function(node)
+  return node:type():match("^outline_%d$") ~= nil
+end
+
+local is_code_block_node = function(node)
+  return node:type() == "code_block"
+end
+
+local is_image_node = function(node)
+  return node:type() == "image"
+end
+
+local is_banner_node = function(node)
+  return node:type() == "banner"
+end
+
+local is_task_session_node = function(node)
+  return node:type() == "task_session"
+end
+
+local is_task_schedule_node = function(node)
+  return node:type() == "task_schedule"
+end
+
+local is_task_completion_node = function(node)
+  return node:type() == "task_completion"
+end
+
+local is_horizontal_rule_node = function(node)
+  return node:type() == "horizontal_rule"
+end
+
+local is_double_horizontal_rule_node = function(node)
+  return node:type() == "double_horizontal_rule"
+end
+
+local is_label_line_node = function(node)
+  return node:type() == "label_line"
+end
+
+local is_text_line_node = function(node)
+  return node:type() == "text_line"
+end
+
+local movable_entry_specs = {
+  { matches = is_outline_node },
+  { matches = is_task_node },
+  { matches = is_list_item_node },
+  { matches = is_section_node },
+  { matches = is_code_block_node },
+  { matches = is_image_node },
+  { matches = is_banner_node },
+  { matches = is_task_session_node },
+  { matches = is_task_schedule_node },
+  { matches = is_task_completion_node },
+  { matches = is_horizontal_rule_node },
+  { matches = is_double_horizontal_rule_node },
+  { matches = is_label_line_node },
+  { matches = is_text_line_node },
+}
+
+local get_cursor_node = function()
   local root = slib.get_root()
   if root == nil then return end
 
   local position = vim.api.nvim_win_get_cursor(0)
+  local row = position[1]
+  local line_length = #vim.fn.getline(row)
+  local col = math.max(line_length - 1, 0)
+  return root:named_descendant_for_range(row - 1, col, row - 1, col)
+end
+
+local get_row_node = function(row)
+  local root = slib.get_root()
+  if root == nil then return end
+
+  local line_length = #vim.fn.getline(row)
+  local col = math.max(line_length - 1, 0)
+  return root:named_descendant_for_range(row - 1, col, row - 1, col)
+end
+
+local get_node_start_row = function(node)
+  return node:range()
+end
+
+local get_entry_at_row
+local get_node_line_range
+
+local get_outline_line_range = function(node)
+  local start_line = get_node_start_row(node) + 1
+  local end_line = start_line
+  local current_indent = vim.fn.indent(start_line)
+  local line_count = vim.api.nvim_buf_line_count(0)
+
+  local line = start_line + 1
+  while line <= line_count do
+    local entry = get_entry_at_row(line)
+    if entry then
+      local entry_start_line = get_node_start_row(entry) + 1
+      local entry_indent = vim.fn.indent(entry_start_line)
+      if entry_indent <= current_indent then break end
+
+      local _, entry_end_line = get_node_line_range(entry)
+      end_line = math.max(end_line, entry_end_line)
+      line = entry_end_line + 1
+    else
+      local text = vim.fn.getline(line)
+      if text == "" then
+        local next_line = line + 1
+        while next_line <= line_count and vim.fn.getline(next_line) == "" do
+          next_line = next_line + 1
+        end
+
+        if next_line > line_count then break end
+
+        local next_entry = get_entry_at_row(next_line)
+        if next_entry then
+          local next_entry_start_line = get_node_start_row(next_entry) + 1
+          if vim.fn.indent(next_entry_start_line) <= current_indent then break end
+        else
+          if vim.fn.indent(next_line) <= current_indent then break end
+        end
+
+        end_line = next_line - 1
+        line = next_line
+      else
+        if vim.fn.indent(line) <= current_indent then break end
+        end_line = line
+        line = line + 1
+      end
+    end
+  end
+
+  return start_line, end_line
+end
+
+local is_movable_entry = function(node)
+  for _, entry_spec in ipairs(movable_entry_specs) do
+    if entry_spec.matches(node) then return true end
+  end
+  return false
+end
+
+get_entry_at_row = function(row)
+  local current_row = row - 1
+  local node = get_row_node(row)
+  local row_nodes = {}
+  while node do
+    if get_node_start_row(node) ~= current_row then break end
+    table.insert(row_nodes, node)
+    node = node:parent()
+  end
+
+  for _, entry_spec in ipairs(movable_entry_specs) do
+    for _, row_node in ipairs(row_nodes) do
+      if entry_spec.matches(row_node) then return row_node end
+    end
+  end
+end
+
+local get_current_entry = function()
+  return get_entry_at_row(vim.api.nvim_win_get_cursor(0)[1])
+end
+
+get_node_line_range = function(node)
+  if is_outline_node(node) then return get_outline_line_range(node) end
+
+  local start_row, _, end_row, end_col = node:range()
+  local end_line = end_row + 1
+  if end_col == 0 and end_row > start_row then end_line = end_line - 1 end
+  return start_row + 1, end_line
+end
+
+local get_semantic_parent = function(entry)
+  local entry_start_line = get_node_start_row(entry) + 1
+  local entry_indent = vim.fn.indent(entry_start_line)
+  local parent = entry:parent()
+  if not parent then return end
+
+  while parent and parent:type() ~= "document" do
+    local parent_start_line = get_node_start_row(parent) + 1
+    if not is_outline_node(parent) then break end
+    if vim.fn.indent(parent_start_line) < entry_indent then break end
+    parent = parent:parent()
+  end
+
+  return parent
+end
+
+local get_sibling_entries = function(entry)
+  local parent = get_semantic_parent(entry)
+  if not parent then return end
+
+  local entries = {}
+  local current_index = nil
+  local entry_start_line = get_node_start_row(entry) + 1
+  local entry_start_row, _, entry_end_row, entry_end_col = entry:range()
+  local entry_indent = vim.fn.indent(entry_start_line)
+  local is_document_parent = parent:type() == "document"
+  local parent_start_line, parent_end_line = 1, vim.api.nvim_buf_line_count(0)
+
+  if not is_document_parent then
+    parent_start_line, parent_end_line = get_node_line_range(parent)
+    parent_start_line = parent_start_line + 1
+  end
+
+  local seen = {}
+  for line = parent_start_line, parent_end_line do
+    if vim.fn.getline(line) ~= "" and vim.fn.indent(line) == entry_indent then
+      local sibling = get_entry_at_row(line)
+      if sibling then
+        local sibling_start_line = get_node_start_row(sibling) + 1
+        if sibling_start_line == line then
+          local sibling_key = string.format("%d:%s", sibling_start_line, sibling:type())
+          if not seen[sibling_key] then
+            seen[sibling_key] = true
+            table.insert(entries, sibling)
+            local child_start_row, _, child_end_row, child_end_col = sibling:range()
+            if
+              child_start_row == entry_start_row
+              and child_end_row == entry_end_row
+              and child_end_col == entry_end_col
+              and sibling:type() == entry:type()
+            then
+              current_index = #entries
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return entries, current_index
+end
+
+local get_entry_family = function(node)
+  if is_outline_node(node) then return "outline" end
+  if is_task_node(node) then return "task" end
+  if is_list_item_node(node) then return "list" end
+  if is_section_node(node) then return "section" end
+  return "other"
+end
+
+local get_entry_line_step_bounds = function(entry)
+  local parent = get_semantic_parent(entry)
+  local line_count = vim.api.nvim_buf_line_count(0)
+  if not parent or parent:type() == "document" then return 1, line_count end
+
+  local parent_start_line, parent_end_line = get_node_line_range(parent)
+  return parent_start_line + 1, parent_end_line
+end
+
+local should_structurally_swap = function(entry, sibling_entry, direction)
+  if not sibling_entry then return false end
+
+  local entry_family = get_entry_family(entry)
+  if entry_family == "other" or entry_family ~= get_entry_family(sibling_entry) then return false end
+
+  local start_line, end_line = get_node_line_range(entry)
+  local sibling_start_line, sibling_end_line = get_node_line_range(sibling_entry)
+  if direction == "up" then return sibling_end_line == start_line - 1 end
+  return sibling_start_line == end_line + 1
+end
+
+local move_entry_by_line = function(start_line, end_line, direction, min_line, max_line)
+  if direction == "up" then
+    if start_line <= min_line then return false end
+    vim.cmd(string.format("silent keepjumps %d,%dmove %d", start_line, end_line, start_line - 2))
+    return start_line - 1
+  end
+
+  if end_line >= max_line then return false end
+  vim.cmd(string.format("silent keepjumps %d,%dmove %d", start_line, end_line, end_line + 1))
+  return start_line + 1
+end
+
+local move_current_entry = function(direction)
+  local entry = get_current_entry()
+  if not entry then return nil end
+
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local start_line, end_line = get_node_line_range(entry)
+  local entries, current_index = get_sibling_entries(entry)
+  local sibling_entry = nil
+  if entries and current_index then
+    local target_index = direction == "up" and current_index - 1 or current_index + 1
+    sibling_entry = entries[target_index]
+  end
+
+  if not should_structurally_swap(entry, sibling_entry, direction) then
+    local min_line, max_line = get_entry_line_step_bounds(entry)
+    local moved_start_line = move_entry_by_line(start_line, end_line, direction, min_line, max_line)
+    if moved_start_line == false then return false end
+
+    local target_line = vim.fn.getline(moved_start_line)
+    vim.api.nvim_win_set_cursor(0, { moved_start_line, math.min(cursor[2], #target_line) })
+    return true
+  end
+
+  local target_start_line, target_end_line = get_node_line_range(sibling_entry)
+
+  if direction == "up" then
+    vim.cmd(string.format("silent keepjumps %d,%dmove %d", start_line, end_line, target_start_line - 1))
+    start_line = target_start_line
+  else
+    vim.cmd(string.format("silent keepjumps %d,%dmove %d", start_line, end_line, target_end_line))
+    start_line = target_end_line - (end_line - start_line)
+  end
+
+  local target_line = vim.fn.getline(start_line)
+  vim.api.nvim_win_set_cursor(0, { start_line, math.min(cursor[2], #target_line) })
+  return true
+end
+
+local move_current_entry_with_count = function(direction)
+  for _ = 2, vim.v.count1 do
+    local result = move_current_entry(direction)
+    if result ~= true then return end
+  end
+end
+
+local move_current_entry_or_noop = function(direction)
+  local result = move_current_entry(direction)
+  if result ~= true then return end
+  move_current_entry_with_count(direction)
+end
+
+local move_current_entry_or_noop_insert = function(direction)
+  vim.cmd("stopinsert")
+  move_current_entry_or_noop(direction)
+  vim.cmd("startinsert")
+end
+
+local handle_toggle_task = function(force_clear)
+  local position = vim.api.nvim_win_get_cursor(0)
   local line_length = #vim.fn.getline(position[1])
-  local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
+  local node = get_cursor_node()
+  if not node and line_length == 0 then return end
 
   -- toggle task nodes or parent task nodes if called on a session node
   while node do
@@ -293,12 +632,9 @@ local handle_set_schedule = function()
     local date = lib.node.chrono.to_schedule(input)
     if type(date) ~= "string" then return end
 
-    local root = slib.get_root()
-    if root == nil then return end
-
     local position = vim.api.nvim_win_get_cursor(0)
-    local line_length = #vim.fn.getline(position[1])
-    local node = root:named_descendant_for_range(position[1] - 1, line_length - 1, position[1] - 1, line_length - 1)
+    local node = get_cursor_node()
+    if not node and #vim.fn.getline(position[1]) == 0 then return end
 
     while node do
       local node_line = node:range()
@@ -431,6 +767,18 @@ local setup_mappings = function()
   end, { buffer = true, noremap = true })
   vim.keymap.set("n", "<leader>es", handle_set_schedule, { buffer = true, noremap = true })
   vim.keymap.set("n", "<cr>", handle_cr, { buffer = true, noremap = true })
+  vim.keymap.set("n", "<a-k>", function()
+    move_current_entry_or_noop("up")
+  end, { buffer = true, noremap = true })
+  vim.keymap.set("n", "<a-j>", function()
+    move_current_entry_or_noop("down")
+  end, { buffer = true, noremap = true })
+  vim.keymap.set("i", "<a-k>", function()
+    move_current_entry_or_noop_insert("up")
+  end, { buffer = true, noremap = true })
+  vim.keymap.set("i", "<a-j>", function()
+    move_current_entry_or_noop_insert("down")
+  end, { buffer = true, noremap = true })
   -- vim.keymap.set("n", ">", handle_indent, { buffer = true })
   -- vim.keymap.set("n", "<", handle_dedent, { buffer = true })
   -- vim.keymap.set("n", "zR", handle_expand_all, { buffer = true, noremap = true })

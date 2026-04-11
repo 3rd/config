@@ -1,0 +1,89 @@
+id: ts-arrow-no-multiline-expression-body
+valid:
+  - "const x = (a: number, b: number) => a + b"
+  - |
+      const x = (a: number, b: number) => a +
+        b
+  - |
+      const x = () => doThing(
+        alpha,
+        beta,
+        gamma,
+      )
+  - |
+      const x = () => api.doThing(
+        alpha,
+        beta,
+        gamma,
+      )
+  - |
+      const x = () => fn?.(
+        alpha,
+        beta,
+        gamma,
+      )
+  - |
+      const x = () => tag`
+        alpha
+        beta
+        gamma
+      `
+  - |
+      const x = (
+        a: number,
+        b: number,
+      ) => a + b
+  - |
+      const x = (a: number, b: number) => {
+        return a +
+          b
+      }
+  - |
+      async function wrap() {
+        return Promise.resolve()
+      }
+invalid:
+  - |
+      const someFunctionName = (arg1, arg2, arg3) => doThis ?
+        blaThis : blaThis &&
+        2 + etc
+  - |
+      const someFunctionName = (arg1, arg2): number => doThis ?
+        blaThis : blaThis &&
+        2 + etc
+  - |
+      const someFunctionName = <T>(arg1: T): number => doThis ?
+        1 :
+        2
+  - |
+      const x = () => foo()
+        .bar()
+        .baz(arg)
+  - |
+      const x = () => new Thing(
+        alpha,
+        beta,
+        gamma,
+      )
+  - |
+      useMemo(() => doThis ?
+        blaThis : blaThis &&
+        2 + etc, [])
+  - |
+      const config = {
+        render: () => doThis ?
+          blaThis : blaThis &&
+          2 + etc,
+      }
+  - |
+      const renderThing = () => (
+        <Thing
+          alpha={alpha}
+          beta={beta}
+        />
+      )
+  - |
+      const toObject = () => ({
+        alpha: one,
+        beta: two,
+      })

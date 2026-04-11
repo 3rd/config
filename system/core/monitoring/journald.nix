@@ -2,10 +2,10 @@
 let
   cfg = config.core.monitoring;
   retention = "${toString cfg.retention.journalDays}day";
-in lib.mkIf cfg.enable {
+in
+lib.mkIf cfg.enable {
   services.journald = {
     storage = "persistent";
-    audit = "keep";
     extraConfig = ''
       SystemMaxUse=${cfg.retention.journalPersistentMaxUse}
       RuntimeMaxUse=${cfg.retention.journalRuntimeMaxUse}
@@ -13,4 +13,6 @@ in lib.mkIf cfg.enable {
       MaxRetentionSec=${retention}
     '';
   };
+
+  systemd.sockets."systemd-journald-audit".enable = false;
 }

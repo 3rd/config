@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.core.monitoring;
   auditPackage = config.security.auditd.package;
@@ -8,7 +13,9 @@ let
     (if cfg.collectors.auditNet.enable then "net" else null)
   ];
   watchPathsJson = builtins.toJSON cfg.paths.watch;
-  homeWatchPathsJson = builtins.toJSON (builtins.filter (path: lib.hasPrefix "/home/" path) cfg.paths.watch);
+  homeWatchPathsJson = builtins.toJSON (
+    builtins.filter (path: lib.hasPrefix "/home/" path) cfg.paths.watch
+  );
   dbipCountryDbPath = pkgs.dbip-country-lite.mmdb;
   mmdblookupBin = lib.getExe pkgs.libmaxminddb;
   ausearchBin = lib.getExe' auditPackage "ausearch";
@@ -106,7 +113,8 @@ let
           Type = "oneshot";
           User = "root";
           Group = "root";
-        } // backgroundServiceConfig;
+        }
+        // backgroundServiceConfig;
         script = lib.getExe script;
       };
 
@@ -132,33 +140,39 @@ lib.mkIf cfg.enable (
         "d ${statePath} 0700 root root -"
       ];
 
-      systemd.services.core-monitoring-audit-stream-exporter = lib.mkIf (
-        cfg.collectors.auditFs.enable || cfg.collectors.auditExec.enable || cfg.collectors.auditNet.enable
-      ) {
-        description = "Export normalized audit events into Grafana-friendly logs";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "auditd.service" ];
-        wants = [ "auditd.service" ];
-        serviceConfig = {
-          Type = "simple";
-          User = "root";
-          Group = "root";
-          Restart = "always";
-          RestartSec = "2s";
-          TimeoutStopSec = "15s";
-          ExecStart = "${lib.getExe monitoringTools} audit-stream-exporter ${lib.escapeShellArg logDir} ${lib.escapeShellArg statePath} ${toString cfg.thresholds.writeBurst} ${toString cfg.thresholds.connectBurst} ${toString cfg.thresholds.newProcessLookbackDays} ${toString (cfg.collectors.auditFs.intervalMinutes * 60)} ${toString (cfg.collectors.auditExec.intervalMinutes * 60)} ${toString (cfg.collectors.auditNet.intervalMinutes * 60)}";
-        };
-        environment = {
-          CORE_MONITORING_WATCH_PATHS_JSON = watchPathsJson;
-          CORE_MONITORING_HOME_WATCH_PATHS_JSON = homeWatchPathsJson;
-          CORE_MONITORING_ENABLED_AUDIT_MODES = builtins.toJSON enabledAuditModes;
-          CORE_MONITORING_MMDBLOOKUP_BIN = mmdblookupBin;
-          CORE_MONITORING_COUNTRY_DB = dbipCountryDbPath;
-          CORE_MONITORING_AUSEARCH_BIN = ausearchBin;
-          CORE_MONITORING_STATE_SYNC_INTERVAL_SECONDS = "30";
-          CORE_MONITORING_STREAM_CHANNEL_CAPACITY = toString cfg.audit.streamChannelCapacity;
-        };
-      };
+      systemd.services.core-monitoring-audit-stream-exporter =
+        lib.mkIf
+          (cfg.collectors.auditFs.enable || cfg.collectors.auditExec.enable || cfg.collectors.auditNet.enable)
+          {
+            description = "Export normalized audit events into Grafana-friendly logs";
+            wantedBy = [ "multi-user.target" ];
+            after = [ "auditd.service" ];
+            wants = [ "auditd.service" ];
+            serviceConfig = {
+              Type = "simple";
+              User = "root";
+              Group = "root";
+              Restart = "always";
+              RestartSec = "2s";
+              TimeoutStopSec = "15s";
+              ExecStart = "${lib.getExe monitoringTools} audit-stream-exporter ${lib.escapeShellArg logDir} ${lib.escapeShellArg statePath} ${toString cfg.thresholds.writeBurst} ${toString cfg.thresholds.connectBurst} ${toString cfg.thresholds.newProcessLookbackDays} ${
+                toString (cfg.collectors.auditFs.intervalMinutes * 60)
+              } ${toString (cfg.collectors.auditExec.intervalMinutes * 60)} ${
+                toString (cfg.collectors.auditNet.intervalMinutes * 60)
+              }";
+            };
+            environment = {
+              CORE_MONITORING_WATCH_PATHS_JSON = watchPathsJson;
+              CORE_MONITORING_HOME_WATCH_PATHS_JSON = homeWatchPathsJson;
+              CORE_MONITORING_ENABLED_AUDIT_MODES = builtins.toJSON enabledAuditModes;
+              CORE_MONITORING_INCLUDE_LOCAL_SOCKET_CONNECTS = builtins.toJSON cfg.audit.includeLocalSocketConnects;
+              CORE_MONITORING_MMDBLOOKUP_BIN = mmdblookupBin;
+              CORE_MONITORING_COUNTRY_DB = dbipCountryDbPath;
+              CORE_MONITORING_AUSEARCH_BIN = ausearchBin;
+              CORE_MONITORING_STATE_SYNC_INTERVAL_SECONDS = "30";
+              CORE_MONITORING_STREAM_CHANNEL_CAPACITY = toString cfg.audit.streamChannelCapacity;
+            };
+          };
     }
     (mkCollectorService {
       enable = cfg.collectors.networkUsage.enable;

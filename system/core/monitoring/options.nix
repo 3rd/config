@@ -2,7 +2,8 @@
 let
   inherit (lib) mkEnableOption mkOption;
   types = lib.types;
-in {
+in
+{
   options.core.monitoring = {
     enable = mkEnableOption "continuous host monitoring and local forensics tooling";
 
@@ -142,6 +143,15 @@ in {
         type = types.bool;
         default = true;
         description = "Capture outbound connect syscall audit events.";
+      };
+
+      includeLocalSocketConnects = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Keep local socket connect events in normalized audit_net streams.
+          This does not affect raw audit capture or /var/log/audit retention.
+        '';
       };
 
       extraRules = mkOption {

@@ -1,0 +1,67 @@
+id: react-component-async-function-to-arrow
+message: React component declarations should use arrow functions
+severity: warning
+language: tsx
+note: Converting a function declaration to a const arrow removes hoisting. This rule only rewrites top-level PascalCase components, but review non-exported fixes before bulk applying them.
+rule:
+  all:
+    - any:
+        - all:
+            - pattern: "async function $NAME($$$ARGS) { $$$BODY }"
+            - has:
+                field: parameters
+                pattern: $PARAMS
+            - has:
+                field: body
+                pattern: $BODY
+        - all:
+            - pattern: "async function $NAME($$$ARGS): $RET { $$$BODY }"
+            - has:
+                field: parameters
+                pattern: $PARAMS
+            - has:
+                field: body
+                pattern: $BODY
+            - has:
+                field: return_type
+                pattern: $RETURN
+    - has:
+        field: name
+        regex: "^[A-Z][A-Za-z0-9]*$"
+    - not:
+        has:
+          field: type_parameters
+          kind: type_parameters
+    - any:
+        - inside:
+            kind: program
+            stopBy: neighbor
+        - inside:
+            all:
+              - kind: export_statement
+              - inside:
+                  kind: program
+                  stopBy: neighbor
+            stopBy: neighbor
+    - not:
+        inside:
+          kind: export_statement
+          stopBy: neighbor
+          regex: "^export\\s+default\\b"
+    - has:
+        field: body
+        stopBy: end
+        any:
+          - kind: jsx_element
+          - kind: jsx_self_closing_element
+          - all:
+              - kind: call_expression
+              - has:
+                  field: function
+                  pattern: React.createElement
+          - all:
+              - kind: call_expression
+              - has:
+                  field: function
+                  regex: "^use[A-Z][A-Za-z0-9]*$"
+fix: "const $NAME = async $PARAMS$RETURN => $BODY"

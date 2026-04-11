@@ -1,0 +1,303 @@
+id: ts-arrow-no-multiline-expression-body
+snapshots:
+  ? |
+    const config = {
+      render: () => doThis ?
+        blaThis : blaThis &&
+        2 + etc,
+    }
+  : fixed: |
+      const config = {
+        render: () => {
+          return doThis ?
+            blaThis : blaThis &&
+            2 + etc
+        },
+      }
+    labels:
+    - source: |-
+        () => doThis ?
+            blaThis : blaThis &&
+            2 + etc
+      style: primary
+      start: 27
+      end: 78
+    - source: ()
+      style: secondary
+      start: 27
+      end: 29
+    - source: |-
+        doThis ?
+            blaThis : blaThis &&
+            2 + etc
+      style: secondary
+      start: 33
+      end: 78
+  ? |
+    const renderThing = () => (
+      <Thing
+        alpha={alpha}
+        beta={beta}
+      />
+    )
+  : fixed: |
+      const renderThing = () => {
+        return (
+          <Thing
+            alpha={alpha}
+            beta={beta}
+          />
+        )
+      }
+    labels:
+    - source: |-
+        () => (
+          <Thing
+            alpha={alpha}
+            beta={beta}
+          />
+        )
+      style: primary
+      start: 20
+      end: 77
+    - source: ()
+      style: secondary
+      start: 20
+      end: 22
+    - source: |-
+        (
+          <Thing
+            alpha={alpha}
+            beta={beta}
+          />
+        )
+      style: secondary
+      start: 26
+      end: 77
+  ? |
+    const someFunctionName = (arg1, arg2): number => doThis ?
+      blaThis : blaThis &&
+      2 + etc
+  : fixed: |
+      const someFunctionName = (arg1, arg2): number => {
+        return doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      }
+    labels:
+    - source: |-
+        (arg1, arg2): number => doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: primary
+      start: 25
+      end: 90
+    - source: ': number'
+      style: secondary
+      start: 37
+      end: 45
+    - source: (arg1, arg2)
+      style: secondary
+      start: 25
+      end: 37
+    - source: |-
+        doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: secondary
+      start: 49
+      end: 90
+  ? |
+    const someFunctionName = (arg1, arg2, arg3) => doThis ?
+      blaThis : blaThis &&
+      2 + etc
+  : fixed: |
+      const someFunctionName = (arg1, arg2, arg3) => {
+        return doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      }
+    labels:
+    - source: |-
+        (arg1, arg2, arg3) => doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: primary
+      start: 25
+      end: 88
+    - source: (arg1, arg2, arg3)
+      style: secondary
+      start: 25
+      end: 43
+    - source: |-
+        doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: secondary
+      start: 47
+      end: 88
+  ? |
+    const someFunctionName = <T>(arg1: T): number => doThis ?
+      1 :
+      2
+  : fixed: |
+      const someFunctionName = <T>(arg1: T): number => {
+        return doThis ?
+          1 :
+          2
+      }
+    labels:
+    - source: |-
+        <T>(arg1: T): number => doThis ?
+          1 :
+          2
+      style: primary
+      start: 25
+      end: 67
+    - source: <T>
+      style: secondary
+      start: 25
+      end: 28
+    - source: ': number'
+      style: secondary
+      start: 37
+      end: 45
+    - source: '(arg1: T)'
+      style: secondary
+      start: 28
+      end: 37
+    - source: |-
+        doThis ?
+          1 :
+          2
+      style: secondary
+      start: 49
+      end: 67
+  ? |
+    const toObject = () => ({
+      alpha: one,
+      beta: two,
+    })
+  : fixed: |
+      const toObject = () => {
+        return ({
+          alpha: one,
+          beta: two,
+        })
+      }
+    labels:
+    - source: |-
+        () => ({
+          alpha: one,
+          beta: two,
+        })
+      style: primary
+      start: 17
+      end: 55
+    - source: ()
+      style: secondary
+      start: 17
+      end: 19
+    - source: |-
+        ({
+          alpha: one,
+          beta: two,
+        })
+      style: secondary
+      start: 23
+      end: 55
+  ? |
+    const x = () => foo()
+      .bar()
+      .baz(arg)
+  : fixed: |
+      const x = () => {
+        return foo()
+          .bar()
+          .baz(arg)
+      }
+    labels:
+    - source: |-
+        () => foo()
+          .bar()
+          .baz(arg)
+      style: primary
+      start: 10
+      end: 42
+    - source: ()
+      style: secondary
+      start: 10
+      end: 12
+    - source: |-
+        foo()
+          .bar()
+          .baz(arg)
+      style: secondary
+      start: 16
+      end: 42
+  ? |
+    const x = () => new Thing(
+      alpha,
+      beta,
+      gamma,
+    )
+  : fixed: |
+      const x = () => {
+        return new Thing(
+          alpha,
+          beta,
+          gamma,
+        )
+      }
+    labels:
+    - source: |-
+        () => new Thing(
+          alpha,
+          beta,
+          gamma,
+        )
+      style: primary
+      start: 10
+      end: 54
+    - source: ()
+      style: secondary
+      start: 10
+      end: 12
+    - source: |-
+        new Thing(
+          alpha,
+          beta,
+          gamma,
+        )
+      style: secondary
+      start: 16
+      end: 54
+  ? |
+    useMemo(() => doThis ?
+      blaThis : blaThis &&
+      2 + etc, [])
+  : fixed: |
+      useMemo(() => {
+        return doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      }, [])
+    labels:
+    - source: |-
+        () => doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: primary
+      start: 8
+      end: 55
+    - source: ()
+      style: secondary
+      start: 8
+      end: 10
+    - source: |-
+        doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: secondary
+      start: 14
+      end: 55

@@ -138,6 +138,11 @@
         death = nixpkgs.lib.nixosSystem {
           specialArgs = {
             inherit inputs outputs;
+            pkgs-master = import nixpkgs-master {
+              config = {
+                allowUnfree = true;
+              };
+            };
             pkgs-stable = import nixpkgs-stable {
               config = {
                 allowUnfree = true;

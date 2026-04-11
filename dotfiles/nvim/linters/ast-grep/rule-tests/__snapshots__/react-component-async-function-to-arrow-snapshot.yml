@@ -1,0 +1,252 @@
+id: react-component-async-function-to-arrow
+snapshots:
+  ? |
+    async function ExampleBad(
+      props: ExampleBadProps,
+    ): Promise<React.JSX.Element> {
+      // keep comment
+      return <div />
+    }
+  : fixed: |
+      const ExampleBad = async (
+        props: ExampleBadProps,
+      ): Promise<React.JSX.Element> => {
+        // keep comment
+        return <div />
+      }
+    labels:
+    - source: |-
+        async function ExampleBad(
+          props: ExampleBadProps,
+        ): Promise<React.JSX.Element> {
+          // keep comment
+          return <div />
+        }
+      style: primary
+      start: 0
+      end: 121
+    - source: |-
+        (
+          props: ExampleBadProps,
+        )
+      style: secondary
+      start: 25
+      end: 54
+    - source: |-
+        {
+          // keep comment
+          return <div />
+        }
+      style: secondary
+      start: 83
+      end: 121
+    - source: ': Promise<React.JSX.Element>'
+      style: secondary
+      start: 54
+      end: 82
+    - source: ExampleBad
+      style: secondary
+      start: 15
+      end: 25
+    - source: |
+        async function ExampleBad(
+          props: ExampleBadProps,
+        ): Promise<React.JSX.Element> {
+          // keep comment
+          return <div />
+        }
+      style: secondary
+      start: 0
+      end: 122
+    - source: <div />
+      style: secondary
+      start: 112
+      end: 119
+  ? |
+    async function ExampleBad() {
+      const value = useThing()
+      return null
+    }
+  : fixed: |
+      const ExampleBad = async () => {
+        const value = useThing()
+        return null
+      }
+    labels:
+    - source: |-
+        async function ExampleBad() {
+          const value = useThing()
+          return null
+        }
+      style: primary
+      start: 0
+      end: 72
+    - source: ()
+      style: secondary
+      start: 25
+      end: 27
+    - source: |-
+        {
+          const value = useThing()
+          return null
+        }
+      style: secondary
+      start: 28
+      end: 72
+    - source: ExampleBad
+      style: secondary
+      start: 15
+      end: 25
+    - source: |
+        async function ExampleBad() {
+          const value = useThing()
+          return null
+        }
+      style: secondary
+      start: 0
+      end: 73
+    - source: useThing
+      style: secondary
+      start: 46
+      end: 54
+    - source: useThing()
+      style: secondary
+      start: 46
+      end: 56
+  ? |
+    async function ExampleBad(props: ExampleBadProps) {
+      return <div />
+    }
+  : fixed: |
+      const ExampleBad = async (props: ExampleBadProps) => {
+        return <div />
+      }
+    labels:
+    - source: |-
+        async function ExampleBad(props: ExampleBadProps) {
+          return <div />
+        }
+      style: primary
+      start: 0
+      end: 70
+    - source: '(props: ExampleBadProps)'
+      style: secondary
+      start: 25
+      end: 49
+    - source: |-
+        {
+          return <div />
+        }
+      style: secondary
+      start: 50
+      end: 70
+    - source: ExampleBad
+      style: secondary
+      start: 15
+      end: 25
+    - source: |
+        async function ExampleBad(props: ExampleBadProps) {
+          return <div />
+        }
+      style: secondary
+      start: 0
+      end: 71
+    - source: <div />
+      style: secondary
+      start: 61
+      end: 68
+  ? |
+    async function ExampleBad(props: ExampleBadProps) {
+      return React.createElement("div", null, props.label)
+    }
+  : fixed: |
+      const ExampleBad = async (props: ExampleBadProps) => {
+        return React.createElement("div", null, props.label)
+      }
+    labels:
+    - source: |-
+        async function ExampleBad(props: ExampleBadProps) {
+          return React.createElement("div", null, props.label)
+        }
+      style: primary
+      start: 0
+      end: 108
+    - source: '(props: ExampleBadProps)'
+      style: secondary
+      start: 25
+      end: 49
+    - source: |-
+        {
+          return React.createElement("div", null, props.label)
+        }
+      style: secondary
+      start: 50
+      end: 108
+    - source: ExampleBad
+      style: secondary
+      start: 15
+      end: 25
+    - source: |
+        async function ExampleBad(props: ExampleBadProps) {
+          return React.createElement("div", null, props.label)
+        }
+      style: secondary
+      start: 0
+      end: 109
+    - source: React.createElement
+      style: secondary
+      start: 61
+      end: 80
+    - source: React.createElement("div", null, props.label)
+      style: secondary
+      start: 61
+      end: 106
+  ? |
+    export async function ExampleBad(props: ExampleBadProps) {
+      return <div />
+    }
+  : fixed: |
+      export const ExampleBad = async (props: ExampleBadProps) => {
+        return <div />
+      }
+    labels:
+    - source: |-
+        async function ExampleBad(props: ExampleBadProps) {
+          return <div />
+        }
+      style: primary
+      start: 7
+      end: 77
+    - source: '(props: ExampleBadProps)'
+      style: secondary
+      start: 32
+      end: 56
+    - source: |-
+        {
+          return <div />
+        }
+      style: secondary
+      start: 57
+      end: 77
+    - source: ExampleBad
+      style: secondary
+      start: 22
+      end: 32
+    - source: |
+        export async function ExampleBad(props: ExampleBadProps) {
+          return <div />
+        }
+      style: secondary
+      start: 0
+      end: 78
+    - source: |-
+        export async function ExampleBad(props: ExampleBadProps) {
+          return <div />
+        }
+      style: secondary
+      start: 0
+      end: 77
+    - source: <div />
+      style: secondary
+      start: 68
+      end: 75

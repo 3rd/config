@@ -5,4 +5,4 @@ testConfigs:
 utilDirs:
   - /home/rabbit/.config/nvim/linters/ast-grep/utils
 languageGlobs:
-  tsx: ["*.ts"]
+  tsx: ["*.ts", "*.tsx"]

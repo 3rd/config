@@ -1,0 +1,85 @@
+id: ts-arrow-no-multiline-expression-body-async
+valid:
+  - "const x = async (a: number, b: number) => doThing(a, b)"
+  - |
+      const x = async (a: number, b: number) => doThing(
+        a)
+  - |
+      const x = async () => doThing(
+        alpha,
+        beta,
+        gamma,
+      )
+  - |
+      const x = async (a: number, b: number) => doThing(
+        a,
+        b,
+      )
+  - |
+      const x = async () => api.doThing(
+        alpha,
+        beta,
+        gamma,
+      )
+  - |
+      const x = async () => fn?.(
+        alpha,
+        beta,
+        gamma,
+      )
+  - |
+      const x = async () => tag`
+        alpha
+        beta
+        gamma
+      `
+  - |
+      const x = async (
+        a: number,
+        b: number,
+      ) => doThing(a, b)
+  - |
+      const x = async (a: number, b: number) => {
+        return doThing(
+          a,
+          b,
+        )
+      }
+  - |
+      const syncArrow = (a: number, b: number) => doThing(
+        a,
+        b,
+      )
+invalid:
+  - |
+      const someFunctionName = async (arg1, arg2, arg3) => doThis ?
+        blaThis : blaThis &&
+        2 + etc
+  - |
+      const someFunctionName = async (arg1, arg2): Promise<number> => doThis ?
+        blaThis : blaThis &&
+        2 + etc
+  - |
+      const someFunctionName = async <T>(arg1: T): Promise<number> => doThis ?
+        1 :
+        2
+  - |
+      const x = async () => foo()
+        .bar()
+        .baz(arg)
+  - |
+      const x = async () => new Thing(
+        alpha,
+        beta,
+        gamma,
+      )
+  - |
+      Promise.resolve(value).then(async () => doThis ?
+        blaThis : blaThis &&
+        2 + etc)
+  - |
+      const config = {
+        render: async () => doThis ?
+          blaThis : blaThis &&
+          2 + etc,
+      }

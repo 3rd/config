@@ -1,0 +1,262 @@
+id: ts-arrow-no-multiline-expression-body-async
+snapshots:
+  ? |
+    Promise.resolve(value).then(async () => doThis ?
+      blaThis : blaThis &&
+      2 + etc)
+  : fixed: |
+      Promise.resolve(value).then(async () => {
+        return doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      })
+    labels:
+    - source: |-
+        async () => doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: primary
+      start: 28
+      end: 81
+    - source: ()
+      style: secondary
+      start: 34
+      end: 36
+    - source: |-
+        doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: secondary
+      start: 40
+      end: 81
+  ? |
+    const config = {
+      render: async () => doThis ?
+        blaThis : blaThis &&
+        2 + etc,
+    }
+  : fixed: |
+      const config = {
+        render: async () => {
+          return doThis ?
+            blaThis : blaThis &&
+            2 + etc
+        },
+      }
+    labels:
+    - source: |-
+        async () => doThis ?
+            blaThis : blaThis &&
+            2 + etc
+      style: primary
+      start: 27
+      end: 84
+    - source: ()
+      style: secondary
+      start: 33
+      end: 35
+    - source: |-
+        doThis ?
+            blaThis : blaThis &&
+            2 + etc
+      style: secondary
+      start: 39
+      end: 84
+  ? |
+    const someFunctionName = async (arg1, arg2): Promise<number> => doThis ?
+      blaThis : blaThis &&
+      2 + etc
+  : fixed: |
+      const someFunctionName = async (arg1, arg2): Promise<number> => {
+        return doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      }
+    labels:
+    - source: |-
+        async (arg1, arg2): Promise<number> => doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: primary
+      start: 25
+      end: 105
+    - source: ': Promise<number>'
+      style: secondary
+      start: 43
+      end: 60
+    - source: (arg1, arg2)
+      style: secondary
+      start: 31
+      end: 43
+    - source: |-
+        doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: secondary
+      start: 64
+      end: 105
+  ? |
+    const someFunctionName = async (arg1, arg2, arg3) => doThis ?
+      blaThis : blaThis &&
+      2 + etc
+  : fixed: |
+      const someFunctionName = async (arg1, arg2, arg3) => {
+        return doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      }
+    labels:
+    - source: |-
+        async (arg1, arg2, arg3) => doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: primary
+      start: 25
+      end: 94
+    - source: (arg1, arg2, arg3)
+      style: secondary
+      start: 31
+      end: 49
+    - source: |-
+        doThis ?
+          blaThis : blaThis &&
+          2 + etc
+      style: secondary
+      start: 53
+      end: 94
+  ? |
+    const someFunctionName = async <T>(arg1: T): Promise<number> => doThis ?
+      1 :
+      2
+  : fixed: |
+      const someFunctionName = async <T>(arg1: T): Promise<number> => {
+        return doThis ?
+          1 :
+          2
+      }
+    labels:
+    - source: |-
+        async <T>(arg1: T): Promise<number> => doThis ?
+          1 :
+          2
+      style: primary
+      start: 25
+      end: 82
+    - source: <T>
+      style: secondary
+      start: 31
+      end: 34
+    - source: ': Promise<number>'
+      style: secondary
+      start: 43
+      end: 60
+    - source: '(arg1: T)'
+      style: secondary
+      start: 34
+      end: 43
+    - source: |-
+        doThis ?
+          1 :
+          2
+      style: secondary
+      start: 64
+      end: 82
+  ? |
+    const x = async () => foo()
+      .bar()
+      .baz(arg)
+  : fixed: |
+      const x = async () => {
+        return foo()
+          .bar()
+          .baz(arg)
+      }
+    labels:
+    - source: |-
+        async () => foo()
+          .bar()
+          .baz(arg)
+      style: primary
+      start: 10
+      end: 48
+    - source: ()
+      style: secondary
+      start: 16
+      end: 18
+    - source: |-
+        foo()
+          .bar()
+          .baz(arg)
+      style: secondary
+      start: 22
+      end: 48
+  ? |
+    const x = async () => new Thing(
+      alpha,
+      beta,
+      gamma,
+    )
+  : fixed: |
+      const x = async () => {
+        return new Thing(
+          alpha,
+          beta,
+          gamma,
+        )
+      }
+    labels:
+    - source: |-
+        async () => new Thing(
+          alpha,
+          beta,
+          gamma,
+        )
+      style: primary
+      start: 10
+      end: 60
+    - source: ()
+      style: secondary
+      start: 16
+      end: 18
+    - source: |-
+        new Thing(
+          alpha,
+          beta,
+          gamma,
+        )
+      style: secondary
+      start: 22
+      end: 60
+  ? |
+    const x = async (a: number, b: number) => doThing(
+      a,
+      b,
+    )
+  : fixed: |
+      const x = async (a: number, b: number) => {
+        return doThing(
+          a,
+          b,
+        )
+      }
+    labels:
+    - source: |-
+        async (a: number, b: number) => doThing(
+          a,
+          b,
+        )
+      style: primary
+      start: 10
+      end: 62
+    - source: '(a: number, b: number)'
+      style: secondary
+      start: 16
+      end: 38
+    - source: |-
+        doThing(
+          a,
+          b,
+        )
+      style: secondary
+      start: 42
+      end: 62

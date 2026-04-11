@@ -12,7 +12,7 @@ It wires together:
 - compact audit summary streams so default Grafana leaderboard/stat panels do not rescan raw audit logs every refresh
 - local `prometheus` metrics storage for process history panels
 - local `loki` storage
-- local `alloy` ingestion from the journal, audit log, and exporter output
+- local `alloy` ingestion from the journal and exporter output
 - local `grafana` dashboards for triage, process leaders, event exploration, network attribution, and filesystem activity
 
 ## Primary Operators
@@ -71,8 +71,11 @@ systemctl status core-monitoring-process-metrics-exporter
 ## Notes
 
 - `loki.source.journal.max_age` follows `core.monitoring.retention.journalDays`, so Alloy backfills the same window that journald is configured to retain.
+- `systemd-journald-audit.socket` is disabled when `core.monitoring` is enabled, so audit traffic stays in `/var/log/audit` instead of also flooding persistent journald.
 - the audit pipeline is stream-driven after startup backfill; the live socket reader only spools raw groups, and normalization runs asynchronously from the local spool. only network-usage remains timer-driven by default.
 - default aggregate dashboards read the compact `audit_*_summary` streams, while raw event logs and explorers still read the full `audit_*` streams.
+- raw `/var/log/audit/audit.log` is retained for `ausearch`, but it is not ingested into Loki.
+- `core.monitoring.audit.includeLocalSocketConnects` defaults to `false`, so normalized `audit_net*` streams drop local socket chatter like `/var/run/nscd/socket` while raw audit logs still keep it.
 - routine low-priority logs from the monitoring stack itself are intentionally dropped before they reach Loki, but they remain available in local journald.
 - the default journal cap is `1G`, journald retention is `14d`, and the default process-metrics sample interval is `15s`.
 - `core.monitoring.audit.dispatcherQueueDepth` defaults to `16384` and is passed to `audisp-af_unix` as the socket queue depth.

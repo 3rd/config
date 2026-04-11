@@ -13,22 +13,20 @@ let
 
   renderMap =
     attrs:
-    "{ ${lib.concatStringsSep ", " (lib.mapAttrsToList (name: value: "${quote name} = ${quote value}") attrs)} }";
+    "{ ${
+      lib.concatStringsSep ", " (lib.mapAttrsToList (name: value: "${quote name} = ${quote value}") attrs)
+    } }";
 
   renderTarget = path: labels: "${renderMap ({ "__path__" = path; } // labels)},";
 
   baseLabels = {
     host = host;
     host_class = hostClass;
-  } // cfg.labels;
+  }
+  // cfg.labels;
 
   journalLabels = baseLabels // {
     component = "journal";
-  };
-
-  auditLabels = baseLabels // {
-    component = "audit";
-    job = "auditd";
   };
 
   auditFsLabels = baseLabels // {
@@ -71,15 +69,15 @@ let
     job = "anomaly";
   };
 
-  monitoringJournalUnitPattern =
-    "(alloy[.]service|auditd[.]service|core-monitoring-.*|grafana[.]service|loki[.]service|prometheus[.]service)";
+  monitoringJournalUnitPattern = "(alloy[.]service|auditd[.]service|core-monitoring-.*|grafana[.]service|loki[.]service|prometheus[.]service)";
 
   hasNormalizedCollectors =
     cfg.collectors.auditFs.enable
     || cfg.collectors.auditExec.enable
     || cfg.collectors.auditNet.enable
     || cfg.collectors.networkUsage.enable;
-in ''
+in
+''
   logging {
     format = "logfmt"
     level  = "warn"
@@ -92,25 +90,6 @@ in ''
   loki.write "local" {
     endpoint {
       url = ${quote "http://127.0.0.1:${toString cfg.ports.loki}/loki/api/v1/push"}
-    }
-  }
-
-  loki.process "audit" {
-    forward_to = [loki.write.local.receiver]
-
-    stage.regex {
-      expression = "(?:^| )type=(?P<audit_type>[A-Z_]+)(?: |$)"
-    }
-
-    stage.regex {
-      expression = "(?:^| )key=\\\"?(?P<audit_key>[A-Za-z0-9_./:-]+)\\\"?(?: |$)"
-    }
-
-    stage.labels {
-      values = {
-        audit_type = "",
-        audit_key  = "",
-      }
     }
   }
 
@@ -374,130 +353,117 @@ in ''
     max_age       = ${quote "${toString (cfg.retention.journalDays * 24)}h"}
   }
 
-  loki.source.file "audit" {
-    targets = [
-      ${renderTarget "/var/log/audit/audit.log" auditLabels}
-    ]
-    forward_to    = [loki.process.audit.receiver]
-    tail_from_end = false
-
-    file_match {
-      enabled     = true
-      sync_period = "10s"
-    }
-  }
-
   ${lib.optionalString cfg.collectors.auditFs.enable ''
-  loki.source.file "audit_fs" {
-    targets = [
-      ${renderTarget "/var/log/core-monitoring/audit-fs-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditFsLabels}
-    ]
-    forward_to    = [loki.process.audit_fs.receiver]
-    tail_from_end = false
+    loki.source.file "audit_fs" {
+      targets = [
+        ${renderTarget "/var/log/core-monitoring/audit-fs-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditFsLabels}
+      ]
+      forward_to    = [loki.process.audit_fs.receiver]
+      tail_from_end = false
 
-    file_match {
-      enabled     = true
-      sync_period = "10s"
+      file_match {
+        enabled     = true
+        sync_period = "10s"
+      }
     }
-  }
 
-  loki.source.file "audit_fs_summary" {
-    targets = [
-      ${renderTarget "/var/log/core-monitoring/audit-fs-summary-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditFsSummaryLabels}
-    ]
-    forward_to    = [loki.process.audit_fs_summary.receiver]
-    tail_from_end = false
+    loki.source.file "audit_fs_summary" {
+      targets = [
+        ${renderTarget "/var/log/core-monitoring/audit-fs-summary-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditFsSummaryLabels}
+      ]
+      forward_to    = [loki.process.audit_fs_summary.receiver]
+      tail_from_end = false
 
-    file_match {
-      enabled     = true
-      sync_period = "10s"
+      file_match {
+        enabled     = true
+        sync_period = "10s"
+      }
     }
-  }
   ''}
 
   ${lib.optionalString cfg.collectors.auditExec.enable ''
-  loki.source.file "audit_exec" {
-    targets = [
-      ${renderTarget "/var/log/core-monitoring/audit-exec-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditExecLabels}
-    ]
-    forward_to    = [loki.process.audit_exec.receiver]
-    tail_from_end = false
+    loki.source.file "audit_exec" {
+      targets = [
+        ${renderTarget "/var/log/core-monitoring/audit-exec-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditExecLabels}
+      ]
+      forward_to    = [loki.process.audit_exec.receiver]
+      tail_from_end = false
 
-    file_match {
-      enabled     = true
-      sync_period = "10s"
+      file_match {
+        enabled     = true
+        sync_period = "10s"
+      }
     }
-  }
 
-  loki.source.file "audit_exec_summary" {
-    targets = [
-      ${renderTarget "/var/log/core-monitoring/audit-exec-summary-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditExecSummaryLabels}
-    ]
-    forward_to    = [loki.process.audit_exec_summary.receiver]
-    tail_from_end = false
+    loki.source.file "audit_exec_summary" {
+      targets = [
+        ${renderTarget "/var/log/core-monitoring/audit-exec-summary-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditExecSummaryLabels}
+      ]
+      forward_to    = [loki.process.audit_exec_summary.receiver]
+      tail_from_end = false
 
-    file_match {
-      enabled     = true
-      sync_period = "10s"
+      file_match {
+        enabled     = true
+        sync_period = "10s"
+      }
     }
-  }
   ''}
 
   ${lib.optionalString cfg.collectors.auditNet.enable ''
-  loki.source.file "audit_net" {
-    targets = [
-      ${renderTarget "/var/log/core-monitoring/audit-net-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditNetLabels}
-    ]
-    forward_to    = [loki.process.audit_net.receiver]
-    tail_from_end = false
+    loki.source.file "audit_net" {
+      targets = [
+        ${renderTarget "/var/log/core-monitoring/audit-net-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditNetLabels}
+      ]
+      forward_to    = [loki.process.audit_net.receiver]
+      tail_from_end = false
 
-    file_match {
-      enabled     = true
-      sync_period = "10s"
+      file_match {
+        enabled     = true
+        sync_period = "10s"
+      }
     }
-  }
 
-  loki.source.file "audit_net_summary" {
-    targets = [
-      ${renderTarget "/var/log/core-monitoring/audit-net-summary-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditNetSummaryLabels}
-    ]
-    forward_to    = [loki.process.audit_net_summary.receiver]
-    tail_from_end = false
+    loki.source.file "audit_net_summary" {
+      targets = [
+        ${renderTarget "/var/log/core-monitoring/audit-net-summary-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].ndjson" auditNetSummaryLabels}
+      ]
+      forward_to    = [loki.process.audit_net_summary.receiver]
+      tail_from_end = false
 
-    file_match {
-      enabled     = true
-      sync_period = "10s"
+      file_match {
+        enabled     = true
+        sync_period = "10s"
+      }
     }
-  }
   ''}
 
   ${lib.optionalString cfg.collectors.networkUsage.enable ''
-  loki.source.file "net_usage" {
-    targets = [
-      ${renderTarget "/var/log/core-monitoring/network-usage-*.ndjson" netUsageLabels}
-    ]
-    forward_to    = [loki.process.net_usage.receiver]
-    tail_from_end = false
+    loki.source.file "net_usage" {
+      targets = [
+        ${renderTarget "/var/log/core-monitoring/network-usage-*.ndjson" netUsageLabels}
+      ]
+      forward_to    = [loki.process.net_usage.receiver]
+      tail_from_end = false
 
-    file_match {
-      enabled     = true
-      sync_period = "10s"
+      file_match {
+        enabled     = true
+        sync_period = "10s"
+      }
     }
-  }
   ''}
 
   ${lib.optionalString hasNormalizedCollectors ''
-  loki.source.file "anomaly" {
-    targets = [
-      ${renderTarget "/var/log/core-monitoring/anomaly-*.ndjson" anomalyLabels}
-    ]
-    forward_to    = [loki.process.anomaly.receiver]
-    tail_from_end = false
+    loki.source.file "anomaly" {
+      targets = [
+        ${renderTarget "/var/log/core-monitoring/anomaly-*.ndjson" anomalyLabels}
+      ]
+      forward_to    = [loki.process.anomaly.receiver]
+      tail_from_end = false
 
-    file_match {
-      enabled     = true
-      sync_period = "10s"
+      file_match {
+        enabled     = true
+        sync_period = "10s"
+      }
     }
-  }
   ''}
 ''

@@ -142,6 +142,7 @@ type auditConfig struct {
 	mmdbLookupBin         string
 	countryDB             string
 	enabledModes          map[auditMode]struct{}
+	includeLocalSockets   bool
 	stateSyncInterval     time.Duration
 	fullStateInterval     time.Duration
 	streamChannelCapacity int
@@ -1382,40 +1383,20 @@ func (exporter *auditStreamExporter) processNetEvent(buffer *auditModeBuffer, ev
 	exporter.netSeen[dedupeKey] = event.Timestamp
 	exporter.markHeavyStateDirty()
 
-	sockaddr := map[string]string{}
-	for _, item := range event.SockAddrs {
-		if len(item) > 0 {
-			sockaddr = item
-			break
-		}
+	metadata := parseAuditNetMetadata(event)
+	geo := exporter.geoResolver.lookup(metadata.destIP)
+	if metadata.destIP != "" && geo.isExpired(time.Now().UTC()) {
+		exporter.geoResolver.enqueueLookup(metadata.destIP)
 	}
-
-	family := cleanControl(sockaddr["saddr_fam"])
-	destIP := normalizeLookupIP(firstNonEmpty(sockaddr["daddr"], sockaddr["faddr"], sockaddr["raddr"], sockaddr["addr"], sockaddr["laddr"]))
-	rawDestPort := firstNonEmpty(sockaddr["dport"], sockaddr["fport"], sockaddr["rport"], sockaddr["port"], sockaddr["lport"])
-	destPort := parseOptionalInt(rawDestPort)
-	if destPort != nil && (*destPort == 0 || *destPort == 65535) {
-		destPort = nil
-	}
-	unixPath := cleanControl(sockaddr["path"])
-	if family == "" && unixPath != "" {
-		family = "local"
-	}
-
-	endpointKey, fallbackTarget := buildEndpointIdentity(family, destIP, destPort, unixPath)
-	geo := exporter.geoResolver.lookup(destIP)
-	if destIP != "" && geo.isExpired(time.Now().UTC()) {
-		exporter.geoResolver.enqueueLookup(destIP)
-	}
-	destTarget := firstNonEmpty(geo.Host, fallbackTarget)
+	destTarget := firstNonEmpty(geo.Host, metadata.fallbackTarget)
 
 	record := baseProcessRecord(event)
 	record["kind"] = "audit_net_event"
-	addOptionalString(record, "family", family)
-	addOptionalString(record, "dest_ip", destIP)
-	addOptionalInt(record, "dest_port", destPort)
-	addOptionalString(record, "unix_path", unixPath)
-	addOptionalString(record, "endpoint_key", endpointKey)
+	addOptionalString(record, "family", metadata.family)
+	addOptionalString(record, "dest_ip", metadata.destIP)
+	addOptionalInt(record, "dest_port", metadata.destPort)
+	addOptionalString(record, "unix_path", metadata.unixPath)
+	addOptionalString(record, "endpoint_key", metadata.endpointKey)
 	addOptionalString(record, "country_code", geo.CountryCode)
 	addOptionalString(record, "country_name", geo.CountryName)
 	addOptionalString(record, "dest_host", geo.Host)
@@ -1678,6 +1659,9 @@ func (exporter *auditStreamExporter) normalizeEnabledRawAuditEventGroup(group au
 	if mode == "" || !exporter.cfg.modeEnabled(mode) {
 		return auditEvent{}, "", false
 	}
+	if mode == auditModeNet && !exporter.cfg.shouldIncludeAuditNetEvent(event) {
+		return auditEvent{}, "", false
+	}
 	return event, mode, true
 }
 
@@ -1685,6 +1669,9 @@ func (exporter *auditStreamExporter) normalizeEnabledAuditEvent(wrapper auditEve
 	event := normalizeAuditEvent(wrapper)
 	mode := eventMode(event)
 	if mode == "" || !exporter.cfg.modeEnabled(mode) {
+		return auditEvent{}, "", false
+	}
+	if mode == auditModeNet && !exporter.cfg.shouldIncludeAuditNetEvent(event) {
 		return auditEvent{}, "", false
 	}
 	return event, mode, true
@@ -1738,6 +1725,56 @@ func auditSummaryWindowFromBounds(windowStart float64, windowEnd float64) (strin
 	return isoTimestamp(windowStart), isoTimestamp(windowEnd)
 }
 
+type auditNetMetadata struct {
+	family         string
+	destIP         string
+	destPort       *int
+	unixPath       string
+	endpointKey    string
+	fallbackTarget string
+}
+
+func parseAuditNetMetadata(event auditEvent) auditNetMetadata {
+	sockaddr := map[string]string{}
+	for _, item := range event.SockAddrs {
+		if len(item) > 0 {
+			sockaddr = item
+			break
+		}
+	}
+
+	family := cleanControl(sockaddr["saddr_fam"])
+	destIP := normalizeLookupIP(firstNonEmpty(sockaddr["daddr"], sockaddr["faddr"], sockaddr["raddr"], sockaddr["addr"], sockaddr["laddr"]))
+	rawDestPort := firstNonEmpty(sockaddr["dport"], sockaddr["fport"], sockaddr["rport"], sockaddr["port"], sockaddr["lport"])
+	destPort := parseOptionalInt(rawDestPort)
+	if destPort != nil && (*destPort == 0 || *destPort == 65535) {
+		destPort = nil
+	}
+	unixPath := cleanControl(sockaddr["path"])
+	if family == "" && unixPath != "" {
+		family = "local"
+	}
+
+	endpointKey, fallbackTarget := buildEndpointIdentity(family, destIP, destPort, unixPath)
+	return auditNetMetadata{
+		family:         family,
+		destIP:         destIP,
+		destPort:       destPort,
+		unixPath:       unixPath,
+		endpointKey:    endpointKey,
+		fallbackTarget: fallbackTarget,
+	}
+}
+
+func (cfg auditConfig) shouldIncludeAuditNetEvent(event auditEvent) bool {
+	if cfg.includeLocalSockets {
+		return true
+	}
+
+	metadata := parseAuditNetMetadata(event)
+	return metadata.family != "local" && metadata.unixPath == ""
+}
+
 func buildEndpointIdentity(family string, destIP string, destPort *int, unixPath string) (string, string) {
 	switch {
 	case unixPath != "":
@@ -1789,6 +1826,7 @@ func loadAuditConfigFromEnv() (auditConfig, error) {
 		},
 		mmdbLookupBin:         os.Getenv("CORE_MONITORING_MMDBLOOKUP_BIN"),
 		countryDB:             os.Getenv("CORE_MONITORING_COUNTRY_DB"),
+		includeLocalSockets:   false,
 		stateSyncInterval:     defaultStateSyncInterval,
 		fullStateInterval:     defaultFullStateInterval,
 		streamChannelCapacity: 256,
@@ -1834,6 +1872,14 @@ func loadAuditConfigFromEnv() (auditConfig, error) {
 			}
 			cfg.enabledModes[mode] = struct{}{}
 		}
+	}
+
+	if raw := strings.TrimSpace(os.Getenv("CORE_MONITORING_INCLUDE_LOCAL_SOCKET_CONNECTS")); raw != "" {
+		value, err := strconv.ParseBool(raw)
+		if err != nil {
+			return auditConfig{}, fmt.Errorf("parse include local socket connects: %w", err)
+		}
+		cfg.includeLocalSockets = value
 	}
 
 	if raw := strings.TrimSpace(os.Getenv("CORE_MONITORING_STATE_SYNC_INTERVAL_SECONDS")); raw != "" {
@@ -2569,45 +2615,30 @@ func transformAuditNet(events []auditEvent, outputPath string, stateDir string, 
 		}
 		seen[serialKey] = struct{}{}
 
-		sockaddr := map[string]string{}
-		for _, item := range event.SockAddrs {
-			if len(item) > 0 {
-				sockaddr = item
-				break
-			}
+		if !cfg.shouldIncludeAuditNetEvent(event) {
+			continue
 		}
 
-		family := cleanControl(sockaddr["saddr_fam"])
-		destIP := normalizeLookupIP(firstNonEmpty(sockaddr["daddr"], sockaddr["faddr"], sockaddr["raddr"], sockaddr["addr"], sockaddr["laddr"]))
-		rawDestPort := firstNonEmpty(sockaddr["dport"], sockaddr["fport"], sockaddr["rport"], sockaddr["port"], sockaddr["lport"])
-		destPort := parseOptionalInt(rawDestPort)
-		if destPort != nil && (*destPort == 0 || *destPort == 65535) {
-			destPort = nil
-		}
-		unixPath := cleanControl(sockaddr["path"])
-		if family == "" && unixPath != "" {
-			family = "local"
-		}
-
-		geo := geoLookup(destIP, geoCache, cfg)
+		metadata := parseAuditNetMetadata(event)
+		geo := geoLookup(metadata.destIP, geoCache, cfg)
 		destTarget := geo.Host
 		if destTarget == "" {
 			switch {
-			case family == "inet6" && destIP != "" && destPort != nil:
-				destTarget = fmt.Sprintf("[%s]:%d", destIP, *destPort)
-			case destIP != "" && destPort != nil:
-				destTarget = fmt.Sprintf("%s:%d", destIP, *destPort)
+			case metadata.family == "inet6" && metadata.destIP != "" && metadata.destPort != nil:
+				destTarget = fmt.Sprintf("[%s]:%d", metadata.destIP, *metadata.destPort)
+			case metadata.destIP != "" && metadata.destPort != nil:
+				destTarget = fmt.Sprintf("%s:%d", metadata.destIP, *metadata.destPort)
 			default:
-				destTarget = firstNonEmpty(destIP, unixPath)
+				destTarget = firstNonEmpty(metadata.destIP, metadata.unixPath)
 			}
 		}
 
 		record := baseProcessRecord(event)
 		record["kind"] = "audit_net_event"
-		addOptionalString(record, "family", family)
-		addOptionalString(record, "dest_ip", destIP)
-		addOptionalInt(record, "dest_port", destPort)
-		addOptionalString(record, "unix_path", unixPath)
+		addOptionalString(record, "family", metadata.family)
+		addOptionalString(record, "dest_ip", metadata.destIP)
+		addOptionalInt(record, "dest_port", metadata.destPort)
+		addOptionalString(record, "unix_path", metadata.unixPath)
 		addOptionalString(record, "country_code", geo.CountryCode)
 		addOptionalString(record, "country_name", geo.CountryName)
 		addOptionalString(record, "dest_host", geo.Host)
