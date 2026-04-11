@@ -42,6 +42,7 @@ in
       "**/.claude/settings.local.json"
       "**/.eslintcache"
       ".codex"
+      "/.cocoindex_code"
     ];
     settings = {
       alias = {
