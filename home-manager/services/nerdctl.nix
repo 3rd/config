@@ -29,6 +29,9 @@ let
     text = ''
       set -euo pipefail
 
+      # nixos exposes the working setuid uid/gid mapping helpers via wrappers
+      export PATH="/run/wrappers/bin:$PATH"
+
       if ! [ -w "$HOME" ]; then
         echo "HOME needs to be set and writable" >&2
         exit 1

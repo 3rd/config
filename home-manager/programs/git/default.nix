@@ -35,6 +35,7 @@ in
 
   programs.git = {
     enable = true;
+    signing.format = "openpgp";
     ignores = [
       "node_modules"
       ".private"

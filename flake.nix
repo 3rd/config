@@ -55,6 +55,11 @@
     }@inputs:
     let
       inherit (self) outputs;
+      spaceshipCudaConfig = {
+        allowUnfree = true;
+        cudaCapabilities = [ "12.0" ];
+        cudaForwardCompat = false;
+      };
       systems = [
         "aarch64-linux"
         "x86_64-linux"
@@ -106,9 +111,28 @@
     {
       overlays = import ./system/overlays { inherit inputs; };
 
-      packages = forAllSystems (system: {
-        qimgv = nixpkgs.legacyPackages.${system}.callPackage ./system/pkgs/qimgv { };
-      });
+      packages = forAllSystems (
+        system:
+        let
+          pkgsForSystem = import nixpkgs {
+            inherit system;
+            overlays = [ outputs.overlays.additions ];
+            config =
+              if system == "x86_64-linux" then
+                spaceshipCudaConfig
+              else
+                {
+                  allowUnfree = true;
+                };
+          };
+        in
+        {
+          qimgv = pkgsForSystem.qimgv;
+          piper-libritts-r = pkgsForSystem.piperLibrittsR;
+          kokoro-fastapi-cpu = pkgsForSystem.kokoroFastapiCpu;
+          kokoro-fastapi-cuda = pkgsForSystem.kokoroFastapiCuda;
+        }
+      );
 
       nixosConfigurations = {
         spaceship = nixpkgs.lib.nixosSystem {
@@ -129,6 +153,7 @@
             ./hosts/spaceship/configuration.nix
             {
               nixpkgs.overlays = [
+                outputs.overlays.additions
                 fixTextualOverlay
                 keyringPinOverlay
               ];
@@ -159,6 +184,7 @@
             ./hosts/death/configuration.nix
             {
               nixpkgs.overlays = [
+                outputs.overlays.additions
                 fixTextualOverlay
                 keyringPinOverlay
               ];
@@ -175,7 +201,9 @@
           home-manager.lib.homeManagerConfiguration {
             pkgs = import nixpkgs {
               inherit system;
+              config = spaceshipCudaConfig;
               overlays = [
+                outputs.overlays.additions
                 wired.overlays.default
                 fixWiredOverlay
                 fixTextualOverlay
@@ -202,10 +230,10 @@
               ./hosts/spaceship/home.nix
               disableHomeManagerNews
 
-              (_: {
+              ({ pkgs, ... }: {
                 home.packages = [
                   #
-                  self.packages.${system}.qimgv
+                  pkgs.qimgv
                 ];
                 services.wired = {
                   enable = true;
@@ -226,6 +254,7 @@
             pkgs = import nixpkgs {
               inherit system;
               overlays = [
+                outputs.overlays.additions
                 wired.overlays.default
                 fixWiredOverlay
               ];

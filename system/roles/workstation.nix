@@ -1,4 +1,14 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
+let
+  keyringDaemon = "${config.security.wrapperDir}/gnome-keyring-daemon";
+  dbusUpdateActivationEnvironment = "${lib.getBin pkgs.dbus}/bin/dbus-update-activation-environment";
+in
 
 {
   imports = [
@@ -109,9 +119,36 @@
   services.gnome.gcr-ssh-agent.enable = false;
   programs.ssh.startAgent = true;
   security.pam.services = {
-    greetd.enableGnomeKeyring = true;
-    greetd-password.enableGnomeKeyring = true;
     login.enableGnomeKeyring = true;
+    lightdm.enableGnomeKeyring = true;
+  };
+  services.xserver.displayManager = {
+    lightdm.enable = lib.mkDefault true;
+    defaultSession = lib.mkDefault "home-manager";
+    session = lib.mkDefault [
+      {
+        name = "home-manager";
+        manage = "desktop";
+        start = ''
+          ${pkgs.runtimeShell} $HOME/.hm-xsession &
+          waitPID=$!
+        '';
+      }
+    ];
+    sessionCommands = lib.mkAfter ''
+      if [ -z "''${GNOME_KEYRING_CONTROL:-}" ] || [ ! -S "''${GNOME_KEYRING_CONTROL}/control" ]; then
+        eval "$(${keyringDaemon} --start --components=secrets,pkcs11)"
+      fi
+
+      systemctl --user import-environment GNOME_KEYRING_CONTROL GNOME_KEYRING_PID
+      ${dbusUpdateActivationEnvironment} --systemd \
+        DBUS_SESSION_BUS_ADDRESS \
+        DISPLAY \
+        GNOME_KEYRING_CONTROL \
+        GNOME_KEYRING_PID \
+        XAUTHORITY \
+        XDG_RUNTIME_DIR
+    '';
   };
 
   services.flatpak.enable = true;

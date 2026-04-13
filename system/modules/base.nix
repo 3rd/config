@@ -1,23 +1,37 @@
-{ lib, config, pkgs, options, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  options,
+  ...
+}:
 
 {
   # nix
   nix = {
     settings = {
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       sandbox = true;
       substituters = [
+        "https://cache.nixos-cuda.org"
         "https://nix-community.cachix.org"
         "https://cache.nixos.org/"
         "https://arm.cachix.org/"
       ];
       trusted-public-keys = [
+        "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
         "arm.cachix.org-1:5BZ2kjoL1q6nWhlnrbAl+G7ThY7+HaBRD9PZzqZkbnM="
       ];
       auto-optimise-store = true;
-      trusted-users = [ "root" "@wheel" ];
+      trusted-users = [
+        "root"
+        "@wheel"
+      ];
       allowed-users = [ "@wheel" ];
     };
     gc = {
@@ -37,9 +51,12 @@
   };
   nixpkgs.config = {
     allowUnfree = true;
-    packageOverrides = super:
-      let self = super.pkgs;
-      in {
+    packageOverrides =
+      super:
+      let
+        self = super.pkgs;
+      in
+      {
         stable = import <nixos-stable> { inherit (config.nixpkgs) config; };
       };
   };
@@ -51,9 +68,17 @@
     useTmpfs = lib.mkDefault true;
     cleanOnBoot = lib.mkDefault (!config.boot.tmp.useTmpfs);
   };
-  systemd.services.nix-daemon = { environment.TMPDIR = "/var/tmp"; };
+  systemd.services.nix-daemon = {
+    environment.TMPDIR = "/var/tmp";
+  };
 
-  fileSystems."/" = { options = [ "noatime" "nodiratime" "discard" ]; };
+  fileSystems."/" = {
+    options = [
+      "noatime"
+      "nodiratime"
+      "discard"
+    ];
+  };
 
   # networking
   networking = {
@@ -66,7 +91,8 @@
     useDHCP = false;
     networkmanager = {
       enable = true;
-      plugins = lib.mkForce (with pkgs;
+      plugins = lib.mkForce (
+        with pkgs;
         [
           networkmanager-openvpn
           # networkmanager-l2tp
@@ -75,7 +101,8 @@
           # networkmanager-openconnect
           # networkmanager-vpnc
           # networkmanager-sstp
-        ]);
+        ]
+      );
       wifi.backend = "iwd";
     };
     firewall = {
@@ -83,7 +110,10 @@
       allowedTCPPorts = [ ];
     };
     usePredictableInterfaceNames = true;
-    nameservers = [ "1.0.0.1" "1.1.1.1" ];
+    nameservers = [
+      "1.0.0.1"
+      "1.1.1.1"
+    ];
   };
 
   # locale

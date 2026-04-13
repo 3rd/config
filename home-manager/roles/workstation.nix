@@ -7,6 +7,7 @@
     ../layers/file-management.nix
     ../layers/media.nix
     ../layers/password-management.nix
+    ../layers/tts.nix
     ../desktop/mime.nix
     ../desktop/xdg-desktop-entries.nix
     ../programs/bat.nix
