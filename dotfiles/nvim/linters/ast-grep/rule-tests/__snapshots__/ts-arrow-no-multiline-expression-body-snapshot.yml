@@ -273,6 +273,31 @@ snapshots:
       start: 16
       end: 54
   ? |
+    const x = (a: number, b: number) => a +
+      b
+  : fixed: |
+      const x = (a: number, b: number) => {
+        return a +
+          b
+      }
+    labels:
+    - source: |-
+        (a: number, b: number) => a +
+          b
+      style: primary
+      start: 10
+      end: 43
+    - source: '(a: number, b: number)'
+      style: secondary
+      start: 10
+      end: 32
+    - source: |-
+        a +
+          b
+      style: secondary
+      start: 36
+      end: 43
+  ? |
     useMemo(() => doThis ?
       blaThis : blaThis &&
       2 + etc, [])

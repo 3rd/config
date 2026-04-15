@@ -1,13 +1,13 @@
-{ config, pkgs, pkgs-stable, ... }:
+{ config, lib, pkgs, pkgs-stable, ... }:
 
 {
   home.packages = with pkgs;
     let
-      gotools = pkgs.gotools.overrideAttrs (finalAttrs: previousAttrs: {
+      gotools = lib.lowPrio (pkgs.gotools.overrideAttrs (_: previousAttrs: {
         postInstall = previousAttrs.postInstall + ''
           mv $out/bin/play $out/bin/goplay
         '';
-      });
+      }));
     in [
       #
       gotools

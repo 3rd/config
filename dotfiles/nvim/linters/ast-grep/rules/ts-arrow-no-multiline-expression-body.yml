@@ -2,7 +2,7 @@ id: ts-arrow-no-multiline-expression-body
 message: Multiline concise arrow function should use a block body
 severity: warning
 language: tsx
-note: When a concise arrow expression spans more than 2 body lines, rewrite it to a block body with an explicit return unless the body is a single direct, member, or optional call, or a tagged-template call. The autofix preserves generic type parameters and explicit return types; a formatter can normalize indentation afterward.
+note: When a concise arrow expression spans 2 or more body lines, rewrite it to a block body with an explicit return unless the body is a single direct, member, or optional call, or a tagged-template call. The autofix preserves generic type parameters and explicit return types; a formatter can normalize indentation afterward.
 rule:
   all:
     - kind: arrow_function
@@ -84,7 +84,7 @@ rule:
                 pattern: $BODY
 constraints:
   BODY:
-    regex: "(?s)(?:.*\\n){2,}.*"
+    regex: "(?s).*\\n.*"
 fix: |-
   $TYPE_PARAMS$PARAMS$RETURN => {
     return $BODY

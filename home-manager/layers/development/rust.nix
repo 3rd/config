@@ -48,25 +48,25 @@ in
     #   cargoHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     # })
 
-    (ghCrate {
-      owner = "BeaconBay";
-      repo = "ck";
-      rev = "15c35d940c52220f421ecc3a46b1889064da6cd7";
-      hash = "sha256-JL6P1YdeoesdHbWO59r8TzF0lUMd91WJsHvLRhSm2FM=";
-      cargoHash = "sha256-WxJb7YBrwrnxRVCQ/pyU6qIAJTFt3sSMPrRVrrdw74c=";
-      nativeBuildInputs = [
-        perl
-        pkg-config
-      ];
-      buildInputs = [
-        openssl
-        onnxruntime
-      ];
-      env = {
-        ORT_STRATEGY = "system";
-        ORT_LIB_LOCATION = "${onnxruntime}";
-      };
-    })
+    # (ghCrate {
+    #   owner = "BeaconBay";
+    #   repo = "ck";
+    #   rev = "15c35d940c52220f421ecc3a46b1889064da6cd7";
+    #   hash = "sha256-JL6P1YdeoesdHbWO59r8TzF0lUMd91WJsHvLRhSm2FM=";
+    #   cargoHash = "sha256-WxJb7YBrwrnxRVCQ/pyU6qIAJTFt3sSMPrRVrrdw74c=";
+    #   nativeBuildInputs = [
+    #     perl
+    #     pkg-config
+    #   ];
+    #   buildInputs = [
+    #     openssl
+    #     onnxruntime
+    #   ];
+    #   env = {
+    #     ORT_STRATEGY = "system";
+    #     ORT_LIB_LOCATION = "${onnxruntime}";
+    #   };
+    # })
   ];
 
   home.sessionPath = [ "$HOME/.cargo/bin" ];

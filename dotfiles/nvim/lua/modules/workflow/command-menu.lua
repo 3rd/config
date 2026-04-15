@@ -115,6 +115,15 @@ local actions = {
   copy_absolute_path = function()
     require("modules/workflow/yank-location").exports.copy_absolute_path()
   end,
+  copy_relative_path = function()
+    require("modules/workflow/yank-location").exports.copy_relative_path()
+  end,
+  copy_github_link = function()
+    require("modules/workflow/yank-location").exports.copy_github_link()
+  end,
+  copy_github_link_visual = function()
+    require("modules/workflow/yank-location").exports.copy_github_link_visual()
+  end,
   ts_inspect_tree = function()
     cmd(":InspectTree")
   end,
@@ -176,6 +185,8 @@ local commands = {
     ["File: Rename"] = actions.file_rename,
     ["File: Delete"] = actions.file_delete,
     ["File: Copy absolute path to current file"] = actions.copy_absolute_path,
+    ["File: Copy relative path to current file"] = actions.copy_relative_path,
+    ["File: Copy GitHub link to current file"] = actions.copy_github_link,
     ["Buffer: Sort lines"] = actions.lines_sort,
     ["Buffer: Sort lines (desc)"] = actions.lines_sort_desc,
     ["Silicon: File"] = actions.silicon_normal,
@@ -193,6 +204,7 @@ local commands = {
     ["Sort lines (desc)"] = actions.visual_sort_desc,
     ["Silicon: Selection"] = actions.silicon_visual,
     ["Silicon: Highlight"] = actions.silicon_highlight,
+    ["File: Copy GitHub link to selection"] = actions.copy_github_link_visual,
     ["Gist: Upload selection"] = actions.gist_visual,
     ["Refactor"] = actions.refactor,
   },

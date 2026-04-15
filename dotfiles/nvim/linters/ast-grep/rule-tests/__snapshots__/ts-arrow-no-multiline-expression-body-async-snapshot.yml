@@ -228,6 +228,31 @@ snapshots:
       start: 22
       end: 60
   ? |
+    const x = async (a: number, b: number) => a +
+      b
+  : fixed: |
+      const x = async (a: number, b: number) => {
+        return a +
+          b
+      }
+    labels:
+    - source: |-
+        async (a: number, b: number) => a +
+          b
+      style: primary
+      start: 10
+      end: 49
+    - source: '(a: number, b: number)'
+      style: secondary
+      start: 16
+      end: 38
+    - source: |-
+        a +
+          b
+      style: secondary
+      start: 42
+      end: 49
+  ? |
     const x = async (a: number, b: number) => doThing(
       a,
       b,

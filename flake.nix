@@ -107,6 +107,19 @@
           meta = prev.wired.meta;
         };
       };
+      mkNightlyNeovimPackage =
+        system:
+        let
+          package = inputs.neovim-nightly-overlay.packages.${system}.default;
+        in
+        package.overrideAttrs (oldAttrs: {
+          # home-manager's wrapper still hardcodes nvim.desktop
+          postInstall = (oldAttrs.postInstall or "") + ''
+            if [ -f "$out/share/applications/org.neovim.nvim.desktop" ] && [ ! -e "$out/share/applications/nvim.desktop" ]; then
+              ln -s org.neovim.nvim.desktop "$out/share/applications/nvim.desktop"
+            fi
+          '';
+        });
     in
     {
       overlays = import ./system/overlays { inherit inputs; };
@@ -240,7 +253,7 @@
                   # config = ./wired.ron;
                 };
 
-                programs.neovim.package = inputs.neovim-nightly-overlay.packages.${system}.default;
+                programs.neovim.package = mkNightlyNeovimPackage system;
               })
 
               wired.homeManagerModules.default
@@ -290,7 +303,7 @@
                   # config = ./wired.ron;
                 };
 
-                programs.neovim.package = inputs.neovim-nightly-overlay.packages.${system}.default;
+                programs.neovim.package = mkNightlyNeovimPackage system;
               })
             ];
           };

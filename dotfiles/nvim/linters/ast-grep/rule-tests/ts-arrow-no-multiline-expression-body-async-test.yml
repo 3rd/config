@@ -52,6 +52,9 @@ valid:
       )
 invalid:
   - |
+      const x = async (a: number, b: number) => a +
+        b
+  - |
       const someFunctionName = async (arg1, arg2, arg3) => doThis ?
         blaThis : blaThis &&
         2 + etc

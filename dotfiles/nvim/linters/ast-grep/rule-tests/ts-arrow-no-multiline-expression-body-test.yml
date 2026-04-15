@@ -2,9 +2,6 @@ id: ts-arrow-no-multiline-expression-body
 valid:
   - "const x = (a: number, b: number) => a + b"
   - |
-      const x = (a: number, b: number) => a +
-        b
-  - |
       const x = () => doThing(
         alpha,
         beta,
@@ -43,6 +40,9 @@ valid:
         return Promise.resolve()
       }
 invalid:
+  - |
+      const x = (a: number, b: number) => a +
+        b
   - |
       const someFunctionName = (arg1, arg2, arg3) => doThis ?
         blaThis : blaThis &&
