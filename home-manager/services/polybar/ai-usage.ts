@@ -21,28 +21,19 @@ const CACHE_PATH = "/tmp/polybar-ai-usage.json";
 const LOCK_PATH = "/tmp/polybar-ai-usage.lock";
 const CLAUDE_STATUSLINE_CACHE_PATH = "/tmp/polybar-ai-usage-claude-statusline.json";
 const REFRESH_FLAG = "--refresh";
-const XDG_CACHE_FALLBACK_DIR = ".cache";
-const PERSISTENT_CACHE_DIR = "polybar-ai-usage";
-const CLAUDE_STATE_FILE = "claude.json";
 
 const OPENAI_TOKEN_URL = "https://auth.openai.com/oauth/token";
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
-const CLAUDE_TOKEN_URL = "https://platform.claude.com/v1/oauth/token";
-const ANTHROPIC_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const FACTORY_USAGE_URL = "https://app.factory.ai/api/organization/subscription/usage";
 
 const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 const JSON_CONTENT_TYPE = "application/json";
 const USER_AGENT = "polybar-ai-usage";
-const CLAUDE_USER_AGENT = "claude-code/unknown";
-const ANTHROPIC_BETA = "oauth-2025-04-20";
-const CLAUDE_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 
 const HTTP_TIMEOUT_MS = 12_000;
 const LOCK_STALE_MS = 60_000;
 const LOCK_WAIT_TIMEOUT_MS = 30_000;
 const LOCK_WAIT_POLL_MS = 250;
-const CLAUDE_REFRESH_WINDOW_MS = 5 * 60 * 1000;
 const ERROR_TTL_SECONDS = 300;
 const MINUTE_SECONDS = 60;
 const HOUR_SECONDS = 60 * MINUTE_SECONDS;
@@ -100,14 +91,7 @@ const PROVIDER_COMMANDS = {
 } as const satisfies Record<ProviderName, string>;
 
 const CODEX_AUTH_PATHS = ["~/.codex/auth.json", "~/.config/codex/auth.json"] as const;
-const CLAUDE_CREDENTIALS_PATH = "~/.claude/.credentials.json";
 const FACTORY_AUTH_PATH = "~/.factory/auth.json";
-const CLAUDE_DEFAULT_SCOPES = [
-  "user:profile",
-  "user:inference",
-  "user:sessions:claude_code",
-  "user:mcp_servers",
-] as const;
 
 const CODEX_PERCENT_HEADERS = {
   session: "x-codex-primary-used-percent",
@@ -143,12 +127,6 @@ interface CacheData {
   claude?: ProviderEntry;
   codex?: ProviderEntry;
   droid?: ProviderEntry;
-  updatedAt?: number;
-}
-
-interface ClaudePersistentState {
-  lastGood?: ProviderEntry;
-  retryAt?: number;
   updatedAt?: number;
 }
 
@@ -190,18 +168,6 @@ interface CodexAuthFile extends JsonObject {
   last_refresh?: unknown;
 }
 
-interface ClaudeOauthRecord extends JsonObject {
-  accessToken?: unknown;
-  expiresAt?: unknown;
-  refreshToken?: unknown;
-  scopes?: unknown;
-  subscriptionType?: unknown;
-}
-
-interface ClaudeCredentialsFile extends JsonObject {
-  claudeAiOauth: ClaudeOauthRecord;
-}
-
 interface FactoryAuthFile extends JsonObject {
   access_token?: unknown;
   refresh_token?: unknown;
@@ -211,30 +177,7 @@ interface ErrnoLikeError {
   code?: string;
 }
 
-class UsageFetchError extends Error {
-  status: number | null;
-  retryAt: number | null;
-
-  constructor(
-    message: string,
-    options: {
-      status?: number | null;
-      retryAt?: number | null;
-    } = {},
-  ) {
-    super(message);
-    this.name = "UsageFetchError";
-    this.status = options.status ?? null;
-    this.retryAt = options.retryAt ?? null;
-  }
-}
-
 const homeDirectory = (): string => process.env.HOME ?? homedir();
-
-const xdgCacheHome = (): string =>
-  process.env.XDG_CACHE_HOME ?? join(homeDirectory(), XDG_CACHE_FALLBACK_DIR);
-
-const claudeStatePath = (): string => join(xdgCacheHome(), PERSISTENT_CACHE_DIR, CLAUDE_STATE_FILE);
 
 const configurePath = (): void => {
   const home = homeDirectory();
@@ -317,9 +260,6 @@ const firstString = (value: unknown): string | null => {
 
   return null;
 };
-
-const stringArray = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 
 const clampPercent = (value: unknown): number | null => {
   const parsed = asNumber(value);
@@ -528,97 +468,17 @@ const normalizeCacheData = (value: unknown): CacheData => {
   }
 
   return {
-    claude: normalizeProviderEntry("claude", value.claude),
     codex: normalizeProviderEntry("codex", value.codex),
     droid: normalizeProviderEntry("droid", value.droid),
     updatedAt: asNumber(value.updatedAt ?? value.updated_at) ?? undefined,
   };
 };
 
-const normalizeClaudePersistentState = (value: unknown): ClaudePersistentState => {
-  if (!isJsonObject(value)) {
-    return {};
-  }
-
-  return {
-    lastGood: normalizeProviderEntry("claude", value.lastGood ?? value.last_good),
-    retryAt: asNumber(value.retryAt ?? value.retry_at) ?? undefined,
-    updatedAt: asNumber(value.updatedAt ?? value.updated_at) ?? undefined,
-  };
-};
-
-const readClaudePersistentState = (): ClaudePersistentState =>
-  normalizeClaudePersistentState(parseJsonFile(claudeStatePath()));
-
-const writeClaudePersistentState = (state: ClaudePersistentState): void => {
-  try {
-    writeJsonAtomic(claudeStatePath(), state);
-  } catch {
-    return;
-  }
-};
-
-const toLastGoodEntry = (entry: ProviderEntry): ProviderEntry => ({
-  ...entry,
-  error: null,
-  retryAt: null,
-});
-
-const hydrateClaudeEntry = (
-  cacheEntry: ProviderEntry | undefined,
-  state: ClaudePersistentState,
-): ProviderEntry | undefined => {
-  const retryAt = state.retryAt ?? cacheEntry?.retryAt ?? null;
-  const lastGood =
-    hasProviderEntry(state.lastGood) && providerHasValues(state.lastGood) ? state.lastGood : undefined;
-  if (hasProviderEntry(cacheEntry) && providerHasValues(cacheEntry)) {
-    const sessionResetAt = cacheEntry.sessionResetAt ?? lastGood?.sessionResetAt ?? null;
-    const weeklyResetAt = cacheEntry.weeklyResetAt ?? lastGood?.weeklyResetAt ?? null;
-    return (
-        cacheEntry.retryAt === retryAt &&
-          cacheEntry.sessionResetAt === sessionResetAt &&
-          cacheEntry.weeklyResetAt === weeklyResetAt
-      ) ?
-        cacheEntry
-      : {
-          ...cacheEntry,
-          retryAt,
-          sessionResetAt,
-          weeklyResetAt,
-        };
-  }
-
-  if (lastGood) {
-    return {
-      ...lastGood,
-      fetchedAt: cacheEntry?.fetchedAt ?? lastGood.fetchedAt,
-      retryAt,
-      error: cacheEntry?.error ?? (retryAt === null ? lastGood.error : "unavailable"),
-    };
-  }
-
-  if (cacheEntry) {
-    return cacheEntry.retryAt === retryAt ? cacheEntry : { ...cacheEntry, retryAt };
-  }
-
-  if (retryAt === null && state.updatedAt === undefined) {
-    return undefined;
-  }
-
-  return buildProviderEntry({
-    provider: "claude",
-    fetchedAt: state.updatedAt ?? nowEpoch(),
-    retryAt,
-    error: "unavailable",
-  });
-};
-
 const readCache = (): CacheData => {
   const cache = normalizeCacheData(parseJsonFile(CACHE_PATH));
-  const claudeStatuslineEntry = readClaudeStatuslineEntry();
   return {
     ...cache,
-    claude: claudeStatuslineEntry ?? hydrateClaudeEntry(cache.claude, readClaudePersistentState()),
+    claude: readClaudeStatuslineEntry(),
   };
 };
 
@@ -632,10 +492,6 @@ const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
     return false;
   }
 
-  if (provider === "claude" && entry.source === "statusline") {
-    return true;
-  }
-
   if (hasRetryWindow(entry.retryAt)) {
     return true;
   }
@@ -645,7 +501,7 @@ const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
 };
 
 const cacheNeedsRefresh = (cache: CacheData): boolean =>
-  availableProviders().some((provider) => !cacheIsFresh(cache, provider));
+  availableProviders().some((provider) => provider !== "claude" && !cacheIsFresh(cache, provider));
 
 const shouldRefreshProvider = (cache: CacheData, provider: ProviderName, forceRefresh: boolean): boolean =>
   forceRefresh || !cacheIsFresh(cache, provider);
@@ -667,60 +523,6 @@ const colorForRemaining = (value: number | null): string => {
 };
 
 const displayPercent = (value: number | null): string => (value === null ? "--" : String(value));
-
-const formatScaledCompactNumber = (value: number, divisor = 1): string => {
-  const scaledValue = value / divisor;
-  const text = scaledValue.toFixed(Math.abs(scaledValue) >= 100 ? 0 : 1);
-  return text.endsWith(".0") ? text.slice(0, -2) : text;
-};
-
-const formatCompactNumber = (value: number): string => {
-  const absValue = Math.abs(value);
-  if (absValue >= 1_000_000_000) {
-    return `${formatScaledCompactNumber(value, 1_000_000_000)}b`;
-  }
-
-  if (absValue >= 1_000_000) {
-    return `${formatScaledCompactNumber(value, 1_000_000)}m`;
-  }
-
-  if (absValue >= 1_000) {
-    return `${formatScaledCompactNumber(value, 1_000)}k`;
-  }
-
-  return String(Math.round(value));
-};
-
-const formatCompactNumberPair = (
-  left: number,
-  right: number,
-): {
-  left: string;
-  right: string;
-  suffix: string;
-} => {
-  const sharedUnits = [
-    { threshold: 1_000_000_000, divisor: 1_000_000_000, suffix: "b" },
-    { threshold: 1_000_000, divisor: 1_000_000, suffix: "m" },
-    { threshold: 1_000, divisor: 1_000, suffix: "k" },
-  ] as const;
-
-  for (const unit of sharedUnits) {
-    if (Math.abs(left) >= unit.threshold && Math.abs(right) >= unit.threshold) {
-      return {
-        left: formatScaledCompactNumber(left, unit.divisor),
-        right: formatScaledCompactNumber(right, unit.divisor),
-        suffix: unit.suffix,
-      };
-    }
-  }
-
-  return {
-    left: formatCompactNumber(left),
-    right: formatCompactNumber(right),
-    suffix: "",
-  };
-};
 
 const formatRemainingTime = (resetAt: ResetAtValue): string | null => {
   const resetEpochSeconds = toResetEpochSeconds(resetAt);
@@ -785,14 +587,9 @@ const formatOutput = (cache: CacheData): string =>
     .map((provider) => formatProviderOutput(provider, cache[provider]))
     .join(SEGMENT_GAP);
 
-const unavailableEntry = (
-  provider: ProviderName,
-  options: Pick<BuildProviderEntryOptions, "fetchedAt" | "retryAt"> = {},
-): ProviderEntry =>
+const unavailableEntry = (provider: ProviderName): ProviderEntry =>
   buildProviderEntry({
     provider,
-    fetchedAt: options.fetchedAt,
-    retryAt: options.retryAt,
     error: "unavailable",
   });
 
@@ -802,40 +599,6 @@ const parseResponsePayload = (text: string): unknown => {
   } catch {
     return text;
   }
-};
-
-const retryAtFromHeader = (value: string | null): number | null => {
-  if (value === null) {
-    return null;
-  }
-
-  const seconds = asNumber(value);
-  if (seconds !== null) {
-    return nowEpoch() + Math.max(0, Math.ceil(seconds));
-  }
-
-  const parsedAt = Date.parse(value);
-  return Number.isFinite(parsedAt) ? Math.max(nowEpoch(), Math.floor(parsedAt / 1000)) : null;
-};
-
-const toEpochMilliseconds = (value: unknown): number | null => {
-  const numeric = asNumber(value);
-  if (numeric !== null) {
-    return numeric > 1_000_000_000_000 ? Math.floor(numeric) : Math.floor(numeric * 1000);
-  }
-
-  const stringValue = asString(value);
-  if (stringValue === null) {
-    return null;
-  }
-
-  const parsed = Date.parse(stringValue);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const expiresWithinWindow = (value: unknown, windowMs: number): boolean => {
-  const expiresAt = toEpochMilliseconds(value);
-  return expiresAt !== null && Date.now() + windowMs >= expiresAt;
 };
 
 const httpJson = async (url: string, init?: RequestInit): Promise<HttpJsonResponse> => {
@@ -1004,29 +767,10 @@ const fetchCodexUsage = async (): Promise<ProviderEntry> => {
   return buildCodexEntry(response.payload, response);
 };
 
-const isClaudeCredentialsFile = (value: unknown): value is ClaudeCredentialsFile =>
-  isJsonObject(value) && isJsonObject(value.claudeAiOauth);
-
 const isFactoryAuthFile = (value: unknown): value is FactoryAuthFile => isJsonObject(value);
 
 const isErrnoLikeError = (value: unknown): value is ErrnoLikeError =>
   isJsonObject(value) && (value.code === undefined || typeof value.code === "string");
-
-const loadClaudeCredentials = (): { path: string; credentials: ClaudeCredentialsFile } | null => {
-  const path = expandHomePath(CLAUDE_CREDENTIALS_PATH);
-  const file = parseJsonFile(path);
-  return isClaudeCredentialsFile(file) ?
-      {
-        path,
-        credentials: file,
-      }
-    : null;
-};
-
-const resolveClaudeScopes = (oauth: ClaudeOauthRecord): string[] => {
-  const scopes = stringArray(oauth.scopes).filter((scope) => scope.trim() !== "");
-  return scopes.length > 0 ? scopes : [...CLAUDE_DEFAULT_SCOPES];
-};
 
 const loadFactoryAuth = (): FactoryAuthFile | null => {
   const path = expandHomePath(FACTORY_AUTH_PATH);
@@ -1038,77 +782,6 @@ const resolveFactoryUserId = (auth: FactoryAuthFile): string | null => {
   const claims = decodeJwtPayload(asString(auth.access_token));
   return asString(claims?.id) ?? asString(claims?.sub);
 };
-
-const persistRefreshedClaudeTokens = (
-  credentialsPath: string,
-  credentials: ClaudeCredentialsFile,
-  payload: JsonObject,
-): string | null => {
-  const accessToken = asString(payload.access_token);
-  if (!accessToken) {
-    return null;
-  }
-
-  credentials.claudeAiOauth.accessToken = accessToken;
-
-  const refreshToken = asString(payload.refresh_token);
-  if (refreshToken) {
-    credentials.claudeAiOauth.refreshToken = refreshToken;
-  }
-
-  const expiresInSeconds = asNumber(payload.expires_in);
-  if (expiresInSeconds !== null) {
-    credentials.claudeAiOauth.expiresAt = Date.now() + Math.max(0, expiresInSeconds) * 1000;
-  }
-
-  const scope = asString(payload.scope);
-  if (scope) {
-    credentials.claudeAiOauth.scopes = scope.split(/\s+/).filter(Boolean);
-  }
-
-  writeJsonAtomic(credentialsPath, credentials);
-  return accessToken;
-};
-
-const refreshClaudeAccessToken = async (
-  credentialsPath: string,
-  credentials: ClaudeCredentialsFile,
-): Promise<string | null> => {
-  const refreshToken = asString(credentials.claudeAiOauth.refreshToken);
-  if (!refreshToken) {
-    return null;
-  }
-
-  const response = await httpJson(CLAUDE_TOKEN_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": JSON_CONTENT_TYPE,
-    },
-    body: JSON.stringify({
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-      client_id: CLAUDE_CLIENT_ID,
-      scope: resolveClaudeScopes(credentials.claudeAiOauth).join(" "),
-    }),
-  });
-
-  if (response.status !== 200 || !isJsonObject(response.payload)) {
-    return null;
-  }
-
-  return persistRefreshedClaudeTokens(credentialsPath, credentials, response.payload);
-};
-
-const requestClaudeUsage = async (accessToken: string): Promise<HttpJsonResponse> =>
-  httpJson(ANTHROPIC_USAGE_URL, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: JSON_CONTENT_TYPE,
-      "Content-Type": JSON_CONTENT_TYPE,
-      "User-Agent": CLAUDE_USER_AGENT,
-      "anthropic-beta": ANTHROPIC_BETA,
-    },
-  });
 
 const requestDroidUsage = async (accessToken: string, userId: string): Promise<HttpJsonResponse> =>
   httpJson(FACTORY_USAGE_URL, {
@@ -1124,21 +797,6 @@ const requestDroidUsage = async (accessToken: string, userId: string): Promise<H
       userId,
     }),
   });
-
-const buildClaudeEntry = (oauth: ClaudeOauthRecord, payload: JsonObject): ProviderEntry => {
-  const fiveHour = isJsonObject(payload.five_hour) ? payload.five_hour : {};
-  const sevenDay = isJsonObject(payload.seven_day) ? payload.seven_day : {};
-
-  return buildProviderEntry({
-    provider: "claude",
-    source: "api",
-    plan: asString(oauth.subscriptionType),
-    sessionUsed: clampPercent(fiveHour.utilization),
-    weeklyUsed: clampPercent(sevenDay.utilization),
-    sessionResetAt: asResetAtValue(fiveHour.resets_at),
-    weeklyResetAt: asResetAtValue(sevenDay.resets_at),
-  });
-};
 
 const resolveDroidUserScopedLimit = (payload: JsonObject): number | null => {
   const usage = isJsonObject(payload.usage) ? payload.usage : {};
@@ -1211,45 +869,6 @@ const buildDroidEntry = (payload: JsonObject): ProviderEntry => {
   });
 };
 
-const fetchClaudeUsage = async (): Promise<ProviderEntry> => {
-  const claudeCredentials = loadClaudeCredentials();
-  if (!claudeCredentials) {
-    throw new UsageFetchError("claude credentials not found");
-  }
-
-  const { path, credentials } = claudeCredentials;
-  const accessToken = asString(credentials.claudeAiOauth.accessToken);
-  if (!accessToken) {
-    throw new UsageFetchError("claude access token missing");
-  }
-
-  let currentToken = accessToken;
-  if (expiresWithinWindow(credentials.claudeAiOauth.expiresAt, CLAUDE_REFRESH_WINDOW_MS)) {
-    const refreshedToken = await refreshClaudeAccessToken(path, credentials);
-    if (refreshedToken) {
-      currentToken = refreshedToken;
-    }
-  }
-
-  let response = await requestClaudeUsage(currentToken);
-  if (UNAUTHORIZED_STATUSES.has(response.status)) {
-    const refreshedToken = await refreshClaudeAccessToken(path, credentials);
-    if (refreshedToken) {
-      currentToken = refreshedToken;
-      response = await requestClaudeUsage(currentToken);
-    }
-  }
-
-  if (response.status !== 200 || !isJsonObject(response.payload)) {
-    throw new UsageFetchError(`claude usage request failed (${response.status})`, {
-      status: response.status,
-      retryAt: retryAtFromHeader(response.headers.get("retry-after")),
-    });
-  }
-
-  return buildClaudeEntry(credentials.claudeAiOauth, response.payload);
-};
-
 const fetchDroidUsage = async (): Promise<ProviderEntry> => {
   const factoryAuth = loadFactoryAuth();
   if (!factoryAuth) {
@@ -1270,55 +889,20 @@ const fetchDroidUsage = async (): Promise<ProviderEntry> => {
   return buildDroidEntry(response.payload);
 };
 
-const readRetryAt = (error: unknown): number | null =>
-  error instanceof UsageFetchError ? error.retryAt : null;
-
 const recoverProviderEntry = (
   provider: ProviderName,
   previousEntry: ProviderEntry | undefined,
-  error: unknown,
 ): ProviderEntry => {
-  const retryAt = readRetryAt(error);
   if (hasProviderEntry(previousEntry) && providerHasValues(previousEntry)) {
     return {
       ...previousEntry,
       fetchedAt: nowEpoch(),
-      retryAt,
+      retryAt: null,
       error: "unavailable",
     };
   }
 
-  return unavailableEntry(provider, {
-    retryAt,
-  });
-};
-
-const persistClaudeSuccess = (entry: ProviderEntry): void => {
-  writeClaudePersistentState({
-    lastGood: toLastGoodEntry(entry),
-    updatedAt: nowEpoch(),
-  });
-};
-
-const persistClaudeFailure = (
-  state: ClaudePersistentState,
-  previousEntry: ProviderEntry | undefined,
-  retryAt: number | null,
-): void => {
-  const lastGood =
-    hasProviderEntry(state.lastGood) && providerHasValues(state.lastGood) ? toLastGoodEntry(state.lastGood)
-    : hasProviderEntry(previousEntry) && providerHasValues(previousEntry) ? toLastGoodEntry(previousEntry)
-    : undefined;
-
-  if (lastGood === undefined && retryAt === null) {
-    return;
-  }
-
-  writeClaudePersistentState({
-    lastGood,
-    retryAt: retryAt ?? undefined,
-    updatedAt: nowEpoch(),
-  });
+  return unavailableEntry(provider);
 };
 
 const refreshCache = async (
@@ -1327,46 +911,28 @@ const refreshCache = async (
   } = {},
 ): Promise<CacheData> => {
   const previousCache = readCache();
-  const previousClaudeState = readClaudePersistentState();
   const enabledProviders = availableProviders();
   const forceRefresh = options.forceRefresh ?? false;
-  const claudeNeedsRefresh =
-    enabledProviders.includes("claude") && shouldRefreshProvider(previousCache, "claude", forceRefresh);
   const codexNeedsRefresh =
     enabledProviders.includes("codex") && shouldRefreshProvider(previousCache, "codex", forceRefresh);
   const droidNeedsRefresh =
     enabledProviders.includes("droid") && shouldRefreshProvider(previousCache, "droid", forceRefresh);
-  const [claudeResult, codexResult, droidResult] = await Promise.allSettled([
-    claudeNeedsRefresh ? fetchClaudeUsage() : (
-      Promise.resolve(previousCache.claude ?? unavailableEntry("claude"))
-    ),
+  const [codexResult, droidResult] = await Promise.allSettled([
     codexNeedsRefresh ? fetchCodexUsage() : Promise.resolve(previousCache.codex ?? unavailableEntry("codex")),
     droidNeedsRefresh ? fetchDroidUsage() : Promise.resolve(previousCache.droid ?? unavailableEntry("droid")),
   ]);
 
-  const claude =
-    !claudeNeedsRefresh ? (previousCache.claude ?? unavailableEntry("claude"))
-    : claudeResult.status === "fulfilled" ? claudeResult.value
-    : recoverProviderEntry("claude", previousCache.claude, claudeResult.reason);
   const codex =
     !codexNeedsRefresh ? (previousCache.codex ?? unavailableEntry("codex"))
     : codexResult.status === "fulfilled" ? codexResult.value
-    : recoverProviderEntry("codex", previousCache.codex, codexResult.reason);
+    : recoverProviderEntry("codex", previousCache.codex);
   const droid =
     !droidNeedsRefresh ? (previousCache.droid ?? unavailableEntry("droid"))
     : droidResult.status === "fulfilled" ? droidResult.value
-    : recoverProviderEntry("droid", previousCache.droid, droidResult.reason);
-
-  if (!claudeNeedsRefresh) {
-    // nothing to persist
-  } else if (claudeResult.status === "fulfilled") {
-    persistClaudeSuccess(claudeResult.value);
-  } else {
-    persistClaudeFailure(previousClaudeState, previousCache.claude, readRetryAt(claudeResult.reason));
-  }
+    : recoverProviderEntry("droid", previousCache.droid);
 
   const nextCache: CacheData = {
-    claude,
+    claude: previousCache.claude,
     codex,
     droid,
     updatedAt: nowEpoch(),

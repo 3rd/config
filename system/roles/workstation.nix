@@ -125,7 +125,7 @@ in
   services.xserver.displayManager = {
     lightdm.enable = lib.mkDefault true;
     defaultSession = lib.mkDefault "home-manager";
-    session = lib.mkDefault [
+    session = lib.mkAfter [
       {
         name = "home-manager";
         manage = "desktop";

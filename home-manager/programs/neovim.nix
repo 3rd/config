@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   home.packages = with pkgs; [ proximity-sort ];
@@ -13,7 +13,7 @@
   };
 
   # prevent home-manager from generating init.lua
-  xdg.configFile."nvim/init.lua".enable = false;
+  xdg.configFile."nvim/init.lua".enable = lib.mkForce false;
 
   programs.fish.shellAliases = {
     v = "/home/rabbit/.nix-profile/bin/with-vendors nvim";
