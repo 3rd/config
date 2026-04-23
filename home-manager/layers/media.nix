@@ -3,6 +3,8 @@
 {
   home.packages = [
     #
+    pkgs.btfs
+    pkgs.fuse3
     pkgs.mpv
     pkgs.espeak-ng
     pkgs-stable.ffmpeg-full
@@ -16,4 +18,3 @@
   else
     [ ]);
 }
-

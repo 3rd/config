@@ -46,6 +46,7 @@
 
   home.sessionPath = [ "$HOME/.local/bin" ];
   home.sessionVariables = {
+    DO_NOT_TRACK = "true";
     EDITOR = "nvim";
     MANPAGER = "nvim +Man!";
     MANWIDTH = "80";
