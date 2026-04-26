@@ -3,6 +3,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-master.url = "github:nixos/nixpkgs/master";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+    llama-cpp.url = "github:ggml-org/llama.cpp";
     # https://github.com/NixOS/nixpkgs/issues/504370
     nixpkgs-keyring.url = "github:nixos/nixpkgs?rev=b40629efe5d6ec48dd1efba650c797ddbd39ace0";
     hardware.url = "github:nixos/nixos-hardware";
@@ -140,7 +141,7 @@
           };
         in
         {
-          qimgv = pkgsForSystem.qimgv;
+          inherit (pkgsForSystem) claudeDesktop qimgv;
           piper-libritts-r = pkgsForSystem.piperLibrittsR;
           kokoro-fastapi-cpu = pkgsForSystem.kokoroFastapiCpu;
           kokoro-fastapi-cuda = pkgsForSystem.kokoroFastapiCuda;

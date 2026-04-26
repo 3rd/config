@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [ $# -lt 1 ]; then
+  echo "usage: $0 <magnet-url-or-torrent-file> [mpv-args...]" >&2
+  exit 1
+fi
+
+readonly TORRENT="$1"
+shift
+
+for cmd in btfs mpv mountpoint; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "error: $cmd not found in PATH" >&2
+    exit 1
+  fi
+done
+
+if command -v fusermount >/dev/null 2>&1; then
+  readonly FUSERMOUNT="fusermount"
+elif command -v fusermount3 >/dev/null 2>&1; then
+  readonly FUSERMOUNT="fusermount3"
+else
+  echo "error: fusermount or fusermount3 not found in PATH" >&2
+  exit 1
+fi
+
+MOUNT_DIR="$(mktemp -d -t btfs-play.XXXXXX)"
+readonly MOUNT_DIR
+DATA_DIR="$(mktemp -d -t btfs-data.XXXXXX)"
+readonly DATA_DIR
+readonly BTFS_OPTIONS=(
+  "--data-directory=$DATA_DIR"
+  "--max-download-rate=0"
+  "--max-upload-rate=0"
+  "-o" "auto_unmount"
+  "-o" "kernel_cache"
+)
+readonly MPV_OPTIONS=(
+  "--cache=yes"
+  "--cache-pause-initial=yes"
+  "--cache-pause-wait=3"
+  "--demuxer-seekable-cache=yes"
+  "--demuxer-max-back-bytes=128M"
+  "--demuxer-max-bytes=192M"
+  "--demuxer-readahead-secs=20"
+  "--stream-buffer-size=4M"
+  "--msg-level=cache=info,demuxer=info,stream=info"
+)
+MPV_PID=""
+
+cleanup() {
+  local rc=$?
+
+  if mountpoint -q "$MOUNT_DIR" 2>/dev/null; then
+    "$FUSERMOUNT" -u "$MOUNT_DIR" 2>/dev/null || "$FUSERMOUNT" -uz "$MOUNT_DIR" 2>/dev/null || true
+  fi
+
+  for _ in 1 2 3 4 5; do
+    if ! mountpoint -q "$MOUNT_DIR" 2>/dev/null; then
+      break
+    fi
+    sleep 1
+  done
+
+  rmdir "$MOUNT_DIR" 2>/dev/null || true
+  rm -rf "$DATA_DIR"
+  exit "$rc"
+}
+
+interrupt() {
+  if [ -n "$MPV_PID" ] && kill -0 "$MPV_PID" 2>/dev/null; then
+    kill -KILL "$MPV_PID" 2>/dev/null || true
+    wait "$MPV_PID" 2>/dev/null || true
+    MPV_PID=""
+  fi
+
+  exit 130
+}
+
+trap cleanup EXIT
+trap interrupt INT TERM HUP
+
+echo "mounting torrent at $MOUNT_DIR..." >&2
+btfs "${BTFS_OPTIONS[@]}" "$TORRENT" "$MOUNT_DIR"
+
+echo "waiting for metadata..." >&2
+for i in $(seq 1 60); do
+  if [ -n "$(find "$MOUNT_DIR" -mindepth 1 -maxdepth 3 -type f 2>/dev/null | head -n1)" ]; then
+    break
+  fi
+
+  if [ "$i" = 60 ]; then
+    echo "error: timed out waiting for torrent metadata" >&2
+    exit 1
+  fi
+
+  sleep 1
+done
+
+mapfile -t files < <(
+  find "$MOUNT_DIR" -type f \
+    \( -iname '*.mkv' -o -iname '*.mp4' -o -iname '*.avi' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.m4v' -o -iname '*.ts' -o -iname '*.wmv' -o -iname '*.flv' \) \
+    -printf '%s\t%p\n' 2>/dev/null | sort -rn | cut -f2-
+)
+
+if [ "${#files[@]}" -eq 0 ]; then
+  echo "error: no playable video files found in torrent" >&2
+  exit 1
+fi
+
+selected_index=1
+
+select_target() {
+  if [ "${#files[@]}" -eq 1 ]; then
+    printf '%s\n' "${files[0]}"
+    return 0
+  fi
+
+  echo "multiple video files found:" >&2
+  for i in "${!files[@]}"; do
+    printf "  [%d] %s\n" "$((i + 1))" "$(basename "${files[$i]}")" >&2
+  done
+
+  printf "select [1-%d] or q to quit (default %d): " "${#files[@]}" "$selected_index" >&2
+  read -r choice < /dev/tty || choice="$selected_index"
+  choice="${choice:-$selected_index}"
+
+  if [ "$choice" = "q" ]; then
+    return 1
+  fi
+
+  if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#files[@]}" ]; then
+    echo "error: invalid selection" >&2
+    exit 1
+  fi
+
+  selected_index="$choice"
+  printf '%s\n' "${files[$((choice - 1))]}"
+}
+
+while true; do
+  if ! target="$(select_target)"; then
+    break
+  fi
+
+  echo "playing: $(basename "$target")" >&2
+  echo "mpv startup: waiting for initial cache fill..." >&2
+  mpv "${MPV_OPTIONS[@]}" "$@" "$target" &
+  MPV_PID=$!
+  wait "$MPV_PID"
+  MPV_PID=""
+
+  if [ "${#files[@]}" -eq 1 ]; then
+    break
+  fi
+done

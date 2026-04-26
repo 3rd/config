@@ -1,4 +1,10 @@
-{ config, pkgs, pkgs-master, lib, ... }:
+{
+  config,
+  pkgs,
+  pkgs-master,
+  lib,
+  ...
+}:
 
 {
   imports = [ ../colors.nix ];
@@ -27,11 +33,13 @@
       scrollback_lines = "100000";
       shell_integration = "no-cursor";
       sync_to_monitor = "no";
+      touch_scroll_multiplier = "1.0";
       tab_bar_edge = "bottom";
       tab_bar_style = "separator";
       tab_separator = "┇";
       tab_title_template = "{index}";
       visual_bell_duration = "0.2";
+      wheel_scroll_multiplier = "1.0";
       window_alert_on_bell = "no";
       window_border_width = "0";
       window_margin_width = "0";
@@ -48,8 +56,7 @@
       background_opacity = "0.98";
       dynamic_background_opacity = "yes";
       # background_tint = "0.5";
-      transparent_background_colors =
-        "#312F3C@0.98 #282631@0.98 #2F2D39@0.98 #2A2833@0.98 #363442@0.98 #3F3D4D@0.98 #26232f@0.98 #494659@0.98"; # max 8
+      transparent_background_colors = "#312F3C@0.98 #282631@0.98 #2F2D39@0.98 #2A2833@0.98 #363442@0.98 #3F3D4D@0.98 #26232f@0.98 #494659@0.98"; # max 8
 
       # theme
       cursor_text_color = "background";
@@ -169,4 +176,3 @@
     '';
   };
 }
-

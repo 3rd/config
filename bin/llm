@@ -1,0 +1,1111 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+readonly LLM_ROOT="${LLM_ROOT:-/storage/llm}"
+readonly MODELS_DIR="${LLM_MODELS_DIR:-$LLM_ROOT/models}"
+readonly REGISTRY_DIR="${LLM_REGISTRY_DIR:-$LLM_ROOT/registry}"
+readonly MODELS_JSON="$REGISTRY_DIR/models.json"
+readonly SWAP_CONFIG="$REGISTRY_DIR/llama-swap.yaml"
+readonly API_BASE="${LLM_API_BASE:-http://127.0.0.1:11343}"
+readonly OPENAI_KEY="${LLM_OPENAI_KEY:-local}"
+readonly OLLAMA_MANIFEST_ROOT="${OLLAMA_MANIFEST_ROOT:-/storage/ollama/models/manifests}"
+readonly OLLAMA_BLOBS_ROOT="${OLLAMA_BLOBS_ROOT:-/storage/ollama/models/blobs}"
+readonly DEFAULT_CTX="${LLM_DEFAULT_CTX:-65536}"
+readonly DEFAULT_BATCH="${LLM_DEFAULT_BATCH:-256}"
+readonly DEFAULT_UBATCH="${LLM_DEFAULT_UBATCH:-128}"
+JSON_OUTPUT=0
+
+usage() {
+  cat <<'EOF'
+usage: llm <command> [args]
+
+commands:
+  help                         show this help
+  doctor                       check tools, storage, auth, and services
+  search <query>               search Hugging Face GGUF repos
+  info [repo|url|model|path]   show repo, file, or registry details
+  pull <repo|url> [options]    download and register a selected GGUF
+  cache ls|prune               inspect or prune Hugging Face cache
+  ls [--long|--registered|--unregistered|--enabled|--disabled|--missing]
+                               list local models and registry state
+  adopt [--all|--dry-run]      register moved Ollama models from manifests
+  add <path> --id <id> [opts]  register a local GGUF
+  set [id] [--ctx n] [--gpu-layers n] [--batch n] [--ubatch n] [--ttl 10m]
+                               update runtime settings
+  edit [id]                    edit one registry entry
+  enable|disable [id]          toggle serving registry state
+  reload                       regenerate llama-swap config
+  start|stop|restart [id]      control serving
+  clear                        unload and reap local llama-server processes
+  ps                           show running upstreams
+  served                       list /v1/models from llama-swap
+  status                       show service and endpoint state
+  logs                         tail llama-swap logs
+  test [id]                    send a tiny chat request
+  chat [id] <prompt>           send one prompt
+  bench [id] <prompt>          run one prompt with rough elapsed time
+  rm <id|path> [--dry-run]     remove a model under /storage/llm
+
+global:
+  --json                       machine-readable output where supported
+
+examples:
+  llm search "qwen3 coder gguf"
+  llm info unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
+  llm pull unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
+  llm start
+EOF
+}
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+log() {
+  [[ "$JSON_OUTPUT" -eq 1 ]] && return
+  echo "$*" >&2
+}
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+require_cmd() {
+  have "$1" || die "$1 not found in PATH"
+}
+
+ensure_registry() {
+  mkdir -p "$MODELS_DIR" "$REGISTRY_DIR"
+  if [[ ! -f "$MODELS_JSON" ]]; then
+    printf '{"models":{}}\n' >"$MODELS_JSON"
+  fi
+  if [[ ! -f "$SWAP_CONFIG" ]]; then
+    printf 'models: {}\n' >"$SWAP_CONFIG"
+  fi
+}
+
+json_arg() {
+  jq -Rn --arg value "$1" '$value'
+}
+
+normalize_repo() {
+  local value="$1"
+  value="${value#https://huggingface.co/}"
+  value="${value#http://huggingface.co/}"
+  value="${value#huggingface.co/}"
+  IFS='/' read -r owner repo rest <<<"$value"
+  [[ -n "${owner:-}" && -n "${repo:-}" ]] || die "expected Hugging Face repo or URL"
+  printf '%s/%s\n' "$owner" "$repo"
+}
+
+gguf_file_from_url() {
+  local value="$1"
+  [[ "$value" == http://huggingface.co/* || "$value" == https://huggingface.co/* || "$value" == huggingface.co/* ]] || return 0
+  [[ "$value" == *.gguf* ]] || return 0
+  value="${value%%\?*}"
+  printf '%s\n' "${value##*/}"
+}
+
+hf_json() {
+  local repo="$1" output
+  if ! output="$(hf models info "$repo" --expand siblings,tags,downloads,likes,gated --format json 2>&1)"; then
+    printf '%s\n' "$output" >&2
+    if [[ "$repo" == *GGU ]]; then
+      printf 'did you mean: %sF\n' "$repo" >&2
+    fi
+    return 1
+  fi
+  if ! jq -e . >/dev/null 2>&1 <<<"$output"; then
+    printf 'error: Hugging Face returned non-JSON output for %s\n' "$repo" >&2
+    printf '%s\n' "$output" >&2
+    if [[ "$repo" == *GGU ]]; then
+      printf 'did you mean: %sF\n' "$repo" >&2
+    fi
+    return 1
+  fi
+  printf '%s\n' "$output"
+}
+
+list_remote_ggufs() {
+  local repo="$1"
+  hf_json "$repo" | jq -r --arg repo "$repo" '
+    def size: if (.size? // 0) == 0 then "-" else ((.size / 1024 / 1024 / 1024) | tostring) + " GiB" end;
+    .siblings[]?
+    | select((.rfilename // "") | endswith(".gguf"))
+    | [.rfilename, ((.rfilename | (capture("(?<q>Q[0-9A-Za-z_\\-]+)")? // {}) | .q) // "-"), size, "https://huggingface.co/" + $repo + "/resolve/main/" + (.rfilename | @uri)]
+    | @tsv
+  ' | while IFS=$'\t' read -r file quant size url; do
+    if [[ "$size" == "-" ]] && have curl; then
+      local headers linked_size
+      headers="$(curl -fsSI "$url" 2>/dev/null | tr -d '\r' || true)"
+      linked_size="$(printf '%s\n' "$headers" | awk 'BEGIN{IGNORECASE=1} /^x-linked-size:/ {print $2; exit}')"
+      if [[ -n "$linked_size" && "$linked_size" =~ ^[0-9]+$ ]]; then
+        size="$(awk -v bytes="$linked_size" 'BEGIN { printf "%.1f GiB", bytes / 1024 / 1024 / 1024 }')"
+      fi
+    fi
+    printf '%s\t%s\t%s\n' "$file" "$quant" "$size"
+  done
+}
+
+hf_file_url() {
+  jq -rn --arg repo "$1" --arg file "$2" '"https://huggingface.co/" + $repo + "/resolve/main/" + ($file | @uri)'
+}
+
+download_hf_file() {
+  require_cmd curl
+  local repo="$1" file="$2" target="$3" url part token
+  url="$(hf_file_url "$repo" "$file")"
+  part="$target.part"
+  if [[ -f "$target" ]]; then
+    log "already downloaded: $target"
+    return
+  fi
+  token="${HF_TOKEN:-${HUGGING_FACE_HUB_TOKEN:-}}"
+  log "downloading: $file"
+  log "target: $target"
+  if [[ -n "$token" ]]; then
+    curl -fL --retry 5 --retry-all-errors --continue-at - --progress-bar --speed-limit 1024 --speed-time 120 \
+      -H "authorization: Bearer $token" -o "$part" "$url"
+  else
+    curl -fL --retry 5 --retry-all-errors --continue-at - --progress-bar --speed-limit 1024 --speed-time 120 \
+      -o "$part" "$url"
+  fi
+  mv "$part" "$target"
+}
+
+registry_entry() {
+  jq -e --arg id "$1" '.models[$id]' "$MODELS_JSON"
+}
+
+model_path() {
+  local id="$1"
+  if [[ -f "$id" ]]; then
+    realpath -m "$id"
+    return
+  fi
+  jq -er --arg id "$id" '
+    if .models[$id] then .models[$id].path
+    else
+      .models
+      | to_entries[]
+      | select((.value.aliases // []) | index($id))
+      | .value.path
+    end
+  ' "$MODELS_JSON"
+}
+
+model_id_from_alias() {
+  local id="$1"
+  jq -er --arg id "$id" '
+    if .models[$id] then $id
+    else
+      .models
+      | to_entries[]
+      | select((.value.aliases // []) | index($id))
+      | .key
+    end
+  ' "$MODELS_JSON"
+}
+
+is_embedding_model() {
+  local id="$1" path
+  path="$(model_path "$id" 2>/dev/null || true)"
+  [[ "$id ${path##*/}" =~ [Ee]mbed|[Ee]mbedding|(^|[-_.])[Ee]5($|[-_.])|(^|[-_.])[Bb][Gg][Ee]($|[-_.]) ]]
+}
+
+require_chat_model() {
+  local id="$1"
+  if is_embedding_model "$id"; then
+    die "$id is an embedding model; chat/start/test/bench need a generative model"
+  fi
+}
+
+is_known_bad_model() {
+  local id="$1" path
+  path="$(model_path "$id" 2>/dev/null || true)"
+  [[ "$id ${path##*/}" =~ qwen3[-.]5|qwen3\.5 ]]
+}
+
+require_startable_model() {
+  local id="$1"
+  require_chat_model "$id"
+  if is_known_bad_model "$id"; then
+    die "$id is a known-incompatible imported Qwen3.5 GGUF; replace it with a corrected GGUF before starting"
+  fi
+}
+
+select_model_id() {
+  require_cmd jq
+  require_cmd fzf
+  ensure_registry
+  local include_missing="${1:-0}" prompt="${2:-model}" mode="${3:-any}" rows selected
+  [[ -r /dev/tty ]] || die "model id is required without a controlling terminal"
+  rows="$(
+    jq -r --argjson defaultCtx "$DEFAULT_CTX" '
+      .models
+      | to_entries[]
+      | [
+        .key,
+        .value.path,
+        (.value.enabled // true | tostring),
+        (.value.ctx // $defaultCtx | tostring),
+        (.value.gpuLayers // 99 | tostring),
+        ((.value.aliases // []) | join(","))
+      ]
+      | @tsv
+    ' "$MODELS_JSON" | while IFS=$'\t' read -r id path enabled ctx gpu aliases; do
+      [[ -n "$id" ]] || continue
+      if [[ ! -f "$path" && "$include_missing" != "1" ]]; then
+        continue
+      fi
+      if [[ "$mode" == "served-chat" && "$enabled" == "false" ]]; then
+        continue
+      fi
+      if [[ "$mode" == "chat" || "$mode" == "served-chat" ]]; then
+        if [[ "$id ${path##*/}" =~ [Ee]mbed|[Ee]mbedding|(^|[-_.])[Ee]5($|[-_.])|(^|[-_.])[Bb][Gg][Ee]($|[-_.])|qwen3[-.]5|qwen3\.5 ]]; then
+          continue
+        fi
+      fi
+      if [[ "$mode" == "enabled" && "$enabled" == "false" ]]; then
+        continue
+      fi
+      local state="enabled" size="missing"
+      [[ "$enabled" == "false" ]] && state="disabled"
+      if [[ -f "$path" ]]; then
+        size="$(du -h "$path" | awk '{print $1}')"
+      fi
+      printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$state" "$size" "$ctx" "$gpu" "${aliases:-"-"}"
+    done
+  )"
+  [[ -n "$rows" ]] || die "no registered models found"
+  selected="$(printf '%s\n' "$rows" | column -t -s $'\t' | fzf --header='id state size ctx gpu aliases' --prompt="$prompt> ")"
+  [[ -n "$selected" ]] || die "no model selected"
+  local id
+  id="$(awk '{print $1}' <<<"$selected")"
+  log "selected: $id"
+  printf '%s\n' "$id"
+}
+
+model_id_or_select() {
+  local prompt="$1" include_missing="$2" value="${3:-}" mode="${4:-any}"
+  if [[ -n "$value" ]]; then
+    model_id_from_alias "$value"
+  else
+    select_model_id "$include_missing" "$prompt" "$mode"
+  fi
+}
+
+select_loaded_model_id() {
+  require_cmd jq
+  local prompt="${1:-model}" running_json rows selected id
+  running_json="$(api_json /running 2>/dev/null || true)"
+  if [[ -z "$running_json" ]] || ! jq -e '.running | length > 0' >/dev/null 2>&1 <<<"$running_json"; then
+    die "no model is currently loaded"
+  fi
+  rows="$(jq -r '.running[] | [.model, (.state // "-"), (.proxy // "-"), (.ttl // "-" | tostring)] | @tsv' <<<"$running_json")"
+  if [[ "$(printf '%s\n' "$rows" | wc -l)" -eq 1 ]]; then
+    selected="$rows"
+  else
+    require_cmd fzf
+    [[ -r /dev/tty ]] || die "model id is required without a controlling terminal"
+    selected="$(printf '%s\n' "$rows" | column -t -s $'\t' | fzf --header='model state proxy ttl' --prompt="$prompt> ")"
+  fi
+  [[ -n "$selected" ]] || die "no model selected"
+  id="$(awk '{print $1}' <<<"$selected")"
+  log "selected: $id"
+  printf '%s\n' "$id"
+}
+
+parse_ttl() {
+  local value="${1:-600}"
+  case "$value" in
+    *s) printf '%s\n' "${value%s}" ;;
+    *m) printf '%s\n' "$(( ${value%m} * 60 ))" ;;
+    *h) printf '%s\n' "$(( ${value%h} * 3600 ))" ;;
+    *) printf '%s\n' "$value" ;;
+  esac
+}
+
+assert_under_llm_root() {
+  local path
+  path="$(realpath -m "$1")"
+  [[ "$path" == "$LLM_ROOT"/* ]] || die "$path is outside $LLM_ROOT"
+  printf '%s\n' "$path"
+}
+
+sanitize_model_id() {
+  local value="$1"
+  value="${value##*/}"
+  value="${value%.gguf}"
+  value="$(printf '%s\n' "$value" | tr '[:upper:]_' '[:lower:]-' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g')"
+  [[ -n "$value" ]] || die "could not derive model id"
+  printf '%s\n' "$value"
+}
+
+register_model() {
+  require_cmd jq
+  ensure_registry
+  local id="$1" path="$2" aliases_json="$3" ctx="$4" gpu_layers="$5" batch="$6" ubatch="$7" ttl="$8" source="$9"
+  local existing_path tmp
+  path="$(assert_under_llm_root "$path")"
+  [[ -f "$path" ]] || die "$path does not exist"
+  existing_path="$(jq -r --arg id "$id" '.models[$id].path // empty' "$MODELS_JSON")"
+  if [[ -n "$existing_path" && "$existing_path" != "$path" ]]; then
+    die "model id already exists for $existing_path; pass --id to choose another id"
+  fi
+  tmp="$(mktemp "$REGISTRY_DIR/models.json.tmp.XXXXXX")"
+  jq \
+    --arg id "$id" \
+    --arg path "$path" \
+    --argjson aliases "$aliases_json" \
+    --argjson ctx "$ctx" \
+    --argjson gpuLayers "$gpu_layers" \
+    --argjson batch "$batch" \
+    --argjson ubatch "$ubatch" \
+    --argjson ttl "$ttl" \
+    --arg source "$source" \
+    --arg updatedAt "$(date -Is)" \
+    '.models[$id] = ((.models[$id] // {}) + {path:$path, aliases:$aliases, ctx:$ctx, gpuLayers:$gpuLayers, batch:$batch, ubatch:$ubatch, ttl:$ttl, enabled:true, source:$source, updatedAt:$updatedAt})' \
+    "$MODELS_JSON" >"$tmp"
+  mv "$tmp" "$MODELS_JSON"
+  render_config
+}
+
+render_config() {
+  require_cmd jq
+  ensure_registry
+  local tmp backup
+  tmp="$(mktemp "$REGISTRY_DIR/llama-swap.yaml.tmp.XXXXXX")"
+  backup="$REGISTRY_DIR/llama-swap.yaml.last-good"
+  jq -r --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" '
+    def cmd($model):
+      "      llama-server --host 127.0.0.1 --port ${PORT} --model " + ($model.path | @sh)
+      + " --ctx-size " + (($model.ctx // $defaultCtx) | tostring)
+      + " --n-gpu-layers " + (($model.gpuLayers // 99) | tostring)
+      + " --batch-size " + (($model.batch // $defaultBatch) | tostring)
+      + " --ubatch-size " + (($model.ubatch // $defaultUbatch) | tostring);
+    "healthCheckTimeout: 500\nlogLevel: info\nlogToStdout: proxy\nstartPort: 12000\nincludeAliasesInList: true\nglobalTTL: 0\nmodels:\n"
+    + (
+      [.models | to_entries[] | select(.value.enabled != false)] as $entries
+      | if ($entries | length) == 0 then
+          "  {}\n"
+        else
+          ($entries | map(
+            "  " + (.key | @json) + ":\n"
+            + "    cmd: >\n"
+            + cmd(.value) + "\n"
+            + "    ttl: " + ((.value.ttl // 600) | tostring) + "\n"
+            + (if ((.value.aliases // []) | length) > 0 then
+                "    aliases:\n" + ((.value.aliases // []) | map("      - " + (. | @json)) | join("\n")) + "\n"
+              else "" end)
+          ) | join(""))
+        end
+    )
+  ' "$MODELS_JSON" >"$tmp"
+  grep -q '^models:' "$tmp" || die "generated llama-swap config is invalid"
+  if [[ -f "$SWAP_CONFIG" ]]; then
+    cp "$SWAP_CONFIG" "$backup"
+  fi
+  mv "$tmp" "$SWAP_CONFIG"
+}
+
+reload_swap() {
+  render_config
+  if have systemctl && systemctl is-active --quiet llama-swap 2>/dev/null; then
+    sleep 1
+  fi
+  echo "registry reloaded: $SWAP_CONFIG"
+}
+
+cmd_doctor() {
+  local failed=0
+  for cmd in hf jq fzf curl llama-server llama-swap; do
+    if have "$cmd"; then
+      echo "ok: $cmd"
+    else
+      echo "missing: $cmd"
+      failed=1
+    fi
+  done
+  for dir in "$LLM_ROOT" "$MODELS_DIR" "$REGISTRY_DIR"; do
+    if [[ -d "$dir" ]]; then
+      echo "ok: $dir"
+    else
+      echo "missing: $dir"
+      failed=1
+    fi
+  done
+  if hf auth whoami >/dev/null 2>&1; then
+    echo "ok: hugging face auth configured"
+  else
+    echo "note: hugging face auth not configured; public models should still work"
+  fi
+  if curl -fsS "$API_BASE/health" >/dev/null 2>&1; then
+    echo "ok: llama-swap health"
+  else
+    echo "missing: llama-swap health at $API_BASE/health"
+  fi
+  return "$failed"
+}
+
+cmd_search() {
+  require_cmd hf
+  local limit=50 no_fzf=0 query=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --limit) limit="$2"; shift 2 ;;
+      --no-fzf) no_fzf=1; shift ;;
+      *) query+=("$1"); shift ;;
+    esac
+  done
+  [[ "${#query[@]}" -gt 0 ]] || die "usage: llm search <query>"
+  local results
+  results="$(hf models ls --search "${query[*]} gguf" --sort downloads --limit "$limit" --format json)"
+  if [[ "$JSON_OUTPUT" -eq 1 ]]; then
+    printf '%s\n' "$results"
+    return
+  fi
+  local table
+  table="$(printf '%s\n' "$results" | jq -r '.[] | [.id, (.downloads // 0 | tostring), (.likes // 0 | tostring)] | @tsv')"
+  if [[ "$no_fzf" -eq 1 || ! -t 1 || ! -t 0 ]]; then
+    printf '%s\n' "$table"
+  else
+    printf '%s\n' "$table" | fzf --with-nth=1 --header='model downloads likes'
+  fi
+}
+
+cmd_info() {
+  require_cmd jq
+  [[ $# -le 1 ]] || die "usage: llm info [repo|url|model|path]"
+  ensure_registry
+  local value="${1:-}"
+  if [[ -z "$value" ]]; then
+    value="$(select_model_id 1 "info")"
+  fi
+  if [[ -f "$value" ]]; then
+    local path
+    path="$(realpath -m "$value")"
+    if [[ "$JSON_OUTPUT" -eq 1 ]]; then
+      jq -n --arg path "$path" --arg size "$(stat -c '%s' "$path")" '{path:$path,size:($size|tonumber)}'
+    else
+      echo "path: $path"
+      du -h "$path"
+    fi
+    return
+  fi
+  if registry_entry "$value" >/dev/null 2>&1 || model_id_from_alias "$value" >/dev/null 2>&1; then
+    local id
+    id="$(model_id_from_alias "$value")"
+    if [[ "$JSON_OUTPUT" -eq 1 ]]; then
+      registry_entry "$id"
+    else
+      registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" '"id: \($id)\npath: \(.path)\nenabled: \(.enabled)\naliases: \((.aliases // []) | join(", "))\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(.gpuLayers // 99)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nttl: \(.ttl // 600)"'
+    fi
+    return
+  fi
+  require_cmd hf
+  local repo
+  repo="$(normalize_repo "$value")"
+  if [[ "$JSON_OUTPUT" -eq 1 ]]; then
+    hf_json "$repo"
+  else
+    hf_json "$repo" | jq -r '"repo: \(.id)\ndownloads: \(.downloads // 0)\nlikes: \(.likes // 0)\ngated: \(.gated // false)\n\nGGUF files:"'
+    list_remote_ggufs "$repo" | column -t -s $'\t'
+  fi
+}
+
+cmd_pull() {
+  require_cmd hf
+  require_cmd jq
+  local quant="" local_name="" model_id="" repo input selected direct_file
+  local ctx="$DEFAULT_CTX" gpu_layers=99 batch="$DEFAULT_BATCH" ubatch="$DEFAULT_UBATCH" ttl=600 aliases_json="[]" register=1 include_mmproj=0
+  [[ $# -ge 1 ]] || die "usage: llm pull <repo|url> [--quant Q4_K_M] [--id id] [--name local-name]"
+  input="$1"
+  shift
+  repo="$(normalize_repo "$input")"
+  direct_file="$(gguf_file_from_url "$input")"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --quant) quant="$2"; shift 2 ;;
+      --name) local_name="$2"; shift 2 ;;
+      --id) model_id="$2"; shift 2 ;;
+      --alias) aliases_json="$(jq -cn --argjson old "$aliases_json" --arg alias "$2" '$old + [$alias]')"; shift 2 ;;
+      --ctx) ctx="$2"; shift 2 ;;
+      --gpu-layers) gpu_layers="$2"; shift 2 ;;
+      --batch) batch="$2"; shift 2 ;;
+      --ubatch) ubatch="$2"; shift 2 ;;
+      --ttl) ttl="$(parse_ttl "$2")"; shift 2 ;;
+      --no-register) register=0; shift ;;
+      --include-mmproj) include_mmproj=1; shift ;;
+      *) die "unknown pull option: $1" ;;
+    esac
+  done
+  local files
+  files="$(list_remote_ggufs "$repo")"
+  [[ -n "$files" ]] || die "no GGUF files found for $repo"
+  if [[ -n "$direct_file" ]]; then
+    selected="$direct_file"
+  else
+    if [[ "$include_mmproj" -eq 0 ]]; then
+      files="$(printf '%s\n' "$files" | awk -F '\t' '$1 !~ /^mmproj-/')"
+    fi
+    if [[ -n "$quant" ]]; then
+      files="$(printf '%s\n' "$files" | awk -F '\t' -v q="$quant" 'tolower($0) ~ tolower(q)')"
+    fi
+    [[ -n "$files" ]] || die "no matching GGUF files found"
+    if [[ "$(printf '%s\n' "$files" | wc -l)" -eq 1 || ! -t 0 ]]; then
+      selected="$(printf '%s\n' "$files" | head -n1 | cut -f1)"
+    else
+      selected="$(printf '%s\n' "$files" | column -t -s $'\t' | fzf --header='file quant size' | awk '{print $1}')"
+    fi
+  fi
+  [[ -n "$selected" ]] || die "no file selected"
+  mkdir -p "$MODELS_DIR"
+  local downloaded="$MODELS_DIR/$selected"
+  if [[ -n "$local_name" ]]; then
+    downloaded="$MODELS_DIR/${local_name%.gguf}.gguf"
+    [[ -e "$downloaded" ]] && die "$downloaded already exists"
+  fi
+  download_hf_file "$repo" "$selected" "$downloaded"
+  if [[ "$register" -eq 1 ]]; then
+    model_id="${model_id:-$(sanitize_model_id "${local_name:-$selected}")}"
+    register_model "$model_id" "$downloaded" "$aliases_json" "$ctx" "$gpu_layers" "$batch" "$ubatch" "$ttl" "hf:$repo/$selected"
+    if [[ "$JSON_OUTPUT" -eq 1 ]]; then
+      jq -cn --arg id "$model_id" --arg path "$downloaded" '{id:$id,path:$path,registered:true}'
+    else
+      echo "downloaded: $downloaded"
+      echo "registered: $model_id"
+    fi
+    return
+  fi
+  if [[ "$JSON_OUTPUT" -eq 1 ]]; then
+    jq -cn --arg path "$downloaded" '{path:$path,registered:false}'
+  else
+    echo "$downloaded"
+  fi
+}
+
+cmd_cache() {
+  require_cmd hf
+  [[ $# -ge 1 ]] || die "usage: llm cache ls|prune"
+  case "$1" in
+    ls) hf cache ls ;;
+    prune) hf cache prune ;;
+    *) die "usage: llm cache ls|prune" ;;
+  esac
+}
+
+cmd_ls() {
+  require_cmd jq
+  ensure_registry
+  local filter="all" long=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --long) long=1; shift ;;
+      --registered) filter="registered"; shift ;;
+      --unregistered) filter="unregistered"; shift ;;
+      --enabled) filter="enabled"; shift ;;
+      --disabled) filter="disabled"; shift ;;
+      --missing) filter="missing"; shift ;;
+      *) die "usage: llm ls [--long|--registered|--unregistered|--enabled|--disabled|--missing]" ;;
+    esac
+  done
+
+  local rows="" json_rows="[]" found=0
+  if [[ "$long" -eq 1 ]]; then
+    rows+=$'state\tid\tsize\tctx\tgpu\tttl\taliases\tpath\n'
+  else
+    rows+=$'state\tid\tsize\tctx\tgpu\tttl\n'
+  fi
+
+  add_ls_row() {
+    local state="$1" id="$2" path="$3" ctx="$4" gpu="$5" ttl="$6" source="$7" aliases="$8"
+    local size="missing"
+    if [[ -f "$path" ]]; then
+      size="$(du -h "$path" | awk '{print $1}')"
+    fi
+    case "$filter" in
+      all) ;;
+      registered) [[ "$state" != "unregistered" ]] || return ;;
+      unregistered) [[ "$state" == "unregistered" ]] || return ;;
+      enabled) [[ "$state" == "enabled" ]] || return ;;
+      disabled) [[ "$state" == "disabled" ]] || return ;;
+      missing) [[ "$state" == "missing" ]] || return ;;
+    esac
+    found=1
+    json_rows="$(jq -cn \
+      --argjson old "$json_rows" \
+      --arg state "$state" \
+      --arg id "$id" \
+      --arg path "$path" \
+      --arg size "$size" \
+      --arg ctx "$ctx" \
+      --arg gpu "$gpu" \
+      --arg ttl "$ttl" \
+      --arg source "$source" \
+      --arg aliases "$aliases" \
+      '$old + [{state:$state,id:$id,path:$path,size:$size,ctx:$ctx,gpuLayers:$gpu,ttl:$ttl,source:$source,aliases:($aliases | split(",") | map(select(. != "" and . != "-")))}]')"
+    if [[ "$long" -eq 1 ]]; then
+      rows+="${state}"$'\t'"${id}"$'\t'"${size}"$'\t'"${ctx}"$'\t'"${gpu}"$'\t'"${ttl}"$'\t'"${aliases}"$'\t'"${path}"$'\n'
+    else
+      rows+="${state}"$'\t'"${id}"$'\t'"${size}"$'\t'"${ctx}"$'\t'"${gpu}"$'\t'"${ttl}"$'\n'
+    fi
+  }
+
+  while IFS=$'\t' read -r id path enabled ctx gpu ttl source aliases; do
+    [[ -n "$id" ]] || continue
+    local state="enabled"
+    [[ "$enabled" == "false" ]] && state="disabled"
+    [[ -f "$path" ]] || state="missing"
+    add_ls_row "$state" "$id" "$path" "$ctx" "$gpu" "$ttl" "$source" "$aliases"
+  done < <(jq -r --argjson defaultCtx "$DEFAULT_CTX" '
+    .models
+    | to_entries[]
+    | [
+      .key,
+      .value.path,
+      (.value.enabled // true | tostring),
+      (.value.ctx // $defaultCtx | tostring),
+      (.value.gpuLayers // 99 | tostring),
+      (.value.ttl // 600 | tostring),
+      (.value.source // "manual"),
+      ((.value.aliases // []) | join(","))
+    ]
+    | @tsv
+  ' "$MODELS_JSON")
+
+  while IFS= read -r file; do
+    [[ -n "$file" ]] || continue
+    if jq -e --arg path "$file" '.models | to_entries[] | select(.value.path == $path)' "$MODELS_JSON" >/dev/null; then
+      continue
+    fi
+    add_ls_row "unregistered" "-" "$file" "-" "-" "-" "-" "-"
+  done < <(find "$MODELS_DIR" -type f -name '*.gguf' -print | sort)
+
+  if [[ "$JSON_OUTPUT" -eq 1 ]]; then
+    printf '%s\n' "$json_rows" | jq .
+    return
+  fi
+  if [[ "$found" -eq 0 ]]; then
+    echo "no models found"
+    return
+  fi
+  printf '%s' "$rows" | column -t -s $'\t'
+}
+
+cmd_add() {
+  require_cmd jq
+  ensure_registry
+  [[ $# -ge 3 ]] || die "usage: llm add <path> --id <id> [--alias alias] [--ctx n] [--gpu-layers n] [--batch n] [--ubatch n] [--ttl 10m]"
+  local path id="" ctx="$DEFAULT_CTX" gpu_layers=99 batch="$DEFAULT_BATCH" ubatch="$DEFAULT_UBATCH" ttl=600 aliases_json="[]"
+  path="$(assert_under_llm_root "$1")"
+  [[ -f "$path" ]] || die "$path does not exist"
+  shift
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --id) id="$2"; shift 2 ;;
+      --alias) aliases_json="$(jq -cn --argjson old "$aliases_json" --arg alias "$2" '$old + [$alias]')"; shift 2 ;;
+      --ctx) ctx="$2"; shift 2 ;;
+      --gpu-layers) gpu_layers="$2"; shift 2 ;;
+      --batch) batch="$2"; shift 2 ;;
+      --ubatch) ubatch="$2"; shift 2 ;;
+      --ttl) ttl="$(parse_ttl "$2")"; shift 2 ;;
+      *) die "unknown add option: $1" ;;
+    esac
+  done
+  [[ -n "$id" ]] || die "--id is required"
+  register_model "$id" "$path" "$aliases_json" "$ctx" "$gpu_layers" "$batch" "$ubatch" "$ttl" "manual"
+  echo "added: $id"
+}
+
+cmd_set() {
+  require_cmd jq
+  ensure_registry
+  local id="" ctx="" gpu_layers="" batch="" ubatch="" ttl="" tmp
+  if [[ $# -gt 0 && "$1" != --* ]]; then
+    id="$(model_id_from_alias "$1")"
+    shift
+  else
+    id="$(model_id_or_select "set" 1)"
+  fi
+  [[ $# -gt 0 ]] || die "usage: llm set [id] [--ctx n] [--gpu-layers n] [--batch n] [--ubatch n] [--ttl 10m]"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --ctx) ctx="$2"; shift 2 ;;
+      --gpu-layers) gpu_layers="$2"; shift 2 ;;
+      --batch) batch="$2"; shift 2 ;;
+      --ubatch) ubatch="$2"; shift 2 ;;
+      --ttl) ttl="$(parse_ttl "$2")"; shift 2 ;;
+      *) die "unknown set option: $1" ;;
+    esac
+  done
+  log "updating: $id"
+  tmp="$(mktemp "$REGISTRY_DIR/models.json.tmp.XXXXXX")"
+  jq \
+    --arg id "$id" \
+    --arg ctx "$ctx" \
+    --arg gpuLayers "$gpu_layers" \
+    --arg batch "$batch" \
+    --arg ubatch "$ubatch" \
+    --arg ttl "$ttl" \
+    '
+      .models[$id] |= (
+        if $ctx != "" then .ctx = ($ctx | tonumber) else . end
+        | if $gpuLayers != "" then .gpuLayers = ($gpuLayers | tonumber) else . end
+        | if $batch != "" then .batch = ($batch | tonumber) else . end
+        | if $ubatch != "" then .ubatch = ($ubatch | tonumber) else . end
+        | if $ttl != "" then .ttl = ($ttl | tonumber) else . end
+      )
+    ' "$MODELS_JSON" >"$tmp"
+  mv "$tmp" "$MODELS_JSON"
+  render_config
+  registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" '"updated: \($id)\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(.gpuLayers // 99)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nttl: \(.ttl // 600)"'
+}
+
+cmd_edit() {
+  require_cmd jq
+  ensure_registry
+  [[ $# -le 1 ]] || die "usage: llm edit [id]"
+  local id tmp
+  id="$(model_id_or_select "edit" 1 "${1:-}")"
+  tmp="$(mktemp)"
+  registry_entry "$id" >"$tmp"
+  "${EDITOR:-vim}" "$tmp"
+  jq -e . "$tmp" >/dev/null
+  local out
+  out="$(mktemp "$REGISTRY_DIR/models.json.tmp.XXXXXX")"
+  jq --arg id "$id" --slurpfile entry "$tmp" '.models[$id] = $entry[0]' "$MODELS_JSON" >"$out"
+  mv "$out" "$MODELS_JSON"
+  rm -f "$tmp"
+  render_config
+  echo "edited: $id"
+}
+
+set_enabled() {
+  require_cmd jq
+  ensure_registry
+  [[ $# -ge 1 && $# -le 2 ]] || die "usage: llm enable|disable [id]"
+  local id enabled tmp
+  enabled="$1"
+  id="$(model_id_or_select "model" 1 "${2:-}")"
+  if [[ "$enabled" == "true" ]]; then
+    log "enabling: $id"
+  else
+    log "disabling: $id"
+  fi
+  tmp="$(mktemp "$REGISTRY_DIR/models.json.tmp.XXXXXX")"
+  jq --arg id "$id" --argjson enabled "$enabled" '.models[$id].enabled = $enabled' "$MODELS_JSON" >"$tmp"
+  mv "$tmp" "$MODELS_JSON"
+  log "regenerating llama-swap config"
+  render_config
+}
+
+api_json() {
+  local path="$1"
+  curl -fsS -H "authorization: Bearer $OPENAI_KEY" "$API_BASE$path"
+}
+
+owned_llama_server_pids() {
+  local pid cmdline
+  while IFS= read -r pid; do
+    [[ -n "$pid" && -r "/proc/$pid/cmdline" ]] || continue
+    cmdline="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
+    [[ "$cmdline" == *"llama-server"* && "$cmdline" == *"$MODELS_DIR/"* ]] || continue
+    printf '%s\n' "$pid"
+  done < <(pgrep -x llama-server || true)
+}
+
+clear_runtime() {
+  local pids still_running=()
+  log "requesting llama-swap unload"
+  curl -fsS -H "authorization: Bearer $OPENAI_KEY" "$API_BASE/unload" >/dev/null 2>&1 || true
+  sleep 1
+  mapfile -t pids < <(owned_llama_server_pids)
+  if [[ "${#pids[@]}" -eq 0 ]]; then
+    log "no stale llama-server processes found"
+    return
+  fi
+  log "terminating stale llama-server pids: ${pids[*]}"
+  kill "${pids[@]}" 2>/dev/null || true
+  sleep 2
+  mapfile -t still_running < <(owned_llama_server_pids)
+  if [[ "${#still_running[@]}" -gt 0 ]]; then
+    log "force-killing stale llama-server pids: ${still_running[*]}"
+    kill -9 "${still_running[@]}" 2>/dev/null || true
+  fi
+}
+
+chat_request() {
+  local model="$1" prompt="$2" max_tokens="${3:-128}"
+  jq -cn --arg model "$model" --arg prompt "$prompt" --argjson max "$max_tokens" \
+    '{model:$model,max_tokens:$max,messages:[{role:"user",content:$prompt}]}'
+}
+
+post_chat() {
+  local body status
+  body="$(mktemp)"
+  status="$(curl -sS -o "$body" -w '%{http_code}' "$API_BASE/v1/chat/completions" -H 'content-type: application/json' -H "authorization: Bearer $OPENAI_KEY" -d @- || true)"
+  if [[ "$status" =~ ^2 ]]; then
+    cat "$body"
+    rm -f "$body"
+    return 0
+  fi
+  echo "error: llama-swap returned HTTP $status" >&2
+  sed -n '1,20p' "$body" >&2
+  rm -f "$body"
+  return 1
+}
+
+diagnose_start_failure() {
+  local id="$1" path ctx gpu batch ubatch port
+  path="$(model_path "$id")"
+  ctx="$(jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" '.models[$id].ctx // $defaultCtx' "$MODELS_JSON")"
+  gpu="$(jq -r --arg id "$id" '.models[$id].gpuLayers // 99' "$MODELS_JSON")"
+  batch="$(jq -r --arg id "$id" --argjson defaultBatch "$DEFAULT_BATCH" '.models[$id].batch // $defaultBatch' "$MODELS_JSON")"
+  ubatch="$(jq -r --arg id "$id" --argjson defaultUbatch "$DEFAULT_UBATCH" '.models[$id].ubatch // $defaultUbatch' "$MODELS_JSON")"
+  port="${LLM_DIAG_PORT:-12999}"
+  echo "diagnostic: llama-server --model $path --ctx-size $ctx --n-gpu-layers $gpu --batch-size $batch --ubatch-size $ubatch" >&2
+  if have timeout && have llama-server; then
+    timeout 15 llama-server --host 127.0.0.1 --port "$port" --model "$path" --ctx-size "$ctx" --n-gpu-layers "$gpu" --batch-size "$batch" --ubatch-size "$ubatch" 2>&1 |
+      grep -Ei 'error|failed|wrong|invalid|unsupported|cuda|exiting' |
+      tail -30 >&2 || true
+  fi
+  if have journalctl; then
+    echo "recent llama-swap logs:" >&2
+    journalctl -u llama-swap -n 20 --no-pager 2>/dev/null >&2 || true
+  fi
+}
+
+cmd_start() {
+  [[ $# -le 1 ]] || die "usage: llm start [id]"
+  local id
+  id="$(model_id_or_select "start" 0 "${1:-}" "chat")"
+  require_startable_model "$id"
+  log "starting: $id"
+  clear_runtime
+  set_enabled true "$id" >/dev/null
+  log "waiting for llama-swap to reload config"
+  sleep 1
+  log "warming model with a 1-token request"
+  if ! chat_request "$id" "ping" 1 | post_chat >/dev/null; then
+    diagnose_start_failure "$id"
+    return 1
+  fi
+  echo "started: $id"
+}
+
+cmd_stop() {
+  [[ $# -le 1 ]] || die "usage: llm stop [id]"
+  local id
+  if [[ -n "${1:-}" ]]; then
+    id="$(model_id_from_alias "$1")"
+  else
+    id="$(select_loaded_model_id "stop")"
+  fi
+  log "stopping: $id"
+  set_enabled false "$id" >/dev/null
+  clear_runtime
+  echo "stopped: $id"
+}
+
+cmd_clear() {
+  clear_runtime
+  echo "cleared llama runtime"
+}
+
+cmd_rm() {
+  require_cmd jq
+  ensure_registry
+  local dry_run=0 target="${1:-}"
+  [[ -n "$target" ]] || die "usage: llm rm <id|path> [--dry-run]"
+  shift || true
+  [[ "${1:-}" == "--dry-run" ]] && dry_run=1
+  local path id=""
+  if registry_entry "$target" >/dev/null 2>&1 || model_id_from_alias "$target" >/dev/null 2>&1; then
+    id="$(model_id_from_alias "$target")"
+    path="$(model_path "$id")"
+  else
+    path="$(assert_under_llm_root "$target")"
+  fi
+  path="$(assert_under_llm_root "$path")"
+  if [[ "$dry_run" -eq 1 ]]; then
+    echo "would remove: $path"
+    [[ -n "$id" ]] && echo "would unregister: $id"
+    return
+  fi
+  rm -f "$path"
+  if [[ -n "$id" ]]; then
+    local tmp
+    tmp="$(mktemp "$REGISTRY_DIR/models.json.tmp.XXXXXX")"
+    jq --arg id "$id" 'del(.models[$id])' "$MODELS_JSON" >"$tmp"
+    mv "$tmp" "$MODELS_JSON"
+    render_config
+  fi
+  echo "removed: $path"
+}
+
+cmd_status() {
+  local swap_state="unknown" webui_state="unknown" health="down" running_json served_json stale_pids
+  if have systemctl; then
+    swap_state="$(systemctl is-active llama-swap 2>/dev/null || true)"
+    webui_state="$(systemctl is-active open-webui 2>/dev/null || true)"
+  fi
+  if api_json /health >/dev/null 2>&1; then
+    health="ok"
+  fi
+
+  echo "services:"
+  printf '  llama-swap: %s\n' "${swap_state:-unknown}"
+  printf '  open-webui: %s\n' "${webui_state:-unknown}"
+  printf '  api: %s (%s)\n' "$health" "$API_BASE"
+
+  echo
+  echo "loaded:"
+  running_json="$(api_json /running 2>/dev/null || true)"
+  if [[ -n "$running_json" ]] && jq -e '.running | length > 0' >/dev/null 2>&1 <<<"$running_json"; then
+    jq -r '
+      .running[]
+      | [
+        (.model // "-"),
+        (.state // "-"),
+        (.proxy // "-"),
+        (.ttl // "-" | tostring)
+      ]
+      | @tsv
+    ' <<<"$running_json" | column -t -s $'\t' | sed 's/^/  /'
+  else
+    echo "  none"
+  fi
+
+  echo
+  echo "served:"
+  served_json="$(api_json /v1/models 2>/dev/null || true)"
+  if [[ -n "$served_json" ]] && jq -e '.data | length > 0' >/dev/null 2>&1 <<<"$served_json"; then
+    jq -r '.data[]?.id' <<<"$served_json" | sed 's/^/  /'
+  else
+    echo "  none"
+  fi
+
+  echo
+  echo "gpu:"
+  if have nvidia-smi; then
+    nvidia-smi --query-gpu=memory.total,memory.used,memory.free --format=csv,noheader,nounits |
+      awk -F ', ' '{printf "  vram: %s MiB used / %s MiB total (%s MiB free)\n", $2, $1, $3}'
+  else
+    echo "  nvidia-smi unavailable"
+  fi
+
+  echo
+  echo "processes:"
+  stale_pids="$(owned_llama_server_pids | paste -sd ' ' -)"
+  if [[ -n "$stale_pids" ]]; then
+    for pid in $stale_pids; do
+      printf '  pid %s: ' "$pid"
+      tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | sed 's/  */ /g'
+      echo
+    done
+  else
+    echo "  no local llama-server processes"
+  fi
+}
+
+cmd_logs() {
+  journalctl -u llama-swap -f
+}
+
+cmd_served() {
+  api_json /v1/models | jq .
+}
+
+cmd_ps() {
+  if api_json /running 2>/dev/null | jq .; then
+    return
+  fi
+  owned_llama_server_pids | while read -r pid; do
+    printf '%s ' "$pid"
+    tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null
+    echo
+  done
+}
+
+cmd_test() {
+  [[ $# -le 1 ]] || die "usage: llm test [id]"
+  local id
+  if [[ -n "${1:-}" ]]; then
+    id="$(model_id_from_alias "$1")"
+  else
+    id="$(select_loaded_model_id "test")"
+  fi
+  require_startable_model "$id"
+  log "testing: $id"
+  chat_request "$id" "Respond with OK." 4 | post_chat | jq -r '.choices[0].message.content // .choices[0].text // .'
+}
+
+cmd_chat() {
+  [[ $# -ge 1 ]] || die "usage: llm chat [id] <prompt>"
+  local model
+  if model_id_from_alias "$1" >/dev/null 2>&1; then
+    model="$(model_id_from_alias "$1")"
+    require_startable_model "$model"
+    shift
+    [[ $# -ge 1 ]] || die "usage: llm chat [id] <prompt>"
+  else
+    model="$(select_loaded_model_id "chat")"
+  fi
+  log "chat: $model"
+  chat_request "$model" "$*" 512 | post_chat | jq -r '.choices[0].message.content // .choices[0].text // .'
+}
+
+cmd_bench() {
+  [[ $# -ge 1 ]] || die "usage: llm bench [id] <prompt>"
+  if ! model_id_from_alias "$1" >/dev/null 2>&1; then
+    set -- "$(select_loaded_model_id "bench")" "$@"
+  fi
+  require_startable_model "$(model_id_from_alias "$1")"
+  local start end
+  log "benchmarking: $1"
+  start="$(date +%s%3N)"
+  cmd_chat "$@"
+  end="$(date +%s%3N)"
+  echo "elapsed_ms: $((end - start))"
+}
+
+main() {
+  local id
+  if [[ "${1:-}" == "--json" ]]; then
+    JSON_OUTPUT=1
+    shift
+  fi
+  case "${1:-help}" in
+    help|--help|-h) usage ;;
+    doctor) shift; cmd_doctor "$@" ;;
+    search) shift; cmd_search "$@" ;;
+    info) shift; cmd_info "$@" ;;
+    pull) shift; cmd_pull "$@" ;;
+    cache) shift; cmd_cache "$@" ;;
+    ls) shift; cmd_ls "$@" ;;
+    add) shift; cmd_add "$@" ;;
+    set) shift; cmd_set "$@" ;;
+    edit) shift; cmd_edit "$@" ;;
+    enable) shift; id="$(model_id_or_select "enable" 1 "${1:-}")"; set_enabled true "$id"; echo "enabled: $id" ;;
+    disable) shift; id="$(model_id_or_select "disable" 1 "${1:-}")"; set_enabled false "$id"; echo "disabled: $id" ;;
+    reload) shift; reload_swap "$@" ;;
+    start) shift; cmd_start "$@" ;;
+    stop) shift; cmd_stop "$@" ;;
+    restart) shift; id="$(model_id_or_select "restart" 0 "${1:-}" "chat")"; require_startable_model "$id"; log "restarting: $id"; cmd_stop "$id"; cmd_start "$id" ;;
+    clear) shift; cmd_clear "$@" ;;
+    ps) shift; cmd_ps "$@" ;;
+    served) shift; cmd_served "$@" ;;
+    status) shift; cmd_status "$@" ;;
+    logs) shift; cmd_logs "$@" ;;
+    test) shift; cmd_test "$@" ;;
+    chat) shift; cmd_chat "$@" ;;
+    bench) shift; cmd_bench "$@" ;;
+    rm) shift; cmd_rm "$@" ;;
+    *) die "unknown command: $1" ;;
+  esac
+}
+
+main "$@"

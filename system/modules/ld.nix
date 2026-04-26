@@ -9,9 +9,6 @@
     libraries = with pkgs;
       [
         stdenv.cc.cc
-
-        (runCommand "steamrun-lib" { }
-          "mkdir $out; ln -s ${steam-run.fhsenv}/usr/lib64 $out/lib")
       ] ++ [ config.boot.kernelPackages.nvidia_x11 ];
   };
 

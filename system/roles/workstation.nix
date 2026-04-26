@@ -109,6 +109,8 @@ in
 
   services.dbus = {
     enable = true;
+    # TODO: remove this and switch to dbus-broker with nixos-rebuild boot + reboot.
+    implementation = "dbus";
     packages = [
       pkgs.gcr
       pkgs.gnome-keyring
