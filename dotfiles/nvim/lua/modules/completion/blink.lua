@@ -6,7 +6,7 @@ return lib.module.create({
   -- enabled = false,
   plugins = {
     {
-      "Saghen/blink.cmp",
+      "saghen/blink.cmp",
       lazy = false,
       -- "3rd/blink.cmp",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "blink.cmp"),
@@ -15,8 +15,11 @@ return lib.module.create({
       -- commit = "77f037cae07358368f3b7548ba39cffceb49349e",
       -- commit = "7ceff61595aae682b421a68e208719b1523c7b44", -- new config
       -- commit = "e3b7cb4a1094377c3093a021300de123d9fc60d3",
-      build = "cargo build --release",
+      build = function()
+        require("blink.cmp").build():wait(60000)
+      end,
       dependencies = {
+        "saghen/blink.lib",
         { "xzbdmw/colorful-menu.nvim", opts = {} },
       },
       opts = {
