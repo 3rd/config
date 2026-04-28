@@ -64,7 +64,11 @@
   };
 
   boot.loader.grub.configurationLimit = 50;
-  # boot.initrd.systemd.enable = true;
+
+  # initrd-find-nixos-closure fucked after:
+  # https://github.com/NixOS/nixpkgs/pull/435781
+  # https://discourse.nixos.org/t/breaking-changes-announcement-for-unstable/17574/130
+  boot.initrd.systemd.enable = lib.mkForce false;
 
   boot.tmp = {
     useTmpfs = lib.mkDefault true;
