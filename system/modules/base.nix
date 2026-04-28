@@ -1,4 +1,5 @@
 {
+  inputs,
   lib,
   config,
   pkgs,
@@ -15,6 +16,8 @@
         "flakes"
       ];
       sandbox = true;
+      max-jobs = lib.mkDefault 4;
+      cores = lib.mkDefault 5;
       substituters = [
         "https://cache.nixos-cuda.org"
         "https://cuda-maintainers.cachix.org"
@@ -53,14 +56,12 @@
   };
   nixpkgs.config = {
     allowUnfree = true;
-    packageOverrides =
-      super:
-      let
-        self = super.pkgs;
-      in
-      {
-        stable = import <nixos-stable> { inherit (config.nixpkgs) config; };
+    packageOverrides = super: {
+      stable = import inputs.nixpkgs-stable {
+        inherit (super.stdenv.hostPlatform) system;
+        inherit (config.nixpkgs) config;
       };
+    };
   };
 
   boot.loader.grub.configurationLimit = 50;
