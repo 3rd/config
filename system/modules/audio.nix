@@ -1,9 +1,16 @@
-{ config, pkgs, options, lib, ... }:
+{
+  config,
+  pkgs,
+  options,
+  lib,
+  ...
+}:
 
 {
   environment.systemPackages = with pkgs; [
-    pavucontrol
     alsa-utils
+    audacity
+    pavucontrol
     sox
   ];
 
@@ -14,12 +21,17 @@
     enable = true;
     alsa.enable = true;
     alsa.support32Bit = true;
+    jack.enable = true;
     pulse.enable = true;
     wireplumber = {
       enable = true;
       extraConfig = {
         "monitor.bluez.properties" = {
-          "bluez5.codecs" = [ "aac" "sbc_xq" "sbc" ];
+          "bluez5.codecs" = [
+            "aac"
+            "sbc_xq"
+            "sbc"
+          ];
           # "bluez5.enable-sbc-xq" = true;
           # "bluez5.enable-msbc" = true;
           # "bluez5.enable-hw-volume" = true;
@@ -30,6 +42,5 @@
         };
       };
     };
-    # jack.enable = true;
   };
 }
