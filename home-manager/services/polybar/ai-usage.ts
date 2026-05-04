@@ -24,7 +24,6 @@ const REFRESH_FLAG = "--refresh";
 
 const OPENAI_TOKEN_URL = "https://auth.openai.com/oauth/token";
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
-const FACTORY_USAGE_URL = "https://app.factory.ai/api/organization/subscription/usage";
 
 const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 const JSON_CONTENT_TYPE = "application/json";
@@ -53,7 +52,7 @@ const PROVIDER_COLORS = {
   warning: "#c2940a",
 } as const;
 
-type ProviderName = "claude" | "codex" | "droid";
+type ProviderName = "claude" | "codex";
 type ProviderSource = "api" | "statusline";
 type ProviderErrorCode = "unavailable";
 type ResetAtValue = number | string | null;
@@ -62,36 +61,30 @@ type JsonObject = Record<string, unknown>;
 const PROVIDER_ICONS = {
   claude: "\u{e861}",
   codex: "\u{e7cf}",
-  droid: "\u{f544}",
 } as const satisfies Record<ProviderName, string>;
 
 const PROVIDER_ICON_FONT_INDICES = {
   claude: 4,
   codex: 4,
-  droid: 5,
 } as const satisfies Record<ProviderName, number>;
 
 const PROVIDER_ICON_COLORS = {
   claude: "#C46849",
   codex: "#E6E6E6",
-  droid: "#B8B8B8",
 } as const satisfies Record<ProviderName, string>;
 
 const PROVIDER_TTLS = {
   claude: 60,
   codex: 60,
-  droid: 60,
 } as const satisfies Record<ProviderName, number>;
 
-const PROVIDER_ORDER = ["claude", "codex", "droid"] as const satisfies readonly ProviderName[];
+const PROVIDER_ORDER = ["claude", "codex"] as const satisfies readonly ProviderName[];
 const PROVIDER_COMMANDS = {
   claude: "claude",
   codex: "codex",
-  droid: "droid",
 } as const satisfies Record<ProviderName, string>;
 
 const CODEX_AUTH_PATHS = ["~/.codex/auth.json", "~/.config/codex/auth.json"] as const;
-const FACTORY_AUTH_PATH = "~/.factory/auth.json";
 
 const CODEX_PERCENT_HEADERS = {
   session: "x-codex-primary-used-percent",
@@ -116,8 +109,6 @@ interface ProviderEntry {
   remaining7d: number | null;
   sessionResetAt: ResetAtValue;
   weeklyResetAt: ResetAtValue;
-  tokensUsed: number | null;
-  tokensLimit: number | null;
   fetchedAt: number;
   retryAt: number | null;
   error: ProviderErrorCode | null;
@@ -126,7 +117,6 @@ interface ProviderEntry {
 interface CacheData {
   claude?: ProviderEntry;
   codex?: ProviderEntry;
-  droid?: ProviderEntry;
   updatedAt?: number;
 }
 
@@ -149,8 +139,6 @@ interface BuildProviderEntryOptions {
   weeklyUsed?: number | null;
   sessionResetAt?: ResetAtValue;
   weeklyResetAt?: ResetAtValue;
-  tokensUsed?: number | null;
-  tokensLimit?: number | null;
   fetchedAt?: number;
   retryAt?: number | null;
   error?: ProviderErrorCode | null;
@@ -166,11 +154,6 @@ interface CodexTokensRecord extends JsonObject {
 interface CodexAuthFile extends JsonObject {
   tokens: CodexTokensRecord;
   last_refresh?: unknown;
-}
-
-interface FactoryAuthFile extends JsonObject {
-  access_token?: unknown;
-  refresh_token?: unknown;
 }
 
 interface ErrnoLikeError {
@@ -289,10 +272,7 @@ const toResetEpochSeconds = (value: ResetAtValue): number | null => {
 const hasProviderEntry = (entry: ProviderEntry | undefined): entry is ProviderEntry => entry !== undefined;
 
 const providerHasValues = (entry: ProviderEntry | undefined): boolean =>
-  hasProviderEntry(entry) &&
-  (isNumber(entry.remaining5h) ||
-    isNumber(entry.remaining7d) ||
-    (isNumber(entry.tokensUsed) && isNumber(entry.tokensLimit)));
+  hasProviderEntry(entry) && (isNumber(entry.remaining5h) || isNumber(entry.remaining7d));
 
 const hasRetryWindow = (retryAt: number | null): boolean => retryAt !== null && retryAt > nowEpoch();
 
@@ -339,8 +319,6 @@ const buildProviderEntry = ({
   weeklyUsed = null,
   sessionResetAt = null,
   weeklyResetAt = null,
-  tokensUsed = null,
-  tokensLimit = null,
   fetchedAt = nowEpoch(),
   retryAt = null,
   error = null,
@@ -354,8 +332,6 @@ const buildProviderEntry = ({
   remaining7d: remainingPercent(weeklyUsed),
   sessionResetAt,
   weeklyResetAt,
-  tokensUsed,
-  tokensLimit,
   fetchedAt,
   retryAt,
   error,
@@ -402,8 +378,6 @@ const normalizeProviderEntry = (provider: ProviderName, value: unknown): Provide
       weeklyUsed: clampPercent(value.weeklyUsed ?? value.weekly_used),
       sessionResetAt: asResetAtValue(value.sessionResetAt ?? value.session_reset_at),
       weeklyResetAt: asResetAtValue(value.weeklyResetAt ?? value.weekly_reset_at),
-      tokensUsed: asNumber(value.tokensUsed ?? value.tokens_used),
-      tokensLimit: asNumber(value.tokensLimit ?? value.tokens_limit),
       fetchedAt,
       retryAt: asNumber(value.retryAt ?? value.retry_at),
       error: asProviderError(value.error),
@@ -469,7 +443,6 @@ const normalizeCacheData = (value: unknown): CacheData => {
 
   return {
     codex: normalizeProviderEntry("codex", value.codex),
-    droid: normalizeProviderEntry("droid", value.droid),
     updatedAt: asNumber(value.updatedAt ?? value.updated_at) ?? undefined,
   };
 };
@@ -547,22 +520,6 @@ const formatProviderOutput = (provider: ProviderName, entry?: ProviderEntry): st
   const unknownPair = `%{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}/%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
 
   if (!entry) return `${label} ${unknownPair}`;
-
-  if (provider === "droid") {
-    if (!isNumber(entry.tokensUsed) || !isNumber(entry.tokensLimit) || entry.tokensLimit <= 0) {
-      return `${label} %{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
-    }
-
-    const remainingTokens = Math.max(0, entry.tokensLimit - entry.tokensUsed);
-    const droidRemainingPercent = Math.round((remainingTokens / entry.tokensLimit) * 100);
-    const remainingColor = colorForRemaining(droidRemainingPercent);
-    const resetTime = formatRemainingTime(entry.sessionResetAt);
-    if (resetTime === null) {
-      return `${label} %{F${remainingColor}}${droidRemainingPercent}${RESET_COLOR}`;
-    }
-
-    return `${label} %{F${remainingColor}}${droidRemainingPercent}${VALUE_DIVIDER}%{F${PROVIDER_COLORS.separator}}${resetTime}${RESET_COLOR}`;
-  }
 
   const availableValues = [entry.remaining5h, entry.remaining7d].filter(isNumber);
   if (availableValues.length === 0) return `${label} ${unknownPair}`;
@@ -767,127 +724,8 @@ const fetchCodexUsage = async (): Promise<ProviderEntry> => {
   return buildCodexEntry(response.payload, response);
 };
 
-const isFactoryAuthFile = (value: unknown): value is FactoryAuthFile => isJsonObject(value);
-
 const isErrnoLikeError = (value: unknown): value is ErrnoLikeError =>
   isJsonObject(value) && (value.code === undefined || typeof value.code === "string");
-
-const loadFactoryAuth = (): FactoryAuthFile | null => {
-  const path = expandHomePath(FACTORY_AUTH_PATH);
-  const file = parseJsonFile(path);
-  return isFactoryAuthFile(file) ? file : null;
-};
-
-const resolveFactoryUserId = (auth: FactoryAuthFile): string | null => {
-  const claims = decodeJwtPayload(asString(auth.access_token));
-  return asString(claims?.id) ?? asString(claims?.sub);
-};
-
-const requestDroidUsage = async (accessToken: string, userId: string): Promise<HttpJsonResponse> =>
-  httpJson(FACTORY_USAGE_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: JSON_CONTENT_TYPE,
-      "Content-Type": JSON_CONTENT_TYPE,
-      "User-Agent": USER_AGENT,
-    },
-    body: JSON.stringify({
-      useCache: true,
-      userId,
-    }),
-  });
-
-const resolveDroidUserScopedLimit = (payload: JsonObject): number | null => {
-  const usage = isJsonObject(payload.usage) ? payload.usage : {};
-  const standard = isJsonObject(usage.standard) ? usage.standard : {};
-  const directUserLimit = asNumber(standard.userLimit);
-  if (directUserLimit !== null && directUserLimit > 0) {
-    return directUserLimit;
-  }
-
-  const globalLimit = isJsonObject(payload.globalLimit) ? payload.globalLimit : {};
-  const globalStandardLimit = asNumber(globalLimit.standard);
-  if (globalStandardLimit !== null && globalStandardLimit > 0) {
-    return globalStandardLimit;
-  }
-
-  const userId = asString(payload.userId);
-  const userLimits = isJsonObject(payload.userLimits) ? payload.userLimits : {};
-  const userLimitEntry = userId === null ? undefined : userLimits[userId];
-  if (isJsonObject(userLimitEntry)) {
-    const nestedLimit = asNumber(userLimitEntry.standard);
-    if (nestedLimit !== null && nestedLimit > 0) {
-      return nestedLimit;
-    }
-  }
-
-  const flatUserLimit = asNumber(userLimitEntry);
-  if (flatUserLimit !== null && flatUserLimit > 0) {
-    return flatUserLimit;
-  }
-
-  return null;
-};
-
-const resolveDroidOrgScopedLimit = (payload: JsonObject): number | null => {
-  const usage = isJsonObject(payload.usage) ? payload.usage : {};
-  const standard = isJsonObject(usage.standard) ? usage.standard : {};
-
-  const totalAllowance = asNumber(standard.totalAllowance);
-  if (totalAllowance !== null && totalAllowance > 0) {
-    return totalAllowance;
-  }
-
-  const basicAllowance = asNumber(standard.basicAllowance);
-  return basicAllowance !== null && basicAllowance > 0 ? basicAllowance : null;
-};
-
-const resolveDroidUsedTokens = (payload: JsonObject, useUserScopedUsage: boolean): number | null => {
-  const usage = isJsonObject(payload.usage) ? payload.usage : {};
-  const standard = isJsonObject(usage.standard) ? usage.standard : {};
-  const userTokens = asNumber(standard.userTokens);
-  if (useUserScopedUsage) {
-    return userTokens;
-  }
-
-  return asNumber(standard.orgTotalTokensUsed) ?? userTokens;
-};
-
-const buildDroidEntry = (payload: JsonObject): ProviderEntry => {
-  const usage = isJsonObject(payload.usage) ? payload.usage : {};
-  const userScopedLimit = resolveDroidUserScopedLimit(payload);
-  const tokensLimit = userScopedLimit ?? resolveDroidOrgScopedLimit(payload);
-  const tokensUsed = resolveDroidUsedTokens(payload, userScopedLimit !== null);
-
-  return buildProviderEntry({
-    provider: "droid",
-    source: "api",
-    sessionResetAt: asResetAtValue(usage.endDate),
-    tokensUsed,
-    tokensLimit,
-  });
-};
-
-const fetchDroidUsage = async (): Promise<ProviderEntry> => {
-  const factoryAuth = loadFactoryAuth();
-  if (!factoryAuth) {
-    throw new Error("factory auth.json not found");
-  }
-
-  const accessToken = asString(factoryAuth.access_token);
-  const userId = resolveFactoryUserId(factoryAuth);
-  if (!accessToken || !userId) {
-    throw new Error("factory access token or user id missing");
-  }
-
-  const response = await requestDroidUsage(accessToken, userId);
-  if (response.status !== 200 || !isJsonObject(response.payload)) {
-    throw new Error(`factory usage request failed (${response.status})`);
-  }
-
-  return buildDroidEntry(response.payload);
-};
 
 const recoverProviderEntry = (
   provider: ProviderName,
@@ -915,26 +753,18 @@ const refreshCache = async (
   const forceRefresh = options.forceRefresh ?? false;
   const codexNeedsRefresh =
     enabledProviders.includes("codex") && shouldRefreshProvider(previousCache, "codex", forceRefresh);
-  const droidNeedsRefresh =
-    enabledProviders.includes("droid") && shouldRefreshProvider(previousCache, "droid", forceRefresh);
-  const [codexResult, droidResult] = await Promise.allSettled([
+  const [codexResult] = await Promise.allSettled([
     codexNeedsRefresh ? fetchCodexUsage() : Promise.resolve(previousCache.codex ?? unavailableEntry("codex")),
-    droidNeedsRefresh ? fetchDroidUsage() : Promise.resolve(previousCache.droid ?? unavailableEntry("droid")),
   ]);
 
   const codex =
     !codexNeedsRefresh ? (previousCache.codex ?? unavailableEntry("codex"))
     : codexResult.status === "fulfilled" ? codexResult.value
     : recoverProviderEntry("codex", previousCache.codex);
-  const droid =
-    !droidNeedsRefresh ? (previousCache.droid ?? unavailableEntry("droid"))
-    : droidResult.status === "fulfilled" ? droidResult.value
-    : recoverProviderEntry("droid", previousCache.droid);
 
   const nextCache: CacheData = {
     claude: previousCache.claude,
     codex,
-    droid,
     updatedAt: nowEpoch(),
   };
 
