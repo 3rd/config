@@ -83,7 +83,6 @@
     options = [
       "noatime"
       "nodiratime"
-      "discard"
     ];
   };
 

@@ -6,9 +6,9 @@ return {
         binary = "nix",
         maxMemoryMB = 8 * 1024,
         flake = {
-          autoEvalInputs = true,
-          autoArchive = true,
-          nixpkgsInputName = vim.NIL,
+          autoEvalInputs = false,
+          autoArchive = false,
+          nixpkgsInputName = "nixpkgs",
         },
       },
     },

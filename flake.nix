@@ -33,11 +33,6 @@
 
     wired.url = "github:Toqozz/wired-notify";
 
-    # apple-silicon = {
-    #   url =
-    #     "github:tpwrules/nixos-apple-silicon?rev=f51de44b1d720ac23e838db8e0cf13fadb7942b8";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
     # ghostty = {
     #   url = "github:ghostty-org/ghostty";
     #   inputs.nixpkgs.follows = "nixpkgs";
@@ -66,7 +61,6 @@
         cudaForwardCompat = false;
       };
       systems = [
-        "aarch64-linux"
         "x86_64-linux"
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;

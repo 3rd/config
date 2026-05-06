@@ -26,6 +26,11 @@ in
     "fs.inotify.max_user_instances" = 8192;
     "fs.inotify.max_user_watches" = 1048576;
 
+    "vm.dirty_background_bytes" = 268435456;
+    "vm.dirty_bytes" = 1073741824;
+    "vm.dirty_expire_centisecs" = 1000;
+    "vm.dirty_writeback_centisecs" = 500;
+
     "net.core.rmem_max" = 67108864;
     "net.core.wmem_max" = 67108864;
     "net.ipv4.tcp_rmem" = "4096 87380 33554432";
@@ -40,6 +45,23 @@ in
   };
   # systemd.extraConfig = "DefaultLimitNOFILE=1048576";
   systemd.user.extraConfig = "DefaultLimitNOFILE=1048576";
+  systemd.services = {
+    fstrim.serviceConfig = {
+      IOSchedulingClass = "idle";
+      IOSchedulingPriority = 7;
+      IOWeight = 10;
+    };
+    nix-gc.serviceConfig = {
+      IOSchedulingClass = "idle";
+      IOSchedulingPriority = 7;
+      IOWeight = 10;
+    };
+    nix-optimise.serviceConfig = {
+      IOSchedulingClass = "idle";
+      IOSchedulingPriority = 7;
+      IOWeight = 10;
+    };
+  };
 
   environment.systemPackages = with pkgs; [
     acpi
