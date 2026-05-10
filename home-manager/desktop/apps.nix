@@ -90,6 +90,9 @@ let
 in
 {
   home.packages = [
+    pkgs.libreoffice-qt-fresh
+    pkgs.hunspell
+    pkgs.hunspellDicts.en_US
     appLaunchScript
     cursorDesktopItem
     handyDesktopItem

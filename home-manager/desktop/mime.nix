@@ -1,7 +1,12 @@
 let
   browserDesktop = "google-chrome.desktop";
+  libreOfficeCalc = "libreoffice-calc.desktop";
+  libreOfficeDraw = "libreoffice-draw.desktop";
+  libreOfficeImpress = "libreoffice-impress.desktop";
+  libreOfficeWriter = "libreoffice-writer.desktop";
   zathura = "org.pwmt.zathura.desktop";
-in {
+in
+{
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
@@ -40,6 +45,18 @@ in {
       "image/x-bzeps" = zathura;
       "image/x-eps" = zathura;
       "image/x-gzeps" = zathura;
+      "application/msword" = libreOfficeWriter;
+      "application/rtf" = libreOfficeWriter;
+      "application/vnd.ms-excel" = libreOfficeCalc;
+      "application/vnd.ms-powerpoint" = libreOfficeImpress;
+      "application/vnd.oasis.opendocument.graphics" = libreOfficeDraw;
+      "application/vnd.oasis.opendocument.presentation" = libreOfficeImpress;
+      "application/vnd.oasis.opendocument.spreadsheet" = libreOfficeCalc;
+      "application/vnd.oasis.opendocument.text" = libreOfficeWriter;
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation" = libreOfficeImpress;
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" = libreOfficeCalc;
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" = libreOfficeWriter;
+      "text/csv" = libreOfficeCalc;
       # browser
       "application/xhtml+xml" = browserDesktop;
       "application/x-extension-htm" = browserDesktop;

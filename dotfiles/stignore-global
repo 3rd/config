@@ -1,6 +1,7 @@
 (?d)node_modules
 (?d)dist
 (?d).cache
+(?d).cocoindex_code
 (?d).parcel-cache
 (?d).temp
 (?d).nuxt

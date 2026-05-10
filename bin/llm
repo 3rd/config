@@ -14,6 +14,7 @@ readonly OLLAMA_BLOBS_ROOT="${OLLAMA_BLOBS_ROOT:-/storage/ollama/models/blobs}"
 readonly DEFAULT_CTX="${LLM_DEFAULT_CTX:-65536}"
 readonly DEFAULT_BATCH="${LLM_DEFAULT_BATCH:-256}"
 readonly DEFAULT_UBATCH="${LLM_DEFAULT_UBATCH:-128}"
+readonly DEFAULT_FIT_TARGET="512"
 JSON_OUTPUT=0
 
 usage() {
@@ -31,8 +32,9 @@ commands:
                                list local models and registry state
   adopt [--all|--dry-run]      register moved Ollama models from manifests
   add <path> --id <id> [opts]  register a local GGUF
-  set [id] [--ctx n] [--gpu-layers n] [--batch n] [--ubatch n] [--ttl 10m]
+  set [id] [--ctx n] [--gpu-layers n|default] [--batch n] [--ubatch n] [--mmap|--no-mmap] [--flash-attn on|off|auto] [--fit-target mib|default] [--ttl 10m]
                                update runtime settings
+  optimize [id] [--ctx n]      live-score and tune llama.cpp runtime settings
   edit [id]                    edit one registry entry
   enable|disable [id]          toggle serving registry state
   reload                       regenerate llama-swap config
@@ -44,7 +46,7 @@ commands:
   logs                         tail llama-swap logs
   test [id]                    send a tiny chat request
   chat [id] <prompt>           send one prompt
-  bench [id] <prompt>          run one prompt with rough elapsed time
+  bench [id] [opts] [prompt]   run served chat benchmark with token metrics
   rm <id|path> [--dry-run]     remove a model under /storage/llm
 
 global:
@@ -55,6 +57,14 @@ examples:
   llm info unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
   llm pull unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
   llm start
+
+bench opts:
+  --prompt-tokens n            synthetic prompt size when prompt is omitted (default: 2048)
+  --gen-tokens n               max generated tokens (default: 512)
+
+bench env:
+  LLM_BENCH_PROMPT_TOKENS      default synthetic prompt size
+  LLM_BENCH_GEN_TOKENS         default generated token limit
 EOF
 }
 
@@ -90,6 +100,18 @@ json_arg() {
   jq -Rn --arg value "$1" '$value'
 }
 
+clean_hf_json() {
+  local output="$1" candidate
+  if jq -e . >/dev/null 2>&1 <<<"$output"; then
+    printf '%s\n' "$output"
+    return 0
+  fi
+  candidate="$(printf '%s\n' "$output" | awk '/^[[:space:]]*[\{\[]/ { print; exit }')"
+  [[ -n "$candidate" ]] || return 1
+  jq -e . >/dev/null 2>&1 <<<"$candidate" || return 1
+  printf '%s\n' "$candidate"
+}
+
 normalize_repo() {
   local value="$1"
   value="${value#https://huggingface.co/}"
@@ -109,7 +131,7 @@ gguf_file_from_url() {
 }
 
 hf_json() {
-  local repo="$1" output
+  local repo="$1" output clean
   if ! output="$(hf models info "$repo" --expand siblings,tags,downloads,likes,gated --format json 2>&1)"; then
     printf '%s\n' "$output" >&2
     if [[ "$repo" == *GGU ]]; then
@@ -117,7 +139,7 @@ hf_json() {
     fi
     return 1
   fi
-  if ! jq -e . >/dev/null 2>&1 <<<"$output"; then
+  if ! clean="$(clean_hf_json "$output")"; then
     printf 'error: Hugging Face returned non-JSON output for %s\n' "$repo" >&2
     printf '%s\n' "$output" >&2
     if [[ "$repo" == *GGU ]]; then
@@ -125,7 +147,7 @@ hf_json() {
     fi
     return 1
   fi
-  printf '%s\n' "$output"
+  printf '%s\n' "$clean"
 }
 
 list_remote_ggufs() {
@@ -251,7 +273,7 @@ select_model_id() {
         .value.path,
         (.value.enabled // true | tostring),
         (.value.ctx // $defaultCtx | tostring),
-        (.value.gpuLayers // 99 | tostring),
+        (if (.value.fitTarget // "") != "" then "auto" elif (.value | has("gpuLayers")) then (.value.gpuLayers | tostring) else "99" end),
         ((.value.aliases // []) | join(","))
       ]
       | @tsv
@@ -379,13 +401,41 @@ render_config() {
   local tmp backup
   tmp="$(mktemp "$REGISTRY_DIR/llama-swap.yaml.tmp.XXXXXX")"
   backup="$REGISTRY_DIR/llama-swap.yaml.last-good"
-  jq -r --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" '
+  jq -r --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" '
+    def shell_args($args):
+      if (($args // []) | length) > 0 then
+        " " + (($args // []) | map(@sh) | join(" "))
+      else
+        ""
+      end;
+    def env_block($model):
+      if (($model.env // {}) | length) > 0 then
+        "    env:\n"
+        + (($model.env // {}) | to_entries | map("      " + .key + ": " + (.value | @json)) | join("\n"))
+        + "\n"
+      else
+        ""
+      end;
     def cmd($model):
       "      llama-server --host 127.0.0.1 --port ${PORT} --model " + ($model.path | @sh)
       + " --ctx-size " + (($model.ctx // $defaultCtx) | tostring)
-      + " --n-gpu-layers " + (($model.gpuLayers // 99) | tostring)
+      + (if (($model.fitTarget // "") != "") then "" elif ($model | has("gpuLayers")) then " --n-gpu-layers " + ($model.gpuLayers | tostring) else " --n-gpu-layers 99" end)
       + " --batch-size " + (($model.batch // $defaultBatch) | tostring)
-      + " --ubatch-size " + (($model.ubatch // $defaultUbatch) | tostring);
+      + " --ubatch-size " + (($model.ubatch // $defaultUbatch) | tostring)
+      + (if $model.mmap == false then " --no-mmap" elif $model.mmap == true then " --mmap" else "" end)
+      + (if ($model.flashAttn // "") != "" then " --flash-attn " + $model.flashAttn else "" end)
+      + (if ($model.fitTarget // "") != "" then " --fit on --fit-target " + ($defaultFitTarget | tostring) + " --fit-ctx " + (($model.ctx // $defaultCtx) | tostring) else " --fit off" end)
+      + (if ($model.cpuMoe // "") != "" then " --n-cpu-moe " + ($model.cpuMoe | tostring) else "" end)
+      + (if ($model.cacheTypeK // "") != "" then " --cache-type-k " + $model.cacheTypeK else "" end)
+      + (if ($model.cacheTypeV // "") != "" then " --cache-type-v " + $model.cacheTypeV else "" end)
+      + (if ($model.threads // "") != "" then " --threads " + ($model.threads | tostring) else "" end)
+      + (if ($model.threadsBatch // "") != "" then " --threads-batch " + ($model.threadsBatch | tostring) else "" end)
+      + (if ($model.splitMode // "") != "" then " --split-mode " + $model.splitMode else "" end)
+      + (if ($model.tensorSplit // "") != "" then " --tensor-split " + $model.tensorSplit else "" end)
+      + (if ($model.mainGpu // "") != "" then " --main-gpu " + ($model.mainGpu | tostring) else "" end)
+      + (if ($model.noKvOffload // false) == true then " --no-kv-offload" else "" end)
+      + (if ($model.mlock // false) == true then " --mlock" else "" end)
+      + shell_args($model.serverArgs);
     "healthCheckTimeout: 500\nlogLevel: info\nlogToStdout: proxy\nstartPort: 12000\nincludeAliasesInList: true\nglobalTTL: 0\nmodels:\n"
     + (
       [.models | to_entries[] | select(.value.enabled != false)] as $entries
@@ -397,6 +447,7 @@ render_config() {
             + "    cmd: >\n"
             + cmd(.value) + "\n"
             + "    ttl: " + ((.value.ttl // 600) | tostring) + "\n"
+            + env_block(.value)
             + (if ((.value.aliases // []) | length) > 0 then
                 "    aliases:\n" + ((.value.aliases // []) | map("      - " + (. | @json)) | join("\n")) + "\n"
               else "" end)
@@ -417,6 +468,18 @@ reload_swap() {
     sleep 1
   fi
   echo "registry reloaded: $SWAP_CONFIG"
+}
+
+wait_for_served_model() {
+  local id="$1" attempts="${2:-20}" served
+  for _ in $(seq 1 "$attempts"); do
+    served="$(api_json /v1/models 2>/dev/null || true)"
+    if [[ -n "$served" ]] && jq -e --arg id "$id" 'any(.data[]?; .id == $id)' >/dev/null 2>&1 <<<"$served"; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
 }
 
 cmd_doctor() {
@@ -501,7 +564,7 @@ cmd_info() {
     if [[ "$JSON_OUTPUT" -eq 1 ]]; then
       registry_entry "$id"
     else
-      registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" '"id: \($id)\npath: \(.path)\nenabled: \(.enabled)\naliases: \((.aliases // []) | join(", "))\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(.gpuLayers // 99)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nttl: \(.ttl // 600)"'
+      registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" '"id: \($id)\npath: \(.path)\nenabled: \(.enabled)\naliases: \((.aliases // []) | join(", "))\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(if (.fitTarget // "") != "" then "auto" elif has("gpuLayers") then .gpuLayers else 99 end)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nmmap: \(if has("mmap") then .mmap else "default" end)\nflashAttn: \(.flashAttn // "default")\nfitTarget: \(if (.fitTarget // "") != "" then $defaultFitTarget else "default" end)\ncpuMoe: \(.cpuMoe // "default")\ncacheTypeK: \(.cacheTypeK // "default")\ncacheTypeV: \(.cacheTypeV // "default")\nthreads: \(.threads // "default")\nthreadsBatch: \(.threadsBatch // "default")\nsplitMode: \(.splitMode // "default")\ntensorSplit: \(.tensorSplit // "default")\nmainGpu: \(.mainGpu // "default")\nnoKvOffload: \(.noKvOffload // "default")\nmlock: \(.mlock // "default")\nserverArgs: \((.serverArgs // []) | join(" "))\nenv: \((.env // {}) | to_entries | map(.key + "=" + .value) | join(" "))\nttl: \(.ttl // 600)"'
     fi
     return
   fi
@@ -533,7 +596,13 @@ cmd_pull() {
       --id) model_id="$2"; shift 2 ;;
       --alias) aliases_json="$(jq -cn --argjson old "$aliases_json" --arg alias "$2" '$old + [$alias]')"; shift 2 ;;
       --ctx) ctx="$2"; shift 2 ;;
-      --gpu-layers) gpu_layers="$2"; shift 2 ;;
+      --gpu-layers)
+        case "$2" in
+          default|auto|unset) gpu_layers="default" ;;
+          *) gpu_layers="$2" ;;
+        esac
+        shift 2
+        ;;
       --batch) batch="$2"; shift 2 ;;
       --ubatch) ubatch="$2"; shift 2 ;;
       --ttl) ttl="$(parse_ttl "$2")"; shift 2 ;;
@@ -668,7 +737,7 @@ cmd_ls() {
       .value.path,
       (.value.enabled // true | tostring),
       (.value.ctx // $defaultCtx | tostring),
-      (.value.gpuLayers // 99 | tostring),
+      (if (.value.fitTarget // "") != "" then "auto" elif (.value | has("gpuLayers")) then (.value.gpuLayers | tostring) else "99" end),
       (.value.ttl // 600 | tostring),
       (.value.source // "manual"),
       ((.value.aliases // []) | join(","))
@@ -723,20 +792,83 @@ cmd_add() {
 cmd_set() {
   require_cmd jq
   ensure_registry
-  local id="" ctx="" gpu_layers="" batch="" ubatch="" ttl="" tmp
+  local id="" ctx="" gpu_layers="" batch="" ubatch="" mmap="" flash_attn="" fit_target="" ttl="" tmp
+  local cpu_moe="" cache_type_k="" cache_type_v="" threads="" threads_batch="" split_mode="" tensor_split="" main_gpu="" no_kv_offload="" mlock=""
+  local server_args_json="[]" env_json="{}"
   if [[ $# -gt 0 && "$1" != --* ]]; then
     id="$(model_id_from_alias "$1")"
     shift
   else
     id="$(model_id_or_select "set" 1)"
   fi
-  [[ $# -gt 0 ]] || die "usage: llm set [id] [--ctx n] [--gpu-layers n] [--batch n] [--ubatch n] [--ttl 10m]"
+  [[ $# -gt 0 ]] || die "usage: llm set [id] [runtime options]"
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --ctx) ctx="$2"; shift 2 ;;
       --gpu-layers) gpu_layers="$2"; shift 2 ;;
       --batch) batch="$2"; shift 2 ;;
       --ubatch) ubatch="$2"; shift 2 ;;
+      --mmap) mmap="true"; shift ;;
+      --no-mmap) mmap="false"; shift ;;
+      --flash-attn)
+        case "$2" in
+          on|off|auto) flash_attn="$2" ;;
+          *) die "--flash-attn must be on, off, or auto" ;;
+        esac
+        shift 2
+        ;;
+      --fit-target)
+        case "$2" in
+          default|auto|unset|off) fit_target="default" ;;
+          *) fit_target="$DEFAULT_FIT_TARGET" ;;
+        esac
+        shift 2
+        ;;
+      --cpu-moe) cpu_moe="$2"; shift 2 ;;
+      --cache-type-k) cache_type_k="$2"; shift 2 ;;
+      --cache-type-v) cache_type_v="$2"; shift 2 ;;
+      --threads) threads="$2"; shift 2 ;;
+      --threads-batch) threads_batch="$2"; shift 2 ;;
+      --split-mode) split_mode="$2"; shift 2 ;;
+      --tensor-split) tensor_split="$2"; shift 2 ;;
+      --main-gpu) main_gpu="$2"; shift 2 ;;
+      --no-kv-offload)
+        if [[ $# -eq 1 || "${2:-}" == --* ]]; then
+          no_kv_offload="true"
+          shift
+        else
+          case "$2" in
+            on|true|1) no_kv_offload="true" ;;
+            off|false|0) no_kv_offload="false" ;;
+            *) die "--no-kv-offload must be on or off" ;;
+          esac
+          shift 2
+        fi
+        ;;
+      --mlock)
+        if [[ $# -eq 1 || "${2:-}" == --* ]]; then
+          mlock="true"
+          shift
+        else
+          case "$2" in
+            on|true|1) mlock="true" ;;
+            off|false|0) mlock="false" ;;
+            *) die "--mlock must be on or off" ;;
+          esac
+          shift 2
+        fi
+        ;;
+      --server-arg)
+        server_args_json="$(jq -cn --argjson old "$server_args_json" --arg value "$2" '$old + [$value]')"
+        shift 2
+        ;;
+      --env)
+        [[ "$2" == *=* ]] || die "--env expects KEY=VALUE"
+        local env_key="${2%%=*}" env_value="${2#*=}"
+        [[ -n "$env_key" ]] || die "--env expects KEY=VALUE"
+        env_json="$(jq -cn --argjson old "$env_json" --arg key "$env_key" --arg value "$env_value" '$old + {($key): $value}')"
+        shift 2
+        ;;
       --ttl) ttl="$(parse_ttl "$2")"; shift 2 ;;
       *) die "unknown set option: $1" ;;
     esac
@@ -749,19 +881,49 @@ cmd_set() {
     --arg gpuLayers "$gpu_layers" \
     --arg batch "$batch" \
     --arg ubatch "$ubatch" \
+    --arg mmap "$mmap" \
+    --arg flashAttn "$flash_attn" \
+    --arg fitTarget "$fit_target" \
+    --arg cpuMoe "$cpu_moe" \
+    --arg cacheTypeK "$cache_type_k" \
+    --arg cacheTypeV "$cache_type_v" \
+    --arg threads "$threads" \
+    --arg threadsBatch "$threads_batch" \
+    --arg splitMode "$split_mode" \
+    --arg tensorSplit "$tensor_split" \
+    --arg mainGpu "$main_gpu" \
+    --arg noKvOffload "$no_kv_offload" \
+    --arg mlock "$mlock" \
+    --argjson serverArgs "$server_args_json" \
+    --argjson env "$env_json" \
     --arg ttl "$ttl" \
     '
       .models[$id] |= (
         if $ctx != "" then .ctx = ($ctx | tonumber) else . end
-        | if $gpuLayers != "" then .gpuLayers = ($gpuLayers | tonumber) else . end
+        | if $gpuLayers == "default" then del(.gpuLayers) elif $gpuLayers != "" then .gpuLayers = ($gpuLayers | tonumber) else . end
         | if $batch != "" then .batch = ($batch | tonumber) else . end
         | if $ubatch != "" then .ubatch = ($ubatch | tonumber) else . end
+        | if $mmap != "" then .mmap = ($mmap == "true") else . end
+        | if $flashAttn != "" then .flashAttn = $flashAttn else . end
+        | if $fitTarget == "default" then del(.fitTarget) elif $fitTarget != "" then .fitTarget = ($fitTarget | tonumber) else . end
+        | if $cpuMoe != "" then .cpuMoe = ($cpuMoe | tonumber) else . end
+        | if $cacheTypeK != "" then .cacheTypeK = $cacheTypeK else . end
+        | if $cacheTypeV != "" then .cacheTypeV = $cacheTypeV else . end
+        | if $threads != "" then .threads = ($threads | tonumber) else . end
+        | if $threadsBatch != "" then .threadsBatch = ($threadsBatch | tonumber) else . end
+        | if $splitMode != "" then .splitMode = $splitMode else . end
+        | if $tensorSplit != "" then .tensorSplit = $tensorSplit else . end
+        | if $mainGpu != "" then .mainGpu = ($mainGpu | tonumber) else . end
+        | if $noKvOffload != "" then .noKvOffload = ($noKvOffload == "true") else . end
+        | if $mlock != "" then .mlock = ($mlock == "true") else . end
+        | if ($serverArgs | length) > 0 then .serverArgs = $serverArgs else . end
+        | if ($env | length) > 0 then .env = ((.env // {}) + $env) else . end
         | if $ttl != "" then .ttl = ($ttl | tonumber) else . end
       )
     ' "$MODELS_JSON" >"$tmp"
   mv "$tmp" "$MODELS_JSON"
   render_config
-  registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" '"updated: \($id)\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(.gpuLayers // 99)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nttl: \(.ttl // 600)"'
+  registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" '"updated: \($id)\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(if (.fitTarget // "") != "" then "auto" elif has("gpuLayers") then .gpuLayers else 99 end)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nmmap: \(if has("mmap") then .mmap else "default" end)\nflashAttn: \(.flashAttn // "default")\nfitTarget: \(if (.fitTarget // "") != "" then $defaultFitTarget else "default" end)\ncpuMoe: \(.cpuMoe // "default")\ncacheTypeK: \(.cacheTypeK // "default")\ncacheTypeV: \(.cacheTypeV // "default")\nthreads: \(.threads // "default")\nthreadsBatch: \(.threadsBatch // "default")\nsplitMode: \(.splitMode // "default")\ntensorSplit: \(.tensorSplit // "default")\nmainGpu: \(.mainGpu // "default")\nnoKvOffload: \(.noKvOffload // "default")\nmlock: \(.mlock // "default")\nserverArgs: \((.serverArgs // []) | join(" "))\nenv: \((.env // {}) | to_entries | map(.key + "=" + .value) | join(" "))\nttl: \(.ttl // 600)"'
 }
 
 cmd_edit() {
@@ -843,6 +1005,12 @@ chat_request() {
     '{model:$model,max_tokens:$max,messages:[{role:"user",content:$prompt}]}'
 }
 
+bench_request() {
+  local model="$1" prompt="$2" max_tokens="$3"
+  jq -cn --arg model "$model" --arg prompt "$prompt" --argjson max "$max_tokens" \
+    '{model:$model,max_tokens:$max,temperature:0,messages:[{role:"user",content:$prompt}]}'
+}
+
 post_chat() {
   local body status
   body="$(mktemp)"
@@ -858,17 +1026,121 @@ post_chat() {
   return 1
 }
 
+warm_served_model() {
+  local id="$1" attempts="${2:-30}" output=""
+  for attempt in $(seq 1 "$attempts"); do
+    if output="$({ chat_request "$id" "ping" 4 | post_chat >/dev/null; } 2>&1)"; then
+      return 0
+    fi
+    if (( attempt % 10 == 0 )); then
+      log "still warming model: ${attempt}s elapsed"
+    fi
+    sleep 1
+  done
+  [[ -n "$output" ]] && echo "$output" >&2
+  return 1
+}
+
+bench_prompt() {
+  local prompt_tokens="$1" gen_tokens="$2"
+  jq -rn --argjson promptTokens "$prompt_tokens" --argjson genTokens "$gen_tokens" '
+    "Output exactly \($genTokens) short tokens. Use the word ok repeatedly, separated by spaces. Do not explain.\n\n"
+    + ([range(0; $promptTokens)] | map("ok") | join(" "))
+  '
+}
+
+bench_metrics() {
+  local model="$1" requested_prompt_tokens="$2" requested_gen_tokens="$3" elapsed_ms="$4" response="$5"
+  jq -cn \
+    --arg model "$model" \
+    --argjson requestedPrompt "$requested_prompt_tokens" \
+    --argjson requestedGen "$requested_gen_tokens" \
+    --argjson elapsedMs "$elapsed_ms" \
+    --argjson response "$response" '
+      def rate($tokens; $seconds):
+        if ($tokens != null and $seconds > 0) then ($tokens / $seconds) else null end;
+      ($elapsedMs / 1000) as $elapsedSeconds
+      | ($response.usage // {}) as $usage
+      | ($response.timings // {}) as $timings
+      | ($usage.prompt_tokens // $timings.prompt_n // null) as $promptTokens
+      | ($usage.completion_tokens // $timings.predicted_n // null) as $completionTokens
+      | ($usage.total_tokens // (if ($promptTokens != null and $completionTokens != null) then ($promptTokens + $completionTokens) else null end)) as $totalTokens
+      | ($timings.predicted_per_second // (if (($timings.predicted_n // null) != null and ($timings.predicted_ms // null) != null and $timings.predicted_ms > 0) then ($timings.predicted_n / ($timings.predicted_ms / 1000)) else null end)) as $serverGeneratedTps
+      | {
+          model: $model,
+          requested_prompt_tokens: $requestedPrompt,
+          requested_gen_tokens: $requestedGen,
+          elapsed_ms: $elapsedMs,
+          elapsed_seconds: $elapsedSeconds,
+          prompt_tokens: $promptTokens,
+          completion_tokens: $completionTokens,
+          total_tokens: $totalTokens,
+          generated_tok_s: rate($completionTokens; $elapsedSeconds),
+          total_tok_s: rate($totalTokens; $elapsedSeconds),
+          server_prompt_tok_s: ($timings.prompt_per_second // null),
+          server_generated_tok_s: $serverGeneratedTps,
+          response_chars: (($response.choices[0].message.content // $response.choices[0].text // "") | length),
+          response_preview: (($response.choices[0].message.content // $response.choices[0].text // "") | gsub("\\s+"; " ") | .[0:200])
+        }
+    '
+}
+
 diagnose_start_failure() {
-  local id="$1" path ctx gpu batch ubatch port
+  local id="$1" path ctx gpu batch ubatch mmap flash_attn fit_target port
+  local cpu_moe cache_type_k cache_type_v threads threads_batch split_mode tensor_split main_gpu no_kv_offload mlock
   path="$(model_path "$id")"
   ctx="$(jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" '.models[$id].ctx // $defaultCtx' "$MODELS_JSON")"
-  gpu="$(jq -r --arg id "$id" '.models[$id].gpuLayers // 99' "$MODELS_JSON")"
+  gpu="$(jq -r --arg id "$id" 'if (.models[$id].fitTarget // "") != "" then empty elif .models[$id] | has("gpuLayers") then .models[$id].gpuLayers else 99 end' "$MODELS_JSON")"
   batch="$(jq -r --arg id "$id" --argjson defaultBatch "$DEFAULT_BATCH" '.models[$id].batch // $defaultBatch' "$MODELS_JSON")"
   ubatch="$(jq -r --arg id "$id" --argjson defaultUbatch "$DEFAULT_UBATCH" '.models[$id].ubatch // $defaultUbatch' "$MODELS_JSON")"
+  mmap="$(jq -r --arg id "$id" 'if .models[$id] | has("mmap") then .models[$id].mmap else empty end' "$MODELS_JSON")"
+  flash_attn="$(jq -r --arg id "$id" '.models[$id].flashAttn // empty' "$MODELS_JSON")"
+  fit_target="$(jq -r --arg id "$id" '.models[$id].fitTarget // empty' "$MODELS_JSON")"
+  cpu_moe="$(jq -r --arg id "$id" '.models[$id].cpuMoe // empty' "$MODELS_JSON")"
+  cache_type_k="$(jq -r --arg id "$id" '.models[$id].cacheTypeK // empty' "$MODELS_JSON")"
+  cache_type_v="$(jq -r --arg id "$id" '.models[$id].cacheTypeV // empty' "$MODELS_JSON")"
+  threads="$(jq -r --arg id "$id" '.models[$id].threads // empty' "$MODELS_JSON")"
+  threads_batch="$(jq -r --arg id "$id" '.models[$id].threadsBatch // empty' "$MODELS_JSON")"
+  split_mode="$(jq -r --arg id "$id" '.models[$id].splitMode // empty' "$MODELS_JSON")"
+  tensor_split="$(jq -r --arg id "$id" '.models[$id].tensorSplit // empty' "$MODELS_JSON")"
+  main_gpu="$(jq -r --arg id "$id" '.models[$id].mainGpu // empty' "$MODELS_JSON")"
+  no_kv_offload="$(jq -r --arg id "$id" '.models[$id].noKvOffload // empty' "$MODELS_JSON")"
+  mlock="$(jq -r --arg id "$id" '.models[$id].mlock // empty' "$MODELS_JSON")"
   port="${LLM_DIAG_PORT:-12999}"
-  echo "diagnostic: llama-server --model $path --ctx-size $ctx --n-gpu-layers $gpu --batch-size $batch --ubatch-size $ubatch" >&2
+  local args=(--host 127.0.0.1 --port "$port" --model "$path" --ctx-size "$ctx")
+  [[ -n "$gpu" ]] && args+=(--n-gpu-layers "$gpu")
+  args+=(--batch-size "$batch" --ubatch-size "$ubatch")
+  if [[ "$mmap" == "false" ]]; then
+    args+=(--no-mmap)
+  elif [[ "$mmap" == "true" ]]; then
+    args+=(--mmap)
+  fi
+  if [[ -n "$flash_attn" ]]; then
+    args+=(--flash-attn "$flash_attn")
+  fi
+  if [[ -n "$fit_target" ]]; then
+    args+=(--fit on)
+    args+=(--fit-target "$DEFAULT_FIT_TARGET")
+    args+=(--fit-ctx "$ctx")
+  else
+    args+=(--fit off)
+  fi
+  [[ -n "$cpu_moe" ]] && args+=(--n-cpu-moe "$cpu_moe")
+  [[ -n "$cache_type_k" ]] && args+=(--cache-type-k "$cache_type_k")
+  [[ -n "$cache_type_v" ]] && args+=(--cache-type-v "$cache_type_v")
+  [[ -n "$threads" ]] && args+=(--threads "$threads")
+  [[ -n "$threads_batch" ]] && args+=(--threads-batch "$threads_batch")
+  [[ -n "$split_mode" ]] && args+=(--split-mode "$split_mode")
+  [[ -n "$tensor_split" ]] && args+=(--tensor-split "$tensor_split")
+  [[ -n "$main_gpu" ]] && args+=(--main-gpu "$main_gpu")
+  [[ "$no_kv_offload" == "true" ]] && args+=(--no-kv-offload)
+  [[ "$mlock" == "true" ]] && args+=(--mlock)
+  while IFS= read -r extra_arg; do
+    [[ -n "$extra_arg" ]] && args+=("$extra_arg")
+  done < <(jq -r --arg id "$id" '.models[$id].serverArgs[]? // empty' "$MODELS_JSON")
+  echo "diagnostic: llama-server ${args[*]}" >&2
   if have timeout && have llama-server; then
-    timeout 15 llama-server --host 127.0.0.1 --port "$port" --model "$path" --ctx-size "$ctx" --n-gpu-layers "$gpu" --batch-size "$batch" --ubatch-size "$ubatch" 2>&1 |
+    timeout 15 llama-server "${args[@]}" 2>&1 |
       grep -Ei 'error|failed|wrong|invalid|unsupported|cuda|exiting' |
       tail -30 >&2 || true
   fi
@@ -886,10 +1158,13 @@ cmd_start() {
   log "starting: $id"
   clear_runtime
   set_enabled true "$id" >/dev/null
-  log "waiting for llama-swap to reload config"
-  sleep 1
-  log "warming model with a 1-token request"
-  if ! chat_request "$id" "ping" 1 | post_chat >/dev/null; then
+  log "waiting for llama-swap to serve: $id"
+  if ! wait_for_served_model "$id"; then
+    echo "error: llama-swap did not serve $id after config reload" >&2
+    return 1
+  fi
+  log "warming model with a chat request"
+  if ! warm_served_model "$id"; then
     diagnose_start_failure "$id"
     return 1
   fi
@@ -1059,17 +1334,93 @@ cmd_chat() {
 }
 
 cmd_bench() {
-  [[ $# -ge 1 ]] || die "usage: llm bench [id] <prompt>"
-  if ! model_id_from_alias "$1" >/dev/null 2>&1; then
-    set -- "$(select_loaded_model_id "bench")" "$@"
-  fi
-  require_startable_model "$(model_id_from_alias "$1")"
-  local start end
-  log "benchmarking: $1"
+  require_cmd jq
+  local id="" prompt="" prompt_tokens="${LLM_BENCH_PROMPT_TOKENS:-2048}" gen_tokens="${LLM_BENCH_GEN_TOKENS:-512}"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --prompt-tokens)
+        [[ $# -ge 2 ]] || die "--prompt-tokens needs a value"
+        prompt_tokens="$2"
+        shift 2
+        ;;
+      --gen-tokens|--max-tokens)
+        [[ $# -ge 2 ]] || die "$1 needs a value"
+        gen_tokens="$2"
+        shift 2
+        ;;
+      --help|-h)
+        echo "usage: llm bench [id] [--prompt-tokens n] [--gen-tokens n] [prompt]"
+        return
+        ;;
+      --*)
+        die "unknown bench option: $1"
+        ;;
+      *)
+        if [[ -z "$id" ]] && model_id_from_alias "$1" >/dev/null 2>&1; then
+          id="$(model_id_from_alias "$1")"
+          shift
+        else
+          prompt="$*"
+          break
+        fi
+        ;;
+    esac
+  done
+  [[ "$prompt_tokens" =~ ^[0-9]+$ && "$prompt_tokens" -gt 0 ]] || die "--prompt-tokens must be a positive integer"
+  [[ "$gen_tokens" =~ ^[0-9]+$ && "$gen_tokens" -gt 0 ]] || die "--gen-tokens must be a positive integer"
+  [[ -n "$id" ]] || id="$(select_loaded_model_id "bench")"
+  require_startable_model "$id"
+  [[ -n "$prompt" ]] || prompt="$(bench_prompt "$prompt_tokens" "$gen_tokens")"
+
+  local start end elapsed_ms response metrics
+  log "benchmarking: $id"
   start="$(date +%s%3N)"
-  cmd_chat "$@"
+  response="$(bench_request "$id" "$prompt" "$gen_tokens" | post_chat)"
   end="$(date +%s%3N)"
-  echo "elapsed_ms: $((end - start))"
+  elapsed_ms="$((end - start))"
+  metrics="$(bench_metrics "$id" "$prompt_tokens" "$gen_tokens" "$elapsed_ms" "$response")"
+  if [[ "$JSON_OUTPUT" -eq 1 ]]; then
+    echo "$metrics"
+    return
+  fi
+  echo "$metrics" | jq -r '
+    def num:
+      if . == null then "-"
+      elif . >= 100 then ((. * 10 | round) / 10 | tostring)
+      else ((. * 100 | round) / 100 | tostring)
+      end;
+    "model: \(.model)",
+    "elapsed: \(.elapsed_seconds | num)s",
+    "generated_tok_s: \(.generated_tok_s | num)",
+    "total_tok_s: \(.total_tok_s | num)",
+    "server_generated_tok_s: \(.server_generated_tok_s | num)",
+    "server_prompt_tok_s: \(.server_prompt_tok_s | num)",
+    "prompt_tokens: \(.prompt_tokens // "-")",
+    "completion_tokens: \(.completion_tokens // "-")",
+    "total_tokens: \(.total_tokens // "-")",
+    "response_chars: \(.response_chars)",
+    "response_preview: \(.response_preview)"
+  '
+}
+
+cmd_optimize() {
+  require_cmd bun
+  ensure_registry
+  local id=""
+  if [[ $# -gt 0 && "$1" != --* ]]; then
+    id="$(model_id_or_select "optimize" 0 "$1" "chat")"
+    shift
+  else
+    id="$(model_id_or_select "optimize" 0 "" "chat")"
+  fi
+  require_startable_model "$id"
+  log "clearing current llama runtime before optimization"
+  clear_runtime
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local args=(--model-id "$id" --registry "$MODELS_JSON" --llm-bin "$script_dir/llm")
+  [[ "$JSON_OUTPUT" -eq 1 ]] && args+=(--json)
+  "$script_dir/llm-optimize" "${args[@]}" "$@"
 }
 
 main() {
@@ -1103,6 +1454,7 @@ main() {
     test) shift; cmd_test "$@" ;;
     chat) shift; cmd_chat "$@" ;;
     bench) shift; cmd_bench "$@" ;;
+    optimize) shift; cmd_optimize "$@" ;;
     rm) shift; cmd_rm "$@" ;;
     *) die "unknown command: $1" ;;
   esac
