@@ -8,6 +8,85 @@
 let
   keyringDaemon = "${config.security.wrapperDir}/gnome-keyring-daemon";
   dbusUpdateActivationEnvironment = "${lib.getBin pkgs.dbus}/bin/dbus-update-activation-environment";
+  resourcePressureSnapshot = pkgs.writeShellApplication {
+    name = "resource-pressure-snapshot";
+    runtimeInputs = with pkgs; [
+      coreutils
+      config.virtualisation.docker.package
+      gawk
+      procps
+      systemd
+      util-linux
+    ];
+    text = ''
+      snapshot_dir="''${RESOURCE_PRESSURE_SNAPSHOT_DIR:-/tmp/resource-pressure-snapshots}"
+      timestamp="$(date +%Y%m%d-%H%M%S)"
+      snapshot="$snapshot_dir/$timestamp.txt"
+
+      mkdir -p "$snapshot_dir"
+
+      {
+        echo "# resource pressure snapshot $timestamp"
+
+        echo
+        echo "## uptime"
+        uptime
+
+        echo
+        echo "## memory"
+        free -h
+
+        echo
+        echo "## vmstat"
+        vmstat 1 5
+
+        echo
+        echo "## pressure"
+        for pressure in cpu memory io; do
+          echo "### $pressure"
+          cat "/proc/pressure/$pressure" || true
+        done
+
+        echo
+        echo "## top cpu"
+        ps -eo pid,ppid,stat,pcpu,pmem,rss,comm,args --sort=-pcpu | head -n 40 || true
+
+        echo
+        echo "## top memory"
+        ps -eo pid,ppid,stat,pcpu,pmem,rss,comm,args --sort=-rss | head -n 40 || true
+
+        echo
+        echo "## blocked tasks"
+        ps -eo pid,ppid,stat,wchan:32,comm,args | awk '$3 ~ /D/ { print }' | head -n 80 || true
+
+        echo
+        echo "## oomd"
+        oomctl || true
+
+        if timeout 3s docker info >/dev/null 2>&1; then
+          echo
+          echo "## docker stats"
+          timeout 5s docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.PIDs}}' || true
+        fi
+      } > "$snapshot"
+
+      printf '%s\n' "$snapshot"
+    '';
+  };
+  userSliceResourcePolicy = {
+    CPUWeight = 80;
+    IOWeight = 80;
+    TasksMax = 16000;
+  };
+  dockerSliceResourcePolicy = {
+    CPUWeight = 60;
+    IOWeight = 40;
+    ManagedOOMMemoryPressure = "kill";
+    ManagedOOMMemoryPressureLimit = "50%";
+    MemoryHigh = "30%";
+    MemoryMax = "35%";
+    TasksMax = 8192;
+  };
 in
 
 {
@@ -44,26 +123,41 @@ in
     "net.ipv6.conf.all.disable_ipv6" = true;
   };
   # systemd.extraConfig = "DefaultLimitNOFILE=1048576";
-  systemd.user.extraConfig = "DefaultLimitNOFILE=1048576";
-  systemd.services = {
-    fstrim.serviceConfig = {
-      IOSchedulingClass = "idle";
-      IOSchedulingPriority = 7;
-      IOWeight = 10;
+  systemd = {
+    user.extraConfig = ''
+      DefaultLimitNOFILE=1048576
+      DefaultCPUAccounting=yes
+      DefaultMemoryAccounting=yes
+      DefaultTasksAccounting=yes
+      DefaultIOAccounting=yes
+    '';
+    slices = {
+      user.sliceConfig = userSliceResourcePolicy;
+      docker.sliceConfig = dockerSliceResourcePolicy;
     };
-    nix-gc.serviceConfig = {
-      IOSchedulingClass = "idle";
-      IOSchedulingPriority = 7;
-      IOWeight = 10;
-    };
-    nix-optimise.serviceConfig = {
-      IOSchedulingClass = "idle";
-      IOSchedulingPriority = 7;
-      IOWeight = 10;
+    services = {
+      fstrim.serviceConfig = {
+        IOSchedulingClass = "idle";
+        IOSchedulingPriority = 7;
+        IOWeight = 10;
+      };
+      nix-gc.serviceConfig = {
+        IOSchedulingClass = "idle";
+        IOSchedulingPriority = 7;
+        IOWeight = 10;
+      };
+      nix-optimise.serviceConfig = {
+        IOSchedulingClass = "idle";
+        IOSchedulingPriority = 7;
+        IOWeight = 10;
+      };
     };
   };
 
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = [
+    resourcePressureSnapshot
+  ]
+  ++ (with pkgs; [
     acpi
     appimage-run
     bluez
@@ -112,7 +206,7 @@ in
     bubblewrap
     nsjail
     pstree
-  ];
+  ]);
   environment.variables.EDITOR = "vim";
 
   xdg = {

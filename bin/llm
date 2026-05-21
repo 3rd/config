@@ -32,7 +32,7 @@ commands:
                                list local models and registry state
   adopt [--all|--dry-run]      register moved Ollama models from manifests
   add <path> --id <id> [opts]  register a local GGUF
-  set [id] [--ctx n] [--gpu-layers n|default] [--batch n] [--ubatch n] [--mmap|--no-mmap] [--flash-attn on|off|auto] [--fit-target mib|default] [--ttl 10m]
+  set [id] [--ctx n] [--gpu-layers n|default] [--batch n] [--ubatch n] [--mmap|--no-mmap] [--flash-attn on|off|auto] [--fit-target mib|default] [--draft off] [--draft-model path] [--draft-hf repo[:quant]] [--draft-n-max n] [--ttl 10m]
                                update runtime settings
   optimize [id] [--ctx n]      live-score and tune llama.cpp runtime settings
   edit [id]                    edit one registry entry
@@ -416,6 +416,20 @@ render_config() {
       else
         ""
       end;
+    def draft_args($model):
+      ($model.draft // {}) as $draft
+      | if ($draft | type) != "object" or (($draft | length) == 0) then
+          ""
+        else
+          (if ($draft.model // "") != "" then " --model-draft " + ($draft.model | @sh) else "" end)
+          + (if ($draft.hf // "") != "" then " --hf-repo-draft " + ($draft.hf | @sh) else "" end)
+          + (if ($draft.nMax // "") != "" then " --spec-draft-n-max " + ($draft.nMax | tostring) else "" end)
+          + (if ($draft.nMin // "") != "" then " --spec-draft-n-min " + ($draft.nMin | tostring) else "" end)
+          + (if ($draft.ctx // "") != "" then " --spec-draft-ctx-size " + ($draft.ctx | tostring) else "" end)
+          + (if ($draft.gpuLayers // "") != "" then " --n-gpu-layers-draft " + ($draft.gpuLayers | tostring) else "" end)
+          + (if ($draft.cacheTypeK // "") != "" then " --cache-type-k-draft " + $draft.cacheTypeK else "" end)
+          + (if ($draft.cacheTypeV // "") != "" then " --cache-type-v-draft " + $draft.cacheTypeV else "" end)
+        end;
     def cmd($model):
       "      llama-server --host 127.0.0.1 --port ${PORT} --model " + ($model.path | @sh)
       + " --ctx-size " + (($model.ctx // $defaultCtx) | tostring)
@@ -435,6 +449,7 @@ render_config() {
       + (if ($model.mainGpu // "") != "" then " --main-gpu " + ($model.mainGpu | tostring) else "" end)
       + (if ($model.noKvOffload // false) == true then " --no-kv-offload" else "" end)
       + (if ($model.mlock // false) == true then " --mlock" else "" end)
+      + draft_args($model)
       + shell_args($model.serverArgs);
     "healthCheckTimeout: 500\nlogLevel: info\nlogToStdout: proxy\nstartPort: 12000\nincludeAliasesInList: true\nglobalTTL: 0\nmodels:\n"
     + (
@@ -564,7 +579,7 @@ cmd_info() {
     if [[ "$JSON_OUTPUT" -eq 1 ]]; then
       registry_entry "$id"
     else
-      registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" '"id: \($id)\npath: \(.path)\nenabled: \(.enabled)\naliases: \((.aliases // []) | join(", "))\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(if (.fitTarget // "") != "" then "auto" elif has("gpuLayers") then .gpuLayers else 99 end)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nmmap: \(if has("mmap") then .mmap else "default" end)\nflashAttn: \(.flashAttn // "default")\nfitTarget: \(if (.fitTarget // "") != "" then $defaultFitTarget else "default" end)\ncpuMoe: \(.cpuMoe // "default")\ncacheTypeK: \(.cacheTypeK // "default")\ncacheTypeV: \(.cacheTypeV // "default")\nthreads: \(.threads // "default")\nthreadsBatch: \(.threadsBatch // "default")\nsplitMode: \(.splitMode // "default")\ntensorSplit: \(.tensorSplit // "default")\nmainGpu: \(.mainGpu // "default")\nnoKvOffload: \(.noKvOffload // "default")\nmlock: \(.mlock // "default")\nserverArgs: \((.serverArgs // []) | join(" "))\nenv: \((.env // {}) | to_entries | map(.key + "=" + .value) | join(" "))\nttl: \(.ttl // 600)"'
+      registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" '"id: \($id)\npath: \(.path)\nenabled: \(.enabled)\naliases: \((.aliases // []) | join(", "))\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(if (.fitTarget // "") != "" then "auto" elif has("gpuLayers") then .gpuLayers else 99 end)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nmmap: \(if has("mmap") then .mmap else "default" end)\nflashAttn: \(.flashAttn // "default")\nfitTarget: \(if (.fitTarget // "") != "" then $defaultFitTarget else "default" end)\ncpuMoe: \(.cpuMoe // "default")\ncacheTypeK: \(.cacheTypeK // "default")\ncacheTypeV: \(.cacheTypeV // "default")\nthreads: \(.threads // "default")\nthreadsBatch: \(.threadsBatch // "default")\nsplitMode: \(.splitMode // "default")\ntensorSplit: \(.tensorSplit // "default")\nmainGpu: \(.mainGpu // "default")\nnoKvOffload: \(.noKvOffload // "default")\nmlock: \(.mlock // "default")\ndraft: \((.draft // "default") | if type == "object" then tojson else tostring end)\nserverArgs: \((.serverArgs // []) | join(" "))\nenv: \((.env // {}) | to_entries | map(.key + "=" + .value) | join(" "))\nttl: \(.ttl // 600)"'
     fi
     return
   fi
@@ -686,7 +701,7 @@ cmd_ls() {
   if [[ "$long" -eq 1 ]]; then
     rows+=$'state\tid\tsize\tctx\tgpu\tttl\taliases\tpath\n'
   else
-    rows+=$'state\tid\tsize\tctx\tgpu\tttl\n'
+    rows+=$'state\tid\tsize\tctx\tgpu\tttl\taliases\n'
   fi
 
   add_ls_row() {
@@ -719,7 +734,7 @@ cmd_ls() {
     if [[ "$long" -eq 1 ]]; then
       rows+="${state}"$'\t'"${id}"$'\t'"${size}"$'\t'"${ctx}"$'\t'"${gpu}"$'\t'"${ttl}"$'\t'"${aliases}"$'\t'"${path}"$'\n'
     else
-      rows+="${state}"$'\t'"${id}"$'\t'"${size}"$'\t'"${ctx}"$'\t'"${gpu}"$'\t'"${ttl}"$'\n'
+      rows+="${state}"$'\t'"${id}"$'\t'"${size}"$'\t'"${ctx}"$'\t'"${gpu}"$'\t'"${ttl}"$'\t'"${aliases}"$'\n'
     fi
   }
 
@@ -794,6 +809,7 @@ cmd_set() {
   ensure_registry
   local id="" ctx="" gpu_layers="" batch="" ubatch="" mmap="" flash_attn="" fit_target="" ttl="" tmp
   local cpu_moe="" cache_type_k="" cache_type_v="" threads="" threads_batch="" split_mode="" tensor_split="" main_gpu="" no_kv_offload="" mlock=""
+  local draft_clear=0 draft_model="" draft_hf="" draft_n_max="" draft_n_min="" draft_ctx="" draft_gpu_layers="" draft_cache_type_k="" draft_cache_type_v=""
   local server_args_json="[]" env_json="{}"
   if [[ $# -gt 0 && "$1" != --* ]]; then
     id="$(model_id_from_alias "$1")"
@@ -827,6 +843,21 @@ cmd_set() {
       --cpu-moe) cpu_moe="$2"; shift 2 ;;
       --cache-type-k) cache_type_k="$2"; shift 2 ;;
       --cache-type-v) cache_type_v="$2"; shift 2 ;;
+      --draft)
+        case "${2:-}" in
+          off|none|default|unset) draft_clear=1 ;;
+          *) die "--draft currently supports off only" ;;
+        esac
+        shift 2
+        ;;
+      --draft-model) draft_model="$2"; draft_clear=0; shift 2 ;;
+      --draft-hf) draft_hf="$2"; draft_clear=0; shift 2 ;;
+      --draft-n-max) draft_n_max="$2"; draft_clear=0; shift 2 ;;
+      --draft-n-min) draft_n_min="$2"; draft_clear=0; shift 2 ;;
+      --draft-ctx) draft_ctx="$2"; draft_clear=0; shift 2 ;;
+      --draft-gpu-layers) draft_gpu_layers="$2"; draft_clear=0; shift 2 ;;
+      --draft-cache-type-k) draft_cache_type_k="$2"; draft_clear=0; shift 2 ;;
+      --draft-cache-type-v) draft_cache_type_v="$2"; draft_clear=0; shift 2 ;;
       --threads) threads="$2"; shift 2 ;;
       --threads-batch) threads_batch="$2"; shift 2 ;;
       --split-mode) split_mode="$2"; shift 2 ;;
@@ -894,6 +925,15 @@ cmd_set() {
     --arg mainGpu "$main_gpu" \
     --arg noKvOffload "$no_kv_offload" \
     --arg mlock "$mlock" \
+    --arg draftClear "$draft_clear" \
+    --arg draftModel "$draft_model" \
+    --arg draftHf "$draft_hf" \
+    --arg draftNMax "$draft_n_max" \
+    --arg draftNMin "$draft_n_min" \
+    --arg draftCtx "$draft_ctx" \
+    --arg draftGpuLayers "$draft_gpu_layers" \
+    --arg draftCacheTypeK "$draft_cache_type_k" \
+    --arg draftCacheTypeV "$draft_cache_type_v" \
     --argjson serverArgs "$server_args_json" \
     --argjson env "$env_json" \
     --arg ttl "$ttl" \
@@ -916,6 +956,15 @@ cmd_set() {
         | if $mainGpu != "" then .mainGpu = ($mainGpu | tonumber) else . end
         | if $noKvOffload != "" then .noKvOffload = ($noKvOffload == "true") else . end
         | if $mlock != "" then .mlock = ($mlock == "true") else . end
+        | if $draftClear == "1" then del(.draft) else . end
+        | if $draftModel != "" then .draft.model = $draftModel else . end
+        | if $draftHf != "" then .draft.hf = $draftHf else . end
+        | if $draftNMax != "" then .draft.nMax = ($draftNMax | tonumber) else . end
+        | if $draftNMin != "" then .draft.nMin = ($draftNMin | tonumber) else . end
+        | if $draftCtx != "" then .draft.ctx = ($draftCtx | tonumber) else . end
+        | if $draftGpuLayers != "" then .draft.gpuLayers = ($draftGpuLayers | tonumber) else . end
+        | if $draftCacheTypeK != "" then .draft.cacheTypeK = $draftCacheTypeK else . end
+        | if $draftCacheTypeV != "" then .draft.cacheTypeV = $draftCacheTypeV else . end
         | if ($serverArgs | length) > 0 then .serverArgs = $serverArgs else . end
         | if ($env | length) > 0 then .env = ((.env // {}) + $env) else . end
         | if $ttl != "" then .ttl = ($ttl | tonumber) else . end
@@ -923,7 +972,7 @@ cmd_set() {
     ' "$MODELS_JSON" >"$tmp"
   mv "$tmp" "$MODELS_JSON"
   render_config
-  registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" '"updated: \($id)\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(if (.fitTarget // "") != "" then "auto" elif has("gpuLayers") then .gpuLayers else 99 end)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nmmap: \(if has("mmap") then .mmap else "default" end)\nflashAttn: \(.flashAttn // "default")\nfitTarget: \(if (.fitTarget // "") != "" then $defaultFitTarget else "default" end)\ncpuMoe: \(.cpuMoe // "default")\ncacheTypeK: \(.cacheTypeK // "default")\ncacheTypeV: \(.cacheTypeV // "default")\nthreads: \(.threads // "default")\nthreadsBatch: \(.threadsBatch // "default")\nsplitMode: \(.splitMode // "default")\ntensorSplit: \(.tensorSplit // "default")\nmainGpu: \(.mainGpu // "default")\nnoKvOffload: \(.noKvOffload // "default")\nmlock: \(.mlock // "default")\nserverArgs: \((.serverArgs // []) | join(" "))\nenv: \((.env // {}) | to_entries | map(.key + "=" + .value) | join(" "))\nttl: \(.ttl // 600)"'
+  registry_entry "$id" | jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" '"updated: \($id)\nctx: \(.ctx // $defaultCtx)\ngpuLayers: \(if (.fitTarget // "") != "" then "auto" elif has("gpuLayers") then .gpuLayers else 99 end)\nbatch: \(.batch // $defaultBatch)\nubatch: \(.ubatch // $defaultUbatch)\nmmap: \(if has("mmap") then .mmap else "default" end)\nflashAttn: \(.flashAttn // "default")\nfitTarget: \(if (.fitTarget // "") != "" then $defaultFitTarget else "default" end)\ncpuMoe: \(.cpuMoe // "default")\ncacheTypeK: \(.cacheTypeK // "default")\ncacheTypeV: \(.cacheTypeV // "default")\nthreads: \(.threads // "default")\nthreadsBatch: \(.threadsBatch // "default")\nsplitMode: \(.splitMode // "default")\ntensorSplit: \(.tensorSplit // "default")\nmainGpu: \(.mainGpu // "default")\nnoKvOffload: \(.noKvOffload // "default")\nmlock: \(.mlock // "default")\ndraft: \((.draft // "default") | if type == "object" then tojson else tostring end)\nserverArgs: \((.serverArgs // []) | join(" "))\nenv: \((.env // {}) | to_entries | map(.key + "=" + .value) | join(" "))\nttl: \(.ttl // 600)"'
 }
 
 cmd_edit() {
@@ -1088,6 +1137,7 @@ bench_metrics() {
 diagnose_start_failure() {
   local id="$1" path ctx gpu batch ubatch mmap flash_attn fit_target port
   local cpu_moe cache_type_k cache_type_v threads threads_batch split_mode tensor_split main_gpu no_kv_offload mlock
+  local draft_model draft_hf draft_n_max draft_n_min draft_ctx draft_gpu_layers draft_cache_type_k draft_cache_type_v
   path="$(model_path "$id")"
   ctx="$(jq -r --arg id "$id" --argjson defaultCtx "$DEFAULT_CTX" '.models[$id].ctx // $defaultCtx' "$MODELS_JSON")"
   gpu="$(jq -r --arg id "$id" 'if (.models[$id].fitTarget // "") != "" then empty elif .models[$id] | has("gpuLayers") then .models[$id].gpuLayers else 99 end' "$MODELS_JSON")"
@@ -1106,6 +1156,14 @@ diagnose_start_failure() {
   main_gpu="$(jq -r --arg id "$id" '.models[$id].mainGpu // empty' "$MODELS_JSON")"
   no_kv_offload="$(jq -r --arg id "$id" '.models[$id].noKvOffload // empty' "$MODELS_JSON")"
   mlock="$(jq -r --arg id "$id" '.models[$id].mlock // empty' "$MODELS_JSON")"
+  draft_model="$(jq -r --arg id "$id" '.models[$id].draft.model // empty' "$MODELS_JSON")"
+  draft_hf="$(jq -r --arg id "$id" '.models[$id].draft.hf // empty' "$MODELS_JSON")"
+  draft_n_max="$(jq -r --arg id "$id" '.models[$id].draft.nMax // empty' "$MODELS_JSON")"
+  draft_n_min="$(jq -r --arg id "$id" '.models[$id].draft.nMin // empty' "$MODELS_JSON")"
+  draft_ctx="$(jq -r --arg id "$id" '.models[$id].draft.ctx // empty' "$MODELS_JSON")"
+  draft_gpu_layers="$(jq -r --arg id "$id" '.models[$id].draft.gpuLayers // empty' "$MODELS_JSON")"
+  draft_cache_type_k="$(jq -r --arg id "$id" '.models[$id].draft.cacheTypeK // empty' "$MODELS_JSON")"
+  draft_cache_type_v="$(jq -r --arg id "$id" '.models[$id].draft.cacheTypeV // empty' "$MODELS_JSON")"
   port="${LLM_DIAG_PORT:-12999}"
   local args=(--host 127.0.0.1 --port "$port" --model "$path" --ctx-size "$ctx")
   [[ -n "$gpu" ]] && args+=(--n-gpu-layers "$gpu")
@@ -1135,6 +1193,14 @@ diagnose_start_failure() {
   [[ -n "$main_gpu" ]] && args+=(--main-gpu "$main_gpu")
   [[ "$no_kv_offload" == "true" ]] && args+=(--no-kv-offload)
   [[ "$mlock" == "true" ]] && args+=(--mlock)
+  [[ -n "$draft_model" ]] && args+=(--model-draft "$draft_model")
+  [[ -n "$draft_hf" ]] && args+=(--hf-repo-draft "$draft_hf")
+  [[ -n "$draft_n_max" ]] && args+=(--spec-draft-n-max "$draft_n_max")
+  [[ -n "$draft_n_min" ]] && args+=(--spec-draft-n-min "$draft_n_min")
+  [[ -n "$draft_ctx" ]] && args+=(--spec-draft-ctx-size "$draft_ctx")
+  [[ -n "$draft_gpu_layers" ]] && args+=(--n-gpu-layers-draft "$draft_gpu_layers")
+  [[ -n "$draft_cache_type_k" ]] && args+=(--cache-type-k-draft "$draft_cache_type_k")
+  [[ -n "$draft_cache_type_v" ]] && args+=(--cache-type-v-draft "$draft_cache_type_v")
   while IFS= read -r extra_arg; do
     [[ -n "$extra_arg" ]] && args+=("$extra_arg")
   done < <(jq -r --arg id "$id" '.models[$id].serverArgs[]? // empty' "$MODELS_JSON")

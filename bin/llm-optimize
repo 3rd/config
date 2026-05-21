@@ -1,0 +1,1808 @@
+#!/usr/bin/env bun
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
+import { cpus } from "node:os";
+
+type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+
+interface DraftConfig {
+  model?: string;
+  hf?: string;
+  nMax?: number;
+  nMin?: number;
+  ctx?: number;
+  gpuLayers?: number;
+  cacheTypeK?: string;
+  cacheTypeV?: string;
+}
+
+interface RegistryModel {
+  path: string;
+  aliases?: string[];
+  source?: string;
+  ctx?: number;
+  gpuLayers?: number;
+  batch?: number;
+  ubatch?: number;
+  mmap?: boolean;
+  flashAttn?: "on" | "off" | "auto";
+  fitTarget?: number;
+  cpuMoe?: number;
+  cacheTypeK?: string;
+  cacheTypeV?: string;
+  threads?: number;
+  threadsBatch?: number;
+  splitMode?: string;
+  tensorSplit?: string;
+  mainGpu?: number;
+  noKvOffload?: boolean;
+  mlock?: boolean;
+  draft?: DraftConfig;
+  serverArgs?: string[];
+  env?: Record<string, string>;
+  ttl?: number;
+}
+
+interface Registry {
+  models: Record<string, RegistryModel>;
+}
+
+interface CliOptions {
+  modelId: string;
+  registryPath: string;
+  llmBin: string;
+  ctx?: number;
+  apply?: boolean;
+  json: boolean;
+  resume?: string;
+  serverCheck: boolean;
+  smart: boolean;
+  verifyServed?: boolean;
+  draftDiscovery: boolean;
+  allowDraftDownloads: boolean;
+}
+
+interface Capabilities {
+  benchHelp: string;
+  serverHelp: string;
+  benchFlags: Set<string>;
+  serverFlags: Set<string>;
+  devices: string;
+  backend: string;
+  gpuTotalMiB?: number;
+  gpuFreeMiB?: number;
+  cacheTypesK: string[];
+  cacheTypesV: string[];
+}
+
+interface RuntimeConfig {
+  label: string;
+  ctx: number;
+  gpuLayers?: number;
+  batch: number;
+  ubatch: number;
+  mmap?: boolean;
+  flashAttn?: "on" | "off" | "auto";
+  fitTarget?: number;
+  cpuMoe?: number;
+  cacheTypeK?: string;
+  cacheTypeV?: string;
+  threads?: number;
+  threadsBatch?: number;
+  splitMode?: string;
+  tensorSplit?: string;
+  mainGpu?: number;
+  noKvOffload?: boolean;
+  draft?: DraftConfig | null;
+  env?: Record<string, string>;
+}
+
+interface DraftCandidate {
+  label: string;
+  source: "local" | "hf";
+  status: "available" | "downloaded" | "skipped" | "rejected" | "failed";
+  score: number;
+  path?: string;
+  repo?: string;
+  file?: string;
+  reason?: string;
+}
+
+interface DraftDiscoveryReport {
+  enabled: boolean;
+  reason?: string;
+  queries: string[];
+  candidates: DraftCandidate[];
+}
+
+interface CandidatePlan {
+  candidates: RuntimeConfig[];
+  fallbackCandidates: RuntimeConfig[];
+  deferred: string[];
+}
+
+interface BenchResult {
+  config: RuntimeConfig;
+  status: "ok" | "failed";
+  ppTps?: number;
+  tgTps?: number;
+  endToEndTps?: number;
+  elapsedSeconds?: number;
+  servedGeneratedTps?: number;
+  servedElapsedSeconds?: number;
+  servedPromptTokens?: number;
+  servedCompletionTokens?: number;
+  servedTotalTokens?: number;
+  reason?: string;
+  command: string[];
+  stderrTail: string;
+  stdoutTail: string;
+}
+
+interface ServerValidation {
+  ok: boolean;
+  reason?: string;
+  command: string[];
+  servedGeneratedTps?: number;
+  servedElapsedSeconds?: number;
+  servedPromptTokens?: number;
+  servedCompletionTokens?: number;
+  servedTotalTokens?: number;
+}
+
+interface CandidateValidation {
+  label: string;
+  ok: boolean;
+  reason?: string;
+  command: string[];
+  servedGeneratedTps?: number;
+  servedElapsedSeconds?: number;
+  servedPromptTokens?: number;
+  servedCompletionTokens?: number;
+  servedTotalTokens?: number;
+}
+
+interface Report {
+  modelId: string;
+  modelPath: string;
+  targetCtx: number;
+  promptTokens: number;
+  genTokens: number;
+  servedPromptTokens: number;
+  servedGenTokens: number;
+  repetitions: number;
+  createdAt: string;
+  capabilities: {
+    backend: string;
+    devices: string;
+    gpuTotalMiB?: number;
+    gpuFreeMiB?: number;
+    cacheTypesK: string[];
+    cacheTypesV: string[];
+  };
+  fastestBench?: BenchResult;
+  selected?: BenchResult;
+  best?: BenchResult;
+  serverValidation?: ServerValidation;
+  validationAttempts: CandidateValidation[];
+  draftDiscovery?: DraftDiscoveryReport;
+  applied: boolean;
+  applyCommand?: string[];
+  benchFallbackApplyCommand?: string[];
+  servedVerification?: {
+    ok: boolean;
+    restartCommand: string[];
+    probeCommand: string[];
+    reason?: string;
+    servedGeneratedTps?: number;
+    servedElapsedSeconds?: number;
+    servedPromptTokens?: number;
+    servedCompletionTokens?: number;
+    servedTotalTokens?: number;
+  };
+  results: BenchResult[];
+}
+
+interface LiveScoreState {
+  selected?: BenchResult;
+  serverValidation?: ServerValidation;
+  servedOkLabels: Set<string>;
+}
+
+const DEFAULT_CTX = numberFromEnv("LLM_DEFAULT_CTX", 65_536);
+const DEFAULT_BATCH = numberFromEnv("LLM_DEFAULT_BATCH", 256);
+const DEFAULT_UBATCH = numberFromEnv("LLM_DEFAULT_UBATCH", 128);
+const LLM_ROOT = process.env.LLM_ROOT ?? "/storage/llm";
+const MODELS_DIR = process.env.LLM_MODELS_DIR ?? join(LLM_ROOT, "models");
+const REGISTRY_DIR = process.env.LLM_REGISTRY_DIR ?? join(LLM_ROOT, "registry");
+const DEFAULT_REGISTRY = join(REGISTRY_DIR, "models.json");
+const REPORT_ROOT = process.env.LLM_OPT_REPORT_ROOT ?? join(REGISTRY_DIR, "optimize-runs");
+const REPETITIONS = numberFromEnv("LLM_OPT_REPETITIONS", 2);
+const DEFAULT_FIT_TARGET_MIB = 512;
+const DEFAULT_SERVED_TIMEOUT_MS = 180_000;
+const DRAFT_N_MAX_VALUES = [4, 8, 12, 16] as const;
+const MAX_REMOTE_DRAFT_CANDIDATES = 3;
+
+const main = async (): Promise<void> => {
+  const options = parseArgs(process.argv.slice(2));
+  if (options.resume) {
+    printResume(options.resume, options.json);
+    return;
+  }
+
+  const registry = readRegistry(options.registryPath);
+  const model = registry.models[options.modelId];
+  if (!model) throw new Error(`unknown model id: ${options.modelId}`);
+  if (!existsSync(model.path)) throw new Error(`model path does not exist: ${model.path}`);
+
+  const targetCtx = options.ctx ?? model.ctx ?? DEFAULT_CTX;
+  const promptTokens = numberFromEnv("LLM_OPT_PROMPT_TOKENS", choosePromptTokens(targetCtx));
+  const genTokens = numberFromEnv("LLM_OPT_GEN_TOKENS", 128);
+  const servedGenTokens = numberFromEnv("LLM_OPT_SERVED_GEN_TOKENS", 512);
+  const servedPromptTokens = numberFromEnv("LLM_OPT_SERVED_PROMPT_TOKENS", chooseServedPromptTokens(targetCtx, servedGenTokens));
+  const capabilities = discoverCapabilities();
+  const candidatePlan = generateCandidates(model, targetCtx, capabilities, options.smart);
+  const draftDiscovery = await discoverDraftCandidates(options, registry, model, capabilities);
+  if (draftDiscovery.enabled) {
+    const draftConfigs = buildDraftConfigs(candidatePlan.candidates, draftDiscovery.candidates);
+    candidatePlan.candidates.push(...draftConfigs);
+  }
+  const candidates = candidatePlan.candidates;
+
+  log(options, `optimizing: ${options.modelId}`);
+  log(options, `model: ${model.path}`);
+  log(options, `target ctx: ${targetCtx}`);
+  log(options, `mode: ${options.smart ? "smart" : "exhaustive"}`);
+  log(options, `candidates: ${candidates.length}`);
+  if (draftDiscovery.enabled) log(options, `draft candidates: ${draftDiscovery.candidates.filter((candidate) => candidate.status === "available" || candidate.status === "downloaded").length}`);
+  else if (draftDiscovery.reason) log(options, `draft discovery: ${draftDiscovery.reason}`);
+  for (const reason of candidatePlan.deferred) log(options, `defer: ${reason}`);
+  log(options, `tokens: bench_prompt=${promptTokens} bench_gen=${genTokens} served_prompt=${servedPromptTokens} served_gen=${servedGenTokens} repetitions=${REPETITIONS}`);
+
+  const results: BenchResult[] = [];
+  let selected: BenchResult | undefined;
+  let serverValidation: ServerValidation | undefined;
+  const validationAttempts: CandidateValidation[] = [];
+  let fastestBench: BenchResult | undefined;
+
+  if (options.serverCheck && options.smart) {
+    const state: LiveScoreState = { servedOkLabels: new Set() };
+    log(options, "");
+    log(options, `live-first scoring: ${candidates.length} primary candidate${candidates.length === 1 ? "" : "s"}`);
+    await liveScoreCandidateConfigs(options, candidates, servedPromptTokens, servedGenTokens, results, validationAttempts, state);
+    selected = state.selected;
+    serverValidation = state.serverValidation;
+    if (!selected && candidatePlan.fallbackCandidates.length > 0) {
+      log(options, "");
+      log(options, `expanding deferred candidates because no primary config served: ${candidatePlan.fallbackCandidates.length}`);
+      await liveScoreCandidateConfigs(options, candidatePlan.fallbackCandidates, servedPromptTokens, servedGenTokens, results, validationAttempts, state);
+      selected = state.selected;
+      serverValidation = state.serverValidation;
+    }
+    fastestBench = rankResults(results)[0];
+  } else {
+    const startedAt = Date.now();
+    let bestSoFar: BenchResult | undefined;
+    for (const [index, candidate] of candidates.entries()) {
+      const result = runBench(candidate, model.path, promptTokens, genTokens, capabilities);
+      results.push(result);
+      if (result.status === "ok" && (result.endToEndTps ?? 0) > (bestSoFar?.endToEndTps ?? 0)) bestSoFar = result;
+      log(options, formatProgress(index + 1, candidates.length, result, bestSoFar, startedAt));
+    }
+
+    if (candidatePlan.fallbackCandidates.length > 0) {
+      log(options, "");
+      log(options, `benchmarking deferred candidates: ${candidatePlan.fallbackCandidates.length}`);
+      const fallbackStartedAt = Date.now();
+      let fallbackBest = bestSoFar;
+      for (const [index, candidate] of candidatePlan.fallbackCandidates.entries()) {
+        const result = runBench(candidate, model.path, promptTokens, genTokens, capabilities);
+        results.push(result);
+        if (result.status === "ok" && (result.endToEndTps ?? 0) > (fallbackBest?.endToEndTps ?? 0)) fallbackBest = result;
+        log(options, formatProgress(index + 1, candidatePlan.fallbackCandidates.length, result, fallbackBest, fallbackStartedAt));
+      }
+    }
+
+    const ranked = rankResults(results);
+    fastestBench = ranked[0];
+    if (options.serverCheck) {
+      const validationCandidates = selectValidationCandidates(ranked);
+      log(options, "");
+      log(options, `live scoring: ${validationCandidates.length} candidate${validationCandidates.length === 1 ? "" : "s"}`);
+      const state: LiveScoreState = { servedOkLabels: new Set() };
+      await liveScoreBenchResults(options, validationCandidates, servedPromptTokens, servedGenTokens, validationAttempts, state);
+      selected = state.selected;
+      serverValidation = state.serverValidation;
+    } else {
+      selected = fastestBench;
+    }
+  }
+
+  const report: Report = {
+    modelId: options.modelId,
+    modelPath: model.path,
+    targetCtx,
+    promptTokens,
+    genTokens,
+    servedPromptTokens,
+    servedGenTokens,
+    repetitions: REPETITIONS,
+    createdAt: new Date().toISOString(),
+    capabilities: {
+      backend: capabilities.backend,
+      devices: capabilities.devices,
+      gpuTotalMiB: capabilities.gpuTotalMiB,
+      gpuFreeMiB: capabilities.gpuFreeMiB,
+      cacheTypesK: capabilities.cacheTypesK,
+      cacheTypesV: capabilities.cacheTypesV,
+    },
+    fastestBench,
+    selected,
+    best: selected,
+    serverValidation,
+    validationAttempts,
+    draftDiscovery,
+    applied: false,
+    applyCommand: selected ? buildSetCommand(options.llmBin, options.modelId, selected.config) : undefined,
+    benchFallbackApplyCommand: !selected && fastestBench ? buildSetCommand(options.llmBin, options.modelId, fastestBench.config) : undefined,
+    results,
+  };
+
+  const reportPath = writeReport(report);
+  if (options.json) {
+    console.log(JSON.stringify({ reportPath, ...report }, null, 2));
+  } else {
+    printReport(report, reportPath);
+  }
+
+  if (!selected) {
+    const fallbackCommand = report.benchFallbackApplyCommand;
+    if (fallbackCommand && askBenchFallback(options, fallbackCommand)) {
+      applyConfig(fallbackCommand);
+      report.applied = true;
+      writeReport(report, reportPath);
+      if (!options.json) console.log(`applied unvalidated benchmark config: ${options.modelId}`);
+      return;
+    }
+    process.exitCode = 1;
+    return;
+  }
+
+  const shouldApply = options.apply ?? askApply(report.applyCommand ?? []);
+  if (!shouldApply) return;
+
+  applyConfig(report.applyCommand ?? []);
+  report.applied = true;
+  if (options.verifyServed ?? true) {
+    report.servedVerification = await verifyServedConfig(options.llmBin, options.modelId, servedPromptTokens, servedGenTokens);
+    writeReport(report, reportPath);
+    if (!report.servedVerification.ok) throw new Error(report.servedVerification.reason ?? "served verification failed");
+  } else if (!options.json) {
+    console.log("served verification skipped; configuration was not proven through llm restart + served speed probe");
+  }
+  writeReport(report, reportPath);
+  if (!options.json) console.log(`applied: ${options.modelId}`);
+};
+
+const parseArgs = (args: string[]): CliOptions => {
+  let modelId = "";
+  let registryPath = DEFAULT_REGISTRY;
+  let llmBin = resolve(dirname(process.argv[1] ?? "bin"), "llm");
+  let ctx: number | undefined;
+  let apply: boolean | undefined;
+  let json = false;
+  let resume: string | undefined;
+  let serverCheck = true;
+  let smart = true;
+  let verifyServed: boolean | undefined;
+  let draftDiscovery = true;
+  let allowDraftDownloads = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index] ?? "";
+    const next = args[index + 1];
+    if (arg === "--help" || arg === "-h") {
+      printHelp();
+      process.exit(0);
+    }
+    if (arg === "--model-id") {
+      modelId = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+    if (arg === "--registry") {
+      registryPath = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+    if (arg === "--llm-bin") {
+      llmBin = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+    if (arg === "--ctx") {
+      ctx = parsePositiveInt(requireValue(arg, next), arg);
+      index += 1;
+      continue;
+    }
+    if (arg === "--apply") {
+      apply = true;
+      continue;
+    }
+    if (arg === "--no-apply") {
+      apply = false;
+      continue;
+    }
+    if (arg === "--json") {
+      json = true;
+      continue;
+    }
+    if (arg === "--resume") {
+      resume = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+    if (arg === "--no-server-check") {
+      serverCheck = false;
+      continue;
+    }
+    if (arg === "--no-smart") {
+      smart = false;
+      continue;
+    }
+    if (arg === "--verify-served") {
+      verifyServed = true;
+      continue;
+    }
+    if (arg === "--no-verify-served") {
+      verifyServed = false;
+      continue;
+    }
+    if (arg === "--no-draft-discovery") {
+      draftDiscovery = false;
+      continue;
+    }
+    if (arg === "--allow-draft-downloads") {
+      allowDraftDownloads = true;
+      continue;
+    }
+    if (!arg.startsWith("--") && !modelId) {
+      modelId = arg;
+      continue;
+    }
+    throw new Error(`unknown option: ${arg}`);
+  }
+
+  if (!modelId && !resume) throw new Error("--model-id is required");
+  return { modelId, registryPath, llmBin, ctx, apply, json, resume, serverCheck, smart, verifyServed, draftDiscovery, allowDraftDownloads };
+};
+
+const printHelp = (): void => {
+  console.log(`usage: llm-optimize --model-id id [options]
+
+options:
+  --ctx n              target context size
+  --apply              apply best validated config without prompting
+  --no-apply           never prompt or apply
+  --json               print machine-readable report and suppress progress logs
+  --resume path        print a previous report
+  --no-smart           run the full exhaustive candidate set
+  --no-server-check    skip live llm restart/chat-speed scoring
+  --verify-served      after apply, restart and measure through llm/llama-swap
+  --no-verify-served   skip post-apply served speed verification
+  --no-draft-discovery skip speculative draft-model discovery
+  --allow-draft-downloads
+                      allow optimizer to download draft candidates without prompting
+
+env:
+  LLM_OPT_SERVED_PROMPT_TOKENS  override live probe prompt length
+  LLM_OPT_SERVED_GEN_TOKENS     override live probe generation length (default: 512)
+  LLM_OPT_SERVED_TIMEOUT_MS     override each live probe timeout`);
+};
+
+const readRegistry = (path: string): Registry => {
+  const parsed = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  if (!isRecord(parsed) || !isRecord(parsed.models)) throw new Error(`invalid registry: ${path}`);
+  const models: Record<string, RegistryModel> = {};
+  for (const [id, value] of Object.entries(parsed.models)) {
+    if (!isRecord(value) || typeof value.path !== "string") continue;
+    models[id] = value as unknown as RegistryModel;
+  }
+  return { models };
+};
+
+const discoverCapabilities = (): Capabilities => {
+  const benchHelp = commandText("llama-bench", ["--help"]);
+  const serverHelp = commandText("llama-server", ["--help"]);
+  const devices = commandText("llama-bench", ["--list-devices"]);
+  const nvidia = commandText("nvidia-smi", ["--query-gpu=memory.total,memory.free", "--format=csv,noheader,nounits"], false);
+  const gpuMemory = parseGpuMemory(nvidia);
+  return {
+    benchHelp,
+    serverHelp,
+    benchFlags: parseFlags(benchHelp),
+    serverFlags: parseFlags(serverHelp),
+    devices,
+    backend: detectBackend(`${benchHelp}\n${devices}`),
+    gpuTotalMiB: gpuMemory?.total,
+    gpuFreeMiB: gpuMemory?.free,
+    cacheTypesK: parseAllowedValues(serverHelp, "--cache-type-k"),
+    cacheTypesV: parseAllowedValues(serverHelp, "--cache-type-v"),
+  };
+};
+
+const generateCandidates = (model: RegistryModel, targetCtx: number, capabilities: Capabilities, smart: boolean): CandidatePlan => {
+  const modelSizeMiB = statSync(model.path).size / 1024 / 1024;
+  const looksLikeMoe = /moe|a\d+b|gpt-oss|mixtral|qwen3/i.test(`${model.path} ${basename(model.path)}`);
+  const nearVramLimit = capabilities.gpuFreeMiB !== undefined && modelSizeMiB > capabilities.gpuFreeMiB * 0.9;
+  const hasGpu = capabilities.backend !== "cpu";
+  const supportsFitTarget = hasBenchFlag(capabilities, "--fit-target") && hasServerFlag(capabilities, "--fit-target");
+  const registryUsesFit = model.fitTarget !== undefined && supportsFitTarget;
+  const deferred: string[] = [];
+  const base: RuntimeConfig = {
+    label: "registry-current",
+    ctx: targetCtx,
+    gpuLayers: registryUsesFit ? undefined : model.gpuLayers ?? (hasGpu ? 99 : 0),
+    batch: model.batch ?? DEFAULT_BATCH,
+    ubatch: model.ubatch ?? DEFAULT_UBATCH,
+    mmap: model.mmap,
+    flashAttn: model.flashAttn,
+    fitTarget: registryUsesFit ? DEFAULT_FIT_TARGET_MIB : undefined,
+    cpuMoe: model.cpuMoe,
+    cacheTypeK: model.cacheTypeK,
+    cacheTypeV: model.cacheTypeV,
+    threads: model.threads,
+    threadsBatch: model.threadsBatch,
+    splitMode: model.splitMode,
+    tensorSplit: model.tensorSplit,
+    mainGpu: model.mainGpu,
+    noKvOffload: model.noKvOffload,
+    draft: model.draft ?? null,
+    env: model.env,
+  };
+
+  const candidates: RuntimeConfig[] = [];
+  const fallbackCandidates: RuntimeConfig[] = [];
+  const add = (config: RuntimeConfig): void => candidates.push(normalizeConfig(config));
+  const defer = (config: RuntimeConfig): void => fallbackCandidates.push(normalizeConfig(config));
+  add(base);
+
+  const fastBase: RuntimeConfig = {
+    ...base,
+    label: "full-gpu-fast",
+    gpuLayers: hasGpu ? 99 : 0,
+    batch: 2048,
+    ubatch: 512,
+    mmap: false,
+    flashAttn: hasServerFlag(capabilities, "--flash-attn") ? "on" : undefined,
+    fitTarget: undefined,
+    draft: null,
+  };
+  add(fastBase);
+  add({ ...fastBase, label: "full-gpu-safe-mmap", mmap: true });
+  add({ ...fastBase, label: "full-gpu-no-flash", flashAttn: "off" });
+
+  const fitBase: RuntimeConfig = {
+    ...fastBase,
+    label: "fit-target-512",
+    gpuLayers: undefined,
+    fitTarget: DEFAULT_FIT_TARGET_MIB,
+  };
+  if (supportsFitTarget) {
+    add(fitBase);
+  }
+
+  const allBatchUbatchPairs = cartesianPairs(uniqueNumbers([model.batch, 64, 512, 1024, 2048, 4096]), uniqueNumbers([model.ubatch, 32, 128, 256, 512, 1024]));
+  const batchUbatchPairs = smart ? [] : allBatchUbatchPairs;
+  if (smart) deferred.push("batch/ubatch sweep; only tried if primary live scoring finds no working config");
+
+  for (const [batch, ubatch] of batchUbatchPairs) {
+      if (ubatch > batch) continue;
+      add({ ...fastBase, label: `batch-${batch}-ubatch-${ubatch}`, batch, ubatch });
+      if (supportsFitTarget) add({ ...fitBase, label: `fit-batch-${batch}-ubatch-${ubatch}`, batch, ubatch });
+  }
+  if (smart) {
+    for (const [batch, ubatch] of allBatchUbatchPairs) {
+      if (ubatch > batch) continue;
+      defer({ ...fastBase, label: `batch-${batch}-ubatch-${ubatch}`, batch, ubatch });
+      if (supportsFitTarget) defer({ ...fitBase, label: `fit-batch-${batch}-ubatch-${ubatch}`, batch, ubatch });
+    }
+  }
+
+  const shouldTryKvCache = targetCtx >= 32_768 || (!smart && targetCtx >= 16_384) || nearVramLimit;
+  const cachePairs = cacheCandidatePairs(capabilities);
+  if (hasBenchFlag(capabilities, "--cache-type-k")) {
+    for (const [cacheTypeK, cacheTypeV] of cachePairs) {
+      const config = { ...fastBase, label: `kv-${cacheTypeK}-${cacheTypeV}`, cacheTypeK, cacheTypeV };
+      if (shouldTryKvCache) add(config);
+      else if (smart) defer(config);
+    }
+  }
+  if (!shouldTryKvCache && smart) deferred.push("KV cache quantization; only tried if primary live scoring finds no working config");
+
+  const gpuLayerValues = hasGpu ? [80, 60, 40, 20, 0] : [0];
+  if (nearVramLimit || !hasGpu || !smart) {
+    for (const gpuLayers of gpuLayerValues) add({ ...fastBase, label: `gpu-layers-${gpuLayers}`, gpuLayers });
+  } else if (smart) {
+    deferred.push("partial GPU-layer fallback; only tried if primary live scoring finds no working config");
+    for (const gpuLayers of gpuLayerValues) defer({ ...fastBase, label: `gpu-layers-${gpuLayers}`, gpuLayers });
+  }
+
+  const cpuMoeValues = [6, 12, 18, 24, 30, 36, 48];
+  if (looksLikeMoe && hasBenchFlag(capabilities, "--n-cpu-moe") && (nearVramLimit || !smart)) {
+    for (const cpuMoe of cpuMoeValues) add({ ...fastBase, label: `cpu-moe-${cpuMoe}`, cpuMoe });
+  } else if (smart && looksLikeMoe) {
+    deferred.push("CPU MoE sweep; only tried if primary live scoring finds no working config");
+    for (const cpuMoe of cpuMoeValues) defer({ ...fastBase, label: `cpu-moe-${cpuMoe}`, cpuMoe });
+  }
+
+  const cpuCount = cpus().length;
+  const threadValues = uniqueNumbers([Math.max(1, Math.floor(cpuCount / 2)), cpuCount]);
+  if (!hasGpu || nearVramLimit || !smart) {
+    for (const threads of threadValues) add({ ...base, label: `cpu-threads-${threads}`, gpuLayers: 0, threads, threadsBatch: threads, mmap: false, draft: null });
+  } else if (smart) {
+    deferred.push("CPU fallback thread sweep; only tried if primary live scoring finds no working config");
+    for (const threads of threadValues) defer({ ...base, label: `cpu-threads-${threads}`, gpuLayers: 0, threads, threadsBatch: threads, mmap: false, draft: null });
+  }
+
+  if (capabilities.backend === "cuda") {
+    const config = { ...fastBase, label: "cuda-graph-opt", env: { ...(fastBase.env ?? {}), GGML_CUDA_GRAPH_OPT: "1" } };
+    if (smart) defer(config);
+    else add(config);
+  }
+
+  return {
+    candidates: uniqueConfigs(candidates),
+    fallbackCandidates: uniqueConfigs(fallbackCandidates),
+    deferred,
+  };
+};
+
+const discoverDraftCandidates = async (
+  options: CliOptions,
+  registry: Registry,
+  model: RegistryModel,
+  capabilities: Capabilities,
+): Promise<DraftDiscoveryReport> => {
+  if (!options.draftDiscovery) return { enabled: false, reason: "disabled", queries: [], candidates: [] };
+  if (!options.smart || !options.serverCheck) return { enabled: false, reason: "requires smart live scoring", queries: [], candidates: [] };
+  if (!hasServerFlag(capabilities, "--model-draft")) return { enabled: false, reason: "installed llama-server has no draft-model flag", queries: [], candidates: [] };
+
+  const queries = draftSearchQueries(options.modelId, model);
+  const localCandidates = localDraftCandidates(options.modelId, registry, model);
+  const remoteCandidates = discoverRemoteDraftCandidates(queries, model, capabilities);
+  const preparedRemote = remoteCandidates.map((candidate) => prepareRemoteDraftCandidate(options, candidate));
+  const candidates = [...localCandidates, ...preparedRemote].sort((left, right) => right.score - left.score);
+  return { enabled: true, queries, candidates };
+};
+
+const buildDraftConfigs = (baseCandidates: RuntimeConfig[], draftCandidates: DraftCandidate[]): RuntimeConfig[] => {
+  const base = baseCandidates.find((candidate) => candidate.label === "full-gpu-fast") ?? baseCandidates[0];
+  if (!base) return [];
+  const usable = draftCandidates.filter((candidate) => (candidate.status === "available" || candidate.status === "downloaded") && candidate.path);
+  return usable.flatMap((candidate) => {
+    const model = candidate.path;
+    if (!model) return [];
+    return DRAFT_N_MAX_VALUES.map((nMax): RuntimeConfig => ({
+      ...base,
+      label: `draft-${sanitizeLabel(candidate.label)}-n${nMax}`,
+      draft: { model, nMax },
+    }));
+  });
+};
+
+const localDraftCandidates = (targetId: string, registry: Registry, target: RegistryModel): DraftCandidate[] => {
+  const targetText = modelIdentityText(targetId, target);
+  const family = detectModelFamily(targetText);
+  const targetSize = safeFileSize(target.path);
+  const candidates: DraftCandidate[] = [];
+  for (const [id, model] of Object.entries(registry.models)) {
+    if (id === targetId || !existsSync(model.path)) continue;
+    const text = modelIdentityText(id, model);
+    if (family && !containsModelFamily(text, family)) continue;
+    const size = safeFileSize(model.path);
+    const draftish = /draft|drafter|assistant|e2b|e4b|small/i.test(text);
+    if (!draftish && size >= targetSize * 0.75) continue;
+    candidates.push({
+      label: `local-${id}`,
+      source: "local",
+      status: "available",
+      score: 100 + draftScore(text, size, targetSize),
+      path: model.path,
+      reason: "registered local model",
+    });
+  }
+  return candidates.sort((left, right) => right.score - left.score).slice(0, 3);
+};
+
+const discoverRemoteDraftCandidates = (queries: string[], target: RegistryModel, capabilities: Capabilities): DraftCandidate[] => {
+  if (!commandExists("hf")) return [];
+  const targetText = modelIdentityText("", target);
+  const targetSize = safeFileSize(target.path);
+  const seen = new Set<string>();
+  const candidates: DraftCandidate[] = [];
+  let inspected = 0;
+  for (const query of queries) {
+    for (const repo of hfModelSearch(query)) {
+      if (seen.has(repo)) continue;
+      seen.add(repo);
+      if (inspected >= 12) break;
+      inspected += 1;
+      const candidate = remoteDraftCandidate(repo, targetText, targetSize, capabilities);
+      if (candidate) candidates.push(candidate);
+    }
+    if (inspected >= 12) break;
+  }
+  return candidates.sort((left, right) => right.score - left.score).slice(0, MAX_REMOTE_DRAFT_CANDIDATES);
+};
+
+const remoteDraftCandidate = (repo: string, targetText: string, targetSize: number, capabilities: Capabilities): DraftCandidate | undefined => {
+  const info = hfModelInfo(repo);
+  if (!info) return undefined;
+  const repoText = `${repo} ${stringArrayField(info, "tags").join(" ")}`;
+  if (!sameModelFamily(targetText, repoText)) return undefined;
+  if (info.gated === true) return rejectedDraft(repo, "hf", "gated model");
+  const files = arrayField(info, "siblings")
+    .filter(isRecord)
+    .map((sibling) => ({ name: stringField(sibling, "rfilename"), size: numberField(sibling, ["size"]) }))
+    .filter((file) => file.name.endsWith(".gguf") && !basename(file.name).startsWith("mmproj-"));
+  const file = selectDraftFile(files, repoText, targetSize);
+  if (!file) return rejectedDraft(repo, "hf", "no GGUF draft file found");
+  const incompatibility = knownDraftIncompatibility(`${repoText} ${file.name}`, capabilities);
+  if (incompatibility) return rejectedDraft(repo, "hf", incompatibility, file.name);
+  const cachedPath = join(MODELS_DIR, basename(file.name));
+  return {
+    label: `hf-${repo.split("/").at(-1) ?? repo}`,
+    source: "hf",
+    status: existsSync(cachedPath) ? "available" : "skipped",
+    score: 50 + draftScore(`${repoText} ${file.name}`, file.size ?? 0, targetSize),
+    repo,
+    file: file.name,
+    path: existsSync(cachedPath) ? cachedPath : undefined,
+    reason: existsSync(cachedPath) ? "already downloaded" : "download not approved yet",
+  };
+};
+
+const prepareRemoteDraftCandidate = (options: CliOptions, candidate: DraftCandidate): DraftCandidate => {
+  if (candidate.source !== "hf" || candidate.status === "rejected" || candidate.status === "available") return candidate;
+  if (!candidate.repo || !candidate.file) return { ...candidate, status: "failed", reason: "missing remote draft location" };
+  if (!shouldDownloadDraft(options, candidate)) return candidate;
+  const url = `https://huggingface.co/${candidate.repo}/resolve/main/${candidate.file}`;
+  const localName = `${sanitizeLabel(candidate.repo)}-${basename(candidate.file)}`;
+  const command = [options.llmBin, "--json", "pull", url, "--no-register", "--name", localName];
+  const result = spawnSync(command[0] ?? "", command.slice(1), { encoding: "utf8", env: process.env, timeout: numberFromEnv("LLM_OPT_DRAFT_DOWNLOAD_TIMEOUT_MS", 1_800_000) });
+  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  if (result.error || result.status !== 0) return { ...candidate, status: "failed", reason: `download failed: ${formatReason(output)}` };
+  const parsed = parseJson(output);
+  const path = isRecord(parsed) ? stringField(parsed, "path") : "";
+  if (!path || !existsSync(path)) return { ...candidate, status: "failed", reason: "download did not return a local path" };
+  return { ...candidate, status: "downloaded", path, reason: "downloaded for live test" };
+};
+
+const shouldDownloadDraft = (options: CliOptions, candidate: DraftCandidate): boolean => {
+  if (options.allowDraftDownloads) return true;
+  if (options.json || !process.stdin.isTTY) return false;
+  console.log("");
+  console.log(`draft candidate: ${candidate.repo}/${candidate.file}`);
+  console.log(`reason: ${candidate.reason ?? "remote candidate"}`);
+  const answer = prompt("download and test this draft model? [y/N] ");
+  return answer?.trim().toLowerCase() === "y";
+};
+
+const draftSearchQueries = (modelId: string, model: RegistryModel): string[] => {
+  const text = modelIdentityText(modelId, model);
+  const queries: string[] = [];
+  if (/gemma[- ]?4/i.test(text)) {
+    queries.push("gemma 4 assistant gguf", "gemma 4 draft gguf");
+    if (/26b|a4b/i.test(text)) queries.unshift("gemma 4 26B A4B assistant gguf");
+    if (/31b/i.test(text)) queries.unshift("gemma 4 31B assistant gguf");
+  }
+  if (/qwen3\.6/i.test(text)) queries.push("Qwen3.6 DFlash GGUF", "Qwen3.6 draft GGUF");
+  const family = detectModelFamily(text);
+  if (family) queries.push(`${family.replace("-", " ")} draft gguf`);
+  return [...new Set(queries)].slice(0, 5);
+};
+
+const hfModelSearch = (query: string): string[] => {
+  const result = spawnSync("hf", ["models", "ls", "--search", query, "--limit", "8", "--sort", "downloads", "--format", "json"], { encoding: "utf8", timeout: 45_000 });
+  if (result.status !== 0) return [];
+  const parsed = parseJson(`${result.stdout ?? ""}\n${result.stderr ?? ""}`);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.map((item) => isRecord(item) ? stringField(item, "id") : "").filter(Boolean);
+};
+
+const hfModelInfo = (repo: string): Record<string, unknown> | undefined => {
+  const result = spawnSync("hf", ["models", "info", repo, "--expand", "siblings,tags,downloads,likes,gated", "--format", "json"], { encoding: "utf8", timeout: 45_000 });
+  if (result.status !== 0) return undefined;
+  const parsed = parseJson(`${result.stdout ?? ""}\n${result.stderr ?? ""}`);
+  return isRecord(parsed) ? parsed : undefined;
+};
+
+const selectDraftFile = (files: Array<{ name: string; size?: number }>, repoText: string, targetSize: number): { name: string; size?: number } | undefined => {
+  return files
+    .map((file) => ({ ...file, score: draftScore(`${repoText} ${file.name}`, file.size ?? 0, targetSize) }))
+    .sort((left, right) => right.score - left.score)[0];
+};
+
+const rejectedDraft = (label: string, source: "local" | "hf", reason: string, file?: string): DraftCandidate => ({
+  label: `rejected-${sanitizeLabel(label)}`,
+  source,
+  status: "rejected",
+  score: 0,
+  repo: source === "hf" ? label : undefined,
+  file,
+  reason,
+});
+
+const draftScore = (text: string, size: number, targetSize: number): number => {
+  const lower = text.toLowerCase();
+  let score = 0;
+  if (/draft|drafter|dflash|assistant/.test(lower)) score += 40;
+  if (/q4_k_m|iq4_xs|q5_k_m|q4_k_s/.test(lower)) score += 25;
+  if (/q8_0|f16/.test(lower)) score -= 10;
+  if (/e2b|e4b|0\.4b|small/.test(lower)) score += 20;
+  if (size > 0 && size < targetSize * 0.5) score += 20;
+  if (size > targetSize * 0.75) score -= 30;
+  return score;
+};
+
+const knownDraftIncompatibility = (text: string, capabilities: Capabilities): string | undefined => {
+  if (/gemma[- ]?4/i.test(text) && /assistant|mtp|turboquant/i.test(text) && !/mtp/i.test(capabilities.serverHelp)) {
+    return "requires Gemma MTP llama.cpp fork; installed llama-server does not advertise mtp support";
+  }
+  if (/dflash/i.test(text) && !/dflash/i.test(capabilities.serverHelp)) {
+    return "requires DFlash llama.cpp support; installed llama-server does not advertise dflash support";
+  }
+  return undefined;
+};
+
+const sameModelFamily = (left: string, right: string): boolean => {
+  const family = detectModelFamily(left);
+  return family === undefined || containsModelFamily(right, family);
+};
+
+const detectModelFamily = (text: string): string | undefined => {
+  const lower = text.toLowerCase();
+  if (lower.includes("qwen3.6")) return "qwen3.6";
+  if (lower.includes("qwen3")) return "qwen3";
+  if (/gemma[- ]?4/.test(lower)) return "gemma-4";
+  if (/llama[- ]?3/.test(lower)) return "llama-3";
+  return undefined;
+};
+
+const containsModelFamily = (text: string, family: string): boolean => {
+  const lower = text.toLowerCase();
+  if (family === "gemma-4") return /gemma[- ]?4/.test(lower);
+  if (family === "qwen3.6") return /qwen3\.6/.test(lower);
+  if (family === "qwen3") return /qwen3/.test(lower);
+  if (family === "llama-3") return /llama[- ]?3/.test(lower);
+  return lower.includes(family);
+};
+
+const modelIdentityText = (id: string, model: RegistryModel): string => {
+  return `${id} ${model.path} ${model.source ?? ""} ${(model.aliases ?? []).join(" ")}`.toLowerCase();
+};
+
+const safeFileSize = (path: string): number => {
+  try {
+    return statSync(path).size;
+  } catch {
+    return 0;
+  }
+};
+
+const commandExists = (command: string): boolean => {
+  const result = spawnSync(command, ["--help"], { encoding: "utf8", timeout: 10_000 });
+  return result.error === undefined;
+};
+
+const sanitizeLabel = (value: string): string => {
+  return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 64) || "draft";
+};
+
+const runBench = (
+  config: RuntimeConfig,
+  modelPath: string,
+  promptTokens: number,
+  genTokens: number,
+  capabilities: Capabilities,
+): BenchResult => {
+  const args = buildBenchArgs(config, modelPath, promptTokens, genTokens, capabilities);
+  const child = spawnSync("llama-bench", args, {
+    encoding: "utf8",
+    timeout: numberFromEnv("LLM_OPT_BENCH_TIMEOUT_MS", 120_000),
+    env: { ...process.env, ...(config.env ?? {}) },
+  });
+  const stdout = child.stdout ?? "";
+  const stderr = child.stderr ?? "";
+  if (child.error || child.status !== 0) {
+    return {
+      config,
+      status: "failed",
+      reason: classifyFailure(`${stdout}\n${stderr}\n${String(child.error?.message ?? "")}`),
+      command: ["llama-bench", ...args],
+      stderrTail: tail(stderr),
+      stdoutTail: tail(stdout),
+    };
+  }
+  const parsed = parseBenchOutput(stdout, promptTokens, genTokens);
+  if (!parsed.ppTps && !parsed.tgTps) {
+    return {
+      config,
+      status: "failed",
+      reason: "could not parse llama-bench output",
+      command: ["llama-bench", ...args],
+      stderrTail: tail(stderr),
+      stdoutTail: tail(stdout),
+    };
+  }
+  const ppSeconds = parsed.ppTps ? promptTokens / parsed.ppTps : 0;
+  const tgSeconds = parsed.tgTps ? genTokens / parsed.tgTps : 0;
+  const elapsedSeconds = ppSeconds + tgSeconds;
+  const endToEndTps = elapsedSeconds > 0 ? (promptTokens + genTokens) / elapsedSeconds : undefined;
+  return {
+    config,
+    status: "ok",
+    ppTps: parsed.ppTps,
+    tgTps: parsed.tgTps,
+    endToEndTps,
+    elapsedSeconds,
+    command: ["llama-bench", ...args],
+    stderrTail: tail(stderr),
+    stdoutTail: tail(stdout),
+  };
+};
+
+const buildBenchArgs = (
+  config: RuntimeConfig,
+  modelPath: string,
+  promptTokens: number,
+  genTokens: number,
+  capabilities: Capabilities,
+): string[] => {
+  const args = [
+    "--model",
+    modelPath,
+    "--n-prompt",
+    String(promptTokens),
+    "--n-gen",
+    String(genTokens),
+    "--repetitions",
+    String(REPETITIONS),
+    "--output",
+    "json",
+    "--batch-size",
+    String(config.batch),
+    "--ubatch-size",
+    String(config.ubatch),
+  ];
+  if (config.gpuLayers !== undefined) args.push("--n-gpu-layers", String(config.gpuLayers));
+  if (config.mmap !== undefined && hasBenchFlag(capabilities, "--mmap")) args.push("--mmap", config.mmap ? "1" : "0");
+  if (config.flashAttn !== undefined && hasBenchFlag(capabilities, "--flash-attn")) args.push("--flash-attn", config.flashAttn === "on" ? "1" : "0");
+  if (hasBenchFlag(capabilities, "--fit")) args.push("--fit", config.fitTarget === undefined ? "off" : "on");
+  if (config.fitTarget !== undefined && hasBenchFlag(capabilities, "--fit-target")) args.push("--fit-target", String(DEFAULT_FIT_TARGET_MIB), "--fit-ctx", String(config.ctx));
+  if (config.cpuMoe !== undefined && hasBenchFlag(capabilities, "--n-cpu-moe")) args.push("--n-cpu-moe", String(config.cpuMoe));
+  if (config.cacheTypeK && hasBenchFlag(capabilities, "--cache-type-k")) args.push("--cache-type-k", config.cacheTypeK);
+  if (config.cacheTypeV && hasBenchFlag(capabilities, "--cache-type-v")) args.push("--cache-type-v", config.cacheTypeV);
+  if (config.threads !== undefined && hasBenchFlag(capabilities, "--threads")) args.push("--threads", String(config.threads));
+  if (config.splitMode && hasBenchFlag(capabilities, "--split-mode")) args.push("--split-mode", config.splitMode);
+  if (config.tensorSplit && hasBenchFlag(capabilities, "--tensor-split")) args.push("--tensor-split", config.tensorSplit);
+  if (config.mainGpu !== undefined && hasBenchFlag(capabilities, "--main-gpu")) args.push("--main-gpu", String(config.mainGpu));
+  if (config.noKvOffload !== undefined && hasBenchFlag(capabilities, "--no-kv-offload")) args.push("--no-kv-offload", config.noKvOffload ? "1" : "0");
+  return args;
+};
+
+const parseBenchOutput = (stdout: string, promptTokens: number, genTokens: number): { ppTps?: number; tgTps?: number } => {
+  const json = parseJson(stdout);
+  const records = json ? collectRecords(json) : [];
+  let ppTps: number | undefined;
+  let tgTps: number | undefined;
+  for (const record of records) {
+    const test = recordTestName(record);
+    const tps = extractTps(record, test);
+    if (!tps) continue;
+    if (test.startsWith("pp")) ppTps = Math.max(ppTps ?? 0, tps);
+    if (test.startsWith("tg")) tgTps = Math.max(tgTps ?? 0, tps);
+  }
+  if (!ppTps || !tgTps) {
+    for (const match of stdout.matchAll(/"n_prompt":\s*(\d+)[\s\S]*?"n_gen":\s*(\d+)[\s\S]*?"avg_ts":\s*([0-9]+(?:\.[0-9]+)?)/g)) {
+      const nPrompt = Number(match[1]);
+      const nGen = Number(match[2]);
+      const tps = Number(match[3]);
+      if (!Number.isFinite(tps)) continue;
+      if (nPrompt > 0) ppTps = Math.max(ppTps ?? 0, tps);
+      if (nGen > 0) tgTps = Math.max(tgTps ?? 0, tps);
+    }
+  }
+  if (!ppTps || !tgTps) {
+    for (const line of stdout.split("\n")) {
+      const match = line.match(/\|\s*(pp|tg)(\d+)\s*\|\s*([0-9]+(?:\.[0-9]+)?)/);
+      if (!match) continue;
+      const [, kind, , value] = match;
+      if (kind === "pp") ppTps = Math.max(ppTps ?? 0, Number(value));
+      if (kind === "tg") tgTps = Math.max(tgTps ?? 0, Number(value));
+    }
+  }
+  if (!ppTps && records.length === 1) ppTps = extractTps(records[0] ?? {}, `pp${promptTokens}`);
+  if (!tgTps && records.length === 1) tgTps = extractTps(records[0] ?? {}, `tg${genTokens}`);
+  return { ppTps, tgTps };
+};
+
+const recordTestName = (record: Record<string, unknown>): string => {
+  if (typeof record.test === "string") return record.test;
+  const nPrompt = typeof record.n_prompt === "number" ? record.n_prompt : 0;
+  const nGen = typeof record.n_gen === "number" ? record.n_gen : 0;
+  if (nPrompt > 0) return `pp${nPrompt}`;
+  if (nGen > 0) return `tg${nGen}`;
+  return "";
+};
+
+const extractTps = (record: Record<string, unknown>, test: string): number | undefined => {
+  for (const key of ["t/s", "tps", "tokens_per_second", "avg_ts"]) {
+    const value = record[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  const tokens = Number(test.replace(/^\D+/, ""));
+  if (!Number.isFinite(tokens) || tokens <= 0) return undefined;
+  for (const [key, scale] of [["t_avg_us", 1_000_000], ["avg_us", 1_000_000], ["t_avg_ms", 1_000], ["avg_ms", 1_000], ["t_avg_ns", 1_000_000_000]]) {
+    const value = record[key];
+    if (typeof value === "number" && value > 0) return (tokens * scale) / value;
+  }
+  return undefined;
+};
+
+const buildSetCommand = (llmBin: string, modelId: string, config: RuntimeConfig): string[] => {
+  const args = [
+    llmBin,
+    "set",
+    modelId,
+    "--ctx",
+    String(config.ctx),
+    "--batch",
+    String(config.batch),
+    "--ubatch",
+    String(config.ubatch),
+  ];
+  args.push("--gpu-layers", config.gpuLayers === undefined ? "default" : String(config.gpuLayers));
+  if (config.mmap === false) args.push("--no-mmap");
+  if (config.mmap === true) args.push("--mmap");
+  if (config.flashAttn) args.push("--flash-attn", config.flashAttn);
+  args.push("--fit-target", config.fitTarget === undefined ? "default" : String(DEFAULT_FIT_TARGET_MIB));
+  if (config.cpuMoe !== undefined) args.push("--cpu-moe", String(config.cpuMoe));
+  if (config.cacheTypeK) args.push("--cache-type-k", config.cacheTypeK);
+  if (config.cacheTypeV) args.push("--cache-type-v", config.cacheTypeV);
+  if (config.threads !== undefined) args.push("--threads", String(config.threads));
+  if (config.threadsBatch !== undefined) args.push("--threads-batch", String(config.threadsBatch));
+  if (config.splitMode) args.push("--split-mode", config.splitMode);
+  if (config.tensorSplit) args.push("--tensor-split", config.tensorSplit);
+  if (config.mainGpu !== undefined) args.push("--main-gpu", String(config.mainGpu));
+  if (config.noKvOffload !== undefined) args.push("--no-kv-offload", config.noKvOffload ? "on" : "off");
+  if (config.draft === null) args.push("--draft", "off");
+  if (config.draft && config.draft.model) args.push("--draft-model", config.draft.model);
+  if (config.draft && config.draft.hf) args.push("--draft-hf", config.draft.hf);
+  if (config.draft?.nMax !== undefined) args.push("--draft-n-max", String(config.draft.nMax));
+  if (config.draft?.nMin !== undefined) args.push("--draft-n-min", String(config.draft.nMin));
+  if (config.draft?.ctx !== undefined) args.push("--draft-ctx", String(config.draft.ctx));
+  if (config.draft?.gpuLayers !== undefined) args.push("--draft-gpu-layers", String(config.draft.gpuLayers));
+  if (config.draft?.cacheTypeK) args.push("--draft-cache-type-k", config.draft.cacheTypeK);
+  if (config.draft?.cacheTypeV) args.push("--draft-cache-type-v", config.draft.cacheTypeV);
+  for (const [key, value] of Object.entries(config.env ?? {})) args.push("--env", `${key}=${value}`);
+  return args;
+};
+
+const applyConfig = (command: string[]): void => {
+  if (command.length === 0) throw new Error("missing apply command");
+  const [program, ...args] = command;
+  const result = spawnSync(program, args, { stdio: "inherit", env: process.env });
+  if (result.status !== 0) throw new Error(`apply command failed: ${quoteCommand(command)}`);
+};
+
+const liveScoreCandidateConfigs = async (
+  options: CliOptions,
+  configs: RuntimeConfig[],
+  promptTokens: number,
+  genTokens: number,
+  results: BenchResult[],
+  validationAttempts: CandidateValidation[],
+  state: LiveScoreState,
+): Promise<void> => {
+  const startedAt = Date.now();
+  for (const [index, config] of configs.entries()) {
+    const skipReason = skipLiveCandidateReason(config, state.servedOkLabels);
+    if (skipReason) {
+      log(options, formatLiveSkip(index + 1, configs.length, config, skipReason, startedAt));
+      continue;
+    }
+    const result = emptyBenchResult(config);
+    results.push(result);
+    await liveScoreBenchResult(options, result, index + 1, configs.length, promptTokens, genTokens, validationAttempts, state);
+  }
+};
+
+const liveScoreBenchResults = async (
+  options: CliOptions,
+  candidates: BenchResult[],
+  promptTokens: number,
+  genTokens: number,
+  validationAttempts: CandidateValidation[],
+  state: LiveScoreState,
+): Promise<void> => {
+  for (const [index, candidate] of candidates.entries()) {
+    await liveScoreBenchResult(options, candidate, index + 1, candidates.length, promptTokens, genTokens, validationAttempts, state);
+  }
+};
+
+const liveScoreBenchResult = async (
+  options: CliOptions,
+  candidate: BenchResult,
+  index: number,
+  total: number,
+  promptTokens: number,
+  genTokens: number,
+  validationAttempts: CandidateValidation[],
+  state: LiveScoreState,
+): Promise<void> => {
+  log(options, formatValidationStart(index, total, candidate));
+  const validationStartedAt = Date.now();
+  const validation = await validateManagedConfig(options, candidate.config, promptTokens, genTokens, (message) => log(options, message));
+  attachServedMetrics(candidate, validation);
+  validationAttempts.push({
+    label: candidate.config.label,
+    ok: validation.ok,
+    reason: validation.reason,
+    command: validation.command,
+    servedGeneratedTps: validation.servedGeneratedTps,
+    servedElapsedSeconds: validation.servedElapsedSeconds,
+    servedPromptTokens: validation.servedPromptTokens,
+    servedCompletionTokens: validation.servedCompletionTokens,
+    servedTotalTokens: validation.servedTotalTokens,
+  });
+  if (validation.ok) {
+    state.servedOkLabels.add(candidate.config.label);
+    if ((candidate.servedGeneratedTps ?? 0) > (state.selected?.servedGeneratedTps ?? 0)) {
+      state.selected = candidate;
+      state.serverValidation = validation;
+    }
+  } else {
+    candidate.status = "failed";
+    candidate.reason = `live scoring failed: ${validation.reason ?? "unknown"}`;
+  }
+  log(options, formatValidationResult(index, total, candidate, validation, validationStartedAt, state.selected));
+};
+
+const emptyBenchResult = (config: RuntimeConfig): BenchResult => ({
+  config,
+  status: "ok",
+  command: [],
+  stderrTail: "",
+  stdoutTail: "",
+});
+
+const skipLiveCandidateReason = (config: RuntimeConfig, servedOkLabels: Set<string>): string | undefined => {
+  if (config.label === "fit-target-512" && servedOkLabels.size > 0) return "a primary config already served; fit fallback not needed";
+  if (config.label === "full-gpu-no-flash" && servedOkLabels.size > 0) return "a flash-enabled config already served";
+  if (!config.label.startsWith("fit-batch-")) return undefined;
+  const fixedLabel = config.label.replace(/^fit-/, "");
+  if (servedOkLabels.has(fixedLabel)) return `${fixedLabel} already served; fit fallback not needed`;
+  return undefined;
+};
+
+const validateManagedConfig = async (
+  options: CliOptions,
+  config: RuntimeConfig,
+  promptTokens: number,
+  genTokens: number,
+  onProgress?: (message: string) => void,
+): Promise<ServerValidation> => {
+  const command = buildSetCommand(options.llmBin, options.modelId, config);
+  const previousRegistry = readFileSync(options.registryPath, "utf8");
+  const restoreRegistry = (): void => {
+    writeFileSync(options.registryPath, previousRegistry);
+    spawnSync(options.llmBin, ["reload"], { encoding: "utf8", env: process.env });
+    spawnSync(options.llmBin, ["clear"], { encoding: "utf8", env: process.env });
+  };
+
+  try {
+    onProgress?.(`  ${color("dim", "applying candidate to registry for live scoring")}`);
+    const applied = spawnSync(command[0] ?? "", command.slice(1), { encoding: "utf8", env: process.env });
+    if (applied.status !== 0) return { ok: false, reason: `set failed: ${tail(`${applied.stdout ?? ""}\n${applied.stderr ?? ""}`)}`, command };
+
+    onProgress?.(`  ${color("dim", "validating through llm restart")}`);
+    const restart = spawnSync(options.llmBin, ["restart", options.modelId], { encoding: "utf8", env: process.env });
+    if (restart.status !== 0) return { ok: false, reason: `restart failed: ${tail(`${restart.stdout ?? ""}\n${restart.stderr ?? ""}`)}`, command };
+
+    onProgress?.(`  ${color("dim", "measuring served chat completion speed")}`);
+    const served = await probeServedSpeed(options.modelId, promptTokens, genTokens);
+    if (!served.ok) return { ok: false, reason: served.reason, command };
+
+    return { ok: true, command, ...served };
+  } finally {
+    onProgress?.(`  ${color("dim", "restoring previous registry after live scoring")}`);
+    restoreRegistry();
+  }
+};
+
+const verifyServedConfig = async (
+  llmBin: string,
+  modelId: string,
+  promptTokens: number,
+  genTokens: number,
+): Promise<NonNullable<Report["servedVerification"]>> => {
+  const restartCommand = [llmBin, "restart", modelId];
+  const probeCommand = servedProbeCommand(modelId);
+  const restart = spawnSync(restartCommand[0], restartCommand.slice(1), { encoding: "utf8", env: process.env });
+  if (restart.status !== 0) {
+    return {
+      ok: false,
+      restartCommand,
+      probeCommand,
+      reason: `restart failed: ${tail(`${restart.stdout ?? ""}\n${restart.stderr ?? ""}`)}`,
+    };
+  }
+  const served = await probeServedSpeed(modelId, promptTokens, genTokens);
+  if (!served.ok) return { ok: false, restartCommand, probeCommand, reason: served.reason };
+  return { ok: true, restartCommand, probeCommand, ...served };
+};
+
+const probeServedSpeed = async (
+  modelId: string,
+  promptTokens: number,
+  genTokens: number,
+): Promise<Omit<ServerValidation, "command">> => {
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), numberFromEnv("LLM_OPT_SERVED_TIMEOUT_MS", DEFAULT_SERVED_TIMEOUT_MS));
+  try {
+    const response = await fetch(`${llmApiBase()}/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        "authorization": `Bearer ${process.env.LLM_OPENAI_KEY ?? "local"}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: modelId,
+        messages: [{ role: "user", content: syntheticPrompt(promptTokens, genTokens) }],
+        temperature: 0,
+        max_tokens: genTokens,
+        stream: false,
+      }),
+      signal: controller.signal,
+    });
+    const elapsedSeconds = Math.max(0.001, (Date.now() - startedAt) / 1000);
+    const text = await response.text();
+    if (!response.ok) return { ok: false, reason: `HTTP ${response.status}: ${tail(text)}` };
+    const parsed = parseJson(text);
+    if (!parsed) return { ok: false, reason: "chat completion returned non-JSON response" };
+    const metrics = extractServedMetrics(parsed, elapsedSeconds);
+    if (!metrics.servedGeneratedTps) return { ok: false, reason: "chat completion did not report generated token speed or usage" };
+    return { ok: true, ...metrics };
+  } catch (error) {
+    return { ok: false, reason: errorMessage(error) };
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const extractServedMetrics = (
+  value: JsonValue,
+  elapsedSeconds: number,
+): Pick<ServerValidation, "servedGeneratedTps" | "servedElapsedSeconds" | "servedPromptTokens" | "servedCompletionTokens" | "servedTotalTokens"> => {
+  const record = isRecord(value) ? value : {};
+  const usage = isRecord(record.usage) ? record.usage : {};
+  const timings = isRecord(record.timings) ? record.timings : {};
+  const predictedTokens = numberField(timings, ["predicted_n", "predicted_tokens"]);
+  const predictedMs = numberField(timings, ["predicted_ms", "predicted_time_ms"]);
+  const timingTps = numberField(timings, ["predicted_per_second", "predicted_tps"]);
+  const promptTokens = numberField(usage, ["prompt_tokens", "promptTokens"]) ?? numberField(timings, ["prompt_n", "prompt_tokens"]);
+  const completionTokens = numberField(usage, ["completion_tokens", "completionTokens"]) ?? predictedTokens;
+  const totalTokens = numberField(usage, ["total_tokens", "totalTokens"]);
+  const timingGeneratedTps = timingTps ?? (predictedTokens && predictedMs ? predictedTokens / (predictedMs / 1000) : undefined);
+  const wallGeneratedTps = completionTokens ? completionTokens / elapsedSeconds : undefined;
+  return {
+    servedGeneratedTps: timingGeneratedTps ?? wallGeneratedTps,
+    servedElapsedSeconds: elapsedSeconds,
+    servedPromptTokens: promptTokens,
+    servedCompletionTokens: completionTokens,
+    servedTotalTokens: totalTokens,
+  };
+};
+
+const attachServedMetrics = (result: BenchResult, validation: ServerValidation): void => {
+  result.servedGeneratedTps = validation.servedGeneratedTps;
+  result.servedElapsedSeconds = validation.servedElapsedSeconds;
+  result.servedPromptTokens = validation.servedPromptTokens;
+  result.servedCompletionTokens = validation.servedCompletionTokens;
+  result.servedTotalTokens = validation.servedTotalTokens;
+};
+
+const syntheticPrompt = (promptTokens: number, genTokens: number): string => {
+  const filler = Array.from({ length: Math.max(1, promptTokens) }, () => "ok").join(" ");
+  return [
+    `Output exactly ${genTokens} short tokens. Use the word ok repeatedly, separated by spaces. Do not explain.`,
+    "",
+    filler,
+  ].join("\n");
+};
+
+const servedProbeCommand = (modelId: string): string[] => ["POST", `${llmApiBase()}/v1/chat/completions`, `model=${modelId}`];
+const llmApiBase = (): string => (process.env.LLM_API_BASE ?? "http://127.0.0.1:11343").replace(/\/+$/, "");
+
+const numberField = (record: Record<string, unknown>, keys: string[]): number | undefined => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
+  }
+  return undefined;
+};
+
+const askApply = (command: string[]): boolean => {
+  if (!process.stdin.isTTY) return false;
+  console.log(`apply command: ${quoteCommand(command)}`);
+  const answer = prompt("apply this configuration? [y/N] ");
+  return answer?.trim().toLowerCase() === "y";
+};
+
+const askBenchFallback = (options: CliOptions, command: string[]): boolean => {
+  if (options.json || options.apply !== undefined || !process.stdin.isTTY) return false;
+  console.log("");
+  console.log("no served configuration was confirmed.");
+  console.log(`bench-only best apply command: ${quoteCommand(command)}`);
+  const answer = prompt("apply this unvalidated benchmark configuration anyway? [y/N] ");
+  return answer?.trim().toLowerCase() === "y";
+};
+
+const printReport = (report: Report, reportPath: string): void => {
+  console.log("");
+  console.log(`report: ${reportPath}`);
+  printDraftDiscovery(report.draftDiscovery);
+  const selected = report.selected ?? report.best;
+  const fastestBench = report.fastestBench ?? report.results.filter((item) => item.status === "ok" && item.endToEndTps !== undefined).sort((left, right) => (right.endToEndTps ?? 0) - (left.endToEndTps ?? 0))[0];
+  const fastestServed = report.results.filter((item) => item.servedGeneratedTps !== undefined).sort((left, right) => (right.servedGeneratedTps ?? 0) - (left.servedGeneratedTps ?? 0))[0];
+  if (fastestBench) {
+    console.log(`fastest bench: ${fastestBench.config.label} (${formatNumber(fastestBench.endToEndTps)} tok/s)`);
+  }
+  if (fastestServed) {
+    console.log(`fastest served: ${fastestServed.config.label} (${formatNumber(fastestServed.servedGeneratedTps)} generated tok/s)`);
+  }
+  if (!selected) {
+    console.log("selected: none");
+    if (fastestBench) {
+      console.log(`bench-only fallback: ${fastestBench.config.label}`);
+      console.log(`fallback params: ${formatConfig(fastestBench.config)}`);
+      console.log("fallback status: not served; apply only if you want to inspect manually");
+    }
+    if (report.serverValidation) console.log(`validation: failed ${formatReason(report.serverValidation.reason)}`);
+    printValidationFailures(report.validationAttempts ?? []);
+    printTopResults(report.results);
+    printFailures(report.results);
+    return;
+  }
+  const hasServedSpeed = selected.servedGeneratedTps !== undefined;
+  console.log(`selected: ${selected.config.label}${hasServedSpeed ? " (served speed verified)" : report.serverValidation?.ok ? " (validated)" : ""}`);
+  if (hasServedSpeed) console.log(`served_generated: ${formatNumber(selected.servedGeneratedTps)} tok/s (${formatNumber(selected.servedElapsedSeconds)}s, ${formatNumber(selected.servedCompletionTokens)} tokens)`);
+  console.log(`bench_estimate: e2e ${formatNumber(selected.endToEndTps)} tok/s, pp ${formatNumber(selected.ppTps)}, tg ${formatNumber(selected.tgTps)}`);
+  console.log(`params: ${formatConfig(selected.config)}`);
+  if (report.serverValidation?.ok) {
+    console.log(`validation: passed ${report.serverValidation.servedGeneratedTps !== undefined ? "llm restart + served chat speed" : "live validation"}`);
+    console.log(`validated apply: ${quoteCommand(report.serverValidation.command)}`);
+  } else if (report.serverValidation) {
+    console.log(`validation: failed ${formatReason(report.serverValidation.reason)}`);
+  }
+  if (report.servedVerification) {
+    console.log(`served verification: ${report.servedVerification.ok ? `passed${report.servedVerification.servedGeneratedTps !== undefined ? ` ${formatNumber(report.servedVerification.servedGeneratedTps)} generated tok/s` : ""}` : `failed ${report.servedVerification.reason ?? "unknown"}`}`);
+  }
+  console.log(`apply: ${quoteCommand(report.applyCommand ?? [])}`);
+  printValidationFailures(report.validationAttempts ?? []);
+  printTopServedResults(report.results);
+  printTopResults(report.results);
+  printFailures(report.results);
+};
+
+const printDraftDiscovery = (discovery: DraftDiscoveryReport | undefined): void => {
+  if (!discovery) return;
+  if (!discovery.enabled) {
+    if (discovery.reason) console.log(`draft discovery: ${discovery.reason}`);
+    return;
+  }
+  const usable = discovery.candidates.filter((candidate) => candidate.status === "available" || candidate.status === "downloaded");
+  const rejected = discovery.candidates.filter((candidate) => candidate.status === "rejected" || candidate.status === "failed" || candidate.status === "skipped");
+  console.log(`draft discovery: ${usable.length} usable, ${rejected.length} rejected/skipped`);
+  for (const candidate of rejected.slice(0, 5)) console.log(`  ${candidate.label}: ${candidate.status} ${formatReason(candidate.reason)}`);
+};
+
+const printValidationFailures = (attempts: CandidateValidation[]): void => {
+  const failedValidation = attempts.filter((attempt) => !attempt.ok);
+  if (failedValidation.length === 0) return;
+  console.log("");
+  console.log("served candidates rejected:");
+  for (const attempt of failedValidation) console.log(`  ${attempt.label}: ${formatReason(attempt.reason)}`);
+};
+
+const printTopResults = (results: BenchResult[]): void => {
+  const benchResults = results.filter((item) => item.status === "ok" && item.endToEndTps !== undefined).sort((left, right) => (right.endToEndTps ?? 0) - (left.endToEndTps ?? 0)).slice(0, 10);
+  if (benchResults.length === 0) return;
+  console.log("");
+  console.log("top bench results:");
+  for (const result of benchResults) {
+    console.log(`  ${pad(result.config.label, 28)} ${pad(formatNumber(result.endToEndTps), 8)} tok/s  pp ${pad(formatNumber(result.ppTps), 8)}  tg ${pad(formatNumber(result.tgTps), 8)}`);
+  }
+};
+
+const printTopServedResults = (results: BenchResult[]): void => {
+  const served = results.filter((item) => item.servedGeneratedTps !== undefined).sort((left, right) => (right.servedGeneratedTps ?? 0) - (left.servedGeneratedTps ?? 0)).slice(0, 10);
+  if (served.length === 0) return;
+  console.log("");
+  console.log("top served results:");
+  for (const result of served) {
+    console.log(`  ${pad(result.config.label, 28)} ${pad(formatNumber(result.servedGeneratedTps), 8)} generated tok/s  ${pad(formatNumber(result.servedCompletionTokens), 6)} tokens  ${pad(formatNumber(result.servedElapsedSeconds), 6)}s`);
+  }
+};
+
+const printFailures = (results: BenchResult[]): void => {
+  const failures = results.filter((result) => result.status === "failed").slice(0, 12);
+  if (failures.length === 0) return;
+  console.log("");
+  console.log("failures:");
+  for (const failure of failures) console.log(`  ${failure.config.label}: ${formatReason(failure.reason)}`);
+};
+
+const rankResults = (results: BenchResult[]): BenchResult[] => {
+  return results
+    .filter((result) => result.status === "ok" && result.endToEndTps !== undefined)
+    .sort((left, right) => (right.endToEndTps ?? 0) - (left.endToEndTps ?? 0));
+};
+
+const selectValidationCandidates = (ranked: BenchResult[]): BenchResult[] => {
+  const selected: BenchResult[] = [];
+  const add = (result: BenchResult | undefined): void => {
+    if (!result || selected.some((item) => item.config.label === result.config.label)) return;
+    selected.push(result);
+  };
+
+  add(ranked[0]);
+  add(ranked.find((result) => result.config.fitTarget !== undefined));
+  add(ranked.find((result) => result.config.label === "registry-current"));
+  for (const result of ranked) add(result);
+  return selected;
+};
+
+const formatProgress = (
+  current: number,
+  total: number,
+  result: BenchResult,
+  bestSoFar: BenchResult | undefined,
+  startedAt: number,
+): string => {
+  const elapsedSeconds = (Date.now() - startedAt) / 1000;
+  const averageSeconds = elapsedSeconds / current;
+  const remainingSeconds = Math.max(0, averageSeconds * (total - current));
+  const index = color("cyan", `[${String(current).padStart(String(total).length, "0")}/${total}]`);
+  const label = color("bold", result.config.label);
+  const progress = color("dim", `${formatDuration(elapsedSeconds)} elapsed, ${formatDuration(remainingSeconds)} left`);
+  if (result.status !== "ok") {
+    const best = bestSoFar ? `best ${formatRate(bestSoFar.endToEndTps)} ${bestSoFar.config.label}` : "best -";
+    return [
+      `${index} ${label}`,
+      `  ${color("red", "fail")} ${result.reason ?? "unknown"}  ${color("yellow", best)}  ${progress}`,
+    ].join("\n");
+  }
+  const metrics = `e2e ${formatRate(result.endToEndTps)}  pp ${formatCompactNumber(result.ppTps)}  tg ${formatCompactNumber(result.tgTps)}`;
+  const best = bestSoFar ? `best ${formatRate(bestSoFar.endToEndTps)} ${bestSoFar.config.label}` : "best -";
+  return [
+    `${index} ${label}`,
+    `  ${color("green", "ok")} ${metrics}  ${color("yellow", best)}  ${progress}`,
+  ].join("\n");
+};
+
+const formatValidationStart = (current: number, total: number, candidate: BenchResult): string => {
+  const index = color("cyan", `[serve ${current}/${total}]`);
+  const label = color("bold", candidate.config.label);
+  return `${index} ${label}\n  ${color("dim", "validating exact llm set + restart + served chat speed")}`;
+};
+
+const formatValidationResult = (
+  current: number,
+  total: number,
+  candidate: BenchResult,
+  validation: ServerValidation,
+  startedAt: number,
+  bestServed: BenchResult | undefined,
+): string => {
+  const index = color("cyan", `[serve ${current}/${total}]`);
+  const label = color("bold", candidate.config.label);
+  const elapsed = color("dim", `${formatDuration((Date.now() - startedAt) / 1000)} elapsed`);
+  const best = bestServed?.servedGeneratedTps ? `best ${formatRate(bestServed.servedGeneratedTps)} ${bestServed.config.label}` : "best -";
+  if (validation.ok) return `${index} ${label}\n  ${color("green", "ok")} served ${formatRate(validation.servedGeneratedTps)} generated  ${color("yellow", best)}  ${elapsed}`;
+  return `${index} ${label}\n  ${color("red", "fail")} ${formatReason(validation.reason)}  ${elapsed}`;
+};
+
+const formatLiveSkip = (
+  current: number,
+  total: number,
+  config: RuntimeConfig,
+  reason: string,
+  startedAt: number,
+): string => {
+  const index = color("cyan", `[serve ${current}/${total}]`);
+  const label = color("bold", config.label);
+  const elapsed = color("dim", `${formatDuration((Date.now() - startedAt) / 1000)} elapsed`);
+  return `${index} ${label}\n  ${color("yellow", "skip")} ${reason}  ${elapsed}`;
+};
+
+const formatDuration = (seconds: number): string => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "-";
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.round(seconds % 60);
+  return `${minutes}m${String(remainder).padStart(2, "0")}s`;
+};
+
+const printResume = (path: string, json: boolean): void => {
+  const content = readFileSync(path, "utf8");
+  if (json) {
+    console.log(content);
+    return;
+  }
+  const report = JSON.parse(content) as Report;
+  printReport(report, path);
+};
+
+const writeReport = (report: Report, existingPath?: string): string => {
+  const dir = join(REPORT_ROOT, report.modelId);
+  mkdirSync(dir, { recursive: true });
+  const path = existingPath ?? join(dir, `${report.createdAt.replace(/[:.]/g, "-")}.json`);
+  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+  return path;
+};
+
+const choosePromptTokens = (ctx: number): number => {
+  if (ctx <= 2048) return Math.max(128, Math.floor(ctx / 2));
+  if (ctx <= 8192) return 512;
+  if (ctx <= 32768) return 2048;
+  return 4096;
+};
+
+const chooseServedPromptTokens = (ctx: number, genTokens: number): number => {
+  const margin = Math.max(256, genTokens + 64);
+  if (ctx > margin + 128) return ctx - margin;
+  return Math.max(1, Math.floor(ctx / 2));
+};
+
+const commandText = (command: string, args: string[], required = true): string => {
+  const result = spawnSync(command, args, { encoding: "utf8" });
+  if (required && (result.error || result.status !== 0)) throw new Error(`${command} ${args.join(" ")} failed`);
+  return `${result.stdout ?? ""}${result.stderr ?? ""}`;
+};
+
+const parseFlags = (help: string): Set<string> => {
+  const flags = new Set<string>();
+  for (const match of help.matchAll(/--[a-z0-9][a-z0-9-]*/gi)) flags.add(match[0]);
+  return flags;
+};
+
+const parseAllowedValues = (help: string, flag: string): string[] => {
+  const index = help.indexOf(flag);
+  if (index < 0) return [];
+  const excerpt = help.slice(index, index + 800);
+  const match = excerpt.match(/allowed values:\s*([^\n]+)/i);
+  if (!match) return [];
+  return match[1]
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+};
+
+const cacheCandidatePairs = (capabilities: Capabilities): Array<[string, string]> => {
+  const kTypes = new Set(capabilities.cacheTypesK);
+  const vTypes = new Set(capabilities.cacheTypesV);
+  const pairs: Array<[string, string]> = [];
+  const add = (k: string, v: string): void => {
+    if (kTypes.has(k) && vTypes.has(v)) pairs.push([k, v]);
+  };
+
+  for (const type of ["q8_0", "q5_1", "q5_0", "q4_1", "q4_0", "iq4_nl"]) add(type, type);
+
+  const futureLowBitTypes = [...kTypes].filter((type) => /turbo|tq|tbq/i.test(type));
+  for (const type of futureLowBitTypes) {
+    add(type, type);
+    add(type, "q8_0");
+    add(type, "f16");
+  }
+
+  return uniquePairs(pairs);
+};
+
+const detectBackend = (text: string): string => {
+  if (/CUDA/i.test(text)) return "cuda";
+  if (/ROCm|HIP/i.test(text)) return "rocm";
+  if (/Metal/i.test(text)) return "metal";
+  if (/Vulkan/i.test(text)) return "vulkan";
+  return "cpu";
+};
+
+const parseGpuMemory = (text: string): { total: number; free: number } | undefined => {
+  const line = text.split("\n").find((value) => value.trim().length > 0);
+  if (!line) return undefined;
+  const [totalRaw, freeRaw] = line.split(",").map((value) => Number(value.trim()));
+  if (!Number.isFinite(totalRaw) || !Number.isFinite(freeRaw)) return undefined;
+  return { total: totalRaw, free: freeRaw };
+};
+
+const parseJson = (text: string): JsonValue | undefined => {
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+  try {
+    return JSON.parse(trimmed) as JsonValue;
+  } catch {
+    const objectStart = trimmed.indexOf("{");
+    const arrayStart = trimmed.indexOf("[");
+    const open = objectStart >= 0 && (arrayStart < 0 || objectStart < arrayStart) ? "{" : "[";
+    const close = open === "{" ? "}" : "]";
+    const start = trimmed.indexOf(open);
+    const end = trimmed.lastIndexOf(close);
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(trimmed.slice(start, end + 1)) as JsonValue;
+      } catch {}
+    }
+  }
+  return undefined;
+};
+
+const collectRecords = (value: JsonValue): Record<string, unknown>[] => {
+  if (Array.isArray(value)) return value.flatMap(collectRecords);
+  if (!isRecord(value)) return [];
+  const hasTest = typeof value.test === "string" || typeof value.avg_ts === "number";
+  const children = Object.values(value).flatMap((item) => collectRecords(item as JsonValue));
+  return hasTest ? [value, ...children] : children;
+};
+
+const classifyFailure = (output: string): string => {
+  if (/invalid parameter|unknown argument|unrecognized option/i.test(output)) return "unsupported flag";
+  if (/out of memory|cuda.*memory|failed to allocate|vk::OutOfDeviceMemory/i.test(output)) return "out of memory";
+  if (/failed to create context|context.*failed/i.test(output)) return "context creation failed";
+  if (/killed|timed out|ETIMEDOUT/i.test(output)) return "timeout";
+  return tail(output).replace(/\s+/g, " ").slice(0, 240) || "benchmark failed";
+};
+
+const normalizeConfig = (config: RuntimeConfig): RuntimeConfig => ({
+  ...config,
+  batch: Math.max(1, config.batch),
+  ubatch: Math.min(Math.max(1, config.ubatch), Math.max(1, config.batch)),
+});
+
+const uniqueConfigs = (configs: RuntimeConfig[]): RuntimeConfig[] => {
+  const seen = new Set<string>();
+  const unique: RuntimeConfig[] = [];
+  for (const config of configs) {
+    const key = JSON.stringify({ ...config, label: "" });
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(config);
+  }
+  return unique;
+};
+
+const uniqueNumbers = (values: Array<number | undefined>): number[] => {
+  return [...new Set(values.filter((value): value is number => Number.isFinite(value)))].sort((left, right) => left - right);
+};
+
+const uniquePairs = (values: Array<[number | undefined, number | undefined]>): Array<[number, number]> => {
+  const seen = new Set<string>();
+  const pairs: Array<[number, number]> = [];
+  for (const [left, right] of values) {
+    if (!Number.isFinite(left) || !Number.isFinite(right)) continue;
+    const pair: [number, number] = [left, right];
+    const key = pair.join(":");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    pairs.push(pair);
+  }
+  return pairs;
+};
+
+const cartesianPairs = (leftValues: number[], rightValues: number[]): Array<[number, number]> => {
+  return leftValues.flatMap((left) => rightValues.map((right): [number, number] => [left, right]));
+};
+
+const hasBenchFlag = (capabilities: Capabilities, flag: string): boolean => capabilities.benchFlags.has(flag);
+const hasServerFlag = (capabilities: Capabilities, flag: string): boolean => capabilities.serverFlags.has(flag);
+
+const formatConfig = (config: RuntimeConfig): string => {
+  const parts = [
+    `ctx=${config.ctx}`,
+    `ngl=${config.gpuLayers ?? "auto"}`,
+    `batch=${config.batch}`,
+    `ubatch=${config.ubatch}`,
+  ];
+  if (config.mmap !== undefined) parts.push(`mmap=${config.mmap}`);
+  if (config.flashAttn) parts.push(`flash=${config.flashAttn}`);
+  if (config.fitTarget !== undefined) parts.push(`fit=${config.fitTarget}`);
+  if (config.cpuMoe !== undefined) parts.push(`cpuMoe=${config.cpuMoe}`);
+  if (config.cacheTypeK) parts.push(`ctk=${config.cacheTypeK}`);
+  if (config.cacheTypeV) parts.push(`ctv=${config.cacheTypeV}`);
+  if (config.threads !== undefined) parts.push(`threads=${config.threads}`);
+  if (config.draft === null) parts.push("draft=off");
+  if (config.draft?.model) parts.push(`draft=${basename(config.draft.model)}`);
+  if (config.draft?.hf) parts.push(`draft=${config.draft.hf}`);
+  if (config.draft?.nMax !== undefined) parts.push(`draftN=${config.draft.nMax}`);
+  return parts.join(" ");
+};
+
+const quoteCommand = (command: string[]): string => command.map(shellQuote).join(" ");
+const shellQuote = (value: string): string => /^[A-Za-z0-9_./:=+-]+$/.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`;
+const formatNumber = (value: number | undefined): string => value === undefined ? "-" : value.toFixed(2);
+const formatCompactNumber = (value: number | undefined): string => value === undefined ? "-" : value.toFixed(value >= 1000 ? 0 : 1);
+const formatRate = (value: number | undefined): string => `${formatCompactNumber(value)}t/s`;
+const formatReason = (value: string | undefined): string => {
+  const reason = value?.replace(/\s+/g, " ").trim() || "unknown";
+  return reason.length > 240 ? `${reason.slice(0, 237)}...` : reason;
+};
+const pad = (value: string, width: number): string => value.padEnd(width).slice(0, width);
+const tail = (text: string): string => text.split("\n").filter(Boolean).slice(-20).join("\n");
+const log = (options: CliOptions, message: string): void => {
+  if (!options.json) console.log(message);
+};
+
+const COLORS = {
+  bold: "\x1b[1m",
+  cyan: "\x1b[36m",
+  dim: "\x1b[2m",
+  green: "\x1b[32m",
+  red: "\x1b[31m",
+  reset: "\x1b[0m",
+  yellow: "\x1b[33m",
+} as const;
+
+const color = (name: keyof typeof COLORS, value: string): string => {
+  if (!useColor()) return value;
+  return `${COLORS[name]}${value}${COLORS.reset}`;
+};
+
+const useColor = (): boolean => {
+  return process.env.NO_COLOR === undefined && Boolean(process.stdout.isTTY);
+};
+
+function numberFromEnv(key: string, fallback: number): number {
+  const value = Number(process.env[key]);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+const parsePositiveInt = (value: string, name: string): number => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) throw new Error(`${name} must be a positive integer`);
+  return parsed;
+};
+
+const requireValue = (name: string, value: string | undefined): string => {
+  if (!value) throw new Error(`${name} needs a value`);
+  return value;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+const stringField = (record: Record<string, unknown>, key: string): string => {
+  const value = record[key];
+  return typeof value === "string" ? value : "";
+};
+
+const arrayField = (record: Record<string, unknown>, key: string): unknown[] => {
+  const value = record[key];
+  return Array.isArray(value) ? value : [];
+};
+
+const stringArrayField = (record: Record<string, unknown>, key: string): string[] => {
+  return arrayField(record, key).filter((value): value is string => typeof value === "string");
+};
+
+const errorMessage = (error: unknown): string => {
+  return error instanceof Error ? error.message : String(error);
+};
+
+main().catch((error: unknown) => {
+  console.error(`error: ${errorMessage(error)}`);
+  process.exit(1);
+});

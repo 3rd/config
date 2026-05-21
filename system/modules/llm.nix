@@ -36,7 +36,12 @@ let
       cudaForwardCompat = false;
     };
   };
-  llamaCppPackage = llamaCppPkgs.llamaPackages.llama-cpp;
+  llamaCppPackage = llamaCppPkgs.llamaPackages.llama-cpp.overrideAttrs (oldAttrs: {
+    cmakeFlags = (oldAttrs.cmakeFlags or [ ]) ++ [
+      "-DLLAMA_BUILD_UI=OFF"
+      "-DLLAMA_BUILD_WEBUI=OFF"
+    ];
+  });
   llamaSwapPackage = pkgs-master.llama-swap or pkgs.llama-swap;
 in
 {
@@ -99,6 +104,7 @@ in
       PORT = "9999";
       SCARF_NO_ANALYTICS = "True";
       WEBUI_URL = "http://localhost:9999";
+      HOME = "/var/lib/open-webui";
     };
   };
 }

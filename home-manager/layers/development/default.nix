@@ -4,6 +4,7 @@
     ./analysis.nix
     ./api.nix
     ./bash.nix
+    ./bun.nix
     ./c.nix
     ./clojure.nix
     ./data.nix
@@ -15,6 +16,8 @@
     ./misc.nix
     ./nix.nix
     ./nodejs.nix
+    ./npm.nix
+    ./pnpm.nix
     ./python.nix
     ./rust.nix
     ./workflow.nix

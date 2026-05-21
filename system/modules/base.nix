@@ -75,6 +75,13 @@
     useTmpfs = lib.mkDefault true;
     cleanOnBoot = lib.mkDefault (!config.boot.tmp.useTmpfs);
   };
+  swapDevices = lib.mkForce [ ];
+  zramSwap.enable = lib.mkForce false;
+  boot.kernel.sysctl = {
+    "kernel.core_pattern" = lib.mkForce "";
+    "kernel.core_uses_pid" = lib.mkForce 0;
+  };
+
   systemd.services.nix-daemon = {
     environment.TMPDIR = "/var/tmp";
   };
@@ -171,14 +178,47 @@
       type = "-";
       value = 1;
     }
+    {
+      domain = "*";
+      item = "core";
+      type = "-";
+      value = 0;
+    }
   ];
-  systemd.user.extraConfig = "DefaultLimitNOFILE=999999";
+  systemd = {
+    coredump.enable = false;
+    settings.Manager = {
+      DefaultCPUAccounting = true;
+      DefaultMemoryAccounting = true;
+      DefaultTasksAccounting = true;
+      DefaultIOAccounting = true;
+      DefaultLimitCORE = 0;
+    };
+    user.extraConfig = ''
+      DefaultLimitNOFILE=999999
+      DefaultLimitCORE=0
+      DefaultCPUAccounting=yes
+      DefaultMemoryAccounting=yes
+      DefaultTasksAccounting=yes
+      DefaultIOAccounting=yes
+    '';
+    oomd = {
+      enable = true;
+      enableUserSlices = true;
+      settings.OOM = {
+        DefaultMemoryPressureLimit = "50%";
+        DefaultMemoryPressureDurationSec = "10s";
+      };
+    };
+  };
 
   # oom
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 2;
+    freeMemThreshold = 10;
+    freeMemKillThreshold = 5;
     freeSwapThreshold = 100;
+    freeSwapKillThreshold = 100;
     enableNotifications = true;
   };
 }

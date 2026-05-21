@@ -19,6 +19,16 @@ in
 {
   networking.nftables.enable = true;
 
+  systemd.services.docker.serviceConfig = {
+    CPUAccounting = true;
+    CPUWeight = 60;
+    IOAccounting = true;
+    IOWeight = 40;
+    MemoryAccounting = true;
+    TasksAccounting = true;
+    TasksMax = 8192;
+  };
+
   environment.systemPackages = with pkgs; [
     # TODO: until project view bug is fixed
     lazydocker_0_24_4
@@ -39,6 +49,9 @@ in
       package = pkgs.docker_25;
       # package = pkgs.stable.docker;
       # extraOptions = "--default-runtime=nvidia";
+      daemon.settings = {
+        "cgroup-parent" = "docker.slice";
+      };
     };
     podman = {
       enable = true;
