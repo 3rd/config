@@ -66,6 +66,16 @@
           end
         '';
       };
+      vf = {
+        description = "Fuzzy file opener.";
+        body = ''
+          set -l file (fd -uu --type f --hidden --follow --exclude .git | fzf --preview 'bat --style=plain --color=always --line-range :500 {}')
+          if test -z "$file"
+            return 0
+          end
+          nvim "$file"
+        '';
+      };
       work = {
         description = "Work manager";
         body = ''
@@ -118,8 +128,6 @@
       ti = "nvim ~/brain/wiki/_inbox/tasks";
       tl = "nvim ~/brain/wiki/_inbox/links";
       bookmarks = "nvim ~/brain/wiki/bookmarks";
-      # extra
-      vv = "~/sources/v/v";
     };
   };
 

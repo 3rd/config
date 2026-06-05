@@ -12,9 +12,6 @@
       ignore-scripts=true
       min-release-age=7
       allow-git=none
-      allow-remote=none
-      allow-file=root
-      allow-directory=root
       engine-strict=true
       save-exact=true
       audit=true

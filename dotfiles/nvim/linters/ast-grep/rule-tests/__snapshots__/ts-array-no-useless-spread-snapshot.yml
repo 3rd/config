@@ -1,182 +1,248 @@
 id: ts-array-no-useless-spread
 snapshots:
-  const a = [...b].at():
+  const a = [...Array.from(values)].some(Boolean):
     labels:
-    - source: '[...b].at()'
+    - source: '[...Array.from(values)].some(Boolean)'
       style: primary
       start: 10
-      end: 21
-  const a = [...b].concat():
+      end: 47
+  const a = [...[1, 2]].at():
     labels:
-    - source: '[...b].concat()'
-      style: primary
-      start: 10
-      end: 25
-  const a = [...b].entries():
-    labels:
-    - source: '[...b].entries()'
+    - source: '[...[1, 2]].at()'
       style: primary
       start: 10
       end: 26
-  const a = [...b].every():
+  const a = [...[1, 2]].concat():
     labels:
-    - source: '[...b].every()'
-      style: primary
-      start: 10
-      end: 24
-  const a = [...b].filter():
-    labels:
-    - source: '[...b].filter()'
-      style: primary
-      start: 10
-      end: 25
-  const a = [...b].find():
-    labels:
-    - source: '[...b].find()'
-      style: primary
-      start: 10
-      end: 23
-  const a = [...b].findIndex():
-    labels:
-    - source: '[...b].findIndex()'
-      style: primary
-      start: 10
-      end: 28
-  const a = [...b].findLast():
-    labels:
-    - source: '[...b].findLast()'
-      style: primary
-      start: 10
-      end: 27
-  const a = [...b].findLastIndex():
-    labels:
-    - source: '[...b].findLastIndex()'
-      style: primary
-      start: 10
-      end: 32
-  const a = [...b].flat():
-    labels:
-    - source: '[...b].flat()'
-      style: primary
-      start: 10
-      end: 23
-  const a = [...b].flatMap():
-    labels:
-    - source: '[...b].flatMap()'
-      style: primary
-      start: 10
-      end: 26
-  const a = [...b].forEach():
-    labels:
-    - source: '[...b].forEach()'
-      style: primary
-      start: 10
-      end: 26
-  const a = [...b].includes():
-    labels:
-    - source: '[...b].includes()'
-      style: primary
-      start: 10
-      end: 27
-  const a = [...b].indexOf():
-    labels:
-    - source: '[...b].indexOf()'
-      style: primary
-      start: 10
-      end: 26
-  const a = [...b].join("\n"):
-    labels:
-    - source: '[...b].join("\n")'
-      style: primary
-      start: 10
-      end: 27
-  const a = [...b].join():
-    labels:
-    - source: '[...b].join()'
-      style: primary
-      start: 10
-      end: 23
-  const a = [...b].keys():
-    labels:
-    - source: '[...b].keys()'
-      style: primary
-      start: 10
-      end: 23
-  const a = [...b].map():
-    labels:
-    - source: '[...b].map()'
-      style: primary
-      start: 10
-      end: 22
-  const a = [...b].map(item => item + 1):
-    labels:
-    - source: '[...b].map(item => item + 1)'
-      style: primary
-      start: 10
-      end: 38
-  const a = [...b].reduce():
-    labels:
-    - source: '[...b].reduce()'
-      style: primary
-      start: 10
-      end: 25
-  const a = [...b].reduceRight():
-    labels:
-    - source: '[...b].reduceRight()'
+    - source: '[...[1, 2]].concat()'
       style: primary
       start: 10
       end: 30
-  const a = [...b].slice():
+  const a = [...[1, 2]].entries():
     labels:
-    - source: '[...b].slice()'
+    - source: '[...[1, 2]].entries()'
       style: primary
       start: 10
-      end: 24
-  const a = [...b].some():
+      end: 31
+  const a = [...[1, 2]].every():
     labels:
-    - source: '[...b].some()'
-      style: primary
-      start: 10
-      end: 23
-  const a = [...b].toLocaleString():
-    labels:
-    - source: '[...b].toLocaleString()'
-      style: primary
-      start: 10
-      end: 33
-  const a = [...b].toReversed():
-    labels:
-    - source: '[...b].toReversed()'
+    - source: '[...[1, 2]].every()'
       style: primary
       start: 10
       end: 29
-  const a = [...b].toSorted():
+  const a = [...[1, 2]].filter():
     labels:
-    - source: '[...b].toSorted()'
+    - source: '[...[1, 2]].filter()'
       style: primary
       start: 10
-      end: 27
-  const a = [...b].toSpliced():
+      end: 30
+  const a = [...[1, 2]].find():
     labels:
-    - source: '[...b].toSpliced()'
+    - source: '[...[1, 2]].find()'
       style: primary
       start: 10
       end: 28
-  const a = [...b].toString():
+  const a = [...[1, 2]].findIndex():
     labels:
-    - source: '[...b].toString()'
+    - source: '[...[1, 2]].findIndex()'
       style: primary
       start: 10
-      end: 27
-  const a = [...b].values():
+      end: 33
+  const a = [...[1, 2]].findLast():
     labels:
-    - source: '[...b].values()'
+    - source: '[...[1, 2]].findLast()'
       style: primary
       start: 10
-      end: 25
-  const a = [...b].with():
+      end: 32
+  const a = [...[1, 2]].findLastIndex():
     labels:
-    - source: '[...b].with()'
+    - source: '[...[1, 2]].findLastIndex()'
       style: primary
       start: 10
-      end: 23
+      end: 37
+  const a = [...[1, 2]].flat():
+    labels:
+    - source: '[...[1, 2]].flat()'
+      style: primary
+      start: 10
+      end: 28
+  const a = [...[1, 2]].flatMap():
+    labels:
+    - source: '[...[1, 2]].flatMap()'
+      style: primary
+      start: 10
+      end: 31
+  const a = [...[1, 2]].forEach():
+    labels:
+    - source: '[...[1, 2]].forEach()'
+      style: primary
+      start: 10
+      end: 31
+  const a = [...[1, 2]].includes():
+    labels:
+    - source: '[...[1, 2]].includes()'
+      style: primary
+      start: 10
+      end: 32
+  const a = [...[1, 2]].indexOf():
+    labels:
+    - source: '[...[1, 2]].indexOf()'
+      style: primary
+      start: 10
+      end: 31
+  const a = [...[1, 2]].join("\n"):
+    labels:
+    - source: '[...[1, 2]].join("\n")'
+      style: primary
+      start: 10
+      end: 32
+  const a = [...[1, 2]].keys():
+    labels:
+    - source: '[...[1, 2]].keys()'
+      style: primary
+      start: 10
+      end: 28
+  const a = [...[1, 2]].map(item => item + 1):
+    labels:
+    - source: '[...[1, 2]].map(item => item + 1)'
+      style: primary
+      start: 10
+      end: 43
+  const a = [...[1, 2]].reduce():
+    labels:
+    - source: '[...[1, 2]].reduce()'
+      style: primary
+      start: 10
+      end: 30
+  const a = [...[1, 2]].reduceRight():
+    labels:
+    - source: '[...[1, 2]].reduceRight()'
+      style: primary
+      start: 10
+      end: 35
+  const a = [...[1, 2]].slice():
+    labels:
+    - source: '[...[1, 2]].slice()'
+      style: primary
+      start: 10
+      end: 29
+  const a = [...[1, 2]].some():
+    labels:
+    - source: '[...[1, 2]].some()'
+      style: primary
+      start: 10
+      end: 28
+  const a = [...[1, 2]].toLocaleString():
+    labels:
+    - source: '[...[1, 2]].toLocaleString()'
+      style: primary
+      start: 10
+      end: 38
+  const a = [...[1, 2]].toReversed():
+    labels:
+    - source: '[...[1, 2]].toReversed()'
+      style: primary
+      start: 10
+      end: 34
+  const a = [...[1, 2]].toSorted():
+    labels:
+    - source: '[...[1, 2]].toSorted()'
+      style: primary
+      start: 10
+      end: 32
+  const a = [...[1, 2]].toSpliced():
+    labels:
+    - source: '[...[1, 2]].toSpliced()'
+      style: primary
+      start: 10
+      end: 33
+  const a = [...[1, 2]].toString():
+    labels:
+    - source: '[...[1, 2]].toString()'
+      style: primary
+      start: 10
+      end: 32
+  const a = [...[1, 2]].values():
+    labels:
+    - source: '[...[1, 2]].values()'
+      style: primary
+      start: 10
+      end: 30
+  const a = [...[1, 2]].with():
+    labels:
+    - source: '[...[1, 2]].with()'
+      style: primary
+      start: 10
+      end: 28
+  ? |
+    const items = [1, 2];
+    const a = [...items].filter(Boolean);
+  : labels:
+    - source: '[...items].filter(Boolean)'
+      style: primary
+      start: 32
+      end: 58
+    - source: const items = [1, 2];
+      style: secondary
+      start: 0
+      end: 21
+    - source: |
+        const items = [1, 2];
+        const a = [...items].filter(Boolean);
+      style: secondary
+      start: 0
+      end: 60
+  ? |
+    const items: string[] = getItems();
+    const a = [...items].some(Boolean);
+  : labels:
+    - source: '[...items].some(Boolean)'
+      style: primary
+      start: 46
+      end: 70
+    - source: 'const items: string[] = getItems();'
+      style: secondary
+      start: 0
+      end: 35
+    - source: |
+        const items: string[] = getItems();
+        const a = [...items].some(Boolean);
+      style: secondary
+      start: 0
+      end: 72
+  ? |
+    let items = Array.from(values);
+    const a = [...items].map((item) => item);
+  : labels:
+    - source: '[...items].map((item) => item)'
+      style: primary
+      start: 42
+      end: 72
+    - source: let items = Array.from(values);
+      style: secondary
+      start: 0
+      end: 31
+    - source: |
+        let items = Array.from(values);
+        const a = [...items].map((item) => item);
+      style: secondary
+      start: 0
+      end: 74
+  ? |
+    let items: Array<string> = getItems();
+    const a = [...items].join(",");
+  : labels:
+    - source: '[...items].join(",")'
+      style: primary
+      start: 49
+      end: 69
+    - source: 'let items: Array<string> = getItems();'
+      style: secondary
+      start: 0
+      end: 38
+    - source: |
+        let items: Array<string> = getItems();
+        const a = [...items].join(",");
+      style: secondary
+      start: 0
+      end: 71

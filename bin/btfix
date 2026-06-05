@@ -1,9 +1,301 @@
 #!/usr/bin/env bash
+set -euf -o pipefail
 IFS=$'\n\t'
 
-sudo hciconfig hci0 down
-sudo rmmod btusb
-sudo modprobe btusb
-sudo hciconfig hci0 up
-sleep 1
-bluetoothctl power on
+ADAPTER="${BT_FIX_ADAPTER:-hci0}"
+ATTEMPTS="${BT_FIX_ATTEMPTS:-3}"
+READY_TIMEOUT_SECONDS="${BT_FIX_READY_TIMEOUT_SECONDS:-15}"
+USB_DEVICE="${BT_FIX_USB_DEVICE:-}"
+REFRESH_AUDIO="${BT_FIX_REFRESH_AUDIO:-1}"
+
+log() {
+  printf 'btfix: %s\n' "$*" >&2
+}
+
+is_positive_integer() {
+  [[ "$1" =~ ^[1-9][0-9]*$ ]]
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || {
+    log "missing command: $1"
+    exit 127
+  }
+}
+
+print_status() {
+  log "kernel adapter status"
+  hciconfig "$ADAPTER" >&2 || true
+
+  log "bluez controller list"
+  bluetoothctl list >&2 || true
+
+  log "bluez default controller"
+  bluetoothctl show >&2 || true
+
+  if [[ -e /dev/rfkill ]] && command -v rfkill >/dev/null 2>&1; then
+    log "rfkill bluetooth status"
+    rfkill list bluetooth >&2 || true
+  fi
+}
+
+sysfs_write() {
+  local value="$1"
+  local path="$2"
+
+  printf '%s\n' "$value" | sudo tee "$path" >/dev/null
+}
+
+fail() {
+  log "$*"
+  print_status
+  exit 1
+}
+
+validate_config() {
+  is_positive_integer "$ATTEMPTS" || {
+    log "BT_FIX_ATTEMPTS must be a positive integer"
+    exit 2
+  }
+
+  is_positive_integer "$READY_TIMEOUT_SECONDS" || {
+    log "BT_FIX_READY_TIMEOUT_SECONDS must be a positive integer"
+    exit 2
+  }
+
+  [[ "$REFRESH_AUDIO" == "0" || "$REFRESH_AUDIO" == "1" ]] || {
+    log "BT_FIX_REFRESH_AUDIO must be 0 or 1"
+    exit 2
+  }
+}
+
+find_usb_device() {
+  local current
+  current="$(readlink -f "/sys/class/bluetooth/$ADAPTER/device" 2>/dev/null)" || return 1
+
+  while [[ "$current" != "/" && -n "$current" ]]; do
+    if [[ -e "$current/idVendor" && -e "$current/idProduct" && -e "$current/authorized" ]]; then
+      printf '%s\n' "$current"
+      return 0
+    fi
+
+    current="$(dirname "$current")"
+  done
+
+  return 1
+}
+
+unblock_rfkill() {
+  if [[ -e /dev/rfkill ]] && command -v rfkill >/dev/null 2>&1; then
+    sudo rfkill unblock bluetooth || true
+  fi
+}
+
+# shellcheck disable=SC2329
+ensure_stack_started() {
+  if [[ -n "${USB_DEVICE:-}" && -e "$USB_DEVICE/authorized" ]]; then
+    sysfs_write 1 "$USB_DEVICE/authorized" >/dev/null 2>&1 || true
+  fi
+
+  sudo modprobe btusb >/dev/null 2>&1 || true
+  sudo systemctl start bluetooth >/dev/null 2>&1 || true
+}
+
+# shellcheck disable=SC2329
+cleanup_on_exit() {
+  ensure_stack_started
+}
+
+usb_power_cycle() {
+  local usb_device="$1"
+
+  [[ -n "$usb_device" && -e "$usb_device/authorized" ]] || return 1
+
+  log "power-cycling usb device $(basename "$usb_device")"
+  sysfs_write 0 "$usb_device/authorized" || return 1
+  sleep 2
+  sysfs_write 1 "$usb_device/authorized" || return 1
+  sleep 2
+}
+
+usb_driver_rebind() {
+  local usb_device="$1"
+  local usb_name
+
+  [[ -n "$usb_device" && -e "$usb_device" ]] || return 1
+
+  usb_name="$(basename "$usb_device")"
+  [[ -e /sys/bus/usb/drivers/usb/unbind && -e /sys/bus/usb/drivers/usb/bind ]] || return 1
+
+  log "rebinding usb device $usb_name"
+  sysfs_write "$usb_name" /sys/bus/usb/drivers/usb/unbind || return 1
+  sleep 2
+  sysfs_write "$usb_name" /sys/bus/usb/drivers/usb/bind || return 1
+  sleep 2
+}
+
+wait_for_adapter_present() {
+  local deadline=$((SECONDS + READY_TIMEOUT_SECONDS))
+  while (( SECONDS <= deadline )); do
+    if hciconfig "$ADAPTER" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    sleep 1
+  done
+
+  log "timed out waiting for $ADAPTER to appear"
+  return 1
+}
+
+bring_adapter_up() {
+  wait_for_adapter_present || return 1
+  sudo hciconfig "$ADAPTER" up || return 1
+}
+
+reset_stack() {
+  local attempt="$1"
+  local usb_device="$2"
+
+  log "reset attempt $attempt/$ATTEMPTS"
+
+  sudo systemctl stop bluetooth || true
+
+  if hciconfig "$ADAPTER" >/dev/null 2>&1; then
+    sudo hciconfig "$ADAPTER" down || true
+  fi
+
+  sudo modprobe -r btusb || true
+
+  if (( attempt > 1 )) && usb_driver_rebind "$usb_device"; then
+    :
+  elif ! usb_power_cycle "$usb_device"; then
+    log "usb power-cycle unavailable; using module reload only"
+    sleep 2
+  fi
+
+  sudo modprobe btusb
+  sudo systemctl start bluetooth
+  unblock_rfkill
+  bring_adapter_up || true
+}
+
+adapter_initialized() {
+  local output
+  output="$(hciconfig "$ADAPTER" 2>/dev/null)" || return 1
+
+  [[ "$output" == *"BD Address:"* ]] || return 1
+  [[ "$output" != *"BD Address: 00:00:00:00:00:00"* ]] || return 1
+  [[ "$output" != *"ACL MTU: 0:0"* ]]
+}
+
+bluez_has_controller() {
+  bluetoothctl list 2>/dev/null | grep -q '^Controller '
+}
+
+controller_powered() {
+  local output
+  output="$(bluetoothctl show 2>/dev/null)" || return 1
+  [[ "$output" == *"Powered: yes"* ]]
+}
+
+refresh_audio_stack() {
+  (( REFRESH_AUDIO == 1 )) || return 0
+  command -v systemctl >/dev/null 2>&1 || return 0
+
+  log "refreshing wireplumber bluetooth monitor"
+  systemctl --user restart wireplumber || true
+  sleep 2
+}
+
+wait_for_adapter_initialized() {
+  local deadline=$((SECONDS + READY_TIMEOUT_SECONDS))
+  while (( SECONDS <= deadline )); do
+    if adapter_initialized; then
+      return 0
+    fi
+
+    sleep 1
+  done
+
+  log "timed out waiting for $ADAPTER initialization"
+  return 1
+}
+
+wait_for_bluez_controller() {
+  local deadline=$((SECONDS + READY_TIMEOUT_SECONDS))
+  while (( SECONDS <= deadline )); do
+    if bluez_has_controller; then
+      return 0
+    fi
+
+    sleep 1
+  done
+
+  log "timed out waiting for bluez controller"
+  return 1
+}
+
+wait_for_controller_powered() {
+  local deadline=$((SECONDS + READY_TIMEOUT_SECONDS))
+  while (( SECONDS <= deadline )); do
+    if controller_powered; then
+      return 0
+    fi
+
+    sleep 1
+  done
+
+  log "timed out waiting for powered controller"
+  return 1
+}
+
+main() {
+  validate_config
+
+  require_command basename
+  require_command bluetoothctl
+  require_command dirname
+  require_command grep
+  require_command hciconfig
+  require_command modprobe
+  require_command readlink
+  require_command sudo
+  require_command systemctl
+  require_command tee
+
+  sudo -v
+  trap cleanup_on_exit EXIT
+
+  if [[ -z "$USB_DEVICE" ]]; then
+    USB_DEVICE="$(find_usb_device || true)"
+  fi
+
+  if [[ -n "$USB_DEVICE" ]]; then
+    log "using usb device $USB_DEVICE"
+  else
+    log "no usb device path found for $ADAPTER"
+  fi
+
+  local attempt
+  for (( attempt = 1; attempt <= ATTEMPTS; attempt++ )); do
+    reset_stack "$attempt" "$USB_DEVICE"
+
+    if wait_for_adapter_initialized &&
+      wait_for_bluez_controller &&
+      bluetoothctl power on >/dev/null 2>&1 &&
+      wait_for_controller_powered; then
+      refresh_audio_stack
+      trap - EXIT
+      log "bluetooth is powered"
+      print_status
+      exit 0
+    fi
+
+    print_status
+  done
+
+  fail "bluetooth reset failed after $ATTEMPTS attempts"
+}
+
+main "$@"

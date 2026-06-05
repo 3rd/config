@@ -3,6 +3,8 @@
     enable = true;
     settings = {
       add_newline = true;
+      scan_timeout = 120;
+      follow_symlinks = false;
       character = {
         success_symbol = "[➜](bold green)";
         error_symbol = "✗";

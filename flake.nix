@@ -29,6 +29,10 @@
       url = "github:aaddrick/claude-desktop-debian";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    codex-desktop-linux = {
+      url = "github:ilysenko/codex-desktop-linux";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixpkgs-chromium.url = "github:nixos/nixpkgs?rev=8dd2f1add978a4747a5962f2874b8ad20f86b01c";
 
     wired.url = "github:Toqozz/wired-notify";
@@ -166,6 +170,7 @@
             {
               nixpkgs.overlays = [
                 outputs.overlays.additions
+                outputs.overlays.modifications
                 fixTextualOverlay
                 keyringPinOverlay
               ];
@@ -197,6 +202,7 @@
             {
               nixpkgs.overlays = [
                 outputs.overlays.additions
+                outputs.overlays.modifications
                 fixTextualOverlay
                 keyringPinOverlay
               ];

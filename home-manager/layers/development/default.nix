@@ -8,6 +8,7 @@
     ./c.nix
     ./clojure.nix
     ./data.nix
+    ./deno.nix
     ./diagramming.nix
     ./dotnet.nix
     ./golang.nix

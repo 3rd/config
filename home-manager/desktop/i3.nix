@@ -402,7 +402,7 @@ in
         bindsym ${modifier}+Shift+0 move container to workspace "9: ${iconCenter} ${workspaces.last}"
 
         # default to the first workspace
-        exec i3-msg 'workspace "1: ${iconLeft} ${workspaces.one}"; workspace "1: ${iconRight} ${workspaces.one}"; workspace "1: ${iconCenter} ${workspaces.one}"'
+        exec --no-startup-id i3-msg 'workspace "1: ${iconLeft} ${workspaces.one}"; workspace "1: ${iconRight} ${workspaces.one}"; workspace "1: ${iconCenter} ${workspaces.one}"'
 
         # resize (mouse)
         bindsym --whole-window --border ${modifier}+shift+button4 resize grow height 5 px or 5 ppt
@@ -425,5 +425,6 @@ in
 
   systemd.user.services = {
     setxkbmap.Service.ExecStart = lib.mkForce "${pkgs.coreutils}/bin/true";
+    polybar.Install.WantedBy = lib.mkForce [ ];
   };
 }

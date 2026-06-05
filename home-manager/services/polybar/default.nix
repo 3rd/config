@@ -75,12 +75,14 @@ in
         "inherit" = "bar/common";
         modules-left = "i3";
         modules-center = "task";
-        modules-right = "ai_usage separator battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock";
+        modules-right = "ai_usage separator battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock tray";
         height = 28;
         fixed-center = true;
+      };
+      "module/tray" = {
+        type = "internal/tray";
         tray-background = gray-darkest;
-        tray-position = "right";
-        tray-scale = "1.0";
+        tray-spacing = "4px";
       };
       "module/blank" = {
         type = "custom/text";

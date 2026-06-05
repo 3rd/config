@@ -1,6 +1,8 @@
 id: ts-array-no-useless-spread
 valid:
   - const a = [...b];
+  - const a = [...b].some(Boolean);
+  - const a = [...iterable].map((item) => item);
   - const a = [...b].copyWithin();
   - const a = [...b].fill()
   - const a = [...b].pop()
@@ -10,32 +12,65 @@ valid:
   - const a = [...b].sort();
   - const a = [...b].splice();
   - const a = [...b].unshift();
+  - const a = [..."abc"].map((letter) => letter.toUpperCase());
+  - |
+    const declaredNames = new Set<string>();
+    const knownNames = new Set<string>();
+    if (![...declaredNames].some((name) => knownNames.has(name))) return new Set<string>();
+  - |
+    const entries = new Map<string, string>();
+    const keys = [...entries].map(([key]) => key);
+  - |
+    function* values() {
+      yield 1;
+    }
+    const a = [...values()].map(Boolean);
+  - const a = [...[, 1]].map((item) => item);
+  - const a = [...[1,, 2]].map((item) => item);
+  - |
+    const items: string[] = [];
+    function collect(items: Set<string>) {
+      return [...items].some(Boolean);
+    }
 invalid:
-  - const a = [...b].at()
-  - const a = [...b].concat()
-  - const a = [...b].entries()
-  - const a = [...b].every()
-  - const a = [...b].filter()
-  - const a = [...b].find()
-  - const a = [...b].findIndex()
-  - const a = [...b].findLast()
-  - const a = [...b].findLastIndex()
-  - const a = [...b].flat()
-  - const a = [...b].flatMap()
-  - const a = [...b].forEach()
-  - const a = [...b].includes()
-  - const a = [...b].indexOf()
-  - const a = [...b].join("\n")
-  - const a = [...b].keys()
-  - const a = [...b].map(item => item + 1)
-  - const a = [...b].reduce()
-  - const a = [...b].reduceRight()
-  - const a = [...b].slice()
-  - const a = [...b].some()
-  - const a = [...b].toLocaleString()
-  - const a = [...b].toReversed()
-  - const a = [...b].toSorted()
-  - const a = [...b].toSpliced()
-  - const a = [...b].toString()
-  - const a = [...b].values()
-  - const a = [...b].with()
+  - const a = [...[1, 2]].at()
+  - const a = [...[1, 2]].concat()
+  - const a = [...[1, 2]].entries()
+  - const a = [...[1, 2]].every()
+  - const a = [...[1, 2]].filter()
+  - const a = [...[1, 2]].find()
+  - const a = [...[1, 2]].findIndex()
+  - const a = [...[1, 2]].findLast()
+  - const a = [...[1, 2]].findLastIndex()
+  - const a = [...[1, 2]].flat()
+  - const a = [...[1, 2]].flatMap()
+  - const a = [...[1, 2]].forEach()
+  - const a = [...[1, 2]].includes()
+  - const a = [...[1, 2]].indexOf()
+  - const a = [...[1, 2]].join("\n")
+  - const a = [...[1, 2]].keys()
+  - const a = [...[1, 2]].map(item => item + 1)
+  - const a = [...[1, 2]].reduce()
+  - const a = [...[1, 2]].reduceRight()
+  - const a = [...[1, 2]].slice()
+  - const a = [...[1, 2]].some()
+  - const a = [...[1, 2]].toLocaleString()
+  - const a = [...[1, 2]].toReversed()
+  - const a = [...[1, 2]].toSorted()
+  - const a = [...[1, 2]].toSpliced()
+  - const a = [...[1, 2]].toString()
+  - const a = [...[1, 2]].values()
+  - const a = [...[1, 2]].with()
+  - const a = [...Array.from(values)].some(Boolean)
+  - |
+    const items = [1, 2];
+    const a = [...items].filter(Boolean);
+  - |
+    let items = Array.from(values);
+    const a = [...items].map((item) => item);
+  - |
+    const items: string[] = getItems();
+    const a = [...items].some(Boolean);
+  - |
+    let items: Array<string> = getItems();
+    const a = [...items].join(",");

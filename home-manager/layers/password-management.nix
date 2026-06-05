@@ -5,5 +5,6 @@
     #
     keepassxc
     pass
+    seahorse
   ];
 }

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+state_dir="$HOME/.local/state/vv"
+
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  root=$(git rev-parse --show-toplevel)
+else
+  root=$(pwd -P)
+fi
+
+slug=$(
+  printf "%s" "${root#/}" |
+    tr "[:upper:]" "[:lower:]" |
+    sed -E "s/[^a-z0-9._-]+/-/g; s/-+/-/g; s/^-//; s/-$//"
+)
+
+if [[ -z "$slug" ]]; then
+  slug="root"
+fi
+
+scratch_file="$state_dir/$slug.md"
+
+mkdir -p "$state_dir"
+touch "$scratch_file"
+exec nvim "$scratch_file"
