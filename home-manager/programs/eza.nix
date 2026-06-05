@@ -10,6 +10,7 @@
   programs.fish.shellAliases = {
     l = "eza -l --group-directories-first";
     la = "eza -alBhg --group-directories-first --time-style long-iso";
+    lr = "eza -l --sort=modified --reverse --time-style long-iso";
     tree = "eza --tree --icons";
   };
 }

@@ -16,6 +16,8 @@
     package = pkgs.kitty;
     settings = with config.colors; {
       # general
+      # workaround: kitty 0.47.1 recursively watches /nix/store on NixOS/Home Manager.
+      auto_reload_config = "-1";
       clear_all_shortcuts = "yes";
       clipboard_control = "write-clipboard write-primary no-append";
       close_on_child_death = "yes";
