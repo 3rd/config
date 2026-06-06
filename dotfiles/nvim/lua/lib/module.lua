@@ -9,7 +9,6 @@ local is = require("lib/is")
 ---@field treesitter string[]|nil
 ---@field lspconfig table<string, lsp_hooks>|nil
 ---@field null table<any>|nil
----@field mason string[]|nil
 
 ---@class Module
 ---@field name string

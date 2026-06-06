@@ -22,8 +22,6 @@
   "lensline.nvim": { "branch": "main", "commit": "93c14465c742511a645bb454db33ddd96f23bf76" },
   "lualine.nvim": { "branch": "master", "commit": "131a558e13f9f28b15cd235557150ccb23f89286" },
   "lush.nvim": { "branch": "main", "commit": "9c60ec2279d62487d942ce095e49006af28eed6e" },
-  "mason-lspconfig.nvim": { "branch": "main", "commit": "7b01e2974a47d489bb92f47a41e4c0088ea8f86e" },
-  "mason.nvim": { "branch": "main", "commit": "8e921c2b68571e978db5d4d3fef9c9a7f8755473" },
   "maximize.nvim": { "branch": "master", "commit": "d688b66344b03ee6e5a32a0a40af85d174490af8" },
   "mini.nvim": { "branch": "main", "commit": "6a8aab4b07c6caa1d0643c1c9dccd5b2d5f5e094" },
   "modes.nvim": { "branch": "main", "commit": "2badf8771dbb2d1e1066fd6a5dddaad2fc836e72" },

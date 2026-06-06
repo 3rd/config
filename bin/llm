@@ -1381,7 +1381,10 @@ cmd_test() {
   fi
   require_startable_model "$id"
   log "testing: $id"
-  chat_request "$id" "Respond with OK." 4 | post_chat | jq -r '.choices[0].message.content // .choices[0].text // .'
+  local response
+  response="$(chat_request "$id" "Respond with the single word OK." 128 | post_chat | jq -r '.choices[0].message.content // .choices[0].text // empty')"
+  [[ -n "$response" ]] || die "test returned empty response"
+  printf '%s\n' "$response"
 }
 
 cmd_chat() {

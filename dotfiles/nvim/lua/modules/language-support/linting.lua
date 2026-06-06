@@ -5,11 +5,12 @@ return lib.module.create({
     {
       "mfussenegger/nvim-lint",
       event = "VeryLazy",
-      dependencies = { "mason-org/mason.nvim" },
       config = function()
+        local installer = require("lib/installer")
         local lint = require("lint")
         local has_jit, jit = pcall(require, "jit")
         local is_arm64 = has_jit and jit.arch == "arm64"
+        local selene = is_arm64 and nil or installer.resolve("selene")
 
         lint.linters.selene.args = {
           "--display-style",
@@ -18,6 +19,7 @@ return lib.module.create({
           lib.path.resolve(lib.env.dirs.vim.config, "linters/selene.toml"),
           "-",
         }
+        if selene then lint.linters.selene.cmd = selene end
 
         lint.linters_by_ft = {
           nix = { "nix", "statix" },
@@ -26,7 +28,7 @@ return lib.module.create({
             -- "alex",
           },
           sh = { "shellcheck" },
-          lua = is_arm64 and {} or { "selene" },
+          lua = selene and { "selene" } or {},
         }
 
         local group = vim.api.nvim_create_augroup("lint", { clear = true })

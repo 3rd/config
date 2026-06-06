@@ -37,7 +37,7 @@
     ../desktop/apps.nix
     ../desktop/gtk.nix
     ../layers/utilities.nix
-    ../services/nerdctl.nix
+    # ../services/nerdctl.nix
     # ../programs/ghostty.nix
   ];
 

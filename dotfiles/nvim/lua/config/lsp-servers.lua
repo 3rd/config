@@ -1,10 +1,11 @@
-return {
+local installer = require("lib/installer")
+
+local servers = {
   "ast_grep",
   "bashls",
   "clangd",
   "csharp_ls",
   "cssls",
-  "cssmodules_ls",
   "dockerls",
   "gopls",
   "html",
@@ -21,3 +22,7 @@ return {
   "yamlls",
   "zls",
 }
+
+if installer.resolve("cssmodules-language-server") then table.insert(servers, "cssmodules_ls") end
+
+return servers

@@ -34,6 +34,7 @@ _G.lib = {
   bun = require("lib/bun"),
   env = require("lib/env"),
   fs = require("lib/fs"),
+  installer = require("lib/installer"),
   is = require("lib/is"),
   lazy = require("lib/lazy"),
   log = log,

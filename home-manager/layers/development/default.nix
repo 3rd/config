@@ -22,5 +22,6 @@
     ./python.nix
     ./rust.nix
     ./workflow.nix
+    ./zig.nix
   ];
 }

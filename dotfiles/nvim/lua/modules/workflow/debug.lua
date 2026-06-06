@@ -6,8 +6,6 @@ return lib.module.create({
       "mfussenegger/nvim-dap",
       event = "VeryLazy",
       dependencies = {
-        { "mason-org/mason.nvim" },
-        { "jay-babu/mason-nvim-dap.nvim" },
         {
           "rcarriga/nvim-dap-ui",
           dependencies = { "nvim-neotest/nvim-nio" },
@@ -73,72 +71,66 @@ return lib.module.create({
           require("dap-view").open()
         end
 
-        require("mason-nvim-dap").setup({
-          ensure_installed = { "js", "delve" },
-          handlers = {
-            js = function()
-              -- js
-              local pwa_node_attach = {
-                type = "pwa-node",
-                request = "launch",
-                name = "js-debug: Attach to Process (pwa-node)",
-                processId = require("dap.utils").pick_process,
-                cwd = "${workspaceFolder}",
-              }
-              dap.adapters["pwa-node"] = {
-                type = "server",
-                port = "${port}",
-                executable = { command = vim.fn.exepath("js-debug-adapter"), args = { "${port}" } },
-              }
-              require("dap.ext.vscode").type_to_filetypes["pwa-node"] = {
-                "javascript",
-                "javascriptreact",
-                "typescript",
-                "typescriptreact",
-              }
-              for _, language in ipairs({ "javascript", "javascriptreact" }) do
-                dap.configurations[language] = {
-                  {
-                    type = "pwa-node",
-                    request = "launch",
-                    name = "js-debug: Launch (pwa-node)",
-                    program = "${file}",
-                    cwd = "${workspaceFolder}",
-                  },
-                  pwa_node_attach,
-                }
-              end
-
-              -- ts
-              local function typescript(args)
-                return {
-                  type = "pwa-node",
-                  request = "launch",
-                  name = ("js-debug: Launch (tsx%s)"):format(args and (" " .. table.concat(args, " ")) or ""),
-                  program = "${file}",
-                  cwd = "${workspaceFolder}",
-                  runtimeExecutable = "tsx",
-                  runtimeArgs = args,
-                  sourceMaps = true,
-                  protocol = "inspector",
-                  console = "integratedTerminal",
-                  resolveSourceMapLocations = {
-                    "${workspaceFolder}/dist/**/*.js",
-                    "${workspaceFolder}/**",
-                    "!**/node_modules/**",
-                  },
-                }
-              end
-              for _, language in ipairs({ "typescript", "typescriptreact" }) do
-                dap.configurations[language] = {
-                  typescript(),
-                  typescript({ "--esm" }),
-                  pwa_node_attach,
-                }
-              end
-            end,
+        local pwa_node_attach = {
+          type = "pwa-node",
+          request = "launch",
+          name = "js-debug: Attach to Process (pwa-node)",
+          processId = require("dap.utils").pick_process,
+          cwd = "${workspaceFolder}",
+        }
+        dap.adapters["pwa-node"] = {
+          type = "server",
+          port = "${port}",
+          executable = {
+            command = require("lib/installer").resolve("js-debug"),
+            args = { "${port}" },
           },
-        })
+        }
+        require("dap.ext.vscode").type_to_filetypes["pwa-node"] = {
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact",
+        }
+        for _, language in ipairs({ "javascript", "javascriptreact" }) do
+          dap.configurations[language] = {
+            {
+              type = "pwa-node",
+              request = "launch",
+              name = "js-debug: Launch (pwa-node)",
+              program = "${file}",
+              cwd = "${workspaceFolder}",
+            },
+            pwa_node_attach,
+          }
+        end
+
+        local function typescript(args)
+          return {
+            type = "pwa-node",
+            request = "launch",
+            name = ("js-debug: Launch (tsx%s)"):format(args and (" " .. table.concat(args, " ")) or ""),
+            program = "${file}",
+            cwd = "${workspaceFolder}",
+            runtimeExecutable = "tsx",
+            runtimeArgs = args,
+            sourceMaps = true,
+            protocol = "inspector",
+            console = "integratedTerminal",
+            resolveSourceMapLocations = {
+              "${workspaceFolder}/dist/**/*.js",
+              "${workspaceFolder}/**",
+              "!**/node_modules/**",
+            },
+          }
+        end
+        for _, language in ipairs({ "typescript", "typescriptreact" }) do
+          dap.configurations[language] = {
+            typescript(),
+            typescript({ "--esm" }),
+            pwa_node_attach,
+          }
+        end
 
         vim.api.nvim_create_autocmd({ "FileType" }, {
           pattern = { "dap-view", "dap-view-term", "dap-repl", "dap-float" },
