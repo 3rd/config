@@ -92,11 +92,13 @@ in
 {
   imports = [
     ../modules/base.nix
+    ../modules/android.nix
     ../modules/audio.nix
     ../modules/bluetooth.nix
     ../modules/nerdctl.nix
     ../modules/xorg.nix
     ../modules/fonts.nix
+    ../modules/thunar.nix
     ../modules/virtualisation.nix
   ];
 

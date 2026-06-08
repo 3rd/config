@@ -42,6 +42,35 @@ return lib.module.create({
       },
     },
     {
+      "saghen/blink.pairs",
+      event = { "InsertEnter", "CmdlineEnter" },
+      version = "*",
+      dependencies = { "saghen/blink.download" },
+      opts = {
+        mappings = {
+          enabled = true,
+          cmdline = true,
+        },
+        highlights = {
+          enabled = true,
+          cmdline = false,
+          groups = {
+            "RainbowRed",
+            "RainbowYellow",
+            "RainbowBlue",
+            "RainbowOrange",
+            "RainbowGreen",
+            "RainbowViolet",
+            "RainbowCyan",
+          },
+          matchparen = {
+            enabled = true,
+            include_surrounding = true,
+          },
+        },
+      },
+    },
+    {
       "Wansmer/sibling-swap.nvim",
       -- enabled = false,
       dependencies = { "nvim-treesitter" },

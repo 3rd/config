@@ -137,6 +137,9 @@ return lib.module.create({
         {
           "antosha417/nvim-lsp-file-operations",
           opts = {},
+          config = function(_, opts)
+            require("lib.patches.lsp-file-operations").setup(opts)
+          end,
         },
       },
       config = setup_tree,

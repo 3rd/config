@@ -297,7 +297,7 @@ in
           inherit modifier;
           border = 2;
           criteria = [
-            { class = "Pcmanfm"; }
+            { class = "Thunar"; }
             { instance = "copyq"; }
             { instance = "pavucontrol"; }
             { instance = "yad"; }
@@ -360,7 +360,7 @@ in
         default_floating_border pixel 2
         for_window [class="^.*"] border pixel 2
 
-        bindcode ${modifier}+110 exec ${pkgs-stable.pcmanfm}/bin/pcmanfm
+        bindcode ${modifier}+110 exec thunar
         bindcode ${modifier}+118 exec ulimit -n 999999 && ${browserExe}
         bindcode ${modifier}+115 exec ulimit -n 999999 && ${browserExe}
 

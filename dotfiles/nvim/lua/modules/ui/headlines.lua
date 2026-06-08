@@ -21,9 +21,7 @@ local syslang_headline_highlights = {
 	"SyslangHeadline6",
 }
 
-local syslang_headline_query = vim.treesitter.query.parse(
-	"syslang",
-	[[
+local syslang_headline_query_text = [[
               [
                 (heading_1_marker)
                 (heading_2_marker)
@@ -38,7 +36,21 @@ local syslang_headline_query = vim.treesitter.query.parse(
               (banner) @quote
               ((code_block) @codeblock (#offset! @codeblock 0 0 1 0))
             ]]
-)
+local syslang_headline_query = nil
+
+local get_syslang_headline_query = function()
+	if syslang_headline_query then
+		return syslang_headline_query
+	end
+
+	local ok, query = pcall(vim.treesitter.query.parse, "syslang", syslang_headline_query_text)
+	if not ok then
+		return nil
+	end
+
+	syslang_headline_query = query
+	return query
+end
 
 local syslang_headline_group = vim.api.nvim_create_augroup("syslang_headline_signs", { clear = true })
 local syslang_headline_text_namespace = vim.api.nvim_create_namespace("syslang_headline_text")
@@ -124,14 +136,20 @@ local render_syslang_headline_gutter = function(bufnr)
 		vim.cmd("redrawstatus")
 		return
 	end
+	local query = get_syslang_headline_query()
+	if not query then
+		gutter_rows[bufnr] = {}
+		vim.cmd("redrawstatus")
+		return
+	end
 
 	local headlines = require("headlines")
 	local rows = {}
 	local width = vim.api.nvim_win_get_width(0)
 
-	for _, match in syslang_headline_query:iter_matches(tree:root(), bufnr) do
+	for _, match in query:iter_matches(tree:root(), bufnr) do
 		for id, node in pairs(match) do
-			if syslang_headline_query.captures[id] == "headline" then
+			if query.captures[id] == "headline" then
 				local headline_node = get_query_match_node(node)
 				if headline_node then
 					local level = #vim.trim(vim.treesitter.get_node_text(headline_node, bufnr))
@@ -233,6 +251,10 @@ return lib.module.create({
 			dependencies = { "nvim-treesitter/nvim-treesitter" },
 			config = function()
 				local headlines = require("headlines")
+				local query = get_syslang_headline_query()
+				if not query then
+					return
+				end
 
 				headlines.setup({
 					-- markdown = shared_config,
@@ -240,7 +262,7 @@ return lib.module.create({
 						fat_headlines = false,
 						headline_highlights = syslang_headline_highlights,
 						bullet_highlights = {},
-						query = syslang_headline_query,
+						query = query,
 					}),
 				})
 

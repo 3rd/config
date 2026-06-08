@@ -58,6 +58,7 @@ local status_lines = function()
     table.insert(lines, ("%s [%s]"):format(name, state(name)))
     table.insert(lines, ("  kind: %s"):format(tool.kind))
     table.insert(lines, ("  pin: %s@%s"):format(tool.package, tool.version))
+    table.insert(lines, ("  scripts: %s"):format(tool.allow_scripts and "enabled" or "disabled"))
     table.insert(lines, ("  resolved: %s"):format(resolve(name) or "n/a"))
     table.insert(lines, ("  install: %s"):format(registry.get_install_dir(name)))
   end
@@ -77,19 +78,21 @@ local install_npm = function(name, tool)
     error("could not create install directory: " .. install_dir)
   end
 
-  local output = vim.fn.system({
+  local install_args = {
     "npm",
     "install",
     "--prefix",
     install_dir,
-    "--ignore-scripts",
+    tool.allow_scripts and "--ignore-scripts=false" or "--ignore-scripts",
     "--no-audit",
     "--no-fund",
     "--package-lock=false",
     "--save-exact",
     "--omit=dev",
     ("%s@%s"):format(tool.package, tool.version),
-  })
+  }
+
+  local output = vim.fn.system(install_args)
   if vim.v.shell_error ~= 0 then error(output) end
   if not registry.is_installed(name) then error("install completed but executable is missing: " .. tool.bin) end
   path_update_prepend(registry.get_bin_dir(name))

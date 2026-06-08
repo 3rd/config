@@ -11,7 +11,7 @@ in
     enable = true;
     defaultApplications = {
       # inode
-      "inode/directory" = "pcmanfm-qt.desktop";
+      "inode/directory" = "thunar.desktop";
       # text
       "text/plain" = "nvim.desktop";
       # mail

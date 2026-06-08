@@ -11,6 +11,19 @@ local tools = {
     bin = "cssmodules-language-server",
     lspconfig = "cssmodules_ls",
   },
+  fixjson = {
+    kind = "npm",
+    package = "fixjson",
+    version = "1.1.2",
+    bin = "fixjson",
+  },
+  rustywind = {
+    kind = "npm",
+    package = "rustywind",
+    version = "0.24.3",
+    bin = "rustywind",
+    allow_scripts = true,
+  },
 }
 
 ---@return string[]

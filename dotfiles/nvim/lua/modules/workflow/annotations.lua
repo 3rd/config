@@ -27,7 +27,19 @@ local state = {
   annotations = {},
   ---@type table<number, number[]>
   by_buffer = {},
+  ---@type Annotation[]|nil
+  restore_backup = nil,
 }
+
+local function discard_restore_backup()
+  for _, annotation in ipairs(state.restore_backup or {}) do
+    if annotation.range_id and vim.api.nvim_buf_is_valid(annotation.bufnr) then
+      pcall(vim.api.nvim_buf_del_extmark, annotation.bufnr, range_namespace, annotation.range_id)
+    end
+  end
+
+  state.restore_backup = nil
+end
 
 local function refresh_statusline()
   local ok, lualine = pcall(require, "lualine")
@@ -322,6 +334,8 @@ end
 ---@param original_code string
 ---@param comment string
 local function create_annotation(target, original_code, comment)
+  discard_restore_backup()
+
   local annotation = {
     id = state.next_id,
     bufnr = target.bufnr,
@@ -441,13 +455,57 @@ local function export_annotations()
   vim.notify(string.format("Copied %d annotation%s to clipboard", #annotations, #annotations == 1 and "" or "s"))
 end
 
+---@return number
+local function restore_cleared_annotations()
+  local backup = state.restore_backup
+  state.restore_backup = nil
+
+  if not backup then return 0 end
+
+  local buffers = {}
+  local restored_count = 0
+
+  for _, annotation in ipairs(backup) do
+    if get_annotation_range(annotation) then
+      state.annotations[annotation.id] = annotation
+      ensure_buffer_annotations(annotation.bufnr)[#ensure_buffer_annotations(annotation.bufnr) + 1] = annotation.id
+      if annotation.id >= state.next_id then state.next_id = annotation.id + 1 end
+
+      buffers[annotation.bufnr] = true
+      restored_count = restored_count + 1
+    end
+  end
+
+  for bufnr in pairs(buffers) do
+    render_buffer(bufnr)
+  end
+
+  return restored_count
+end
+
 local function clear_annotations()
+  cleanup_invalid_annotations()
+
+  if not next(state.annotations) and state.restore_backup then
+    local restored_count = restore_cleared_annotations()
+    refresh_statusline()
+    if restored_count == 0 then
+      vim.notify("No annotations to restore", vim.log.levels.INFO)
+    else
+      vim.notify(string.format("Restored %d annotation%s", restored_count, restored_count == 1 and "" or "s"))
+    end
+    return
+  end
+
   local annotation_ids = {}
   local buffers = {}
+  local backup = {}
 
   for id, annotation in pairs(state.annotations) do
     annotation_ids[#annotation_ids + 1] = id
     buffers[annotation.bufnr] = true
+
+    if get_annotation_range(annotation) then backup[#backup + 1] = annotation end
   end
 
   if #annotation_ids == 0 then
@@ -457,13 +515,10 @@ local function clear_annotations()
 
   for _, id in ipairs(annotation_ids) do
     local annotation = state.annotations[id]
-    if annotation then
-      if vim.api.nvim_buf_is_valid(annotation.bufnr) then
-        pcall(vim.api.nvim_buf_del_extmark, annotation.bufnr, range_namespace, annotation.range_id)
-      end
-      detach_annotation(annotation)
-    end
+    if annotation then detach_annotation(annotation) end
   end
+
+  state.restore_backup = backup
 
   for bufnr in pairs(buffers) do
     if vim.api.nvim_buf_is_valid(bufnr) then vim.api.nvim_buf_clear_namespace(bufnr, render_namespace, 0, -1) end

@@ -1,6 +1,6 @@
 return lib.module.create({
   name = "misc/rainbow",
-  -- enabled = false,
+  enabled = false,
   hosts = "*",
   plugins = {
     {

@@ -20,6 +20,14 @@
 # llm start gemma4-e4b-q8
 # llm test
 # llm chat "write a short explanation of what you are"
+#
+# 12B Q4_K_M
+# llm pull ggml-org/gemma-4-12B-it-GGUF --quant Q4_K_M --id gemma4-12b
+# llm set gemma4-12b --ctx 131072 --gpu-layers 99 --batch 256 --ubatch 128
+# llm optimize gemma4-12b --apply
+# llm start gemma4-12b
+# llm test gemma4-12b
+# llm chat gemma4-12b "write a short explanation of what you are"
 
 let
   llmUser = "rabbit";
