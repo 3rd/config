@@ -45,7 +45,10 @@ return lib.module.create({
       "saghen/blink.pairs",
       event = { "InsertEnter", "CmdlineEnter" },
       version = "*",
-      dependencies = { "saghen/blink.download" },
+      build = function()
+        require("blink.pairs").download():pwait(60000)
+      end,
+      dependencies = { "saghen/blink.lib" },
       opts = {
         mappings = {
           enabled = true,

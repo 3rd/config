@@ -222,6 +222,7 @@
               config = spaceshipCudaConfig;
               overlays = [
                 outputs.overlays.additions
+                outputs.overlays.modifications
                 wired.overlays.default
                 fixWiredOverlay
                 fixTextualOverlay
@@ -273,6 +274,7 @@
               inherit system;
               overlays = [
                 outputs.overlays.additions
+                outputs.overlays.modifications
                 wired.overlays.default
                 fixWiredOverlay
               ];

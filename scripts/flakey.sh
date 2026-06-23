@@ -31,19 +31,23 @@ collect_relevant_paths() {
   printf '%s\n' "${include[@]}"
 }
 
-list_relevant_files() {
-  local files=()
-
+find_relevant_files() {
   while IFS= read -r path; do
     if [[ -d "$ROOT/$path" ]]; then
-      while IFS= read -r file; do
-        files+=("$file")
-      done < <(cd "$ROOT" && find "$path" -type f | sort)
+      (cd "$ROOT" && find "$path" -type f -print)
       continue
     fi
 
-    files+=("$path")
+    printf '%s\n' "$path"
   done < <(collect_relevant_paths)
+}
+
+list_relevant_files() {
+  local files=()
+
+  while IFS= read -r file; do
+    files+=("$file")
+  done < <(find_relevant_files | sort)
 
   printf '%s\n' "${files[@]}"
   echo
@@ -55,15 +59,15 @@ list_relevant_files() {
 }
 
 copy_relevant_files_to_tmpdir() {
-  local include=()
+  local files=()
 
-  while IFS= read -r path; do
-    include+=("$path")
-  done < <(collect_relevant_paths)
+  while IFS= read -r file; do
+    files+=("$file")
+  done < <(find_relevant_files | sort)
 
   (
     cd "$ROOT"
-    command cp -a --parents "${include[@]}" "$TMPDIR"
+    command cp -a --parents "${files[@]}" "$TMPDIR"
   )
   echo "Copied relevant files to $TMPDIR"
 }

@@ -1,0 +1,34 @@
+diff --git a/opensnitch/desktop_parser.py b/opensnitch/desktop_parser.py
+index ecb4a935..e835b526 100644
+--- a/opensnitch/desktop_parser.py
++++ b/opensnitch/desktop_parser.py
+@@ -15,6 +15,19 @@ DESKTOP_PATHS = tuple([
+     for d in os.getenv('XDG_DATA_DIRS', '/usr/share/').split(':')
+ ])
+ 
++GENERIC_DESKTOP_LAUNCHERS = {
++    'bash',
++    'bun',
++    'dash',
++    'env',
++    'fish',
++    'node',
++    'python',
++    'python3',
++    'sh',
++    'zsh',
++}
++
+ class LinuxDesktopParser(threading.Thread):
+     def __init__(self):
+         threading.Thread.__init__(self)
+@@ -111,6 +124,9 @@ class LinuxDesktopParser(threading.Thread):
+                 return
+ 
+             cmd  = self._parse_exec(cmdline)
++            if os.path.basename(cmd) in GENERIC_DESKTOP_LAUNCHERS:
++                return
++
+             icon = parser.get('Desktop Entry', 'Icon', raw=True, fallback=None)
+             name = parser.get('Desktop Entry', 'Name', raw=True, fallback=None)
+             desc = self.get_app_description(parser)

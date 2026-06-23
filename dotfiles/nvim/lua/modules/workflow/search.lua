@@ -85,19 +85,19 @@ return lib.module.create({
   hosts = "*",
   setup = setup,
   plugins = {
-    {
-      "MagicDuck/grug-far.nvim",
-      opts = { headerMaxWidth = 80 },
-      cmd = "GrugFar",
-      keys = {
-        {
-          "<C-S-f>",
-          search_replace,
-          mode = { "n", "v" },
-          desc = "Search and Replace",
-        },
-      },
-    },
+    -- {
+    --   "MagicDuck/grug-far.nvim",
+    --   opts = { headerMaxWidth = 80 },
+    --   cmd = "GrugFar",
+    --   keys = {
+    --     {
+    --       "<C-S-f>",
+    --       search_replace,
+    --       mode = { "n", "v" },
+    --       desc = "Search and Replace",
+    --     },
+    --   },
+    -- },
   },
   exports = {
     find_files = find_files,

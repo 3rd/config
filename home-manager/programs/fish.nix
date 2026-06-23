@@ -117,7 +117,9 @@
       "@tpl" = "cd ~/brain/projects/templates";
       "@s" = "cd ~/sync";
       "@bb" = "cd ~/sync/brain";
-      "@ccc" = "cd /home/rabbit/brain/config/workflow/claude/launcher";
+      "@ccc" = "cd ~/brain/config/workflow/claude/launcher";
+      "@a" = "cd ~/brain/config/workflow/agents";
+      "@aa" = "cd ~/brain/config/workflow/agents/config";
       "@trash" = "cd ~/.local/share/Trash/files";
       # custom utils
       w = "work";

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 let
   lazydocker_0_24_4 = pkgs.lazydocker.overrideAttrs (_oldAttrs: rec {
@@ -19,16 +19,6 @@ in
 {
   networking.nftables.enable = true;
 
-  systemd.services.docker.serviceConfig = {
-    CPUAccounting = true;
-    CPUWeight = 60;
-    IOAccounting = true;
-    IOWeight = 40;
-    MemoryAccounting = true;
-    TasksAccounting = true;
-    TasksMax = 8192;
-  };
-
   environment.systemPackages = with pkgs; [
     # TODO: until project view bug is fixed
     lazydocker_0_24_4
@@ -37,14 +27,23 @@ in
 
   # hardware.nvidia-container-toolkit.enable = true;
   virtualisation = {
-    oci-containers.backend = "docker";
+    oci-containers.backend = lib.mkDefault "podman";
     libvirtd = {
       enable = true;
       qemu.package = pkgs.qemu_kvm;
     };
     docker = {
-      enable = true;
-      enableOnBoot = false;
+      enable = lib.mkDefault false;
+      enableOnBoot = lib.mkDefault false;
+      rootless = {
+        enable = lib.mkDefault true;
+        setSocketVariable = lib.mkDefault false;
+        # the rootful daemon.settings below does not apply to the rootless daemon; without
+        # this, rootless containers land in the user manager's user.slice uncontained
+        daemon.settings = {
+          "cgroup-parent" = "docker.slice";
+        };
+      };
       # new docker shitfest
       package = pkgs.docker_25;
       # package = pkgs.stable.docker;

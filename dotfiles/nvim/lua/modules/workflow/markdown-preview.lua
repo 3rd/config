@@ -18,6 +18,14 @@ local get_current_path = function()
   return vim.api.nvim_buf_get_name(0)
 end
 
+local is_running = function()
+  return job_id ~= nil
+end
+
+local is_stopped = function()
+  return not is_running()
+end
+
 local stop_preview = function()
   if job_id then
     vim.fn.jobstop(job_id)
@@ -105,7 +113,7 @@ return lib.module.create({
   hosts = "*",
   setup = setup,
   actions = {
-    { "n", "Markdown: Preview Start", start_preview },
-    { "n", "Markdown: Preview Stop", stop_preview },
+    { "n", "Markdown: Preview Start", start_preview, is_stopped },
+    { "n", "Markdown: Preview Stop", stop_preview, is_running },
   },
 })

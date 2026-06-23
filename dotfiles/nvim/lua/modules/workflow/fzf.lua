@@ -31,6 +31,10 @@ local FFF_LIST_BORDER = { " ", "─", " ", "│", " ", "", "", "" }
 local FFF_INPUT_BORDER = { " ", "─", " ", "", "", "", "", "" }
 local FFF_PREVIEW_BORDER = { " ", "─", " ", "", "", "", "", "" }
 local FFF_GREP_SEPARATOR = "  "
+local FZF_FILES_RG_COMMAND =
+  "rg --files --hidden --no-ignore-global --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
+local FZF_GREP_RG_OPTS =
+  "--hidden --no-ignore-global --glob '!.git' --glob '!*[-\\.]lock\\.*' --glob '!LICENSE' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e"
 local LAST_PICKER_BACKEND = nil
 local LAST_FFF_SESSION = nil
 local FFF_STICKY_CWD = nil
@@ -516,6 +520,39 @@ local get_fff_context_cwd = function()
   return vim.fn.fnamemodify(node.absolute_path, ":h")
 end
 
+local get_fzf_file_command = function()
+  local command = FZF_FILES_RG_COMMAND
+
+  if vim.fn.expand("%:p:h") ~= vim.uv.cwd() then
+    local prox = vim.fn.exepath("proximity-sort")
+    if prox ~= nil and #prox > 0 then
+      local libuv = require("fzf-lua.libuv")
+      command = command .. " | " .. libuv.shellescape(prox) .. " " .. libuv.shellescape(vim.fn.expand("%:."))
+    end
+  end
+
+  return command
+end
+
+local add_fzf_grep_context = function(opts)
+  if lib.buffer.current.get_filetype() ~= "NvimTree" then return opts end
+  if opts.search_paths or opts.filename then return opts end
+
+  local ok, api = pcall(require, "nvim-tree.api")
+  if not ok then return opts end
+
+  local node = api.tree.get_node_under_cursor()
+  if not node or not node.absolute_path or #node.absolute_path == 0 then return opts end
+
+  if node.type == "directory" then
+    opts.search_paths = { node.absolute_path }
+  else
+    opts.filename = node.absolute_path
+  end
+
+  return opts
+end
+
 local get_rooter = function()
   local ok, rooter = pcall(require, "modules/workflow/rooter")
   if not ok or not rooter or not rooter.exports then return nil end
@@ -533,36 +570,6 @@ local get_fff_sticky_cwd = function()
 
   FFF_STICKY_CWD = vim.uv.cwd()
   return FFF_STICKY_CWD
-end
-
-local get_fff_find_files_opts = function()
-  local cwd = get_fff_sticky_cwd()
-  if not cwd then return {} end
-
-  return { cwd = cwd }
-end
-
-local get_fff_live_grep_opts = function(opts)
-  local grep_opts = vim.tbl_deep_extend("force", {
-    grep = {
-      auto_exact_on_uppercase = true,
-      modes = { "fuzzy", "plain" },
-    },
-  }, opts or {})
-
-  local cwd = get_fff_sticky_cwd()
-  if cwd and grep_opts.cwd == nil then grep_opts.cwd = cwd end
-
-  return grep_opts
-end
-
-local normalize_fff_query = function(text)
-  if type(text) ~= "string" then return nil end
-
-  local query = vim.trim(text:gsub("%s*\n%s*", " "))
-  if query == "" then return nil end
-
-  return query
 end
 
 fff_query_has_uppercase = function(query)
@@ -611,9 +618,6 @@ end
 
 local setup_fzf_lua = function()
   local fzf = require("fzf-lua")
-  local fff = require("fff")
-
-  local base_fd_command = "rg --files --hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --smart-case"
 
   local config = {
     -- defaults = {
@@ -650,7 +654,7 @@ local setup_fzf_lua = function()
       },
     },
     files = {
-      cmd = base_fd_command,
+      cmd = FZF_FILES_RG_COMMAND,
       -- path_shorten = 4,
       git_icons = false,
       fzf_opts = {
@@ -661,7 +665,7 @@ local setup_fzf_lua = function()
       -- path_shorten = 4,
     },
     grep = {
-      rg_opts = "--hidden --glob '!.git' --glob '!*[-\\.]lock\\.*' --glob '!LICENSE' --column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e",
+      rg_opts = FZF_GREP_RG_OPTS,
       -- path_shorten = 4,
       git_icons = false,
       fzf_opts = { ["--layout"] = "default", ["--no-hscroll"] = "" },
@@ -673,22 +677,6 @@ local setup_fzf_lua = function()
   }
   fzf.setup(config)
 
-  -- lib.map.map("n", "<c-p>", function()
-  --   set_last_picker_backend("fzf_lua")
-  --   local fd_command = base_fd_command
-  --   if vim.fn.expand("%:p:h") ~= vim.uv.cwd() then
-  --     local prox = vim.fn.exepath("proximity-sort")
-  --     if prox ~= nil and #prox > 0 then
-  --       local libuv = require("fzf-lua.libuv")
-  --       fd_command = base_fd_command
-  --         .. " | "
-  --         .. libuv.shellescape(prox)
-  --         .. " "
-  --         .. libuv.shellescape(vim.fn.expand("%:."))
-  --     end
-  --   end
-  --   fzf.files({ cmd = fd_command })
-  -- end, "Find file in project")
   lib.map.map("n", "<c-p>", function()
     find_files()
   end, "Find file in project")
@@ -697,25 +685,6 @@ local setup_fzf_lua = function()
     buffers()
   end, "Find buffer")
 
-  -- lib.map.map("n", "<c-f>", function()
-  --   set_last_picker_backend("fzf_lua")
-  --   local opts = {}
-  --   -- nvim-tree
-  --   if vim.bo.filetype == "NvimTree" then
-  --     local ok, api = pcall(require, "nvim-tree.api")
-  --     if ok then
-  --       local node = api.tree.get_node_under_cursor()
-  --       if node and node.absolute_path and #node.absolute_path > 0 then
-  --         if node.type == "directory" then
-  --           opts.search_paths = { node.absolute_path }
-  --         else
-  --           opts.filename = node.absolute_path
-  --         end
-  --       end
-  --     end
-  --   end
-  --   fzf.grep_project(opts)
-  -- end, "Find text in project")
   lib.map.map("n", "<c-f>", function()
     live_grep()
   end, "Find text in project")
@@ -729,43 +698,38 @@ local setup_fzf_lua = function()
   lib.map.map("n", "<leader>;", resume_last_picker, "Resume last picker")
 
   -- visual
-  -- lib.map.map("v", "<c-f>", function()
-  --   set_last_picker_backend("fzf_lua")
-  --   local opts = {}
-  --   if type(config) == "table" and type(config.grep) == "table" and type(config.grep.rg_opts) == "string" then
-  --     opts.rg_opts = (config.grep.rg_opts:gsub("%-%-color=always", "--color=never"))
-  --   end
-  --   local prox = vim.fn.exepath("proximity-sort")
-  --   if prox and #prox > 0 then
-  --     local ctx = vim.fn.expand("%:.")
-  --     if ctx and #ctx > 0 then
-  --       local libuv = require("fzf-lua.libuv")
-  --       opts.filter = string.format("%s %s", libuv.shellescape(prox), libuv.shellescape(ctx))
-  --     end
-  --   end
-  --   require("fzf-lua").grep_visual(opts)
-  -- end, "Find selected text in project")
   lib.map.map("v", "<c-f>", function()
     live_grep_selection()
   end, "Find selected text in project")
 end
 
 find_files = function(opts)
-  local fff = require("fff")
-  set_last_picker_backend("fff")
-  fff.find_files(vim.tbl_deep_extend("force", get_fff_find_files_opts(), opts or {}))
+  local fzf = require("fzf-lua")
+  set_last_picker_backend("fzf_lua")
+  fzf.files(vim.tbl_deep_extend("force", { cmd = get_fzf_file_command() }, opts or {}))
 end
 
 live_grep = function(opts)
-  local fff = require("fff")
-  set_last_picker_backend("fff")
-  fff.live_grep(get_fff_live_grep_opts(opts))
+  local fzf = require("fzf-lua")
+  set_last_picker_backend("fzf_lua")
+  fzf.grep_project(add_fzf_grep_context(vim.tbl_deep_extend("force", { rg_opts = FZF_GREP_RG_OPTS }, opts or {})))
 end
 
 live_grep_selection = function()
-  local query = normalize_fff_query(lib.buffer.current.get_selected_text())
-  if not query then return end
-  live_grep({ query = query })
+  local fzf = require("fzf-lua")
+  local opts = { rg_opts = FZF_GREP_RG_OPTS:gsub("%-%-color=always", "--color=never") }
+
+  local prox = vim.fn.exepath("proximity-sort")
+  if prox and #prox > 0 then
+    local ctx = vim.fn.expand("%:.")
+    if ctx and #ctx > 0 then
+      local libuv = require("fzf-lua.libuv")
+      opts.filter = string.format("%s %s", libuv.shellescape(prox), libuv.shellescape(ctx))
+    end
+  end
+
+  set_last_picker_backend("fzf_lua")
+  fzf.grep_visual(opts)
 end
 
 buffers = function(opts)

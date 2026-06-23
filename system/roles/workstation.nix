@@ -76,7 +76,7 @@ let
   userSliceResourcePolicy = {
     CPUWeight = 80;
     IOWeight = 80;
-    TasksMax = 16000;
+    TasksMax = 131072;
   };
   dockerSliceResourcePolicy = {
     CPUWeight = 60;
@@ -85,7 +85,7 @@ let
     ManagedOOMMemoryPressureLimit = "50%";
     MemoryHigh = "30%";
     MemoryMax = "35%";
-    TasksMax = 8192;
+    TasksMax = 32768;
   };
 in
 
@@ -95,7 +95,6 @@ in
     ../modules/android.nix
     ../modules/audio.nix
     ../modules/bluetooth.nix
-    ../modules/nerdctl.nix
     ../modules/xorg.nix
     ../modules/fonts.nix
     ../modules/thunar.nix
@@ -126,13 +125,16 @@ in
   };
   # systemd.extraConfig = "DefaultLimitNOFILE=1048576";
   systemd = {
-    user.extraConfig = ''
-      DefaultLimitNOFILE=1048576
-      DefaultCPUAccounting=yes
-      DefaultMemoryAccounting=yes
-      DefaultTasksAccounting=yes
-      DefaultIOAccounting=yes
-    '';
+    user = {
+      settings.Manager = {
+        DefaultLimitNOFILE = 1048576;
+        DefaultCPUAccounting = true;
+        DefaultMemoryAccounting = true;
+        DefaultTasksAccounting = true;
+        DefaultIOAccounting = true;
+      };
+      slices.docker.sliceConfig = dockerSliceResourcePolicy;
+    };
     slices = {
       user.sliceConfig = userSliceResourcePolicy;
       docker.sliceConfig = dockerSliceResourcePolicy;

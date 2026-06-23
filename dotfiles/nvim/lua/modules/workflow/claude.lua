@@ -11,6 +11,7 @@ end
 
 return lib.module.create({
   name = "claude",
+  enabled = false,
   hosts = "*",
   plugins = {
     {

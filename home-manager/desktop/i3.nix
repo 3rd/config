@@ -13,6 +13,7 @@ let
   monLeft = "DP-0";
   monCenter = "DP-2";
   monRight = "HDMI-0";
+  polybarMsgExe = lib.getExe' config.services.polybar.package "polybar-msg";
   workspaces = {
     one = "main";
     two = "dev";
@@ -32,7 +33,7 @@ in
     ./xresources.nix
     ../services/polybar
     # ../services/dunst.nix
-    ../services/picom.nix
+    ../services/fastcompmgr.nix
   ];
 
   nixpkgs.overlays = [
@@ -248,6 +249,7 @@ in
           "${modifier}+f" = "fullscreen toggle";
           "${modifier}+v" = "split h";
           "${modifier}+s" = "split v";
+          "${modifier}+b" = "exec --no-startup-id ${polybarMsgExe} cmd toggle";
           # "${modifier}+Tab" = "workspace back_and_forth";
           "${modifier}+Tab" = "exec --no-startup-id screen-cycle";
           "${modifier}+o" = "floating toggle";
@@ -298,9 +300,15 @@ in
           border = 2;
           criteria = [
             { class = "Thunar"; }
+            { class = "opensnitch-ui"; }
+            { class = "org.gnome.FileRoller"; }
             { instance = "copyq"; }
             { instance = "pavucontrol"; }
             { instance = "yad"; }
+            { window_role = "pop-up"; }
+            { window_role = "task_dialog"; }
+            { window_type = "dialog"; }
+            { window_type = "utility"; }
           ];
         };
         startup = [

@@ -45,6 +45,11 @@ in
       ".codex"
       ".cocoindex_code"
       ".fallow"
+      ".review"
+      ".reviewrc.json"
+      ".condom"
+      "/specs"
+      "/plan"
     ];
     settings = {
       alias = {
@@ -115,7 +120,7 @@ in
 
   programs.difftastic = {
     enable = true;
-    git.enable = true;
+    git.enable = false;
     options = {
       background = "dark";
     };
@@ -162,7 +167,7 @@ in
       ga = "git add";
       gc = "git commit";
       gs = "git status -sb";
-      gd = "git diff";
+      gd = "git -c diff.external='${pkgs.difftastic}/bin/difft --background=dark' diff";
       gaa = "git add --all";
       gac = "git add . && git commit";
       clone = "git clone";

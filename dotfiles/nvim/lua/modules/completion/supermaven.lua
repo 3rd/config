@@ -27,6 +27,14 @@ local config = {
 
 local is_initialized = false
 
+local is_running = function()
+  return package.loaded["supermaven-nvim"] ~= nil and require("supermaven-nvim.api").is_running()
+end
+
+local is_stopped = function()
+  return not is_running()
+end
+
 return lib.module.create({
   name = "completion/supermaven",
   enabled = config.enabled,
@@ -54,6 +62,7 @@ return lib.module.create({
         end
         require("supermaven-nvim.api").start()
       end,
+      is_stopped,
     },
     {
       "n",
@@ -61,6 +70,7 @@ return lib.module.create({
       function()
         require("supermaven-nvim.api").stop()
       end,
+      is_running,
     },
     {
       "n",

@@ -2,6 +2,11 @@
 {
   additions = final: _prev: import ../pkgs { inherit inputs; pkgs = final; };
   modifications = final: prev: {
+    opensnitch-ui = prev.opensnitch-ui.overrideAttrs (oldAttrs: {
+      patches = (oldAttrs.patches or [ ]) ++ [
+        ./opensnitch-ignore-generic-desktop-launchers.patch
+      ];
+    });
     open-webui = prev.open-webui.overrideAttrs (oldAttrs:
       let
         frontend = oldAttrs.passthru.frontend.overrideAttrs (frontendOld: {

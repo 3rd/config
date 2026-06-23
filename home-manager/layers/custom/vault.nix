@@ -1,10 +1,16 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  pkgs-stable,
+  ...
+}:
 
 let
   vault_path = "$HOME/brain/storage/vault.encfs";
   mount_path = "$HOME/brain/storage/vault";
 in {
-  home.packages = with pkgs; [ encfs ];
+  home.packages = [
+    pkgs-stable.encfs
+  ];
 
   home.file = {
     ".local/bin/vault-mount" = {

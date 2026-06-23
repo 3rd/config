@@ -11,6 +11,13 @@ local tools = {
     bin = "cssmodules-language-server",
     lspconfig = "cssmodules_ls",
   },
+  ["vscode-langservers-extracted"] = {
+    kind = "npm",
+    package = "vscode-langservers-extracted",
+    version = "4.10.0",
+    bin = "vscode-json-language-server",
+    lspconfig = "jsonls",
+  },
   fixjson = {
     kind = "npm",
     package = "fixjson",

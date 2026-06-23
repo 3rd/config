@@ -76,6 +76,7 @@ in
         modules-left = "i3";
         modules-center = "task";
         modules-right = "ai_usage separator battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock tray";
+        enable-ipc = true;
         height = 28;
         fixed-center = true;
       };

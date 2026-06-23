@@ -210,6 +210,12 @@ local commands = {
   },
 }
 
+---@type table<"normal"|"visual", table<string, fun(): boolean>>
+local conditions = {
+  normal = {},
+  visual = {},
+}
+
 local open_normal_menu = nil
 local open_visual_menu = nil
 
@@ -223,19 +229,23 @@ local setup = function()
         local mode = action[1]
         local name = action[2]
         local command = action[3]
+        local cond = action[4]
         if mode == "n" then
           commands.normal[name] = command
+          conditions.normal[name] = cond
         elseif mode == "v" then
           commands.visual[name] = command
+          conditions.visual[name] = cond
         end
       end
     end
   end
 
-  local create_source = function(cmds)
+  local create_source = function(cmds, conds)
     local result = {}
-    for k, _ in pairs(cmds) do
-      table.insert(result, k)
+    for name, _ in pairs(cmds) do
+      local cond = conds[name]
+      if cond == nil or cond() then table.insert(result, name) end
     end
     return result
   end
@@ -260,11 +270,11 @@ local setup = function()
     end)
   end
 
-  local create_menu = function(cmds)
-    local source = create_source(cmds)
+  local create_menu = function(cmds, conds)
     local handler = create_handler(cmds)
 
     return function()
+      local source = create_source(cmds, conds)
       local fzf = require("fzf")
       coroutine.wrap(function()
         local options = {
@@ -281,8 +291,8 @@ local setup = function()
     end
   end
 
-  open_normal_menu = create_menu(commands.normal)
-  open_visual_menu = create_menu(commands.visual)
+  open_normal_menu = create_menu(commands.normal, conditions.normal)
+  open_visual_menu = create_menu(commands.visual, conditions.visual)
 end
 
 return lib.module.create({

@@ -194,14 +194,14 @@
       DefaultIOAccounting = true;
       DefaultLimitCORE = 0;
     };
-    user.extraConfig = ''
-      DefaultLimitNOFILE=999999
-      DefaultLimitCORE=0
-      DefaultCPUAccounting=yes
-      DefaultMemoryAccounting=yes
-      DefaultTasksAccounting=yes
-      DefaultIOAccounting=yes
-    '';
+    user.settings.Manager = {
+      DefaultLimitNOFILE = lib.mkDefault 999999;
+      DefaultLimitCORE = lib.mkDefault 0;
+      DefaultCPUAccounting = lib.mkDefault true;
+      DefaultMemoryAccounting = lib.mkDefault true;
+      DefaultTasksAccounting = lib.mkDefault true;
+      DefaultIOAccounting = lib.mkDefault true;
+    };
     oomd = {
       enable = true;
       enableUserSlices = true;
@@ -215,8 +215,8 @@
   # oom
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 10;
-    freeMemKillThreshold = 5;
+    freeMemThreshold = 3;
+    freeMemKillThreshold = 2;
     freeSwapThreshold = 100;
     freeSwapKillThreshold = 100;
     enableNotifications = true;

@@ -15,9 +15,4 @@
       }
     ];
   };
-
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications."x-scheme-handler/claude" = "claude-desktop.desktop";
-  };
 }

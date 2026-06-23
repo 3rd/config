@@ -19,7 +19,7 @@ local is = require("lib/is")
 ---@field setup function|nil
 ---@field hooks hooks|nil
 ---@field mappings ({ [1]: MappingMode|MappingMode[], [2]: string, [3]: string|function, [4]: string|table })[]|nil
----@field actions ({ [1]: string, [2]: string, [3]: string|function})[]|nil
+---@field actions ({ [1]: string, [2]: string, [3]: string|function, [4]: (fun(): boolean)|nil})[]|nil
 ---@field exports table<string, any>|nil
 local Module = {
   __is_module = true,

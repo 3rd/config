@@ -37,6 +37,7 @@
     ../programs/mise.nix
     ../desktop/apps.nix
     ../desktop/gtk.nix
+    ../desktop/qt.nix
     ../layers/utilities.nix
     # ../services/nerdctl.nix
     # ../programs/ghostty.nix
@@ -50,6 +51,7 @@
   };
 
   programs.home-manager.enable = true;
+  services.opensnitch-ui.enable = true;
 
   home.sessionPath = [ "$HOME/.local/bin" ];
   home.sessionVariables = {
