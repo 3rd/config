@@ -59,7 +59,7 @@
       pkgs-stable.miniserve # https://github.com/svenstaro/miniserve
       pkgs-stable.silicon
       pkgs-stable.netlify-cli
-      pkgs-stable.copyq
+      copyq
       pkgs-stable.flameshot
       pkgs-stable.flyctl
     ];

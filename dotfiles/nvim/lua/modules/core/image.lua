@@ -1,17 +1,16 @@
 return lib.module.create({
   name = "core/image",
-  enabled = false,
+  -- enabled = false,
   hosts = { "spaceship", "death" },
   plugins = {
     {
       "3rd/image.nvim",
-      lazy = false,
       dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "image.nvim"),
       ft = { "markdown", "norg", "syslang", "vimwiki", "html", "org", "image_nvim" },
       config = function()
         require("image").setup({
           debug = {
-            enabled = false,
+            -- enabled = true,
             level = "debug",
             file_path = "/tmp/image.nvim.log",
             format = "compact",

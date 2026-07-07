@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+#/ Usage: formats
+#/ Description: Format staged files in the current directory
+#/ Examples:
+#/   formats        # format staged files
+#/ Options:
+#/   --help: Display this help message
+usage() {
+  grep '^#/' "$0" | cut -c4-
+  exit 0
+}
+expr "$*" : ".*--help" >/dev/null && usage
+
+if [ "$#" -ne 0 ]; then
+  echo "formats: arguments are not supported; staged files are selected automatically" >&2
+  exit 2
+fi
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "FATAL: Not inside a git work tree."
+  exit 1
+fi
+
+STAGED_FILES=()
+while IFS= read -r -d '' file; do
+  if [ -f "$file" ]; then
+    STAGED_FILES+=("$file")
+  fi
+done < <(git diff --cached --name-only --relative --diff-filter=ACMR -z)
+
+if [ "${#STAGED_FILES[@]}" -eq 0 ]; then
+  echo "No staged files."
+  exit 0
+fi
+
+FORMATTED=0
+GLOBAL_PRETTIER_CONFIG="$HOME/.config/nvim/linters/prettier.json"
+
+package_has_prettier_config() {
+  local package_json="$1"
+
+  if ! command -v node >/dev/null 2>&1; then
+    return 1
+  fi
+
+  node -e '
+    const fs = require("fs");
+    const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    process.exit(Object.prototype.hasOwnProperty.call(pkg, "prettier") ? 0 : 1);
+  ' "$package_json"
+}
+
+find_prettier_config() {
+  local target="$1"
+  local dir
+
+  if [ -d "$target" ]; then
+    dir="$(cd "$target" && pwd)"
+  else
+    dir="$(cd "$(dirname "$target")" && pwd)"
+  fi
+
+  while [ "$dir" != "/" ]; do
+    for config in .prettierrc .prettierrc.json .prettierrc.json5 .prettierrc.yaml .prettierrc.yml .prettierrc.toml .prettierrc.js .prettierrc.cjs .prettierrc.mjs .prettierrc.ts .prettierrc.cts .prettierrc.mts prettier.config.js prettier.config.cjs prettier.config.mjs prettier.config.ts prettier.config.cts prettier.config.mts; do
+      if [ -f "$dir/$config" ]; then
+        printf '%s\n' "$dir/$config"
+        return 0
+      fi
+    done
+
+    if [ -f "$dir/package.json" ] && package_has_prettier_config "$dir/package.json"; then
+      printf '%s\n' "$dir/package.json"
+      return 0
+    fi
+
+    dir="$(dirname "$dir")"
+  done
+
+  return 1
+}
+
+if [ -f "package.json" ]; then
+  PRETTIER_FILES=()
+  LOCAL_PRETTIER_FILES=()
+  GLOBAL_PRETTIER_FILES=()
+
+  for file in "${STAGED_FILES[@]}"; do
+    case "$file" in
+      *.cjs | *.cts | *.css | *.gql | *.graphql | *.html | *.js | *.json | *.json5 | *.jsonc | *.jsx | *.less | *.md | *.mdx | *.mjs | *.mts | *.scss | *.ts | *.tsx | *.vue | *.yaml | *.yml)
+        PRETTIER_FILES+=("$file")
+        ;;
+    esac
+  done
+
+  if [ "${#PRETTIER_FILES[@]}" -ne 0 ]; then
+    for file in "${PRETTIER_FILES[@]}"; do
+      if find_prettier_config "$file" >/dev/null; then
+        LOCAL_PRETTIER_FILES+=("$file")
+      else
+        GLOBAL_PRETTIER_FILES+=("$file")
+      fi
+    done
+
+    if [ "${#LOCAL_PRETTIER_FILES[@]}" -ne 0 ]; then
+      echo "Formatting staged files with local Prettier config"
+      prettier -w "${LOCAL_PRETTIER_FILES[@]}"
+    fi
+
+    if [ "${#GLOBAL_PRETTIER_FILES[@]}" -ne 0 ]; then
+      echo "Formatting staged files"
+      prettier -w "${GLOBAL_PRETTIER_FILES[@]}" --config "$GLOBAL_PRETTIER_CONFIG"
+    fi
+
+    FORMATTED=1
+  fi
+fi
+
+if [ "$FORMATTED" -eq 0 ]; then
+  echo "No staged files matched a supported formatter."
+fi

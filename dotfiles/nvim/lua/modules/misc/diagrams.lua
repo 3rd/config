@@ -45,8 +45,8 @@ return lib.module.create({
     },
     {
       "3rd/diagram.nvim",
-      enabled = false,
-      -- ft = { "markdown", "syslang" },
+      -- enabled = false,
+      ft = { "markdown", "syslang" },
       dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "diagram.nvim"),
       opts = {
         events = {

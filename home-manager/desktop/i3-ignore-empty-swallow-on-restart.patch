@@ -1,0 +1,36 @@
+--- a/src/load_layout.c
++++ b/src/load_layout.c
+@@ -32,6 +32,7 @@
+ struct Match *current_swallow;
+ static bool swallow_is_empty;
+ static int num_marks;
++static bool tolerate_empty_swallows;
+ /* We need to save each container that needs to be marked if we want to support
+  * marking non-leaf containers. In their case, the end_map for their children is
+  * called before their own end_map, so marking json_node would end up marking
+@@ -200,7 +201,16 @@
+ 
+     if (parsing_swallows && swallow_is_empty) {
+         /* We parsed an empty swallow definition. This is an invalid layout
+-         * definition, hence we reject it. */
++         * definition, hence we reject it unless it came from i3 restart state. */
++        if (tolerate_empty_swallows) {
++            ELOG("Ignoring empty swallow definition in restart layout.\n");
++            TAILQ_REMOVE(&(json_node->swallow_head), current_swallow, matches);
++            match_free(current_swallow);
++            free(current_swallow);
++            current_swallow = NULL;
++            swallow_is_empty = false;
++            return 1;
++        }
+         ELOG("Layout file is invalid: found an empty swallow definition.\n");
+         return 0;
+     }
+@@ -725,6 +735,7 @@
+     parsing_geometry = false;
+     parsing_focus = false;
+     parsing_marks = false;
++    tolerate_empty_swallows = (errormsg == NULL);
+     setlocale(LC_NUMERIC, "C");
+     const yajl_status stat = yajl_parse(hand, (const unsigned char *)buf, len);
+     if (stat != yajl_status_ok) {

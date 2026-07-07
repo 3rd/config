@@ -8,8 +8,9 @@
 /hosts
 /ssh
 /workspaces
+/dotfiles/emacs/url
 
 *private*
-/dotfiles/emacs/url
+/docs
 /workflow
 /glance

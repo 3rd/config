@@ -39,6 +39,7 @@
     ../desktop/gtk.nix
     ../desktop/qt.nix
     ../layers/utilities.nix
+    ../services/frpc.nix
     # ../services/nerdctl.nix
     # ../programs/ghostty.nix
   ];

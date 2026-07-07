@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+IFS=$'nt'
+
+appimage-run "$(find ~/apps -maxdepth 1 -name 'Cursor*.AppImage' | head -1)" $@ >/dev/null 2>&1 &
+disown

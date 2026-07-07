@@ -1,6 +1,26 @@
-{ pkgs, pkgs-stable, ... }:
+{
+  lib,
+  pkgs,
+  pkgs-stable,
+  ...
+}:
 
 let
+  smergeLayout = pkgs.writeShellScript "smerge-layout" (builtins.readFile ./smerge-layout.sh);
+  sublime-merge-with-layout = pkgs.symlinkJoin {
+    name = "sublime-merge-with-layout";
+    paths = [ pkgs.sublime-merge ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/sublime_merge \
+        --prefix PATH : ${lib.makeBinPath [
+          pkgs.coreutils
+          pkgs.jq
+        ]} \
+        --run ${lib.escapeShellArg "${smergeLayout} \"$@\""}
+    '';
+    meta = pkgs.sublime-merge.meta;
+  };
   scripts = {
     git-id = pkgs.writeShellScriptBin "git-id" (builtins.readFile ./git-id.sh);
     git-branch = pkgs.writeShellScriptBin "git-branch" (builtins.readFile ./git-branch.sh);
@@ -22,7 +42,7 @@ in
     pkgs-stable.gource
     lazygit
     meld
-    sublime-merge
+    sublime-merge-with-layout
     gh
     smartgit
     # custom

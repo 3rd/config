@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+#/ Usage: flints
+#/ Description: Format and lint staged files in the current directory
+#/ Examples:
+#/   flints        # format and lint staged files
+#/ Options:
+#/   --help: Display this help message
+usage() {
+  grep '^#/' "$0" | cut -c4-
+  exit 0
+}
+expr "$*" : ".*--help" >/dev/null && usage
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "FATAL: Not inside a git work tree."
+  exit 1
+fi
+
+STAGED_FILES=()
+while IFS= read -r -d '' file; do
+  if [ -f "$file" ]; then
+    STAGED_FILES+=("$file")
+  fi
+done < <(git diff --cached --name-only --relative --diff-filter=ACMR -z)
+
+if [ "${#STAGED_FILES[@]}" -eq 0 ]; then
+  echo "No staged files."
+  exit 0
+fi
+
+DONE=0
+ESLINT_BIN="$HOME/brain/core/linter/eslint/node_modules/eslint/bin/eslint.js"
+ESLINT_CONFIG="$HOME/brain/core/linter/eslint/dist/main.js"
+
+find_package_root() {
+  local file="$1"
+  local dir
+
+  dir="$(dirname "$file")"
+  while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+    if [ -f "$dir/package.json" ]; then
+      printf '%s\n' "$dir"
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+
+  if [ -f "package.json" ]; then
+    printf '%s\n' "."
+    return 0
+  fi
+
+  return 1
+}
+
+append_unique_eslint_root() {
+  local root="$1"
+  local existing
+
+  for existing in "${ESLINT_ROOTS[@]}"; do
+    if [ "$existing" = "$root" ]; then
+      return
+    fi
+  done
+
+  ESLINT_ROOTS+=("$root")
+}
+
+if [ -f "go.mod" ]; then
+  GO_FILES=()
+  for file in "${STAGED_FILES[@]}"; do
+    case "$file" in
+      *.go) GO_FILES+=("$file") ;;
+    esac
+  done
+
+  if [ "${#GO_FILES[@]}" -eq 0 ]; then
+    echo "No staged Go files."
+    exit 0
+  fi
+
+  echo "Formatting staged Go files"
+  gofmt -w "${GO_FILES[@]}"
+
+  PATCH_FILE="$(mktemp)"
+  trap 'rm -f "$PATCH_FILE"' EXIT
+  git diff --cached --relative -- "${GO_FILES[@]}" >"$PATCH_FILE"
+
+  echo "Linting staged Go files"
+  golangci-lint run --enable-all --exclude-use-default -e "ALL_CAPS" -e "cuddled" -e "SA9004" -e "a blank import should" --new-from-patch "$PATCH_FILE" --whole-files
+  exit
+fi
+
+if [ -f "package.json" ]; then
+  PRETTIER_FILES=()
+  ESLINT_FILES=()
+
+  for file in "${STAGED_FILES[@]}"; do
+    case "$file" in
+      *.cjs | *.cts | *.css | *.gql | *.graphql | *.html | *.js | *.json | *.json5 | *.jsonc | *.jsx | *.less | *.md | *.mdx | *.mjs | *.mts | *.scss | *.ts | *.tsx | *.vue | *.yaml | *.yml)
+        PRETTIER_FILES+=("$file")
+        ;;
+    esac
+
+    case "$file" in
+      *.cjs | *.cts | *.js | *.jsx | *.mjs | *.mts | *.ts | *.tsx)
+        ESLINT_FILES+=("$file")
+        ;;
+    esac
+  done
+
+  if [ "${#PRETTIER_FILES[@]}" -ne 0 ]; then
+    echo "Formatting staged files"
+    prettier -w "${PRETTIER_FILES[@]}" --config ~/.config/nvim/linters/prettier.json
+    DONE=1
+  fi
+
+  if [ "${#ESLINT_FILES[@]}" -ne 0 ]; then
+    ESLINT_ROOTS=()
+    for file in "${ESLINT_FILES[@]}"; do
+      package_root="$(find_package_root "$file")"
+      append_unique_eslint_root "$package_root"
+    done
+
+    for package_root in "${ESLINT_ROOTS[@]}"; do
+      PACKAGE_ESLINT_FILES=()
+      for file in "${ESLINT_FILES[@]}"; do
+        file_package_root="$(find_package_root "$file")"
+        if [ "$file_package_root" != "$package_root" ]; then
+          continue
+        fi
+
+        if [ "$package_root" = "." ]; then
+          PACKAGE_ESLINT_FILES+=("$file")
+        else
+          PACKAGE_ESLINT_FILES+=("${file#"$package_root"/}")
+        fi
+      done
+
+      if [ "${#PACKAGE_ESLINT_FILES[@]}" -eq 0 ]; then
+        continue
+      fi
+
+      echo "Linting staged JS/TS files in $package_root"
+      (
+        cd "$package_root"
+        ESLINT_USE_FLAT_CONFIG=false "$ESLINT_BIN" -c "$ESLINT_CONFIG" --no-eslintrc "${PACKAGE_ESLINT_FILES[@]}" --fix --cache
+      )
+    done
+    DONE=1
+  fi
+fi
+
+if [ "$DONE" -eq 0 ]; then
+  echo "No staged files matched a supported formatter or linter."
+fi

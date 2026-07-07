@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euf -o pipefail
-IFS=$'nt'
 
 UPDATE_URL="https://raw.githubusercontent.com/oslook/cursor-ai-downloads/refs/heads/main/version-history.json"
 DEST="${HOME}/apps/Cursor.AppImage"

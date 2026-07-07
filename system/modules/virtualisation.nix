@@ -37,7 +37,7 @@ in
       enableOnBoot = lib.mkDefault false;
       rootless = {
         enable = lib.mkDefault true;
-        setSocketVariable = lib.mkDefault false;
+        setSocketVariable = lib.mkDefault true;
         # the rootful daemon.settings below does not apply to the rootless daemon; without
         # this, rootless containers land in the user manager's user.slice uncontained
         daemon.settings = {

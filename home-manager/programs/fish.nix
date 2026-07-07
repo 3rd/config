@@ -21,6 +21,9 @@
       set -x BUN_INSTALL "$HOME/.bun"
       set -x PATH $BUN_INSTALL/bin $PATH
       set -x BROWSER google-chrome-stable
+      if not set -q DOCKER_HOST; and set -q XDG_RUNTIME_DIR
+        set -gx DOCKER_HOST "unix://$XDG_RUNTIME_DIR/docker.sock"
+      end
 
       ulimit -n 999999
 

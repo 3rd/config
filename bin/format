@@ -3,6 +3,89 @@ set -euo pipefail
 IFS=$'\n\t'
 
 FORMATTED=0
+GLOBAL_PRETTIER_CONFIG="$HOME/.config/nvim/linters/prettier.json"
+
+package_script() {
+  local script="$1"
+
+  if ! command -v node >/dev/null 2>&1; then
+    return 1
+  fi
+
+  node -e '
+    const fs = require("fs");
+    const script = process.argv[1];
+    const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+    const value = pkg.scripts?.[script];
+    if (!value) process.exit(1);
+    process.stdout.write(value);
+  ' "$script"
+}
+
+package_has_prettier_config() {
+  local package_json="$1"
+
+  if ! command -v node >/dev/null 2>&1; then
+    return 1
+  fi
+
+  node -e '
+    const fs = require("fs");
+    const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    process.exit(Object.prototype.hasOwnProperty.call(pkg, "prettier") ? 0 : 1);
+  ' "$package_json"
+}
+
+find_prettier_config() {
+  local target="$1"
+  local dir
+
+  if [ -d "$target" ]; then
+    dir="$(cd "$target" && pwd)"
+  else
+    dir="$(cd "$(dirname "$target")" && pwd)"
+  fi
+
+  while [ "$dir" != "/" ]; do
+    for config in .prettierrc .prettierrc.json .prettierrc.json5 .prettierrc.yaml .prettierrc.yml .prettierrc.toml .prettierrc.js .prettierrc.cjs .prettierrc.mjs .prettierrc.ts .prettierrc.cts .prettierrc.mts prettier.config.js prettier.config.cjs prettier.config.mjs prettier.config.ts prettier.config.cts prettier.config.mts; do
+      if [ -f "$dir/$config" ]; then
+        printf '%s\n' "$dir/$config"
+        return 0
+      fi
+    done
+
+    if [ -f "$dir/package.json" ] && package_has_prettier_config "$dir/package.json"; then
+      printf '%s\n' "$dir/package.json"
+      return 0
+    fi
+
+    dir="$(dirname "$dir")"
+  done
+
+  return 1
+}
+
+run_package_format() {
+  if command -v bun >/dev/null 2>&1; then
+    bun run format
+  else
+    npm run format
+  fi
+}
+
+run_prettier() {
+  local target="$1"
+  local config_path
+
+  config_path="$(find_prettier_config "$target" || true)"
+  if [ -n "$config_path" ]; then
+    echo "Formatting $target with local Prettier config"
+    prettier -w "$target"
+  else
+    echo "Formatting $target"
+    prettier -w "$target" --config "$GLOBAL_PRETTIER_CONFIG"
+  fi
+}
 
 if [ -f "go.mod" ]; then
   TARGET="${1:-./...}"
@@ -11,12 +94,17 @@ if [ -f "go.mod" ]; then
 fi
 
 if [ -f "package.json" ]; then
-  TARGET="${1:-.}"
-  if [ -d "$TARGET/src" ]; then
-    TARGET="$TARGET/src"
+  format_script="$(package_script format || true)"
+  if [ "$#" -eq 0 ] && [ -n "$format_script" ] && [ "$format_script" != "format" ] && [[ "$format_script" != format\ * ]]; then
+    echo "Formatting with local format script"
+    run_package_format
+  else
+    TARGET="${1:-.}"
+    if [ -d "$TARGET/src" ]; then
+      TARGET="$TARGET/src"
+    fi
+    run_prettier "$TARGET"
   fi
-  echo "Formatting $TARGET"
-  prettier -w "$TARGET" --config ~/.config/nvim/linters/prettier.json
   FORMATTED=1
 fi
 

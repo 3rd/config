@@ -181,6 +181,9 @@ in
           rev = "cfa4cf16bea809c7c715a86c428757e577c85254";
           sha256 = "sha256-Kvygsx0r2SGaAttSWLY/pk71oWf5VdUrB1dF8UwWwGI=";
         };
+        patches = (oldAttrs.patches or [ ]) ++ [
+          ./i3-ignore-empty-swallow-on-restart.patch
+        ];
         doCheck = false;
       });
       config = {
@@ -288,7 +291,7 @@ in
           # launchers
           "${modifier}+Return" = "exec ${pkgs.kitty}/bin/kitty";
           "${modifier}+shift+Return" = "exec ulimit -n 999999 && ${browserExe}";
-          "${modifier}+p" = "exec ${pkgs-stable.copyq}/bin/copyq show";
+          "${modifier}+p" = "exec ${pkgs.copyq}/bin/copyq show";
           "Print" = "exec ${pkgs-stable.flameshot}/bin/flameshot gui";
           "${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad toggle";
           "ctrl+${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad store";
@@ -316,7 +319,7 @@ in
             always = true;
             command = "--no-startup-id ${pkgs-stable.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
           }
-          { command = "--no-startup-id ${pkgs-stable.copyq}/bin/copyq"; }
+          { command = "--no-startup-id ${pkgs.copyq}/bin/copyq"; }
           {
             command = "--no-startup-id ${pkgs-stable.flameshot}/bin/flameshot";
           }
@@ -367,6 +370,7 @@ in
         default_border pixel 2
         default_floating_border pixel 2
         for_window [class="^.*"] border pixel 2
+        for_window [instance="^condom-approval$"] floating enable, move position center
 
         bindcode ${modifier}+110 exec thunar
         bindcode ${modifier}+118 exec ulimit -n 999999 && ${browserExe}

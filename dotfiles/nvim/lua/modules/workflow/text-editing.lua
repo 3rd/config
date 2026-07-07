@@ -1,3 +1,11 @@
+local function should_skip_double_quote_pair(ctx)
+  local char_under_cursor = ctx.char_under_cursor
+  local char_after_cursor = ctx:text_after_cursor(1)
+
+  return (char_under_cursor ~= "" and not char_under_cursor:match("%s"))
+    or (char_after_cursor ~= "" and not char_after_cursor:match("%s"))
+end
+
 return lib.module.create({
   name = "workflow/text-editing",
   hosts = "*",
@@ -49,29 +57,46 @@ return lib.module.create({
         require("blink.pairs").download():pwait(60000)
       end,
       dependencies = { "saghen/blink.lib" },
-      opts = {
-        mappings = {
-          enabled = true,
-          cmdline = true,
-        },
-        highlights = {
-          enabled = true,
-          cmdline = false,
-          groups = {
-            "RainbowRed",
-            "RainbowYellow",
-            "RainbowBlue",
-            "RainbowOrange",
-            "RainbowGreen",
-            "RainbowViolet",
-            "RainbowCyan",
-          },
-          matchparen = {
+      opts = function(_, opts)
+        opts = opts or {}
+
+        local default_quote_pairs = vim.deepcopy(require("blink.pairs.config.mappings").pairs[1]['"'])
+        for _, quote_pair in ipairs(default_quote_pairs) do
+          local default_when = quote_pair.when
+          quote_pair.when = function(ctx)
+            if should_skip_double_quote_pair(ctx) then return false end
+
+            return default_when == nil or default_when(ctx)
+          end
+        end
+
+        return vim.tbl_deep_extend("force", opts, {
+          mappings = {
             enabled = true,
-            include_surrounding = true,
+            cmdline = true,
+            pairs = {
+              ['"'] = default_quote_pairs,
+            },
           },
-        },
-      },
+          highlights = {
+            enabled = true,
+            cmdline = false,
+            groups = {
+              "RainbowRed",
+              "RainbowYellow",
+              "RainbowBlue",
+              "RainbowOrange",
+              "RainbowGreen",
+              "RainbowViolet",
+              "RainbowCyan",
+            },
+            matchparen = {
+              enabled = true,
+              include_surrounding = true,
+            },
+          },
+        })
+      end,
     },
     {
       "Wansmer/sibling-swap.nvim",

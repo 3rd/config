@@ -23,6 +23,22 @@
     alsa.support32Bit = true;
     jack.enable = true;
     pulse.enable = true;
+    # stop chromium/electron webrtc agc from changing the mic device volume system-wide
+    extraConfig.pipewire-pulse."99-block-source-volume" = {
+      "pulse.rules" = [
+        {
+          matches = [
+            { "application.name" = "~Chromium.*"; }
+            { "application.name" = "~Google Chrome.*"; }
+            { "application.process.binary" = "chrome"; }
+            { "application.process.binary" = "chromium"; }
+            { "application.process.binary" = "electron"; }
+            { "application.process.binary" = "~\\.?[Dd]iscord.*"; }
+          ];
+          actions.quirks = [ "block-source-volume" ];
+        }
+      ];
+    };
     wireplumber = {
       enable = true;
       extraConfig = {
