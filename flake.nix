@@ -127,6 +127,10 @@
     {
       overlays = import ./system/overlays { inherit inputs; };
 
+      nixosModules = {
+        condom = import ./condom/modules/condom.nix;
+      };
+
       packages = forAllSystems (
         system:
         let

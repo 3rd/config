@@ -30,7 +30,7 @@ STYLUA_CONFIG=$(SOURCE)/linters/stylua.toml
 FORMAT_LUA_TARGETS?=init.lua lua after colors plugins specs
 
 .DEFAULT_GOAL = help
-.PHONY: help clean dev format profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup doctor doctor-tools doctor-runtime
+.PHONY: help clean dev format profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup doctor doctor-tools doctor-runtime update
 
 help: ## help
 	@echo "🔥 ${YELLOW}nvim${RESET}"
@@ -47,6 +47,9 @@ dev: ## watch
 
 run: ## run
 	@bash -c "nvim $(DEV_EXTRA_ARGS)"
+
+update: ## safely review and update plugins
+	@bash "$(SOURCE)/scripts/upgrade-plugins.sh"
 
 dev-sandbox: ## watch in sandbox
 	$(eval SANDBOX_HOME=$(SOURCE)/sandbox)

@@ -18,6 +18,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
 
 collect_relevant_paths() {
   include=(
+    ./condom/modules
     ./home-manager
     ./system
     ./flake.nix

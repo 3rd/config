@@ -99,6 +99,19 @@ in
     ../modules/fonts.nix
     ../modules/thunar.nix
     ../modules/virtualisation.nix
+    ../../condom/modules/condom.nix
+  ];
+
+  programs.condom = {
+    enable = true;
+    binaryPath = "/home/rabbit/.local/bin/condom";
+    helperBinaryPath = "/home/rabbit/.local/bin/condom-helper";
+    installPackage = false;
+    installSandboxTools = true;
+  };
+
+  users.users.rabbit.extraGroups = [
+    config.programs.condom.helperGroup
   ];
 
   boot.kernel.sysctl = {
