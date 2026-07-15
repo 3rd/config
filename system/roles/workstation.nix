@@ -290,7 +290,10 @@ in
   services.flatpak.enable = true;
   services.fstrim.enable = true;
   services.fwupd.enable = true;
-  services.opensnitch.enable = true;
+  services.opensnitch = {
+    enable = true;
+    settings.DefaultAction = "deny";
+  };
   services.timesyncd.enable = lib.mkDefault true;
   services.udisks2.enable = true;
 

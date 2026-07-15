@@ -1,4 +1,9 @@
-{ config, pkgs, options, ... }:
+{
+  config,
+  pkgs,
+  options,
+  ...
+}:
 
 {
 
@@ -9,17 +14,19 @@
     powerOnBoot = true;
     settings = {
       General = {
-        ControllerMode = "bredr";
+        ControllerMode = "dual";
         FastConnectable = true;
         Experimental = true;
         KernelExperimental = true;
       };
-      LE = { EnableAdvMonInterleaveScan = 1; };
+      LE = {
+        EnableAdvMonInterleaveScan = 1;
+      };
     };
   };
   services.blueman.enable = true;
 
   services.udev.extraRules = ''
-    SUBSYSTEM=="usb", ATTRS{idVendor}=="8087", ATTRS{idProduct}=="0029", ATTR{authorized}="0"
+    ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="8087", ATTR{idProduct}=="0029", ATTR{authorized}="0"
   '';
 }

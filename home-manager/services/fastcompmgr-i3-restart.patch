@@ -1,0 +1,69 @@
+diff --git a/cm-window.c b/cm-window.c
+index 3ea5d6b..5be4ac1 100644
+--- a/cm-window.c
++++ b/cm-window.c
+@@ -71,6 +71,16 @@ win* find_win(Window id) {
+ }
+ 
+ 
++win* find_win_any_state(Window id) {
++  win *w;
++  for (w = list; w; w = w->next) {
++    if (w->id == id)
++      return w;
++  }
++  return NULL;
++}
++
++
+ win* find_win_any_parent(Window w) {
+   Window root, parent;
+   Window *children;
+@@ -132,5 +142,6 @@ bool win_is_client(Window window){
+ 
+ void win_register_client_events(Window window)
+ {
++  set_ignore(g_dpy, NextRequest(g_dpy));
+   XSelectInput(g_dpy, window, PropertyChangeMask);
+ }
+diff --git a/cm-window.h b/cm-window.h
+index 98f8022..e0bf813 100644
+--- a/cm-window.h
++++ b/cm-window.h
+@@ -105,5 +105,6 @@ extern win *list;
+ 
+ win* find_win(Window id);
++win* find_win_any_state(Window id);
+ win* find_win_any_parent(Window w);
+ 
+ bool win_state_is_hidden(Window window);
+diff --git a/fastcompmgr.c b/fastcompmgr.c
+index b138a82..c9d02f0 100644
+--- a/fastcompmgr.c
++++ b/fastcompmgr.c
+@@ -870,6 +870,7 @@ find_client_win(Display *dpy, Window win) {
+     return win;
+   }
+ 
++  set_ignore(dpy, NextRequest(dpy));
+   if (!XQueryTree(dpy, win, &root,
+       &parent, &children, &nchildren)) {
+     return 0;
+@@ -1442,6 +1443,7 @@ map_win(Display *dpy, Window id,
+ 
+   /* select before reading the property
+      so that no property changes are lost */
++  set_ignore(dpy, NextRequest(dpy));
+   XSelectInput(dpy, id, PropertyChangeMask | FocusChangeMask);
+ 
+   // this causes problems for inactive transparency
+@@ -1674,6 +1675,9 @@ win_suggest_opacity(win* w, bool* is_userdefined){
+ 
+ static void
+ add_win(Display *dpy, Window id, Window prev) {
++  if (unlikely(find_win_any_state(id)))
++    return;
++
+   win *new = calloc(1, sizeof(win));
+   win **p;
+ 

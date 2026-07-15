@@ -13,6 +13,7 @@ let
   monLeft = "DP-0";
   monCenter = "DP-2";
   monRight = "HDMI-0";
+  desktopOsdExe = lib.getExe config.desktop.osd.package;
   polybarMsgExe = lib.getExe' config.services.polybar.package "polybar-msg";
   workspaces = {
     one = "main";
@@ -29,11 +30,13 @@ in
 {
   imports = [
     ./common.nix
+    ./desktop-osd.nix
     ../colors.nix
     ./xresources.nix
     ../services/polybar
     ../services/xfce4-notifyd.nix
     ../services/fastcompmgr.nix
+    ../services/xmousepasteblock.nix
   ];
 
   nixpkgs.overlays = [
@@ -165,7 +168,6 @@ in
       feh
       alt-tab-scratchpad
       screen-cycle
-      xmousepasteblock
     ]
     ++ (with pkgs-stable; [ xss-lock ]);
 
@@ -188,6 +190,10 @@ in
       });
       config = {
         bars = [ ];
+        fonts = {
+          names = [ "DejaVu Sans" ];
+          size = 9.0;
+        };
         gaps = {
           inner = lib.mkDefault 4;
           outer = lib.mkDefault 0;
@@ -266,25 +272,17 @@ in
           "${modifier}+shift+k" = "move up";
           "${modifier}+shift+l" = "move right";
           # media
-          "XF86AudioRaiseVolume" =
-            "exec --no-startup-id ${pkgs.pulseaudio}/bin/pactl set-sink-mute @DEFAULT_SINK@ false, exec --no-startup-id ${pkgs.pulseaudio}/bin/pactl set-sink-volume @DEFAULT_SINK@ +5%";
-          "XF86AudioLowerVolume" =
-            "exec --no-startup-id ${pkgs.pulseaudio}/bin/pactl set-sink-mute @DEFAULT_SINK@ false, exec --no-startup-id ${pkgs.pulseaudio}/bin/pactl set-sink-volume @DEFAULT_SINK@ -5%";
-          "XF86AudioMute" =
-            "exec --no-startup-id ${pkgs.pulseaudio}/bin/pactl set-sink-mute @DEFAULT_SINK@ toggle";
-          "XF86AudioMicMute" =
-            "exec --no-startup-id ${pkgs.pulseaudio}/bin/pactl set-source-mute @DEFAULT_SOURCE@ toggle";
+          "XF86AudioRaiseVolume" = "exec --no-startup-id ${desktopOsdExe} volume up";
+          "XF86AudioLowerVolume" = "exec --no-startup-id ${desktopOsdExe} volume down";
+          "XF86AudioMute" = "exec --no-startup-id ${desktopOsdExe} volume toggle";
+          "XF86AudioMicMute" = "exec --no-startup-id ${desktopOsdExe} microphone toggle";
           "XF86AudioPlay" = "exec ${pkgs.playerctl}/bin/playerctl play-pause";
           "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
           "XF86AudioPrev" = "exec ${pkgs.playerctl}/bin/playerctl previous";
-          "XF86MonBrightnessUp" =
-            "exec ${pkgs.brightnessctl}/bin/brightnessctl set +5% && ${pkgs.libnotify}/bin/notify-send --replace-id=9991 --transient --app-name=System Brightness \"$(${pkgs.brightnessctl}/bin/brightnessctl get)\"";
-          "XF86MonBrightnessDown" =
-            "exec ${pkgs.brightnessctl}/bin/brightnessctl set 5%- && ${pkgs.libnotify}/bin/notify-send --replace-id=9991 --transient --app-name=System Brightness \"$(${pkgs.brightnessctl}/bin/brightnessctl get)\"";
-          "XF86KbdBrightnessUp" =
-            "exec ${pkgs.brightnessctl}/bin/brightnessctl --device=smc::kbd_backlight' set +25%";
-          "XF86KbdBrightnessDown" =
-            "exec ${pkgs.brightnessctl}/bin/brightnessctl --device='smc::kbd_backlight' set 25%-";
+          "XF86MonBrightnessUp" = "exec --no-startup-id ${desktopOsdExe} brightness up";
+          "XF86MonBrightnessDown" = "exec --no-startup-id ${desktopOsdExe} brightness down";
+          "XF86KbdBrightnessUp" = "exec --no-startup-id ${desktopOsdExe} keyboard-brightness up";
+          "XF86KbdBrightnessDown" = "exec --no-startup-id ${desktopOsdExe} keyboard-brightness down";
           # modes
           "${modifier}+r" = "mode resize";
           "${modifier}+x" = "mode power";
@@ -295,8 +293,8 @@ in
           "Print" = "exec ${pkgs-stable.flameshot}/bin/flameshot gui";
           "${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad toggle";
           "ctrl+${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad store";
-          "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun -dpi 120";
-          "ctrl+${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show window -dpi 120";
+          "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun";
+          "ctrl+${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show window";
         };
         floating = {
           inherit modifier;
@@ -351,10 +349,6 @@ in
             always = true;
             command = "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/.config/wallpaper";
             # "--no-startup-id ${pkgs.feh}/bin/feh --bg-fill ~/brain/config/assets/wallpaper";
-          }
-          {
-            always = true;
-            command = "--no-startup-id ${pkgs.xmousepasteblock}/bin/xmousepasteblock";
           }
         ];
       };

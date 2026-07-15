@@ -61,15 +61,23 @@ let
         ;;
     esac
   '';
+  bluetoothControlScript = pkgs.writeShellApplication {
+    name = "polybar-bluetooth";
+    runtimeInputs = with pkgs; [
+      bluez
+      coreutils
+      expect
+      gnugrep
+    ];
+    text = builtins.readFile ./bluetooth.sh;
+  };
 in
 {
   imports = [ ../../colors.nix ];
 
+  home.packages = [ bluetoothControlScript ];
+
   home.file = {
-    ".config/polybar/bluetooth.sh" = {
-      executable = true;
-      source = ./bluetooth.sh;
-    };
     ".config/polybar/task.sh" = {
       executable = true;
       source = ./task.sh;
@@ -285,13 +293,14 @@ in
       };
       "module/bluetooth" = {
         type = "custom/script";
-        exec = "$HOME/.config/polybar/bluetooth.sh";
-        click-left = "exec /run/current-system/sw/bin/blueman-manager";
-        # click-right = "";
+        exec = "${lib.getExe bluetoothControlScript} watch";
+        click-left = "exec ${lib.getExe' pkgs.blueman "blueman-manager"}";
+        click-right = "${lib.getExe bluetoothControlScript} toggle-power";
         format-background = gray-darkest;
         format-foreground = gray-lighter;
         format-padding = 2;
-        interval = 2;
+        interval-fail = 2;
+        tail = true;
       };
       "module/clock" = {
         type = "internal/date";
@@ -315,7 +324,7 @@ in
         type = "custom/script";
         exec = "${bunExe} $HOME/.config/polybar/ai-usage.ts";
         click-middle = "${bunExe} $HOME/.config/polybar/ai-usage.ts --refresh >/dev/null 2>&1 &";
-        interval = 5;
+        interval = 30;
         # format-background = gray-darkest;
         format-foreground = foreground;
         format-padding = 2;

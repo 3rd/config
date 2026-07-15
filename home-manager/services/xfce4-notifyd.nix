@@ -70,6 +70,7 @@
     "initial-opacity" = 1.0;
     "show-notifications-on" = "active-monitor";
     "notify-location" = "top-right";
+    "show-text-with-gauge" = true;
     "notification-log" = true;
     "log-level" = "always";
     "log-level-apps" = "all";
@@ -78,5 +79,6 @@
       type = "uint";
       value = 1000;
     };
+    "applications/excluded-from-log" = [ "Desktop OSD" ];
   };
 }
