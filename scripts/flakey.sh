@@ -27,7 +27,12 @@ collect_relevant_paths() {
 
   while IFS= read -r host_file; do
     include+=("$host_file")
-  done < <(find "./hosts/$HOSTNAME" -type f -name '*.nix' | sort)
+  done < <(
+    find "./hosts/$HOSTNAME" -type f \
+      \( -name '*.nix' -o -name '*.mjs' \) \
+      ! -name '*.test.mjs' \
+      | sort
+  )
 
   printf '%s\n' "${include[@]}"
 }

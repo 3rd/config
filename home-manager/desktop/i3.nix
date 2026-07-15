@@ -32,7 +32,7 @@ in
     ../colors.nix
     ./xresources.nix
     ../services/polybar
-    # ../services/dunst.nix
+    ../services/xfce4-notifyd.nix
     ../services/fastcompmgr.nix
   ];
 
@@ -278,9 +278,9 @@ in
           "XF86AudioNext" = "exec ${pkgs.playerctl}/bin/playerctl next";
           "XF86AudioPrev" = "exec ${pkgs.playerctl}/bin/playerctl previous";
           "XF86MonBrightnessUp" =
-            "exec ${pkgs.brightnessctl}/bin/brightnessctl set +5% && notify-send Brightness $(brightnessctl get) -h string:x-canonical-private-synchronous:brightness_percentage --app-name System";
+            "exec ${pkgs.brightnessctl}/bin/brightnessctl set +5% && ${pkgs.libnotify}/bin/notify-send --replace-id=9991 --transient --app-name=System Brightness \"$(${pkgs.brightnessctl}/bin/brightnessctl get)\"";
           "XF86MonBrightnessDown" =
-            "exec ${pkgs.brightnessctl}/bin/brightnessctl set 5%- && notify-send Brightness $(brightnessctl get) -h string:x-canonical-private-synchronous:brightness_percentage --app-name System";
+            "exec ${pkgs.brightnessctl}/bin/brightnessctl set 5%- && ${pkgs.libnotify}/bin/notify-send --replace-id=9991 --transient --app-name=System Brightness \"$(${pkgs.brightnessctl}/bin/brightnessctl get)\"";
           "XF86KbdBrightnessUp" =
             "exec ${pkgs.brightnessctl}/bin/brightnessctl --device=smc::kbd_backlight' set +25%";
           "XF86KbdBrightnessDown" =
@@ -370,9 +370,10 @@ in
         default_border pixel 2
         default_floating_border pixel 2
         for_window [class="^.*"] border pixel 2
+        for_window [window_type="notification"] border none
         for_window [instance="^condom-approval$"] floating enable, move position center
 
-        bindcode ${modifier}+110 exec thunar
+        bindcode ${modifier}+110 exec thunar --window
         bindcode ${modifier}+118 exec ulimit -n 999999 && ${browserExe}
         bindcode ${modifier}+115 exec ulimit -n 999999 && ${browserExe}
 

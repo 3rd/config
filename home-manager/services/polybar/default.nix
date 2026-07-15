@@ -20,6 +20,47 @@ let
 
     printf "n/a\n"
   '';
+  notificationControlScript = pkgs.writeShellScriptBin "polybar-notifications" ''
+    set -eu
+
+    xfconf_query=${pkgs.xfconf}/bin/xfconf-query
+
+    case "''${1:-status}" in
+      status)
+        dnd="$($xfconf_query -c xfce4-notifyd -p /do-not-disturb 2>/dev/null || true)"
+        unread="$(${pkgs.systemd}/bin/busctl --user call \
+          org.xfce.Notifyd \
+          /org/xfce/Notifyd \
+          org.xfce.Notifyd.Log \
+          HasUnread 2>/dev/null || true)"
+
+        case "$unread" in
+          *true) has_unread=true ;;
+          *) has_unread=false ;;
+        esac
+
+        case "$dnd:$has_unread" in
+          true:true) printf '%s\n' '%{F${config.colors.accent}}%{F-}' ;;
+          true:false) printf '%s\n' '%{F${config.colors.gray-medium}}%{F-}' ;;
+          false:true) printf '%s\n' '%{F${config.colors.accent}}%{F-}' ;;
+          *) printf '%s\n' '%{F${config.colors.gray-lighter}}%{F-}' ;;
+        esac
+        ;;
+      toggle-dnd)
+        current="$($xfconf_query -c xfce4-notifyd -p /do-not-disturb 2>/dev/null || true)"
+        if [ "$current" = true ]; then
+          next=false
+        else
+          next=true
+        fi
+        "$xfconf_query" -c xfce4-notifyd -p /do-not-disturb -n -t bool -s "$next"
+        ;;
+      *)
+        printf "usage: polybar-notifications [status|toggle-dnd]\n" >&2
+        exit 2
+        ;;
+    esac
+  '';
 in
 {
   imports = [ ../../colors.nix ];
@@ -65,7 +106,7 @@ in
     config = with config.colors; {
       "bar/common" = {
         background = lib.mkDefault gray-darkest;
-        font-0 = lib.mkDefault "Fira Sans Mono:size=12;3";
+        font-0 = lib.mkDefault "DejaVu Sans:size=12;3";
         font-1 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-2 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-3 = lib.mkDefault "Font Awesome 7 Brands:size=12;3";
@@ -75,7 +116,7 @@ in
         "inherit" = "bar/common";
         modules-left = "i3";
         modules-center = "task";
-        modules-right = "ai_usage separator battery separator pulseaudio bluetooth cpu cpu_temp separator mem separator fs separator clock tray";
+        modules-right = "ai_usage separator battery separator pulseaudio notifications bluetooth cpu cpu_temp separator mem separator fs separator clock tray";
         enable-ipc = true;
         height = 28;
         fixed-center = true;
@@ -84,6 +125,15 @@ in
         type = "internal/tray";
         tray-background = gray-darkest;
         tray-spacing = "4px";
+      };
+      "module/notifications" = {
+        type = "custom/script";
+        exec = "${lib.getExe notificationControlScript} status";
+        interval = 2;
+        click-left = "${lib.getExe pkgs.xfce4-notifyd} &";
+        click-right = "${lib.getExe notificationControlScript} toggle-dnd";
+        format-font = 5;
+        format-padding = 1;
       };
       "module/blank" = {
         type = "custom/text";

@@ -2,6 +2,7 @@
 
 {
   home.pointerCursor = {
+    enable = true;
     name = "Posy_Cursor";
     package = pkgs.posy-cursors;
     size = lib.mkDefault 32;

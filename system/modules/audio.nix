@@ -11,6 +11,7 @@
     alsa-utils
     audacity
     pavucontrol
+    pipewire.jack
     sox
   ];
 
@@ -21,7 +22,6 @@
     enable = true;
     alsa.enable = true;
     alsa.support32Bit = true;
-    jack.enable = true;
     pulse.enable = true;
     # stop chromium/electron webrtc agc from changing the mic device volume system-wide
     extraConfig.pipewire-pulse."99-block-source-volume" = {

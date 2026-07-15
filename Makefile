@@ -84,7 +84,6 @@ link: ## link dotfiles
 	$(call linkdot,ranger,~/.config/ranger)
 	$(call linkdot,yazi,~/.config/yazi)
 	$(call linkdot,superfile,~/.config/superfile)
-	$(call linkdot,wired,~/.config/wired)
 	$(call print_mod_end)
 
 swap: ## swap

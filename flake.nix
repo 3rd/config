@@ -35,8 +35,6 @@
     };
     nixpkgs-chromium.url = "github:nixos/nixpkgs?rev=8dd2f1add978a4747a5962f2874b8ad20f86b01c";
 
-    wired.url = "github:Toqozz/wired-notify";
-
     # ghostty = {
     #   url = "github:ghostty-org/ghostty";
     #   inputs.nixpkgs.follows = "nixpkgs";
@@ -52,7 +50,6 @@
       nixpkgs-master,
       nixpkgs-keyring,
       home-manager,
-      wired,
       nixpkgs-chromium,
       hardware,
       ...
@@ -97,18 +94,6 @@
       };
       keyringPinOverlay = final: prev: {
         gnome-keyring = inputs.nixpkgs-keyring.legacyPackages.${prev.system}.gnome-keyring;
-      };
-      fixWiredOverlay = final: prev: {
-        wired = prev.symlinkJoin {
-          name = prev.wired.name;
-          paths = [ prev.wired ];
-          nativeBuildInputs = [ prev.makeWrapper ];
-          postBuild = ''
-            wrapProgram $out/bin/wired \
-              --prefix LD_LIBRARY_PATH : ${prev.lib.makeLibraryPath [ prev.libxkbcommon ]}
-          '';
-          meta = prev.wired.meta;
-        };
       };
       mkNightlyNeovimPackage =
         system:
@@ -227,8 +212,6 @@
               overlays = [
                 outputs.overlays.additions
                 outputs.overlays.modifications
-                wired.overlays.default
-                fixWiredOverlay
                 fixTextualOverlay
                 # inputs.ghostty.overlays.default
               ];
@@ -258,15 +241,8 @@
                   #
                   pkgs.qimgv
                 ];
-                services.wired = {
-                  enable = true;
-                  # config = ./wired.ron;
-                };
-
                 programs.neovim.package = mkNightlyNeovimPackage system;
               })
-
-              wired.homeManagerModules.default
             ];
           };
         "rabbit@death" =
@@ -279,8 +255,6 @@
               overlays = [
                 outputs.overlays.additions
                 outputs.overlays.modifications
-                wired.overlays.default
-                fixWiredOverlay
               ];
             };
             extraSpecialArgs = {
@@ -306,14 +280,7 @@
               ./hosts/death/home.nix
               disableHomeManagerNews
 
-              wired.homeManagerModules.default
-
               (_: {
-                services.wired = {
-                  enable = true;
-                  # config = ./wired.ron;
-                };
-
                 programs.neovim.package = mkNightlyNeovimPackage system;
               })
             ];

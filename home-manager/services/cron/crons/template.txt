@@ -1,0 +1,7 @@
+name = "name"
+description = "dessc"
+timerDescription = "timer desc"
+script = "./filename.fish"
+onCalendar = "*-*-* 00,10,18,22:00:00"
+persistent = true
+successExitStatus = [1]
