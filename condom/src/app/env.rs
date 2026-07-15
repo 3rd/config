@@ -4,6 +4,9 @@ use std::path::{Path, PathBuf};
 
 use crate::model::config::{EnvironmentConfig, ExecutionMode};
 use crate::model::project::{ProjectContext, PROJECT_ROOT_ENV};
+use crate::model::runtime_support::{
+    is_safe_operational_environment_key, SAFE_OPERATIONAL_ENV_KEYS,
+};
 use crate::model::state::{StatePaths, STATE_HOME_ENV};
 
 pub const ORIGINAL_PATH_ENV: &str = "CONDOM_ORIGINAL_PATH";
@@ -33,8 +36,19 @@ pub fn current_environment() -> BTreeMap<String, String> {
 pub fn current_user_environment() -> BTreeMap<String, String> {
     current_environment()
         .into_iter()
-        .filter(|(key, _)| USER_ENV_KEYS.contains(&key.as_str()))
+        .filter(|(key, _)| is_caller_environment_key(key))
         .collect()
+}
+
+pub fn is_caller_environment_key(key: &str) -> bool {
+    USER_ENV_KEYS.contains(&key) || is_safe_operational_environment_key(key)
+}
+
+pub fn caller_environment_keys() -> impl Iterator<Item = &'static str> {
+    USER_ENV_KEYS
+        .iter()
+        .chain(SAFE_OPERATIONAL_ENV_KEYS)
+        .copied()
 }
 
 pub fn sanitized_environment(
@@ -88,7 +102,8 @@ fn keep_passthrough_key(key: &str, environment: &EnvironmentConfig) -> bool {
     if environment.deny.iter().any(|denied| denied == key) {
         return false;
     }
-    environment.allow.iter().any(|allowed| allowed == key)
+    is_safe_operational_environment_key(key)
+        || environment.allow.iter().any(|allowed| allowed == key)
 }
 
 fn source_path(source: &BTreeMap<String, String>) -> Option<&String> {
@@ -200,6 +215,9 @@ mod tests {
         );
         source.insert("SSH_AUTH_SOCK".into(), "/tmp/ssh-agent".into());
         source.insert("LC_ALL".into(), "C.UTF-8".into());
+        source.insert("SSL_CERT_DIR".into(), "/etc/ssl/certs".into());
+        source.insert("SSL_CERT_FILE".into(), "/home/me/combined-ca.pem".into());
+        source.insert("NODE_OPTIONS".into(), "--require=/home/me/inject.js".into());
         source.insert("COLORTERM".into(), "truecolor".into());
         source.insert("TERM_PROGRAM".into(), "kitty".into());
         source.insert("COLUMNS".into(), "120".into());
@@ -220,7 +238,15 @@ mod tests {
         assert!(path
             .split(':')
             .any(|entry| entry == "/run/current-system/sw/bin"));
-        assert!(!env.contains_key("LC_ALL"));
+        assert_eq!(env.get("LC_ALL").map(String::as_str), Some("C.UTF-8"));
+        assert_eq!(
+            env.get("SSL_CERT_DIR").map(String::as_str),
+            Some("/etc/ssl/certs")
+        );
+        assert_eq!(
+            env.get("SSL_CERT_FILE").map(String::as_str),
+            Some("/home/me/combined-ca.pem")
+        );
         assert_eq!(env.get("HOME").map(String::as_str), Some("/home/me"));
         assert!(!env.contains_key("XDG_CONFIG_HOME"));
         assert!(!env.contains_key("XDG_STATE_HOME"));
@@ -246,6 +272,7 @@ mod tests {
         assert!(!env.contains_key("COLUMNS"));
         assert!(!env.contains_key("LINES"));
         assert!(!env.contains_key("SSH_AUTH_SOCK"));
+        assert!(!env.contains_key("NODE_OPTIONS"));
     }
 
     #[test]
@@ -254,6 +281,7 @@ mod tests {
         source.insert("CLOUD_PROFILE".into(), "work".into());
         source.insert("SOURCE_TOKEN".into(), "needed-for-install".into());
         source.insert("SHELL".into(), "/bin/sh".into());
+        source.insert("SSL_CERT_FILE".into(), "/home/me/combined-ca.pem".into());
         source.insert("XDG_CONFIG_HOME".into(), "/home/me/.config".into());
         let environment = EnvironmentConfig {
             allow: vec![
@@ -262,7 +290,11 @@ mod tests {
                 "SHELL".into(),
                 "XDG_CONFIG_HOME".into(),
             ],
-            deny: vec!["SOURCE_TOKEN".into(), "SHELL".into()],
+            deny: vec![
+                "SOURCE_TOKEN".into(),
+                "SHELL".into(),
+                "SSL_CERT_FILE".into(),
+            ],
         };
 
         let env = sanitized_environment(
@@ -280,6 +312,7 @@ mod tests {
         );
         assert!(!env.contains_key("SOURCE_TOKEN"));
         assert!(!env.contains_key("SHELL"));
+        assert!(!env.contains_key("SSL_CERT_FILE"));
     }
 
     #[test]

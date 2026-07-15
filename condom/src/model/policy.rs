@@ -14,6 +14,7 @@ use crate::model::config::{
 };
 use crate::model::events::redact_command;
 use crate::model::project::ProjectContext;
+use crate::model::runtime_support::{path_is_blocked_by_patterns, resolve_executable_target};
 use crate::model::state::StatePaths;
 
 pub const POLICY_SNAPSHOT_SCHEMA_VERSION: u32 = 7;
@@ -200,6 +201,18 @@ pub fn resolve_filesystem_policy(
     config: &crate::model::config::CondomConfig,
     command: &[String],
 ) -> Result<ResolvedFilesystemPolicy> {
+    let path =
+        std::env::var_os(crate::app::env::ORIGINAL_PATH_ENV).or_else(|| std::env::var_os("PATH"));
+    resolve_filesystem_policy_with_path(project, state, config, command, path.as_deref())
+}
+
+fn resolve_filesystem_policy_with_path(
+    project: &ProjectContext,
+    state: &StatePaths,
+    config: &crate::model::config::CondomConfig,
+    command: &[String],
+    path: Option<&OsStr>,
+) -> Result<ResolvedFilesystemPolicy> {
     let project_root = path_string(&project.root);
     let runtime_dir = path_string(&state.runtime_dir);
     let stores = ApprovalStores::from_state(state);
@@ -217,9 +230,8 @@ pub fn resolve_filesystem_policy(
         format!("{runtime_dir}/tmp"),
         format!("{runtime_dir}/xdg"),
     ];
-    let path =
-        std::env::var_os(crate::app::env::ORIGINAL_PATH_ENV).or_else(|| std::env::var_os("PATH"));
-    let path_dirs = executable_search_paths(path.as_deref());
+    let path_dirs = executable_search_paths(path);
+    let executable_target = resolve_executable_target(command, path);
     extend_unique(&mut allow_read, path_dirs.clone());
     allow_read.extend(config.filesystem.allow_read.clone());
     allow_read.extend(read_approvals.allow);
@@ -246,13 +258,28 @@ pub fn resolve_filesystem_policy(
     deny_write.extend(config.filesystem.deny_write.clone());
     deny_write.extend(write_approvals.deny);
 
+    let deny_execute = execute_approvals.deny;
+    if let Some(path) = executable_target {
+        let blocked_read_patterns = deny_read.iter().chain(config.filesystem.redact_read.iter());
+        if !path_is_blocked_by_patterns(&path, blocked_read_patterns.clone()) {
+            push_unique(&mut allow_read, path.clone());
+        }
+        let blocked_execute_patterns = deny_execute
+            .iter()
+            .chain(deny_read.iter())
+            .chain(config.filesystem.redact_read.iter());
+        if !path_is_blocked_by_patterns(&path, blocked_execute_patterns.clone()) {
+            push_unique(&mut allow_execute, path);
+        }
+    }
+
     Ok(ResolvedFilesystemPolicy {
         allow_read,
         allow_write,
         allow_execute,
         deny_read,
         deny_write,
-        deny_execute: execute_approvals.deny,
+        deny_execute,
         redact_read: config.filesystem.redact_read.clone(),
     })
 }
@@ -328,6 +355,8 @@ fn path_string(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::os::unix::fs::PermissionsExt;
+
     use super::*;
     use crate::auth::approvals::{Approval, ApprovalScope, ApprovalStore, NewApproval};
     use crate::model::config::{CondomConfig, ExecutionMode};
@@ -403,6 +432,85 @@ mod tests {
                 "/run/current-system/sw/bin".to_string(),
             ]
         );
+    }
+
+    #[test]
+    fn resolved_policy_limits_selected_executable_support_to_its_exact_target() {
+        let temp = tempfile::tempdir().unwrap();
+        let project = ProjectContext {
+            root: temp.path().join("project"),
+            id: "project-id".into(),
+            origin: None,
+        };
+        fs::create_dir_all(&project.root).unwrap();
+        let state = StatePaths::from_base(&project, &temp.path().join("state"));
+        let bin = temp.path().join("bin");
+        let install_dir = temp.path().join("tools/example");
+        fs::create_dir_all(&bin).unwrap();
+        fs::create_dir_all(&install_dir).unwrap();
+        let target = install_dir.join("tool");
+        fs::write(&target, "#!/bin/sh\n").unwrap();
+        fs::set_permissions(&target, fs::Permissions::from_mode(0o755)).unwrap();
+        std::os::unix::fs::symlink(&target, bin.join("tool")).unwrap();
+        let path = std::env::join_paths([&bin]).unwrap();
+
+        let policy = resolve_filesystem_policy_with_path(
+            &project,
+            &state,
+            &CondomConfig::default(),
+            &["tool".into(), "--help".into()],
+            Some(path.as_os_str()),
+        )
+        .unwrap();
+        let target = target.display().to_string();
+
+        assert!(policy.allow_read.contains(&target));
+        assert!(policy.allow_execute.contains(&target));
+        assert!(!policy
+            .allow_read
+            .contains(&install_dir.display().to_string()));
+        assert!(!policy
+            .allow_execute
+            .contains(&install_dir.display().to_string()));
+        assert!(!policy
+            .allow_write
+            .contains(&install_dir.display().to_string()));
+    }
+
+    #[test]
+    fn selected_executable_target_does_not_override_read_protection() {
+        let temp = tempfile::tempdir().unwrap();
+        let project = ProjectContext {
+            root: temp.path().join("project"),
+            id: "project-id".into(),
+            origin: None,
+        };
+        fs::create_dir_all(&project.root).unwrap();
+        let state = StatePaths::from_base(&project, &temp.path().join("state"));
+        let bin = temp.path().join("bin");
+        let install_dir = temp.path().join("tools/example");
+        fs::create_dir_all(&bin).unwrap();
+        fs::create_dir_all(&install_dir).unwrap();
+        let target = install_dir.join("tool");
+        fs::write(&target, "#!/bin/sh\n").unwrap();
+        fs::set_permissions(&target, fs::Permissions::from_mode(0o755)).unwrap();
+        std::os::unix::fs::symlink(&target, bin.join("tool")).unwrap();
+        let path = std::env::join_paths([&bin]).unwrap();
+        let mut config = CondomConfig::default();
+        config.filesystem.deny_read = vec![target.display().to_string()];
+
+        let policy = resolve_filesystem_policy_with_path(
+            &project,
+            &state,
+            &config,
+            &["tool".into()],
+            Some(path.as_os_str()),
+        )
+        .unwrap();
+
+        let target = target.display().to_string();
+        assert!(!policy.allow_read.contains(&target));
+        assert!(!policy.allow_execute.contains(&target));
     }
 
     #[test]

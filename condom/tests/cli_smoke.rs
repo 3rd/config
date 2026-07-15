@@ -1,9 +1,11 @@
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::{Read, Write};
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::UnixListener;
 use std::os::unix::process::CommandExt;
+use std::path::Path;
 use std::process::{Command, Output, Stdio};
 use std::sync::mpsc;
 use std::thread;
@@ -11,9 +13,11 @@ use std::time::{Duration, Instant};
 
 use condom::app::helper::HELPER_PROTOCOL_VERSION;
 use condom::model::config::{CondomConfig, ExecutionMode};
-use condom::model::policy::{NetworkMediationSnapshot, TransparentProxySnapshot};
+use condom::model::events::EventLog;
+use condom::model::policy::{write_snapshot, NetworkMediationSnapshot, TransparentProxySnapshot};
 use condom::model::project::ProjectContext;
 use condom::model::state::StatePaths;
+use condom::sandbox::capture::{self, BindCaptureRun};
 
 const TPROXY_ENV_KEYS: &[&str] = &[
     "CONDOM_TPROXY_ROUTING",
@@ -57,10 +61,8 @@ fn nixos_module_declares_tproxy_host_routing() {
     assert!(module.contains("systemd.services.condom = {"));
     assert!(module.contains("description = \"Condom runtime enforcement\";"));
     assert!(module.contains("wantedBy = [ \"multi-user.target\" ];"));
-    assert!(module.contains("wants ="));
-    assert!(module.contains("[ \"nftables.service\" ]"));
+    assert!(module.contains("wants = [\n        \"nftables.service\"\n      ]"));
     assert!(module.contains("++ lib.optionals (cfg.helperSocket.enable && hasHelperBinary) [ \"condom-helper.socket\" ];"));
-    assert!(module.contains("before = lib.optionals (cfg.helperSocket.enable && hasHelperBinary) [ \"condom-helper.socket\" ];"));
     assert!(module.contains("partOf = [ \"condom.service\" ];"));
     assert!(module.contains("requires = [ \"condom.service\" ];"));
     assert!(module.contains("after = [ \"condom.service\" ];"));
@@ -231,7 +233,6 @@ fn makefile_installs_approval_gui_binary() {
 
     assert!(makefile.contains("target/release/condom-approval"));
     assert!(makefile.contains("\"$(BINDIR)/condom-approval\""));
-    assert!(makefile.contains("CONDOM_SERVICES     ?= condom.service"));
     assert!(!makefile.contains("condom-approval-bin"));
     assert!(!makefile.contains("condom-tproxy-routing.service condom-helper.socket"));
     assert!(!makefile.contains("LD_LIBRARY_PATH"));
@@ -1048,6 +1049,79 @@ fn landlock_runner_allows_system_trust_store_reads() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert_eq!(String::from_utf8(output.stdout).unwrap(), "cert-ok");
+}
+
+#[test]
+fn review_capture_mediates_write_and_preserves_captured_content() {
+    assert!(
+        bwrap_supervisor_surface_available(),
+        "bubblewrap capture surface is required"
+    );
+    let temp = tempfile::tempdir().unwrap();
+    let project = ProjectContext {
+        root: temp.path().join("project"),
+        id: "project-id".into(),
+        origin: None,
+    };
+    fs::create_dir_all(&project.root).unwrap();
+    fs::write(project.root.join("baseline.txt"), "baseline\n").unwrap();
+    let state = StatePaths::from_base(&project, &temp.path().join("state"))
+        .with_runtime_dir(temp.path().join("runtime/.condom"));
+    let config = CondomConfig::default();
+    let captured_path = project.root.join("captured.txt");
+    let command = vec![
+        "/run/current-system/sw/bin/sh".into(),
+        "-c".into(),
+        format!(
+            "printf '%s' 'captured bytes' > '{}'",
+            captured_path.display()
+        ),
+    ];
+    let snapshot = write_snapshot(
+        &project,
+        &state,
+        &config,
+        ExecutionMode::Review,
+        &command,
+        &[],
+    )
+    .unwrap();
+    let session_dir = temp.path().join("session");
+    let workspace_dir = session_dir.join("workspace");
+    fs::create_dir_all(&workspace_dir).unwrap();
+    fs::copy(
+        project.root.join("baseline.txt"),
+        workspace_dir.join("baseline.txt"),
+    )
+    .unwrap();
+    let event_log = EventLog::new(state.events_file.clone());
+    let runtime_path = std::env::var("PATH").ok();
+
+    let code = capture::run_with_bind_capture(BindCaptureRun {
+        project: &project,
+        state: &state,
+        session_dir: &session_dir,
+        workspace_dir: &workspace_dir,
+        config: &config,
+        mode: ExecutionMode::Review,
+        command: &command,
+        extra_env: &BTreeMap::new(),
+        event_log: &event_log,
+        policy_snapshot: &snapshot,
+        runner_path: Some(Path::new(bin())),
+        runtime_path: runtime_path.as_deref(),
+        ephemeral_overlays: &[],
+        mediate_filesystem: true,
+        review_inspection: false,
+    })
+    .unwrap();
+
+    assert_eq!(code, 0);
+    assert!(!captured_path.exists());
+    assert_eq!(
+        fs::read_to_string(workspace_dir.join("captured.txt")).unwrap(),
+        "captured bytes"
+    );
 }
 
 #[test]

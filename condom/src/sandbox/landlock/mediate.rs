@@ -39,7 +39,12 @@ impl LandlockPlan {
             for path in execution_support_paths(policy_snapshot) {
                 insert_path_rule(&mut rules, &path, EXECUTE_ACCESS);
             }
-            for (path, access) in runtime_support_rules() {
+            for (path, access) in runtime_support_rules(policy_snapshot) {
+                let access = if access & LANDLOCK_ACCESS_FS_WRITE_FILE != 0 {
+                    access | abi_write_extensions(abi)
+                } else {
+                    access
+                };
                 insert_path_rule(&mut rules, &path, access);
             }
         }
@@ -57,6 +62,7 @@ impl LandlockPlan {
                         path,
                         fd: opened.fd,
                         allowed_access,
+                        is_dir: opened.is_dir,
                     });
                 }
             }
@@ -123,10 +129,17 @@ pub(super) struct FilesystemAccess {
     pub(super) path: String,
 }
 
-struct OpenNotification {
+#[derive(Clone, Debug)]
+pub(super) struct OpenNotification {
     pub(super) path: String,
     pub(super) flags: i32,
     pub(super) mode: libc::mode_t,
+}
+
+#[derive(Debug)]
+pub(super) struct DecodedFilesystemNotification {
+    pub(super) accesses: Vec<FilesystemAccess>,
+    pub(super) open: Option<OpenNotification>,
 }
 
 pub(super) struct FilesystemNotificationAuthorizer {
@@ -136,6 +149,7 @@ pub(super) struct FilesystemNotificationAuthorizer {
     pub(super) config: CondomConfig,
     pub(super) event_log: EventLog,
     pub(super) helper_endpoint: Option<HelperEndpoint>,
+    pub(super) runtime_rules: Vec<(String, u64)>,
     pub(super) authorization_cache: Mutex<Vec<CachedFilesystemAuthorization>>,
 }
 
@@ -177,6 +191,7 @@ impl FilesystemNotificationAuthorizer {
             config,
             event_log,
             helper_endpoint,
+            runtime_rules: runtime_support_rules(policy_snapshot),
             authorization_cache: Mutex::new(Vec::new()),
         })
     }
@@ -186,21 +201,13 @@ impl FilesystemNotificationAuthorizer {
         policy_snapshot: &PolicySnapshot,
         access: &FilesystemAccess,
     ) -> Result<bool> {
-        if snapshot_denies_access(policy_snapshot, access) {
-            return Ok(false);
-        }
-        if access.kind != ApprovalKind::FsRead
-            && redact_read_pattern_matches(policy_snapshot, &access.path)
-        {
+        if snapshot_rejects_access(policy_snapshot, access) {
             return Ok(false);
         }
         if redacted_read_matches(policy_snapshot, access) {
             return Ok(true);
         }
         if self.runtime_support_allows(policy_snapshot, access) {
-            return Ok(true);
-        }
-        if missing_read_or_exec_path(access) {
             return Ok(true);
         }
         if let Some(authorization) = self.cached_authorization(access) {
@@ -315,35 +322,30 @@ impl FilesystemNotificationAuthorizer {
             return true;
         }
         if access.kind == ApprovalKind::FsRead
-            && is_allowed_read_parent_directory(policy_snapshot, &access.path)
+            && is_allowed_read_parent_directory(policy_snapshot, &self.runtime_rules, &access.path)
         {
             return true;
         }
-        let support_paths =
-            match access.kind {
-                ApprovalKind::FsRead => {
-                    let mut paths = fence_support_read_paths(policy_snapshot, None);
-                    paths.push(self.state.xdg_state_dir.display().to_string());
-                    paths.extend(execution_support_paths(policy_snapshot));
-                    paths.extend(
-                        runtime_support_rules()
-                            .into_iter()
-                            .filter_map(|(path, access)| {
-                                (access & READ_ACCESS != 0).then_some(path)
-                            }),
-                    );
-                    paths
-                }
-                ApprovalKind::FsWrite => {
-                    let mut paths = vec![self.state.xdg_state_dir.display().to_string()];
-                    paths.extend(runtime_support_rules().into_iter().filter_map(
-                        |(path, access)| (access & WRITE_ACCESS_BASE != 0).then_some(path),
-                    ));
-                    paths
-                }
-                ApprovalKind::FsExec => execution_support_paths(policy_snapshot),
-                _ => Vec::new(),
-            };
+        let support_paths = match access.kind {
+            ApprovalKind::FsRead => {
+                let mut paths = fence_support_read_paths(policy_snapshot, None);
+                paths.push(self.state.xdg_state_dir.display().to_string());
+                paths.extend(execution_support_paths(policy_snapshot));
+                paths.extend(self.runtime_rules.iter().filter_map(|(path, access)| {
+                    (*access & READ_ACCESS != 0).then_some(path.clone())
+                }));
+                paths
+            }
+            ApprovalKind::FsWrite => {
+                let mut paths = vec![self.state.xdg_state_dir.display().to_string()];
+                paths.extend(self.runtime_rules.iter().filter_map(|(path, access)| {
+                    (*access & WRITE_ACCESS_BASE != 0).then_some(path.clone())
+                }));
+                paths
+            }
+            ApprovalKind::FsExec => execution_support_paths(policy_snapshot),
+            _ => Vec::new(),
+        };
         support_paths
             .iter()
             .any(|pattern| policy_pattern_matches(pattern, &access.path))
@@ -364,6 +366,29 @@ fn missing_read_or_exec_path(access: &FilesystemAccess) -> bool {
             fs::symlink_metadata(&access.path),
             Err(error) if error.kind() == io::ErrorKind::NotFound
         )
+}
+
+fn host_noncreating_access_error(decoded: &DecodedFilesystemNotification) -> Option<i32> {
+    if let Some(open) = decoded.open.as_ref() {
+        if open.flags & libc::O_CREAT != 0 {
+            return None;
+        }
+        let metadata = if open.flags & libc::O_NOFOLLOW != 0 {
+            fs::symlink_metadata(&open.path)
+        } else {
+            fs::metadata(&open.path)
+        };
+        return match metadata {
+            Err(error) if error.kind() == io::ErrorKind::NotFound => Some(libc::ENOENT),
+            Err(error) if error.kind() == io::ErrorKind::PermissionDenied => Some(libc::EACCES),
+            _ => None,
+        };
+    }
+    decoded
+        .accesses
+        .iter()
+        .any(missing_read_or_exec_path)
+        .then_some(libc::ENOENT)
 }
 
 pub(super) fn run_command_with_filesystem_notifications(
@@ -388,7 +413,13 @@ pub(super) fn run_command_with_filesystem_notifications(
             return Err(error).context("failed to receive seccomp listener");
         }
     };
-    supervise_filesystem_notifications(child, listener, policy_snapshot, &authorizer)
+    supervise_filesystem_notifications(
+        child,
+        listener,
+        policy_snapshot,
+        &landlock_plan,
+        &authorizer,
+    )
 }
 
 struct PtyPair {
@@ -399,6 +430,7 @@ struct PtyPair {
 struct FilesystemNotificationHandler<'a> {
     pub(super) listener: OwnedFd,
     pub(super) policy_snapshot: &'a PolicySnapshot,
+    pub(super) landlock_plan: &'a LandlockPlan,
     pub(super) authorizer: &'a FilesystemNotificationAuthorizer,
 }
 
@@ -563,6 +595,7 @@ pub(super) fn run_pty_command_with_filesystem_notifications(
         Some(FilesystemNotificationHandler {
             listener,
             policy_snapshot,
+            landlock_plan: &landlock_plan,
             authorizer: &authorizer,
         }),
     )
@@ -857,6 +890,7 @@ fn handle_filesystem_notification(handler: &FilesystemNotificationHandler<'_>) -
     let response = filesystem_notification_response(
         &notification,
         handler.policy_snapshot,
+        handler.landlock_plan,
         handler.authorizer,
     )
     .context("failed to authorize filesystem notification")?;
@@ -958,6 +992,7 @@ fn supervise_filesystem_notifications(
     child: libc::pid_t,
     listener: OwnedFd,
     policy_snapshot: &PolicySnapshot,
+    landlock_plan: &LandlockPlan,
     authorizer: &FilesystemNotificationAuthorizer,
 ) -> Result<i32> {
     loop {
@@ -973,8 +1008,13 @@ fn supervise_filesystem_notifications(
             Err(error) if error.raw_os_error() == Some(libc::ENOENT) => continue,
             Err(error) => return Err(error).context("failed to receive filesystem notification"),
         };
-        let response = filesystem_notification_response(&notification, policy_snapshot, authorizer)
-            .context("failed to authorize filesystem notification")?;
+        let response = filesystem_notification_response(
+            &notification,
+            policy_snapshot,
+            landlock_plan,
+            authorizer,
+        )
+        .context("failed to authorize filesystem notification")?;
         if let Err(error) =
             seccomp::respond_filesystem_notification(&listener, &notification, response)
         {
@@ -1259,39 +1299,58 @@ mod pty_signal_tests {
     }
 }
 
-fn filesystem_notification_response(
+pub(super) fn filesystem_notification_response(
     notification: &libc::seccomp_notif,
     policy_snapshot: &PolicySnapshot,
+    landlock_plan: &LandlockPlan,
     authorizer: &FilesystemNotificationAuthorizer,
 ) -> Result<FilesystemNotificationResponse> {
-    let accesses = match filesystem_accesses_for_notification(notification) {
-        Ok(accesses) => accesses,
+    let decoded = match decode_filesystem_notification(notification) {
+        Ok(decoded) => decoded,
         Err(_) => return Ok(FilesystemNotificationResponse::Deny(libc::EACCES)),
     };
-    for access in &accesses {
+    if decoded
+        .accesses
+        .iter()
+        .any(|access| snapshot_rejects_access(policy_snapshot, access))
+    {
+        return Ok(FilesystemNotificationResponse::Deny(libc::EACCES));
+    }
+    if let Some(error) = host_noncreating_access_error(&decoded) {
+        return Ok(FilesystemNotificationResponse::Deny(error));
+    }
+    for access in &decoded.accesses {
         if !authorizer.authorize(policy_snapshot, access)? {
             return Ok(FilesystemNotificationResponse::Deny(libc::EACCES));
         }
     }
     if let Some(response) = redacted_read_response_for_notification(
-        notification,
-        &accesses,
+        decoded.open.as_ref(),
+        &decoded.accesses,
         policy_snapshot,
         authorizer,
     )? {
         return Ok(response);
     }
-    if let Some(response) = authorized_open_response_for_notification(notification)? {
-        return Ok(response);
+    let kernel_backed = decoded
+        .open
+        .as_ref()
+        .is_some_and(|open| landlock_plan_allows_open(landlock_plan, open));
+    if !kernel_backed {
+        if let Some(response) = authorized_open_response_for_notification(decoded.open.as_ref()) {
+            return Ok(response);
+        }
     }
-    if open_write_requires_kernel_backstop(notification)?
-        && !accesses
-            .iter()
-            .all(|access| kernel_backstop_allows(policy_snapshot, authorizer, access))
-    {
+    if open_write_requires_kernel_backstop(decoded.open.as_ref()) && !kernel_backed {
         return Ok(FilesystemNotificationResponse::Deny(libc::EACCES));
     }
     Ok(FilesystemNotificationResponse::Continue)
+}
+
+fn snapshot_rejects_access(policy_snapshot: &PolicySnapshot, access: &FilesystemAccess) -> bool {
+    snapshot_denies_access(policy_snapshot, access)
+        || (access.kind != ApprovalKind::FsRead
+            && redact_read_pattern_matches(policy_snapshot, &access.path))
 }
 
 fn snapshot_denies_access(policy_snapshot: &PolicySnapshot, access: &FilesystemAccess) -> bool {
@@ -1305,35 +1364,30 @@ fn snapshot_denies_access(policy_snapshot: &PolicySnapshot, access: &FilesystemA
         .any(|pattern| policy_pattern_matches(pattern, &access.path))
 }
 
-fn kernel_backstop_allows(
-    policy_snapshot: &PolicySnapshot,
-    authorizer: &FilesystemNotificationAuthorizer,
-    access: &FilesystemAccess,
-) -> bool {
-    if snapshot_denies_access(policy_snapshot, access) {
-        return false;
-    }
-    if authorizer.runtime_support_allows(policy_snapshot, access) {
-        return true;
-    }
-    let Some(allow) = snapshot_allow_rules(policy_snapshot, access.kind) else {
-        return false;
+fn landlock_plan_allows_open(landlock_plan: &LandlockPlan, open: &OpenNotification) -> bool {
+    let access_mode = open.flags & libc::O_ACCMODE;
+    let mut required_access = match access_mode {
+        libc::O_RDONLY => LANDLOCK_ACCESS_FS_READ_FILE,
+        libc::O_WRONLY => LANDLOCK_ACCESS_FS_WRITE_FILE,
+        libc::O_RDWR => LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_WRITE_FILE,
+        _ => return false,
     };
-    allow
-        .iter()
-        .any(|pattern| policy_pattern_matches(pattern, &access.path))
-}
-
-fn snapshot_allow_rules(
-    policy_snapshot: &PolicySnapshot,
-    kind: ApprovalKind,
-) -> Option<&Vec<String>> {
-    match kind {
-        ApprovalKind::FsRead => Some(&policy_snapshot.filesystem.allow_read),
-        ApprovalKind::FsWrite => Some(&policy_snapshot.filesystem.allow_write),
-        ApprovalKind::FsExec => Some(&policy_snapshot.filesystem.allow_execute),
-        _ => None,
+    if open.flags & libc::O_TRUNC != 0 {
+        required_access |= LANDLOCK_ACCESS_FS_TRUNCATE;
     }
+    required_access &= landlock_plan.handled_access_fs;
+    if required_access == 0 {
+        return false;
+    }
+    let path = Path::new(&open.path);
+    landlock_plan.rules.iter().any(|rule| {
+        let covers_path = if rule.is_dir {
+            path.starts_with(&rule.path)
+        } else {
+            path == rule.path
+        };
+        covers_path && rule.allowed_access & required_access == required_access
+    })
 }
 
 fn cached_authorization_matches(
@@ -1406,7 +1460,7 @@ fn redact_pattern_matches_path(policy_snapshot: &PolicySnapshot, path: &str) -> 
 }
 
 fn redacted_read_response_for_notification(
-    notification: &libc::seccomp_notif,
+    open: Option<&OpenNotification>,
     accesses: &[FilesystemAccess],
     policy_snapshot: &PolicySnapshot,
     authorizer: &FilesystemNotificationAuthorizer,
@@ -1417,7 +1471,7 @@ fn redacted_read_response_for_notification(
     {
         return Ok(None);
     }
-    let Some(open) = open_notification(notification)? else {
+    let Some(open) = open else {
         return Ok(None);
     };
     if open_flags_kind(open.flags) != ApprovalKind::FsRead {
@@ -1456,30 +1510,23 @@ fn redacted_read_response_for_notification(
     }))
 }
 
-fn authorized_open_response_for_notification(
-    notification: &libc::seccomp_notif,
-) -> Result<Option<FilesystemNotificationResponse>> {
-    let Some(open) = open_notification(notification)? else {
-        return Ok(None);
-    };
+pub(super) fn authorized_open_response_for_notification(
+    open: Option<&OpenNotification>,
+) -> Option<FilesystemNotificationResponse> {
+    let open = open?;
     let fd = match open_flags_kind(open.flags) {
-        ApprovalKind::FsRead => open_authorized_read_fd(&open),
-        ApprovalKind::FsWrite => open_authorized_write_fd(&open),
+        ApprovalKind::FsRead => open_authorized_read_fd(open),
+        ApprovalKind::FsWrite => open_authorized_write_fd(open),
         _ => None,
     };
-    match fd {
-        Some(fd) => Ok(Some(FilesystemNotificationResponse::AddFd {
-            fd,
-            close_on_exec: open.flags & libc::O_CLOEXEC != 0,
-        })),
-        None => Ok(None),
-    }
+    fd.map(|fd| FilesystemNotificationResponse::AddFd {
+        fd,
+        close_on_exec: open.flags & libc::O_CLOEXEC != 0,
+    })
 }
 
-fn open_write_requires_kernel_backstop(notification: &libc::seccomp_notif) -> Result<bool> {
-    Ok(open_notification(notification)?
-        .as_ref()
-        .is_some_and(|open| open_flags_kind(open.flags) == ApprovalKind::FsWrite))
+fn open_write_requires_kernel_backstop(open: Option<&OpenNotification>) -> bool {
+    open.is_some_and(|open| open_flags_kind(open.flags) == ApprovalKind::FsWrite)
 }
 
 fn open_authorized_read_fd(open: &OpenNotification) -> Option<OwnedFd> {
@@ -1541,7 +1588,9 @@ fn open_authorized_write_fd(open: &OpenNotification) -> Option<OwnedFd> {
     Some(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
-fn open_notification(notification: &libc::seccomp_notif) -> Result<Option<OpenNotification>> {
+pub(super) fn open_notification(
+    notification: &libc::seccomp_notif,
+) -> Result<Option<OpenNotification>> {
     let pid = notification.pid as libc::pid_t;
     let syscall = notification.data.nr as i64;
     let args = notification.data.args;
@@ -1577,30 +1626,30 @@ fn open_notification(notification: &libc::seccomp_notif) -> Result<Option<OpenNo
 pub(super) fn filesystem_accesses_for_notification(
     notification: &libc::seccomp_notif,
 ) -> Result<Vec<FilesystemAccess>> {
+    decode_filesystem_notification(notification).map(|decoded| decoded.accesses)
+}
+
+pub(super) fn decode_filesystem_notification(
+    notification: &libc::seccomp_notif,
+) -> Result<DecodedFilesystemNotification> {
+    let open = open_notification(notification)?;
+    let accesses = match open.as_ref() {
+        Some(open) => vec![FilesystemAccess {
+            kind: open_flags_kind(open.flags),
+            path: open.path.clone(),
+        }],
+        None => non_open_filesystem_accesses_for_notification(notification)?,
+    };
+    Ok(DecodedFilesystemNotification { accesses, open })
+}
+
+fn non_open_filesystem_accesses_for_notification(
+    notification: &libc::seccomp_notif,
+) -> Result<Vec<FilesystemAccess>> {
     let pid = notification.pid as libc::pid_t;
     let syscall = notification.data.nr as i64;
     let args = notification.data.args;
     let accesses = match syscall {
-        x if x == libc::SYS_open => vec![notification_path_access(
-            pid,
-            open_flags_kind(args[1] as i32),
-            libc::AT_FDCWD,
-            args[0],
-        )?],
-        x if x == libc::SYS_openat => vec![notification_path_access(
-            pid,
-            open_flags_kind(args[2] as i32),
-            args[0] as i32,
-            args[1],
-        )?],
-        x if x == libc::SYS_openat2 => {
-            let path = read_child_path(pid, args[1])?;
-            let how = read_child_value::<OpenHow>(pid, args[2])?;
-            vec![FilesystemAccess {
-                kind: open_flags_kind(how.flags as i32),
-                path: resolve_child_path(pid, args[0] as i32, &path)?,
-            }]
-        }
         x if x == libc::SYS_access
             || x == libc::SYS_stat
             || x == libc::SYS_lstat
@@ -1627,8 +1676,7 @@ pub(super) fn filesystem_accesses_for_notification(
             args[0] as i32,
             args[1],
         )?],
-        x if x == libc::SYS_creat
-            || x == libc::SYS_mknod
+        x if x == libc::SYS_mknod
             || x == libc::SYS_unlink
             || x == libc::SYS_rmdir
             || x == libc::SYS_mkdir
@@ -2091,6 +2139,283 @@ pub(super) fn recv_fd(socket_fd: RawFd) -> io::Result<OwnedFd> {
         }
         let fd = std::ptr::read(libc::CMSG_DATA(cmsg) as *const RawFd);
         Ok(OwnedFd::from_raw_fd(fd))
+    }
+}
+
+#[cfg(test)]
+mod notification_response_tests {
+    use super::*;
+    use crate::model::config::{ExecutionMode, PromptMode};
+    use std::os::unix::fs::PermissionsExt;
+
+    fn snapshot_and_authorizer(
+        temp: &tempfile::TempDir,
+        configure: impl FnOnce(&mut CondomConfig),
+    ) -> (
+        PolicySnapshot,
+        LandlockPlan,
+        FilesystemNotificationAuthorizer,
+        StatePaths,
+    ) {
+        let project = ProjectContext {
+            root: temp.path().join("project"),
+            id: "project-id".into(),
+            origin: None,
+        };
+        fs::create_dir_all(&project.root).unwrap();
+        let state = StatePaths::from_base(&project, &temp.path().join("state"));
+        let mut config = CondomConfig::default();
+        config.defaults.prompt_mode = PromptMode::Deny;
+        configure(&mut config);
+        let snapshot = policy::write_snapshot(
+            &project,
+            &state,
+            &config,
+            ExecutionMode::Run,
+            &["tool".into()],
+            &[],
+        )
+        .unwrap();
+        let landlock_plan =
+            LandlockPlan::from_snapshot_for_filesystem_notifications(&snapshot).unwrap();
+        let authorizer = FilesystemNotificationAuthorizer {
+            project,
+            state: state.clone(),
+            state_root: None,
+            config,
+            event_log: EventLog::new(state.events_file.clone()),
+            helper_endpoint: None,
+            runtime_rules: runtime_support_rules(&snapshot),
+            authorization_cache: Mutex::new(Vec::new()),
+        };
+        (snapshot, landlock_plan, authorizer, state)
+    }
+
+    fn openat_notification(path: &CString, flags: i32) -> libc::seccomp_notif {
+        let mut notification = unsafe { std::mem::zeroed::<libc::seccomp_notif>() };
+        notification.pid = std::process::id();
+        notification.data.nr = libc::SYS_openat as i32;
+        notification.data.args[0] = libc::AT_FDCWD as u64;
+        notification.data.args[1] = path.as_ptr() as u64;
+        notification.data.args[2] = flags as u64;
+        notification
+    }
+
+    fn assert_no_events(state: &StatePaths) {
+        let content = fs::read_to_string(&state.events_file).unwrap_or_default();
+        assert!(content.is_empty(), "unexpected events: {content}");
+    }
+
+    #[test]
+    fn kernel_backed_project_read_continues_without_fd_injection() {
+        let temp = tempfile::tempdir().unwrap();
+        let project_file = temp.path().join("project/bunfig.toml");
+        fs::create_dir_all(project_file.parent().unwrap()).unwrap();
+        fs::write(&project_file, "[install]\n").unwrap();
+        let (snapshot, landlock_plan, authorizer, state) = snapshot_and_authorizer(&temp, |_| {});
+        let path = CString::new(project_file.as_os_str().as_bytes()).unwrap();
+        let notification = openat_notification(&path, libc::O_RDONLY);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(response, FilesystemNotificationResponse::Continue));
+        assert_no_events(&state);
+    }
+
+    #[test]
+    fn dynamically_approved_read_still_injects_an_fd() {
+        let temp = tempfile::tempdir().unwrap();
+        let outside_file = temp.path().join("outside/bunfig.toml");
+        fs::create_dir_all(outside_file.parent().unwrap()).unwrap();
+        fs::write(&outside_file, "[install]\n").unwrap();
+        let (snapshot, landlock_plan, authorizer, state) = snapshot_and_authorizer(&temp, |_| {});
+        authorizer
+            .authorization_cache
+            .lock()
+            .unwrap()
+            .push(CachedFilesystemAuthorization {
+                kind: ApprovalKind::FsRead,
+                subject: outside_file.display().to_string(),
+                allowed: true,
+            });
+        let path = CString::new(outside_file.as_os_str().as_bytes()).unwrap();
+        let notification = openat_notification(&path, libc::O_RDONLY);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::AddFd { .. }
+        ));
+        assert_no_events(&state);
+    }
+
+    #[test]
+    fn wildcard_snapshot_read_without_landlock_rule_injects_an_fd() {
+        let temp = tempfile::tempdir().unwrap();
+        let outside_file = temp.path().join("outside/package/bunfig.toml");
+        fs::create_dir_all(outside_file.parent().unwrap()).unwrap();
+        fs::write(&outside_file, "[install]\n").unwrap();
+        let wildcard = temp.path().join("outside/*/bunfig.toml");
+        let (snapshot, landlock_plan, authorizer, _) = snapshot_and_authorizer(&temp, |config| {
+            config
+                .filesystem
+                .allow_read
+                .push(wildcard.display().to_string());
+        });
+        let path = CString::new(outside_file.as_os_str().as_bytes()).unwrap();
+        let notification = openat_notification(&path, libc::O_RDONLY);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::AddFd { .. }
+        ));
+    }
+
+    #[test]
+    fn late_created_snapshot_read_without_landlock_rule_injects_an_fd() {
+        let temp = tempfile::tempdir().unwrap();
+        let outside_file = temp.path().join("outside/generated.txt");
+        let allowed = outside_file.display().to_string();
+        let (snapshot, landlock_plan, authorizer, _) = snapshot_and_authorizer(&temp, |config| {
+            config.filesystem.allow_read.push(allowed);
+        });
+        fs::create_dir_all(outside_file.parent().unwrap()).unwrap();
+        fs::write(&outside_file, "generated\n").unwrap();
+        let path = CString::new(outside_file.as_os_str().as_bytes()).unwrap();
+        let notification = openat_notification(&path, libc::O_RDONLY);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::AddFd { .. }
+        ));
+    }
+
+    #[test]
+    fn host_inaccessible_open_returns_eacces_without_prompting() {
+        let temp = tempfile::tempdir().unwrap();
+        let restricted_dir = temp.path().join("restricted");
+        let restricted_file = restricted_dir.join("trace_marker");
+        fs::create_dir(&restricted_dir).unwrap();
+        fs::write(&restricted_file, "").unwrap();
+        fs::set_permissions(&restricted_dir, fs::Permissions::from_mode(0o000)).unwrap();
+        let (snapshot, landlock_plan, authorizer, state) = snapshot_and_authorizer(&temp, |_| {});
+        let path = CString::new(restricted_file.as_os_str().as_bytes()).unwrap();
+        let notification = openat_notification(&path, libc::O_WRONLY);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+        fs::set_permissions(&restricted_dir, fs::Permissions::from_mode(0o700)).unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::Deny(libc::EACCES)
+        ));
+        assert_no_events(&state);
+    }
+
+    #[test]
+    fn missing_read_open_returns_enoent_without_prompting() {
+        let temp = tempfile::tempdir().unwrap();
+        let (snapshot, landlock_plan, authorizer, state) = snapshot_and_authorizer(&temp, |_| {});
+        let path = CString::new(
+            temp.path()
+                .join("outside/bunfig.toml")
+                .as_os_str()
+                .as_bytes(),
+        )
+        .unwrap();
+        let notification = openat_notification(&path, libc::O_RDONLY);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::Deny(libc::ENOENT)
+        ));
+        assert_no_events(&state);
+    }
+
+    #[test]
+    fn missing_read_write_open_without_create_returns_enoent_without_prompting() {
+        let temp = tempfile::tempdir().unwrap();
+        let (snapshot, landlock_plan, authorizer, state) = snapshot_and_authorizer(&temp, |_| {});
+        let path = CString::new(
+            temp.path()
+                .join("outside/package.json")
+                .as_os_str()
+                .as_bytes(),
+        )
+        .unwrap();
+        let notification = openat_notification(&path, libc::O_RDWR | libc::O_CLOEXEC);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::Deny(libc::ENOENT)
+        ));
+        assert_no_events(&state);
+    }
+
+    #[test]
+    fn missing_create_open_remains_a_mediated_write() {
+        let temp = tempfile::tempdir().unwrap();
+        let (snapshot, landlock_plan, authorizer, state) = snapshot_and_authorizer(&temp, |_| {});
+        let missing = temp.path().join("outside/package.json");
+        let path = CString::new(missing.as_os_str().as_bytes()).unwrap();
+        let notification = openat_notification(&path, libc::O_RDWR | libc::O_CREAT);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::Deny(libc::EACCES)
+        ));
+        let events = fs::read_to_string(&state.events_file).unwrap();
+        assert!(events.contains(&missing.display().to_string()));
+    }
+
+    #[test]
+    fn explicitly_denied_missing_open_returns_eacces() {
+        let temp = tempfile::tempdir().unwrap();
+        let missing = temp.path().join("outside/bunfig.toml");
+        let denied = missing.display().to_string();
+        let (snapshot, landlock_plan, authorizer, state) =
+            snapshot_and_authorizer(&temp, |config| {
+                config.filesystem.deny_read.push(denied);
+            });
+        let path = CString::new(missing.as_os_str().as_bytes()).unwrap();
+        let notification = openat_notification(&path, libc::O_RDONLY);
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::Deny(libc::EACCES)
+        ));
+        assert_no_events(&state);
     }
 }
 

@@ -211,7 +211,6 @@ in
         "network-pre.target"
         "nftables.service"
       ];
-      before = lib.optionals (cfg.helperSocket.enable && hasHelperBinary) [ "condom-helper.socket" ];
       path = [ pkgs.iproute2 ];
       script = ''
         while ip rule del pref ${toString tproxy.rulePriority} fwmark ${toString tproxy.mark} table ${toString tproxy.routingTable} 2>/dev/null; do :; done

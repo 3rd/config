@@ -895,12 +895,12 @@ fn drop_to_peer_credentials(credentials: PeerCredentials) -> Result<()> {
 
 fn restore_caller_user_environment(caller_env: &BTreeMap<String, String>) -> Result<()> {
     for key in caller_env.keys() {
-        if !crate::app::env::USER_ENV_KEYS.contains(&key.as_str()) {
+        if !crate::app::env::is_caller_environment_key(key) {
             bail!("invalid caller environment key `{key}`");
         }
     }
-    for key in crate::app::env::USER_ENV_KEYS {
-        if let Some(value) = caller_env.get(*key) {
+    for key in crate::app::env::caller_environment_keys() {
+        if let Some(value) = caller_env.get(key) {
             std::env::set_var(key, value);
         } else {
             std::env::remove_var(key);
@@ -1098,6 +1098,7 @@ mod tests {
         let previous_xdg_runtime_dir = std::env::var_os("XDG_RUNTIME_DIR");
         let previous_dbus = std::env::var_os("DBUS_SESSION_BUS_ADDRESS");
         let previous_display = std::env::var_os("DISPLAY");
+        let previous_ssl_cert_file = std::env::var_os("SSL_CERT_FILE");
         let previous_wayland_display = std::env::var_os("WAYLAND_DISPLAY");
         let previous_xauthority = std::env::var_os("XAUTHORITY");
         std::env::set_var("HOME", "/root");
@@ -1106,6 +1107,7 @@ mod tests {
         std::env::set_var("XDG_RUNTIME_DIR", "/run/user/0");
         std::env::set_var("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/0/bus");
         std::env::set_var("DISPLAY", ":1");
+        std::env::set_var("SSL_CERT_FILE", "/root/ca.pem");
         std::env::set_var("WAYLAND_DISPLAY", "wayland-0");
         std::env::set_var("XAUTHORITY", "/root/.Xauthority");
 
@@ -1113,6 +1115,7 @@ mod tests {
             ("HOME".into(), "/home/caller".into()),
             ("USER".into(), "caller".into()),
             ("DISPLAY".into(), ":0".into()),
+            ("SSL_CERT_FILE".into(), "/home/caller/ca.pem".into()),
             ("XAUTHORITY".into(), "/home/caller/.Xauthority".into()),
             ("XDG_RUNTIME_DIR".into(), "/run/user/1000".into()),
             (
@@ -1134,6 +1137,10 @@ mod tests {
         );
         assert_eq!(std::env::var("DISPLAY").as_deref(), Ok(":0"));
         assert_eq!(
+            std::env::var("SSL_CERT_FILE").as_deref(),
+            Ok("/home/caller/ca.pem")
+        );
+        assert_eq!(
             std::env::var("XAUTHORITY").as_deref(),
             Ok("/home/caller/.Xauthority")
         );
@@ -1146,6 +1153,7 @@ mod tests {
         restore_env("XDG_RUNTIME_DIR", previous_xdg_runtime_dir);
         restore_env("DBUS_SESSION_BUS_ADDRESS", previous_dbus);
         restore_env("DISPLAY", previous_display);
+        restore_env("SSL_CERT_FILE", previous_ssl_cert_file);
         restore_env("WAYLAND_DISPLAY", previous_wayland_display);
         restore_env("XAUTHORITY", previous_xauthority);
     }

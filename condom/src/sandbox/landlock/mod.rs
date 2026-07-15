@@ -27,6 +27,7 @@ use crate::model::events::{Decision, Event, EventLog};
 use crate::model::policy::{self, PolicySnapshot};
 use crate::model::policy_pattern::{expand_home, policy_pattern_matches};
 use crate::model::project::ProjectContext;
+use crate::model::runtime_support::{path_is_blocked_by_patterns, plan_runtime_read_paths};
 use crate::model::state::StatePaths;
 
 mod mediate;
@@ -66,7 +67,7 @@ mod tests {
     };
     use crate::model::project::ProjectContext;
     use crate::model::state::StatePaths;
-    use std::io::Read;
+    use std::io::{Read, Write};
     use std::os::unix::net::UnixListener;
     use std::sync::{Mutex, MutexGuard};
     use std::{ffi::OsString, thread};
@@ -289,6 +290,43 @@ mod tests {
     }
 
     #[test]
+    fn runtime_support_rules_respect_snapshot_read_write_and_redaction_protections() {
+        let temp = tempfile::tempdir().unwrap();
+        let project = ProjectContext {
+            root: temp.path().join("project"),
+            id: "project-id".into(),
+            origin: None,
+        };
+        std::fs::create_dir_all(&project.root).unwrap();
+        let state = StatePaths::from_base(&project, &temp.path().join("state"));
+        let mut config = CondomConfig::default();
+        config.filesystem.deny_read = vec!["/etc/resolv.conf".into()];
+        config.filesystem.redact_read = vec!["/sys/devices/system/cpu/online".into()];
+        config.filesystem.deny_write = vec!["/dev/tty".into()];
+        let snapshot = write_snapshot(
+            &project,
+            &state,
+            &config,
+            ExecutionMode::Run,
+            &["sh".into()],
+            &[],
+        )
+        .unwrap();
+
+        let rules = runtime_support_rules_from(&snapshot, &BTreeMap::new(), None);
+
+        assert!(rules.iter().any(|(path, _)| path == "/etc/hosts"));
+        assert!(!rules.iter().any(|(path, _)| path == "/etc/resolv.conf"));
+        assert!(!rules
+            .iter()
+            .any(|(path, _)| path == "/sys/devices/system/cpu/online"));
+        assert!(rules
+            .iter()
+            .any(|(path, access)| { path == "/dev/null" && access & WRITE_ACCESS_BASE != 0 }));
+        assert!(!rules.iter().any(|(path, _)| path == "/dev/tty"));
+    }
+
+    #[test]
     fn planned_landlock_network_rules_follow_network_mediation() {
         let temp = tempfile::tempdir().unwrap();
         let project = ProjectContext {
@@ -492,6 +530,7 @@ mod tests {
             config,
             event_log: EventLog::new(temp.path().join("events.jsonl")),
             helper_endpoint: Some(HelperEndpoint::Socket(socket)),
+            runtime_rules: runtime_support_rules(&snapshot),
             authorization_cache: Mutex::new(Vec::new()),
         };
 
@@ -575,6 +614,7 @@ mod tests {
             config,
             event_log: EventLog::new(temp.path().join("events.jsonl")),
             helper_endpoint: Some(HelperEndpoint::Socket(socket)),
+            runtime_rules: runtime_support_rules(&snapshot),
             authorization_cache: Mutex::new(Vec::new()),
         };
 
@@ -638,6 +678,7 @@ mod tests {
             config,
             event_log: EventLog::new(temp.path().join("events.jsonl")),
             helper_endpoint: Some(HelperEndpoint::Socket(socket)),
+            runtime_rules: runtime_support_rules(&snapshot),
             authorization_cache: Mutex::new(Vec::new()),
         };
         let cached = temp.path().join("cached");
@@ -710,6 +751,7 @@ mod tests {
             config,
             event_log: EventLog::new(temp.path().join("events.jsonl")),
             helper_endpoint: Some(HelperEndpoint::Socket(socket)),
+            runtime_rules: runtime_support_rules(&snapshot),
             authorization_cache: Mutex::new(Vec::new()),
         };
 
@@ -879,5 +921,91 @@ mod tests {
         kill_and_reap_child(child);
 
         assert!(saw_hostname, "seen paths: {seen_paths:?}");
+    }
+
+    #[test]
+    fn decoded_open_remains_usable_after_child_becomes_nondumpable() {
+        let (mut parent_socket, mut child_socket) = UnixStream::pair().unwrap();
+        let child = unsafe { libc::fork() };
+        assert!(child >= 0);
+        if child == 0 {
+            drop(parent_socket);
+            let path = CString::new("/etc/hostname").unwrap();
+            child_socket
+                .write_all(&(path.as_ptr() as usize).to_ne_bytes())
+                .unwrap();
+            let mut signal = [0_u8; 1];
+            child_socket.read_exact(&mut signal).unwrap();
+            let changed = unsafe { libc::prctl(libc::PR_SET_DUMPABLE, 0, 0, 0, 0) } == 0;
+            child_socket.write_all(&[u8::from(changed)]).unwrap();
+            child_socket.read_exact(&mut signal).ok();
+            unsafe {
+                libc::_exit(0);
+            }
+        }
+        drop(child_socket);
+        let mut address = [0_u8; size_of::<usize>()];
+        parent_socket.read_exact(&mut address).unwrap();
+        let mut notification = unsafe { std::mem::zeroed::<libc::seccomp_notif>() };
+        notification.pid = child as u32;
+        notification.data.nr = libc::SYS_openat as i32;
+        notification.data.args[0] = libc::AT_FDCWD as u64;
+        notification.data.args[1] = usize::from_ne_bytes(address) as u64;
+        notification.data.args[2] = libc::O_RDONLY as u64;
+
+        let decoded = decode_filesystem_notification(&notification).unwrap();
+        assert_eq!(decoded.accesses[0].path, "/etc/hostname");
+        parent_socket.write_all(&[1]).unwrap();
+        let mut changed = [0_u8; 1];
+        parent_socket.read_exact(&mut changed).unwrap();
+        assert_eq!(changed, [1]);
+
+        let response = authorized_open_response_for_notification(decoded.open.as_ref());
+        kill_and_reap_child(child);
+
+        assert!(matches!(
+            response,
+            Some(FilesystemNotificationResponse::AddFd { .. })
+        ));
+    }
+
+    #[test]
+    fn undecodable_notification_is_denied_without_authorization() {
+        let temp = tempfile::tempdir().unwrap();
+        let project = ProjectContext {
+            root: temp.path().join("project"),
+            id: "project-id".into(),
+            origin: None,
+        };
+        fs::create_dir_all(&project.root).unwrap();
+        let state = StatePaths::from_base(&project, &temp.path().join("state"));
+        let config = CondomConfig::default();
+        let snapshot = write_snapshot(
+            &project,
+            &state,
+            &config,
+            ExecutionMode::Run,
+            &["tool".into()],
+            &[],
+        )
+        .unwrap();
+        let landlock_plan =
+            LandlockPlan::from_snapshot_for_filesystem_notifications(&snapshot).unwrap();
+        let authorizer = FilesystemNotificationAuthorizer::new(&snapshot).unwrap();
+        let mut notification = unsafe { std::mem::zeroed::<libc::seccomp_notif>() };
+        notification.pid = std::process::id();
+        notification.data.nr = libc::SYS_openat as i32;
+        notification.data.args[0] = libc::AT_FDCWD as u64;
+        notification.data.args[1] = 0;
+        notification.data.args[2] = libc::O_RDONLY as u64;
+
+        let response =
+            filesystem_notification_response(&notification, &snapshot, &landlock_plan, &authorizer)
+                .unwrap();
+
+        assert!(matches!(
+            response,
+            FilesystemNotificationResponse::Deny(libc::EACCES)
+        ));
     }
 }

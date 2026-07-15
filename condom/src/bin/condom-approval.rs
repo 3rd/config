@@ -1,4 +1,9 @@
-use std::{cell::RefCell, ffi::CString, path::Path, rc::Rc};
+use std::{
+    cell::RefCell,
+    ffi::CString,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, ValueEnum};
@@ -126,6 +131,7 @@ struct RuleSelection {
     scope: RuleScope,
     subject: Option<String>,
     filesystem_access: Option<FilesystemAccessMode>,
+    persistent_scope_allowed: bool,
 }
 
 #[derive(Clone)]
@@ -643,14 +649,46 @@ fn filesystem_access_from_details(details: &PromptDetails) -> Option<FilesystemA
 }
 
 fn path_candidates(details: &PromptDetails) -> Vec<String> {
+    let home = std::env::var_os("HOME").map(PathBuf::from);
+    path_candidates_with_home(details, home.as_deref())
+}
+
+fn path_candidates_with_home(details: &PromptDetails, home: Option<&Path>) -> Vec<String> {
     let Some(path) = field_value(details, "path") else {
         return Vec::new();
     };
-    Path::new(path)
-        .ancestors()
-        .filter(|ancestor| !ancestor.as_os_str().is_empty())
-        .map(|ancestor| ancestor.display().to_string())
-        .collect()
+    let canonical_home = home.and_then(|home| std::fs::canonicalize(home).ok());
+    let mut ancestors = Path::new(path).ancestors();
+    let Some(exact) = ancestors.next() else {
+        return Vec::new();
+    };
+    if unsafe_persistent_subject(exact, home, canonical_home.as_deref()) {
+        return Vec::new();
+    }
+    let mut candidates = vec![exact.display().to_string()];
+    for ancestor in ancestors {
+        if unsafe_persistent_subject(ancestor, home, canonical_home.as_deref()) {
+            break;
+        }
+        if !ancestor.as_os_str().is_empty() {
+            candidates.push(ancestor.display().to_string());
+        }
+    }
+    candidates
+}
+
+fn unsafe_persistent_subject(
+    candidate: &Path,
+    home: Option<&Path>,
+    canonical_home: Option<&Path>,
+) -> bool {
+    if candidate == Path::new("/") || home.is_some_and(|home| candidate == home) {
+        return true;
+    }
+    let Ok(canonical) = std::fs::canonicalize(candidate) else {
+        return false;
+    };
+    canonical == Path::new("/") || canonical_home.is_some_and(|home| canonical == home)
 }
 
 fn path_candidate_label(index: usize, candidate: &str) -> String {
@@ -787,6 +825,9 @@ fn wire_scope_button(
     details: PromptDetails,
 ) {
     button.set_callback(move |_| {
+        if scope != RuleScope::Once && !selection.borrow().persistent_scope_allowed {
+            return;
+        }
         selection.borrow_mut().scope = scope;
         refresh_rule_controls(&mut controls, selection.borrow().clone(), &details);
     });
@@ -830,7 +871,12 @@ fn wire_keyboard_shortcuts(
                 {
                     let mut selection = selection.borrow_mut();
                     match update {
-                        SelectionUpdate::Scope(scope) => selection.scope = scope,
+                        SelectionUpdate::Scope(scope)
+                            if scope == RuleScope::Once || selection.persistent_scope_allowed =>
+                        {
+                            selection.scope = scope
+                        }
+                        SelectionUpdate::Scope(_) => {}
                         SelectionUpdate::Access(filesystem_access)
                             if selection.filesystem_access.is_some() =>
                         {
@@ -880,20 +926,19 @@ fn selection_update_for_event() -> Option<SelectionUpdate> {
 
 impl RuleSelection {
     fn for_details(details: &PromptDetails) -> Self {
+        let path_candidates = path_candidates(details);
         Self {
             action: RuleAction::Allow,
             scope: RuleScope::Once,
-            subject: path_candidates(details).first().cloned(),
-            // preselect the broadest access when a filesystem prompt is shown so a
-            // persistent Allow does not re-prompt for the other mode; the operator
-            // can narrow it before allowing.
-            filesystem_access: filesystem_access_from_details(details)
-                .map(|_| FilesystemAccessMode::ReadWrite),
+            subject: path_candidates.first().cloned(),
+            filesystem_access: filesystem_access_from_details(details),
+            persistent_scope_allowed: field_value(details, "path").is_none()
+                || !path_candidates.is_empty(),
         }
     }
 
     fn decision(&self) -> PromptDecision {
-        match (self.action, self.scope) {
+        match (self.action, self.effective_scope()) {
             (RuleAction::Allow, RuleScope::Once) => PromptDecision::AllowOnce,
             (RuleAction::Allow, RuleScope::Instance) => PromptDecision::AllowInstance,
             (RuleAction::Allow, RuleScope::AppProject) => PromptDecision::AllowAppProject,
@@ -907,13 +952,21 @@ impl RuleSelection {
 
     fn result(&self) -> PromptResult {
         let decision = self.decision();
-        match (self.scope, &self.subject) {
+        match (self.effective_scope(), &self.subject) {
             (RuleScope::Once, _) | (_, None) => PromptResult::new(decision),
             (_, Some(subject)) => PromptResult::with_subject_and_access(
                 decision,
                 subject.clone(),
                 self.filesystem_access,
             ),
+        }
+    }
+
+    fn effective_scope(&self) -> RuleScope {
+        if self.persistent_scope_allowed {
+            self.scope
+        } else {
+            RuleScope::Once
         }
     }
 }
@@ -943,6 +996,17 @@ fn refresh_rule_controls(
         selection.scope == RuleScope::Project,
         rgb(37, 99, 235),
     );
+    for button in [
+        &mut controls.instance_scope,
+        &mut controls.app_scope,
+        &mut controls.project_scope,
+    ] {
+        if selection.persistent_scope_allowed {
+            button.activate();
+        } else {
+            button.deactivate();
+        }
+    }
     if let Some(button) = controls.read_access.as_mut() {
         style_toggle(
             button,
@@ -1166,33 +1230,104 @@ mod tests {
     }
 
     #[test]
-    fn path_candidates_include_exact_path_and_all_ancestors() {
+    fn path_candidates_stop_before_home_and_root() {
         let details = parse_prompt_details(
             "condom blocked filesystem access:\n  path: /home/example/.agent/config.toml",
         );
 
         assert_eq!(
-            path_candidates(&details),
+            path_candidates_with_home(&details, Some(Path::new("/home/example"))),
+            vec!["/home/example/.agent/config.toml", "/home/example/.agent",]
+        );
+
+        let system =
+            parse_prompt_details("condom blocked filesystem access:\n  path: /etc/resolv.conf");
+        assert_eq!(
+            path_candidates_with_home(&system, Some(Path::new("/home/example"))),
+            vec!["/etc/resolv.conf", "/etc"]
+        );
+
+        for path in ["/home/example", "/"] {
+            let details = parse_prompt_details(&format!(
+                "condom blocked filesystem access:\n  path: {path}"
+            ));
+            assert!(
+                path_candidates_with_home(&details, Some(Path::new("/home/example"))).is_empty()
+            );
+        }
+    }
+
+    #[test]
+    fn path_candidates_stop_before_home_and_root_symlink_aliases() {
+        let temp = tempfile::tempdir().unwrap();
+        let home = temp.path().join("home");
+        std::fs::create_dir_all(home.join(".agent")).unwrap();
+        let home_alias = temp.path().join("home-alias");
+        std::os::unix::fs::symlink(&home, &home_alias).unwrap();
+        let home_path = home_alias.join(".agent/config.toml");
+        let details = parse_prompt_details(&format!(
+            "condom blocked filesystem access:\n  path: {}",
+            home_path.display()
+        ));
+
+        assert_eq!(
+            path_candidates_with_home(&details, Some(&home)),
             vec![
-                "/home/example/.agent/config.toml",
-                "/home/example/.agent",
-                "/home/example",
-                "/home",
-                "/",
+                home_path.display().to_string(),
+                home_alias.join(".agent").display().to_string(),
+            ]
+        );
+
+        let root_alias = temp.path().join("root-alias");
+        std::os::unix::fs::symlink("/", &root_alias).unwrap();
+        let root_path = root_alias.join("etc/hosts");
+        let details = parse_prompt_details(&format!(
+            "condom blocked filesystem access:\n  path: {}",
+            root_path.display()
+        ));
+
+        assert_eq!(
+            path_candidates_with_home(&details, Some(&home)),
+            vec![
+                root_path.display().to_string(),
+                root_alias.join("etc").display().to_string(),
             ]
         );
     }
 
     #[test]
-    fn for_details_preselects_read_write_when_access_requested() {
-        let details = parse_prompt_details(
-            "condom blocked filesystem access:\n  action: write\n  path: /home/example/.agent/config.toml",
-        );
+    fn unsafe_whole_home_or_root_subjects_cannot_be_persisted() {
+        let home = std::env::var("HOME").unwrap();
+        for path in [home.as_str(), "/"] {
+            let details = parse_prompt_details(&format!(
+                "condom blocked filesystem access:\n  action: read\n  path: {path}"
+            ));
+            let mut selection = RuleSelection::for_details(&details);
+            selection.scope = RuleScope::Project;
 
-        assert_eq!(
-            RuleSelection::for_details(&details).filesystem_access,
-            Some(FilesystemAccessMode::ReadWrite)
-        );
+            assert!(!selection.persistent_scope_allowed);
+            assert_eq!(
+                selection.result(),
+                PromptResult::new(PromptDecision::AllowOnce)
+            );
+        }
+    }
+
+    #[test]
+    fn for_details_preselects_the_requested_filesystem_access() {
+        for (action, expected) in [
+            ("read", FilesystemAccessMode::Read),
+            ("write", FilesystemAccessMode::Write),
+            ("read-write", FilesystemAccessMode::ReadWrite),
+        ] {
+            let details = parse_prompt_details(&format!(
+                "condom blocked filesystem access:\n  action: {action}\n  path: /home/example/.agent/config.toml"
+            ));
+            assert_eq!(
+                RuleSelection::for_details(&details).filesystem_access,
+                Some(expected)
+            );
+        }
 
         let proxy = parse_prompt_details("condom blocked a proxy destination:\n  app: npm");
         assert_eq!(RuleSelection::for_details(&proxy).filesystem_access, None);

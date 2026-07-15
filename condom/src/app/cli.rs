@@ -414,9 +414,8 @@ fn wrapper_reexec_args(
 }
 
 fn original_user_environment() -> Vec<(&'static str, OsString)> {
-    crate::app::env::USER_ENV_KEYS
-        .iter()
-        .filter_map(|key| std::env::var_os(key).map(|value| (*key, value)))
+    crate::app::env::caller_environment_keys()
+        .filter_map(|key| std::env::var_os(key).map(|value| (key, value)))
         .collect()
 }
 
@@ -430,7 +429,7 @@ fn original_user_env_assignment(key: &str, value: OsString) -> OsString {
 fn restore_original_user_env(assignments: &[OsString]) -> Result<()> {
     for assignment in assignments {
         let (key, value) = parse_original_user_env_assignment(assignment)?;
-        if !crate::app::env::USER_ENV_KEYS.contains(&key.as_str()) {
+        if !crate::app::env::is_caller_environment_key(&key) {
             bail!("invalid preserved wrapper environment key `{key}`");
         }
         std::env::set_var(key, value);
@@ -1168,6 +1167,23 @@ mod tests {
         assert_eq!(args[3], ORIGINAL_USER_ENV_ARG);
         assert_eq!(args[4], "XDG_CONFIG_HOME=/home/me/.config");
         assert_eq!(args[5], "run");
+    }
+
+    #[test]
+    fn wrapper_restore_accepts_safe_operational_environment() {
+        let previous = std::env::var_os("SSL_CERT_FILE");
+
+        restore_original_user_env(&[OsString::from("SSL_CERT_FILE=/tmp/combined-ca.pem")]).unwrap();
+
+        assert_eq!(
+            std::env::var_os("SSL_CERT_FILE"),
+            Some(OsString::from("/tmp/combined-ca.pem"))
+        );
+        if let Some(previous) = previous {
+            std::env::set_var("SSL_CERT_FILE", previous);
+        } else {
+            std::env::remove_var("SSL_CERT_FILE");
+        }
     }
 
     #[test]

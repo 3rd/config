@@ -8,9 +8,9 @@ const LANDLOCK_RULE_NET_PORT: u32 = 2;
 
 pub(super) const LANDLOCK_ACCESS_FS_EXECUTE: u64 = 1 << 0;
 
-const LANDLOCK_ACCESS_FS_WRITE_FILE: u64 = 1 << 1;
+pub(super) const LANDLOCK_ACCESS_FS_WRITE_FILE: u64 = 1 << 1;
 
-const LANDLOCK_ACCESS_FS_READ_FILE: u64 = 1 << 2;
+pub(super) const LANDLOCK_ACCESS_FS_READ_FILE: u64 = 1 << 2;
 
 const LANDLOCK_ACCESS_FS_READ_DIR: u64 = 1 << 3;
 
@@ -109,6 +109,7 @@ pub(super) struct LandlockPathRule {
     pub(super) path: PathBuf,
     pub(super) fd: OwnedFd,
     pub(super) allowed_access: u64,
+    pub(super) is_dir: bool,
 }
 
 pub(super) struct LandlockNetworkRule {

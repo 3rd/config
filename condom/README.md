@@ -81,11 +81,11 @@ Common keys:
 | `proxy.goAuth` | Optional Go `GOAUTH` value. |
 | `review.fileRules` | Path rules for review visibility and default selection. |
 
-Environment allow and deny entries are exact names. Deny wins; runtime-owned values such as `HOME`, `PATH`, `TMPDIR`, and `CONDOM_*` are pinned by condom. The command passed to `condom run --` or `condom review --` is the user-approved entrypoint; `exec.*` does not deny that entrypoint.
+Environment allow and deny entries are exact names. Deny wins; runtime-owned values such as `HOME`, `PATH`, `TMPDIR`, and `CONDOM_*` are pinned by condom. Certificate, locale, and timezone variables from the built-in operational allowlist are passed by default unless explicitly denied. The command passed to `condom run --` or `condom review --` is the user-approved entrypoint; `exec.*` does not deny that entrypoint.
 
 `condom run` and `condom review` always route network access through Condom's proxy policy system.
 
-There is no built-in filesystem deny/hide list for sensitive host paths, and there is no built-in proxy allow-list, but condom still protects its own project/runtime config, shims, and cache paths. Other host filesystem and proxy access is resolved through policy, stored approvals, or the approval prompt. Review may still flag high-risk changes, but those flags do not grant, hide, or deny access.
+There is no built-in filesystem deny/hide list for sensitive host paths, and there is no built-in proxy allow-list, but condom still protects its own project/runtime config, shims, and cache paths. Read-only runtime support covers resolver, timezone, CPU, current-cgroup, trust-store, and configured certificate paths; the selected executable's canonical target receives read/execute access so the approved command can start. Condom does not infer package or dependency directories: additional installation files use policy, stored approvals, or the approval prompt, where the user can approve an appropriate folder. Explicit filesystem deny and redaction rules override derived support. Other host filesystem and proxy access follows the same approval flow. Review may still flag high-risk changes, but those flags do not grant, hide, or deny access.
 
 Review file rules match review-relative paths with `*` and `**`. Hidden files stay applyable when selected, but are omitted from the review tree. For package upgrade flows that rewrite Git bookkeeping, keep hooks and config visible while default-selecting noisy internals:
 

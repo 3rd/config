@@ -190,15 +190,48 @@ pub(super) fn execution_support_paths(policy_snapshot: &PolicySnapshot) -> Vec<S
     paths
 }
 
-pub(super) fn runtime_support_rules() -> Vec<(String, u64)> {
-    vec![
-        ("/dev".into(), READ_ACCESS),
-        ("/dev/null".into(), WRITE_ACCESS_BASE),
-        ("/dev/tty".into(), WRITE_ACCESS_BASE),
-        ("/etc/pki/tls/certs".into(), READ_ACCESS),
-        ("/etc/ssl/certs".into(), READ_ACCESS),
-        ("/proc".into(), PROC_SUPPORT_ACCESS),
-    ]
+pub(super) fn runtime_support_rules(policy_snapshot: &PolicySnapshot) -> Vec<(String, u64)> {
+    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let cgroup = fs::read_to_string("/proc/self/cgroup").ok();
+    runtime_support_rules_from(policy_snapshot, &environment, cgroup.as_deref())
+}
+
+pub(super) fn runtime_support_rules_from(
+    policy_snapshot: &PolicySnapshot,
+    environment: &BTreeMap<String, String>,
+    cgroup: Option<&str>,
+) -> Vec<(String, u64)> {
+    let blocked_read = policy_snapshot
+        .filesystem
+        .deny_read
+        .iter()
+        .chain(policy_snapshot.filesystem.redact_read.iter());
+    let mut rules = BTreeMap::new();
+    for (path, access) in [
+        ("/dev".to_string(), READ_ACCESS),
+        ("/proc".to_string(), PROC_SUPPORT_ACCESS),
+    ] {
+        if !path_is_blocked_by_patterns(&path, blocked_read.clone()) {
+            rules.insert(path, access);
+        }
+    }
+    for path in plan_runtime_read_paths(environment, cgroup) {
+        if !path_is_blocked_by_patterns(&path, blocked_read.clone()) {
+            rules.insert(path, READ_ACCESS);
+        }
+    }
+    let blocked_write = policy_snapshot
+        .filesystem
+        .deny_write
+        .iter()
+        .chain(policy_snapshot.filesystem.deny_read.iter())
+        .chain(policy_snapshot.filesystem.redact_read.iter());
+    for path in ["/dev/null", "/dev/tty"] {
+        if !path_is_blocked_by_patterns(path, blocked_write.clone()) {
+            rules.insert(path.into(), WRITE_ACCESS_BASE);
+        }
+    }
+    rules.into_iter().collect()
 }
 
 pub(super) fn is_project_parent_directory(project_root: &Path, subject: &str) -> bool {
@@ -214,15 +247,16 @@ pub(super) fn is_project_parent_directory(project_root: &Path, subject: &str) ->
 
 pub(super) fn is_allowed_read_parent_directory(
     policy_snapshot: &PolicySnapshot,
+    runtime_rules: &[(String, u64)],
     subject: &str,
 ) -> bool {
     let subject = Path::new(subject);
     let mut paths = policy_snapshot.filesystem.allow_read.clone();
     paths.extend(execution_support_paths(policy_snapshot));
     paths.extend(
-        runtime_support_rules()
-            .into_iter()
-            .filter_map(|(path, access)| (access & READ_ACCESS != 0).then_some(path)),
+        runtime_rules
+            .iter()
+            .filter_map(|(path, access)| (*access & READ_ACCESS != 0).then_some(path.clone())),
     );
 
     paths
@@ -319,6 +353,6 @@ pub(super) fn allowed_access_for_opened_path(access: u64, is_dir: bool) -> u64 {
     if is_dir {
         access
     } else {
-        access & !DIRECTORY_ONLY_ACCESS & !LANDLOCK_ACCESS_FS_TRUNCATE
+        access & !DIRECTORY_ONLY_ACCESS
     }
 }
