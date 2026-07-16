@@ -14,6 +14,15 @@ let
   monCenter = "DP-2";
   monRight = "HDMI-0";
   desktopOsdExe = lib.getExe config.desktop.osd.package;
+  desktopMenu = pkgs.writeShellApplication {
+    name = "desktop-menu";
+    runtimeInputs = [
+      config.programs.rofi.package
+      pkgs.gnugrep
+    ];
+    text = builtins.readFile ./desktop-menu.sh;
+  };
+  desktopMenuExe = lib.getExe desktopMenu;
   polybarMsgExe = lib.getExe' config.services.polybar.package "polybar-msg";
   workspaces = {
     one = "main";
@@ -168,6 +177,7 @@ in
       feh
       alt-tab-scratchpad
       screen-cycle
+      desktopMenu
     ]
     ++ (with pkgs-stable; [ xss-lock ]);
 
@@ -293,6 +303,7 @@ in
           "Print" = "exec ${pkgs-stable.flameshot}/bin/flameshot gui";
           "${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad toggle";
           "ctrl+${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad store";
+          "${modifier}+space" = "exec --no-startup-id ${desktopMenuExe}";
           "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun";
           "ctrl+${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show window";
         };
