@@ -1,4 +1,4 @@
-% project setup
+% setup
 
-# Setup global ast-grep sgconfig.yml
-cp ~/.config/nvim/linters/ast-grep/sgconfig.yml .
+# Copy the global ast-grep configuration into the current project
+cp "$HOME/.config/nvim/linters/ast-grep/sgconfig.yml" ./sgconfig.yml

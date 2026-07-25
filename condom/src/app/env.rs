@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::ffi::{OsStr, OsString};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
@@ -65,12 +66,12 @@ pub fn sanitized_environment(
             env.insert(key.clone(), value.clone());
         }
     }
-    let path = source_path(source);
-    env.insert("PATH".into(), runtime_path(path));
+    let path = source_path(source, &state.shim_dir);
+    env.insert("PATH".into(), runtime_path(path.as_deref()));
     if environment.allow.iter().any(|key| key == "SHELL")
         && !environment.deny.iter().any(|key| key == "SHELL")
     {
-        if let Some(shell) = resolved_shell(source, path) {
+        if let Some(shell) = resolved_shell(source, path.as_deref()) {
             env.insert("SHELL".into(), shell);
         }
     }
@@ -106,12 +107,34 @@ fn keep_passthrough_key(key: &str, environment: &EnvironmentConfig) -> bool {
         || environment.allow.iter().any(|allowed| allowed == key)
 }
 
-fn source_path(source: &BTreeMap<String, String>) -> Option<&String> {
-    source.get(ORIGINAL_PATH_ENV).or_else(|| source.get("PATH"))
+pub(crate) fn current_source_path(shim_dir: &Path) -> Option<OsString> {
+    let path = if std::env::var_os(WRAPPER_REEXEC_ENV).is_some() {
+        std::env::var_os(ORIGINAL_PATH_ENV).or_else(|| std::env::var_os("PATH"))
+    } else {
+        std::env::var_os("PATH")
+    }?;
+    Some(path_without_entry(&path, shim_dir))
 }
 
-fn resolved_shell(source: &BTreeMap<String, String>, path: Option<&String>) -> Option<String> {
-    let path = path.map(String::as_str);
+fn source_path(source: &BTreeMap<String, String>, shim_dir: &Path) -> Option<String> {
+    let path = if source.contains_key(WRAPPER_REEXEC_ENV) {
+        source.get(ORIGINAL_PATH_ENV).or_else(|| source.get("PATH"))
+    } else {
+        source.get("PATH")
+    }?;
+    Some(
+        path_without_entry(OsStr::new(path), shim_dir)
+            .into_string()
+            .expect("source environment PATH must remain valid UTF-8"),
+    )
+}
+
+fn path_without_entry(path: &OsStr, excluded: &Path) -> OsString {
+    std::env::join_paths(std::env::split_paths(path).filter(|entry| entry != excluded))
+        .expect("PATH entries produced by split_paths must be joinable")
+}
+
+fn resolved_shell(source: &BTreeMap<String, String>, path: Option<&str>) -> Option<String> {
     source
         .get("SHELL")
         .and_then(|shell| resolve_shell(shell, path))
@@ -158,7 +181,7 @@ fn is_executable_file(path: &Path) -> bool {
             .unwrap_or(false)
 }
 
-fn runtime_path(source_path: Option<&String>) -> String {
+fn runtime_path(source_path: Option<&str>) -> String {
     let mut entries = Vec::new();
     if let Some(path) = source_path {
         entries.extend(
@@ -501,6 +524,8 @@ mod tests {
 
     #[test]
     fn preserved_original_path_wins_after_wrapper_reexec() {
+        let state = state();
+        let shim_dir = state.shim_dir.display().to_string();
         let mut source = BTreeMap::new();
         source.insert(
             "PATH".into(),
@@ -508,20 +533,47 @@ mod tests {
         );
         source.insert(
             ORIGINAL_PATH_ENV.into(),
-            "/home/me/.local/bin:/run/current-system/sw/bin".into(),
+            format!("{shim_dir}:/home/me/.local/bin:/run/current-system/sw/bin"),
         );
+        source.insert(WRAPPER_REEXEC_ENV.into(), "1".into());
 
         let env = sanitized_environment(
             &source,
             ExecutionMode::Run,
             &project(),
-            &state(),
+            &state,
             &environment(),
         );
         let path = env.get("PATH").unwrap();
 
         assert!(path.split(':').any(|entry| entry == "/home/me/.local/bin"));
+        assert!(!path.split(':').any(|entry| entry == shim_dir));
         assert!(!env.contains_key(ORIGINAL_PATH_ENV));
+    }
+
+    #[test]
+    fn live_path_wins_outside_wrapper_reexec_and_excludes_project_shims() {
+        let state = state();
+        let shim_dir = state.shim_dir.display().to_string();
+        let live_bin = "/opt/live-toolchain/bin";
+        let mut source = BTreeMap::new();
+        source.insert("PATH".into(), format!("{shim_dir}:{live_bin}"));
+        source.insert(ORIGINAL_PATH_ENV.into(), "/opt/stale-toolchain/bin".into());
+
+        let env = sanitized_environment(
+            &source,
+            ExecutionMode::Run,
+            &project(),
+            &state,
+            &environment(),
+        );
+        let path = env.get("PATH").unwrap();
+
+        assert!(path.split(':').any(|entry| entry == live_bin));
+        assert!(!path.split(':').any(|entry| entry == shim_dir));
+        assert!(!path
+            .split(':')
+            .any(|entry| entry == "/opt/stale-toolchain/bin"));
     }
 
     #[test]

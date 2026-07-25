@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsStr;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use crate::model::policy_pattern::{expand_home, policy_pattern_matches};
 
@@ -36,13 +36,41 @@ pub(crate) const SAFE_OPERATIONAL_ENV_KEYS: &[&str] = &[
 
 const FIXED_RUNTIME_READ_PATHS: &[&str] = &[
     "/etc/gai.conf",
+    "/etc/host.conf",
     "/etc/hosts",
     "/etc/localtime",
     "/etc/nsswitch.conf",
+    "/etc/os-release",
     "/etc/pki/tls/certs",
+    "/etc/pki/tls/openssl.cnf",
+    "/etc/protocols",
     "/etc/resolv.conf",
+    "/etc/services",
     "/etc/ssl/certs",
+    "/etc/ssl/openssl.cnf",
+    "/usr/lib/os-release",
+    "/usr/share/locale",
+    "/usr/share/zoneinfo",
     "/sys/devices/system/cpu/online",
+    "/sys/devices/system/cpu/possible",
+    "/sys/devices/system/cpu/present",
+    "/sys/devices/system/node/online",
+    "/sys/devices/system/node/possible",
+    "/sys/kernel/mm/transparent_hugepage/enabled",
+    "/sys/kernel/mm/transparent_hugepage/hpage_pmd_size",
+];
+
+const CGROUP_V2_ROOT: &str = "/sys/fs/cgroup";
+const CGROUP_RUNTIME_READ_FILES: &[&str] = &[
+    "cgroup.controllers",
+    "cgroup.type",
+    "cpu.max",
+    "cpuset.cpus.effective",
+    "cpuset.mems.effective",
+    "memory.high",
+    "memory.max",
+    "memory.swap.max",
+    "pids.max",
 ];
 
 const SINGLE_PATH_ENV_KEYS: &[&str] = &[
@@ -64,6 +92,14 @@ pub(crate) fn plan_runtime_read_paths(
     environment: &BTreeMap<String, String>,
     cgroup: Option<&str>,
 ) -> Vec<String> {
+    plan_runtime_read_paths_with_cgroup_root(environment, cgroup, Path::new(CGROUP_V2_ROOT))
+}
+
+fn plan_runtime_read_paths_with_cgroup_root(
+    environment: &BTreeMap<String, String>,
+    cgroup: Option<&str>,
+    cgroup_root: &Path,
+) -> Vec<String> {
     let mut paths = FIXED_RUNTIME_READ_PATHS
         .iter()
         .map(|path| (*path).to_string())
@@ -78,8 +114,8 @@ pub(crate) fn plan_runtime_read_paths(
             insert_existing_absolute_path(&mut paths, &path);
         }
     }
-    if let Some(path) = cgroup.and_then(current_cgroup_path) {
-        paths.insert(path);
+    if let Some(contents) = cgroup {
+        paths.extend(current_cgroup_runtime_read_paths(contents, cgroup_root));
     }
     paths.into_iter().collect()
 }
@@ -94,12 +130,38 @@ fn insert_existing_absolute_path(paths: &mut BTreeSet<String>, path: &Path) {
     }
 }
 
-fn current_cgroup_path(contents: &str) -> Option<String> {
-    let relative = contents.lines().find_map(|line| line.strip_prefix("0::"))?;
-    if relative == "/" || !relative.starts_with('/') {
-        return None;
+fn current_cgroup_runtime_read_paths(contents: &str, cgroup_root: &Path) -> BTreeSet<String> {
+    let mut paths = BTreeSet::new();
+    let Some(relative) = contents.lines().find_map(|line| line.strip_prefix("0::")) else {
+        return paths;
+    };
+    let relative = Path::new(relative);
+    if !relative.is_absolute()
+        || relative
+            .components()
+            .any(|component| !matches!(component, Component::RootDir | Component::Normal(_)))
+    {
+        return paths;
     }
-    Some(format!("/sys/fs/cgroup{relative}"))
+    let Ok(relative) = relative.strip_prefix("/") else {
+        return paths;
+    };
+    let current = cgroup_root.join(relative);
+    for directory in current
+        .ancestors()
+        .take_while(|path| path.starts_with(cgroup_root))
+    {
+        for file in CGROUP_RUNTIME_READ_FILES {
+            let candidate = directory.join(file);
+            if candidate
+                .metadata()
+                .is_ok_and(|metadata| metadata.is_file())
+            {
+                paths.insert(path_string(&candidate));
+            }
+        }
+    }
+    paths
 }
 
 pub(crate) fn resolve_executable_target(
@@ -173,7 +235,7 @@ mod tests {
     }
 
     #[test]
-    fn runtime_read_paths_are_fixed_existing_and_current_cgroup_scoped() {
+    fn runtime_read_paths_include_fixed_and_configured_paths() {
         let temp = tempfile::tempdir().unwrap();
         let certificate = temp.path().join("combined-ca.pem");
         let certificate_directory = temp.path().join("certs");
@@ -192,18 +254,23 @@ mod tests {
             ),
         ]);
 
-        let paths = plan_runtime_read_paths(
-            &environment,
-            Some("0::/system.slice/condom-helper.service\n"),
-        );
+        let paths = plan_runtime_read_paths_with_cgroup_root(&environment, None, temp.path());
 
         for expected in [
+            "/etc/host.conf",
             "/etc/hosts",
             "/etc/resolv.conf",
             "/etc/nsswitch.conf",
+            "/etc/os-release",
+            "/etc/services",
             "/etc/localtime",
+            "/usr/share/locale",
+            "/usr/share/zoneinfo",
             "/sys/devices/system/cpu/online",
-            "/sys/fs/cgroup/system.slice/condom-helper.service",
+            "/sys/devices/system/cpu/possible",
+            "/sys/devices/system/node/online",
+            "/sys/kernel/mm/transparent_hugepage/enabled",
+            "/sys/kernel/mm/transparent_hugepage/hpage_pmd_size",
             certificate.to_str().unwrap(),
             certificate_directory.to_str().unwrap(),
         ] {
@@ -212,8 +279,67 @@ mod tests {
                 "missing {expected}"
             );
         }
-        assert!(!paths.iter().any(|path| path == "/sys/fs/cgroup"));
         assert!(!paths.iter().any(|path| path.ends_with("missing.pem")));
         assert!(!paths.iter().any(|path| path == "relative-ca.pem"));
+        assert!(paths.windows(2).all(|pair| pair[0] < pair[1]));
+    }
+
+    #[test]
+    fn runtime_read_paths_include_only_limit_files_on_the_current_cgroup_ancestry() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path();
+        let parent = root.join("system.slice");
+        let current = parent.join("condom-helper.service");
+        let sibling = parent.join("other.service");
+        fs::create_dir_all(&current).unwrap();
+        fs::create_dir(&sibling).unwrap();
+        fs::write(root.join("cpu.max"), "max 100000").unwrap();
+        fs::write(parent.join("memory.high"), "max").unwrap();
+        fs::write(current.join("memory.max"), "1073741824").unwrap();
+        fs::write(current.join("not-preallowed"), "secret").unwrap();
+        fs::write(sibling.join("cpu.max"), "10000 100000").unwrap();
+
+        let paths = plan_runtime_read_paths_with_cgroup_root(
+            &BTreeMap::new(),
+            Some("0::/system.slice/condom-helper.service\n"),
+            root,
+        );
+
+        for expected in [
+            root.join("cpu.max"),
+            parent.join("memory.high"),
+            current.join("memory.max"),
+        ] {
+            assert!(
+                paths
+                    .iter()
+                    .any(|path| path == &expected.display().to_string()),
+                "missing {}",
+                expected.display()
+            );
+        }
+        for excluded in [
+            current.display().to_string(),
+            current.join("not-preallowed").display().to_string(),
+            sibling.join("cpu.max").display().to_string(),
+        ] {
+            assert!(!paths.iter().any(|path| path == &excluded));
+        }
+    }
+
+    #[test]
+    fn malformed_or_legacy_cgroup_memberships_add_no_runtime_paths() {
+        let temp = tempfile::tempdir().unwrap();
+
+        for contents in [
+            "1:name=systemd:/system.slice/example.service\n",
+            "0::relative/path\n",
+            "0::/system.slice/../other.service\n",
+        ] {
+            assert!(
+                current_cgroup_runtime_read_paths(contents, temp.path()).is_empty(),
+                "unexpected paths for {contents:?}"
+            );
+        }
     }
 }

@@ -376,8 +376,7 @@ fn maybe_reexec_transparent_proxy_wrapper() -> Result<()> {
     };
 
     let mut command = ProcessCommand::new(wrapper);
-    let original_path =
-        std::env::var_os(crate::app::env::ORIGINAL_PATH_ENV).or_else(|| std::env::var_os("PATH"));
+    let original_path = std::env::var_os("PATH");
     command
         .args(wrapper_reexec_args(
             original_path,

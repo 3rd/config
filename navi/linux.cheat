@@ -1,33 +1,36 @@
 % linux
 
-# journal (all)
-journalctl -e
+# Show logs from the current boot
+journalctl --boot --pager-end
 
-# journal (current boot)
-journalctl -b -e
+# Follow logs from the current boot
+journalctl --boot --follow
 
-# journal (kernel)
-journalctl -k -e
+# Show kernel logs from the current boot
+journalctl --boot --dmesg --pager-end
 
-# journal (..warn)
-journalctl -e -p 4
+# Show warnings and errors from the current boot
+journalctl --boot --priority=warning --pager-end
 
-# journal (system)
-journalctl --system -e
+# Follow a system service's logs
+journalctl --boot --follow --unit <unit>
 
-# journal (user)
-journalctl --user -e
+# Follow a user service's logs
+journalctl --user --follow --unit <user_unit>
 
-# query mime handler
-XDG_UTILS_DEBUG_LEVEL=3 xdg-mime query default <mime-type>
+# Query the default application for a MIME type
+xdg-mime query default <mime_type>
 
-# disable ipv6
-sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+# Disable IPv6 until reboot
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1 \
+  && sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-# enable ipv6
-sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+# Enable IPv6 until reboot
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0 \
+  && sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
-# libinput: debug key events
+# Inspect libinput events and keycodes
 sudo libinput debug-events --show-keycodes
+
+$ unit: systemctl list-unit-files --type=service --no-legend | awk '{print $1}'
+$ user_unit: systemctl --user list-unit-files --type=service --no-legend | awk '{print $1}'

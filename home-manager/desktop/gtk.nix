@@ -1,6 +1,8 @@
 { config, pkgs, ... }:
 
 {
+  dconf.settings."org/gnome/desktop/interface".toolkit-accessibility = true;
+
   gtk = {
     enable = true;
     colorScheme = "dark";

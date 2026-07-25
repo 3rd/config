@@ -1,0 +1,635 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+WATCH=0
+DRY_RUN=0
+LIST_TASKS=0
+RUN_TEMP_DIR=""
+RUN_SELF=$(readlink -f -- "${BASH_SOURCE[0]}")
+
+JUST_LOADED=0
+JUST_FILE=""
+JUST_TASKS=()
+MAKE_LOADED=0
+MAKE_FILE=""
+MAKE_TASKS=()
+PACKAGE_LOADED=0
+PACKAGE_TASKS=()
+
+usage() {
+  cat <<'EOF'
+Run source files and project tasks with the right tool.
+
+Usage:
+  run [options] <file> [args...]
+  run [options] <task> [args...]
+  run [options] {just|make|pkg}:<task> [args...]
+  run --list
+
+File types:
+  .js .jsx .mjs .cjs .ts .tsx .mts .cts   bun
+  .go                                      go run
+  .lua                                     lua
+  .zig                                     zig run
+  .c                                       CC (default: cc)
+  .C .cc .cpp .cxx .c++                   CXX (default: c++)
+
+Task precedence in the current directory:
+  Justfile > Makefile > package.json
+
+Options:
+  -l, --list       List tasks in the current directory
+  -w, --watch      Restart when relevant files change
+  -n, --dry-run    Print the command without running it
+  -q, --quiet      Compatibility alias; run adds no execution output
+  -h, --help       Show this help
+
+C and C++ compilation honors CC, CXX, CFLAGS, CXXFLAGS, and LDFLAGS.
+Arguments after a file are passed to the resulting program.
+EOF
+}
+
+die() {
+  printf 'run: %s\n' "$*" >&2
+  exit 1
+}
+
+print_command() {
+  local label=$1
+  shift
+
+  printf '%s' "$label"
+  printf ' %q' "$@"
+  printf '\n'
+}
+
+require_command() {
+  local command_name=$1
+  local purpose=$2
+
+  if ! command -v -- "$command_name" >/dev/null 2>&1; then
+    die "missing runner '$command_name' for $purpose"
+  fi
+}
+
+run_command() {
+  local purpose=$1
+  shift
+
+  if ((DRY_RUN)); then
+    print_command '$' "$@"
+    return
+  fi
+
+  require_command "$1" "$purpose"
+  exec "$@"
+}
+
+array_contains() {
+  local needle=$1
+  local array_name=$2
+  local -n values=$array_name
+  local value
+
+  for value in "${values[@]}"; do
+    if [[ "$value" == "$needle" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+find_justfile() {
+  local candidate
+
+  for candidate in justfile Justfile .justfile; do
+    if [[ -f "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return
+    fi
+  done
+
+  return 1
+}
+
+load_just_tasks() {
+  local output
+  local old_ifs
+
+  if ((JUST_LOADED)); then
+    return
+  fi
+  JUST_LOADED=1
+
+  JUST_FILE=$(find_justfile || true)
+  if [[ -z "$JUST_FILE" ]]; then
+    return
+  fi
+
+  require_command just "$JUST_FILE"
+  if ! output=$(just --justfile "$JUST_FILE" --working-directory "$PWD" --summary --unsorted 2>&1); then
+    die "could not inspect $JUST_FILE: $output"
+  fi
+
+  if [[ -n "$output" ]]; then
+    old_ifs=$IFS
+    IFS=' '
+    read -r -a JUST_TASKS <<<"$output"
+    IFS=$old_ifs
+  fi
+}
+
+find_makefile() {
+  local candidate
+
+  for candidate in GNUmakefile makefile Makefile; do
+    if [[ -f "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return
+    fi
+  done
+
+  return 1
+}
+
+load_make_tasks() {
+  local output
+  local status=0
+  local targets
+  local errors
+  local errors_file
+
+  if ((MAKE_LOADED)); then
+    return
+  fi
+  MAKE_LOADED=1
+
+  MAKE_FILE=$(find_makefile || true)
+  if [[ -z "$MAKE_FILE" ]]; then
+    return
+  fi
+
+  require_command make "$MAKE_FILE"
+  errors_file=$(mktemp "${TMPDIR:-/tmp}/run-make.XXXXXX")
+  output=$(make -qpRr -f "$MAKE_FILE" 2>"$errors_file") || status=$?
+  errors=$(<"$errors_file")
+  rm -f -- "$errors_file"
+  if ((status > 1)); then
+    if [[ -n "$errors" ]]; then
+      printf '%s\n' "$errors" >&2
+    fi
+    die "could not inspect $MAKE_FILE"
+  fi
+
+  targets=$(awk -F: -v makefile="$MAKE_FILE" '
+    /^[[:alnum:]_][^$#\/\t=]*:([^=]|$)/ {
+      count = split($1, names, /[[:space:]]+/)
+      for (item = 1; item <= count; item++) {
+        if (names[item] != "" && names[item] != makefile && names[item] !~ /^\./ && names[item] !~ /%/) {
+          print names[item]
+        }
+      }
+    }
+  ' <<<"$output" | LC_ALL=C sort -u)
+
+  if [[ -n "$targets" ]]; then
+    mapfile -t MAKE_TASKS <<<"$targets"
+  fi
+}
+
+load_package_tasks() {
+  local output
+
+  if ((PACKAGE_LOADED)); then
+    return
+  fi
+  PACKAGE_LOADED=1
+
+  if [[ ! -f package.json ]]; then
+    return
+  fi
+
+  require_command jq package.json
+  if ! output=$(jq -r '
+    if has("scripts") and (.scripts | type) != "object" then
+      error("package.json#scripts must be an object")
+    elif any((.scripts // {}) | to_entries[]; (.value | type) != "string") then
+      error("every package.json script must be a string")
+    else
+      (.scripts // {}) | keys_unsorted[]
+    end
+  ' package.json 2>&1); then
+    die "could not inspect package.json: $output"
+  fi
+
+  if [[ -n "$output" ]]; then
+    mapfile -t PACKAGE_TASKS <<<"$output"
+  fi
+}
+
+task_winner() {
+  local task=$1
+
+  if array_contains "$task" JUST_TASKS; then
+    printf 'just\n'
+  elif array_contains "$task" MAKE_TASKS; then
+    printf 'make\n'
+  elif array_contains "$task" PACKAGE_TASKS; then
+    printf 'pkg\n'
+  fi
+}
+
+list_task_source() {
+  local source=$1
+  local array_name=$2
+  local -n tasks=$array_name
+  local task
+  local winner
+  local note
+
+  for task in "${tasks[@]}"; do
+    winner=$(task_winner "$task")
+    note=""
+    if [[ "$winner" != "$source" ]]; then
+      note="  (shadowed by $winner; use $source:$task)"
+    fi
+    printf '  %-5s  %s%s\n' "$source" "$task" "$note"
+  done
+}
+
+list_tasks() {
+  local task_count
+
+  load_just_tasks
+  load_make_tasks
+  load_package_tasks
+
+  task_count=$((${#JUST_TASKS[@]} + ${#MAKE_TASKS[@]} + ${#PACKAGE_TASKS[@]}))
+  if ((task_count == 0)); then
+    printf 'run: no tasks found in %s\n' "$PWD"
+    return
+  fi
+
+  printf 'Tasks in %s:\n' "$PWD"
+  list_task_source just JUST_TASKS
+  list_task_source make MAKE_TASKS
+  list_task_source pkg PACKAGE_TASKS
+}
+
+resolve_task() {
+  local requested=$1
+  local source=""
+  local task=$requested
+
+  case "$requested" in
+    just:*)
+      source="just"
+      task=${requested#just:}
+      ;;
+    make:*)
+      source="make"
+      task=${requested#make:}
+      ;;
+    pkg:*)
+      source="pkg"
+      task=${requested#pkg:}
+      ;;
+  esac
+
+  if [[ -n "$source" && -z "$task" ]]; then
+    die "task name is empty after '$source:'"
+  fi
+
+  case "$source" in
+    just)
+      load_just_tasks
+      [[ -n "$JUST_FILE" ]] || die "no Justfile found in $PWD"
+      array_contains "$task" JUST_TASKS || die "task '$task' is not defined in $JUST_FILE"
+      ;;
+    make)
+      load_make_tasks
+      [[ -n "$MAKE_FILE" ]] || die "no Makefile found in $PWD"
+      array_contains "$task" MAKE_TASKS || die "task '$task' is not defined in $MAKE_FILE"
+      ;;
+    pkg)
+      load_package_tasks
+      [[ -f package.json ]] || die "no package.json found in $PWD"
+      array_contains "$task" PACKAGE_TASKS || die "script '$task' is not defined in package.json"
+      ;;
+    "")
+      load_just_tasks
+      if array_contains "$task" JUST_TASKS; then
+        source="just"
+      else
+        load_make_tasks
+        if array_contains "$task" MAKE_TASKS; then
+          source="make"
+        else
+          load_package_tasks
+          if array_contains "$task" PACKAGE_TASKS; then
+            source="pkg"
+          fi
+        fi
+      fi
+      ;;
+  esac
+
+  if [[ -z "$source" ]]; then
+    printf "run: task '%s' was not found in the current directory\n" "$task" >&2
+    list_tasks >&2
+    exit 1
+  fi
+
+  RESOLVED_TASK_SOURCE=$source
+  RESOLVED_TASK_NAME=$task
+}
+
+watch_with_watchexec() {
+  local watch_path=$1
+  local target=$2
+  shift 2
+  local child=("$RUN_SELF")
+  local command
+
+  child+=(-- "$target" "$@")
+
+  command=(watchexec --restart --shell=none --watch "$watch_path" -- "${child[@]}")
+  run_command watch "${command[@]}"
+}
+
+run_task() {
+  local source=$1
+  local task=$2
+  shift 2
+  local command
+  local qualified_target="$source:$task"
+
+  if ((WATCH)); then
+    watch_with_watchexec "$PWD" "$qualified_target" "$@"
+    return
+  fi
+
+  case "$source" in
+    just)
+      command=(just --justfile "$JUST_FILE" --working-directory "$PWD" -- "$task" "$@")
+      run_command "$JUST_FILE task" "${command[@]}"
+      ;;
+    make)
+      command=(make -f "$MAKE_FILE" -- "$task" "$@")
+      run_command "$MAKE_FILE task" "${command[@]}"
+      ;;
+    pkg)
+      command=(bun run "$task")
+      if (($#)); then
+        command+=(-- "$@")
+      fi
+      run_command "package.json script" "${command[@]}"
+      ;;
+  esac
+}
+
+file_extension() {
+  local filename=${1##*/}
+  local extension=""
+
+  if [[ "$filename" == *.* ]]; then
+    extension=${filename##*.}
+  fi
+  printf '%s\n' "$extension"
+}
+
+is_supported_extension() {
+  local extension
+  extension=$(file_extension "$1")
+
+  file_kind_from_extension "$extension" >/dev/null
+}
+
+file_kind_from_extension() {
+  local extension=$1
+
+  if [[ "$extension" == C ]]; then
+    printf 'cxx\n'
+    return
+  fi
+
+  extension=${extension,,}
+  case "$extension" in
+    js | jsx | mjs | cjs | ts | tsx | mts | cts)
+      printf 'js\n'
+      ;;
+    go | lua | zig | c)
+      printf '%s\n' "$extension"
+      ;;
+    cc | cpp | cxx | c++)
+      printf 'cxx\n'
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+cleanup_temp_dir() {
+  if [[ -n "$RUN_TEMP_DIR" && -d "$RUN_TEMP_DIR" ]]; then
+    rm -rf -- "$RUN_TEMP_DIR"
+  fi
+}
+
+compile_and_run() {
+  local language=$1
+  local file=$2
+  shift 2
+  local compiler_value
+  local flags_value
+  local -a compiler=()
+  local -a compile_flags=()
+  local -a link_flags=()
+  local -a compile_command=()
+  local old_ifs
+  local output
+
+  if [[ "$language" == C ]]; then
+    compiler_value=${CC:-cc}
+    flags_value=${CFLAGS:-}
+  else
+    compiler_value=${CXX:-c++}
+    flags_value=${CXXFLAGS:-}
+  fi
+
+  old_ifs=$IFS
+  IFS=$' \t\n'
+  read -r -a compiler <<<"$compiler_value"
+  read -r -a compile_flags <<<"$flags_value"
+  read -r -a link_flags <<<"${LDFLAGS:-}"
+  IFS=$old_ifs
+  ((${#compiler[@]})) || die "empty compiler command for $language"
+
+  if ((DRY_RUN)); then
+    compile_command=("${compiler[@]}" "${compile_flags[@]}" "$file" -o '<temporary-program>' "${link_flags[@]}")
+    print_command 'compile:' "${compile_command[@]}"
+    print_command 'execute:' '<temporary-program>' "$@"
+    return
+  fi
+
+  require_command "${compiler[0]}" "$language source"
+  RUN_TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/run.XXXXXX")
+  trap cleanup_temp_dir EXIT
+  output="$RUN_TEMP_DIR/program"
+  compile_command=("${compiler[@]}" "${compile_flags[@]}" "$file" -o "$output" "${link_flags[@]}")
+
+  "${compile_command[@]}" || {
+    local status=$?
+    exit "$status"
+  }
+  "$output" "$@" || {
+    local status=$?
+    exit "$status"
+  }
+}
+
+run_js_file() {
+  local file=$1
+  shift
+  local command=(bun)
+
+  if ((WATCH)); then
+    command+=(--watch)
+  fi
+  command+=("$file")
+  if (($#)); then
+    command+=(-- "$@")
+  fi
+
+  run_command "Bun source" "${command[@]}"
+}
+
+run_file() {
+  local file=$1
+  shift
+  local extension
+  local kind
+  local watch_path
+  local command
+
+  extension=$(file_extension "$file")
+  kind=$(file_kind_from_extension "$extension") || die "unsupported file type: $file"
+  case "$kind" in
+    js)
+      run_js_file "$file" "$@"
+      ;;
+    go)
+      if ((WATCH)); then
+        watch_path=$(dirname -- "$file")
+        watch_with_watchexec "$watch_path" "$file" "$@"
+      else
+        command=(go run "$file" "$@")
+        run_command "Go source" "${command[@]}"
+      fi
+      ;;
+    lua)
+      if ((WATCH)); then
+        watch_path=$(dirname -- "$file")
+        watch_with_watchexec "$watch_path" "$file" "$@"
+      else
+        command=(lua "$file" "$@")
+        run_command "Lua source" "${command[@]}"
+      fi
+      ;;
+    zig)
+      if ((WATCH)); then
+        watch_path=$(dirname -- "$file")
+        watch_with_watchexec "$watch_path" "$file" "$@"
+      else
+        command=(zig run "$file")
+        if (($#)); then
+          command+=(-- "$@")
+        fi
+        run_command "Zig source" "${command[@]}"
+      fi
+      ;;
+    c)
+      if ((WATCH)); then
+        watch_path=$(dirname -- "$file")
+        watch_with_watchexec "$watch_path" "$file" "$@"
+      else
+        compile_and_run C "$file" "$@"
+      fi
+      ;;
+    cxx)
+      if ((WATCH)); then
+        watch_path=$(dirname -- "$file")
+        watch_with_watchexec "$watch_path" "$file" "$@"
+      else
+        compile_and_run C++ "$file" "$@"
+      fi
+      ;;
+  esac
+}
+
+while (($#)); do
+  case "$1" in
+    -l | --list)
+      LIST_TASKS=1
+      shift
+      ;;
+    -w | --watch)
+      WATCH=1
+      shift
+      ;;
+    -n | --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -q | --quiet)
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      die "unknown option: $1"
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if ((LIST_TASKS)); then
+  (($# == 0)) || die "--list does not accept a target"
+  ((WATCH == 0)) || die "--list and --watch cannot be combined"
+  list_tasks
+  exit 0
+fi
+
+if (($# == 0)); then
+  ((WATCH == 0)) || die "--watch requires a target"
+  list_tasks
+  exit 0
+fi
+
+TARGET=$1
+shift
+
+if [[ -f "$TARGET" ]]; then
+  FILE_TARGET=$TARGET
+  if [[ "$FILE_TARGET" == -* && "$FILE_TARGET" != */* ]]; then
+    FILE_TARGET="./$FILE_TARGET"
+  fi
+  run_file "$FILE_TARGET" "$@"
+elif [[ -e "$TARGET" && ( "$TARGET" == */* || "$TARGET" == "." || "$TARGET" == ".." ) ]]; then
+  die "not a regular file: $TARGET"
+elif [[ "$TARGET" == */* ]] || is_supported_extension "$TARGET"; then
+  die "file not found: $TARGET"
+else
+  resolve_task "$TARGET"
+  run_task "$RESOLVED_TASK_SOURCE" "$RESOLVED_TASK_NAME" "$@"
+fi

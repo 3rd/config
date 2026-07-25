@@ -1,0 +1,37 @@
+% flatpak
+
+# List installed Flatpak applications
+flatpak list --app
+
+# Search for and install a Flatpak application
+flatpak install --app <application_id>
+
+# Update all installed Flatpak applications and runtimes
+flatpak update
+
+# Update one installed Flatpak application
+flatpak update --app <updatable_application_id>
+
+# Run an installed Flatpak application
+flatpak run <installed_application_id>
+
+# Show information and permissions for an installed Flatpak application
+flatpak info <installed_application_id> && \
+  flatpak info --show-permissions <installed_application_id>
+
+# Uninstall a Flatpak application
+flatpak uninstall --app <installed_application_id>
+
+# Uninstall a Flatpak application and delete its app data
+flatpak uninstall --app --delete-data <installed_application_id>
+
+# Remove unused Flatpak runtimes and extensions after confirmation
+flatpak uninstall --unused
+
+# Stop a running Flatpak application
+flatpak kill <running_application_id>
+
+$ application_id: flatpak search --columns=application "<search_term>"
+$ installed_application_id: flatpak list --app --columns=application
+$ updatable_application_id: flatpak remote-ls --updates --app --columns=application
+$ running_application_id: flatpak ps --columns=application

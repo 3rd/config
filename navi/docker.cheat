@@ -1,36 +1,269 @@
 % docker
 
-# Remove docker image
-docker image rm <image_id>
+# List running containers
+docker container ls
 
-# Delete docker image
-docker rmi <image_id>
+# List all containers, including stopped containers
+docker container ls --all
 
-# Clean none/dangling docker images
-docker rmi $(docker images --filter "dangling=true" -q --no-trunc) -f
+# Run a disposable interactive container
+docker container run --rm --interactive --tty <image> <command>
 
-# Build and tag docker image from ./Dockerfile
-docker build -t <image>:<version> .
+# Run a named container in the background
+docker container run --detach --name <container_name> <image>
 
-# Stop docker container
-docker stop <container_id>
+# Run a named container with a published port
+docker container run --detach --name <container_name> \
+  --publish <host_port>:<container_port> \
+  <image>
 
-# Kill docker container
-docker kill <container_id>
+# Run a disposable container with a bind mount
+docker container run --rm --interactive --tty \
+  --mount "type=bind,src=<host_path>,dst=<container_path>" \
+  <image> <command>
 
-# Delete all running and stopped docker containers
-docker rm -f $(docker ps -aq)
+# Start a stopped container
+docker container start <container>
 
-# Open a shell inside a docker container
-docker exec -it <container_id> sh
+# Stop a running container gracefully
+docker container stop <running_container>
 
-# Print and watch docker container logs
-docker logs <container_id> -f
+# Immediately kill a running container
+docker container kill <running_container>
 
-$ image_id: docker images --- --headers 1 --column 3
-$ container_id: docker ps --- --headers 1 --column 1
+# Restart a running container
+docker container restart <running_container>
 
-% docker-compose
+# Follow recent container logs
+docker container logs --follow --tail <lines> <container>
 
-# Print and watch docker-compose service logs
-docker-compose logs -f --tail 100 <service_name>
+# Open an interactive shell in a running container
+docker container exec --interactive --tty <running_container> <shell>
+
+# Execute a command in a running container
+docker container exec <running_container> <command>
+
+# Inspect a container
+docker container inspect <container>
+
+# Show processes running inside a container
+docker container top <running_container>
+
+# Monitor a container's resource usage
+docker container stats <running_container>
+
+# Show a container's published ports
+docker container port <container>
+
+# Copy a file or directory from a container
+docker container cp "<container>:<container_path>" "<host_path>"
+
+# Copy a file or directory into a container
+docker container cp "<host_path>" "<container>:<container_path>"
+
+# Show filesystem changes in a container
+docker container diff <container>
+
+# Remove a stopped container
+docker container rm <container>
+
+# Force-remove a container, even when running
+docker container rm --force <container>
+
+# Remove all stopped containers after confirmation
+docker container prune
+
+# List local images
+docker image ls
+
+# Pull an image from a registry
+docker image pull <image>
+
+# Build and tag an image
+docker image build --tag <repository>:<tag> "<build_context>"
+
+# Build an image from a specific Dockerfile
+docker image build --file "<dockerfile>" --tag <repository>:<tag> "<build_context>"
+
+# Rebuild an image with fresh base images and no cache
+docker image build --pull --no-cache --tag <repository>:<tag> "<build_context>"
+
+# Inspect an image
+docker image inspect <image>
+
+# Show an image's layer history
+docker image history <image>
+
+# Add a repository tag to an image
+docker image tag <image> <repository>:<tag>
+
+# Push an image to a registry
+docker image push <repository>:<tag>
+
+# Save an image to a tar archive
+docker image save --output "<archive>" <image>
+
+# Load images from a tar archive
+docker image load --input "<archive>"
+
+# Remove an image
+docker image rm <image>
+
+# Remove dangling images after confirmation
+docker image prune
+
+# Remove all unused images after confirmation
+docker image prune --all
+
+# List Compose projects
+docker compose ls
+
+# Validate and resolve the Compose configuration
+docker compose config --quiet
+
+# List services in the Compose project
+docker compose config --services
+
+# Pull Compose service images
+docker compose pull
+
+# Build Compose service images
+docker compose build
+
+# Rebuild one Compose service without cache
+docker compose build --no-cache <service>
+
+# Start the Compose project in the background
+docker compose up --detach
+
+# Build and start the Compose project in the background
+docker compose up --detach --build
+
+# Start one Compose service in the background
+docker compose up --detach <service>
+
+# Start the Compose project and wait until services are ready
+docker compose up --detach --wait
+
+# Scale and start a Compose service
+docker compose up --detach --scale <service>=<replicas>
+
+# List Compose service containers
+docker compose ps
+
+# Follow recent logs from all Compose services
+docker compose logs --follow --tail <lines>
+
+# Follow recent logs from one Compose service
+docker compose logs --follow --tail <lines> <service>
+
+# Open an interactive shell in a Compose service
+docker compose exec <service> <shell>
+
+# Run a disposable command for a Compose service
+docker compose run --rm <service> <command>
+
+# Restart one Compose service
+docker compose restart <service>
+
+# Stop the Compose project without removing it
+docker compose stop
+
+# Stop and remove the Compose project
+docker compose down
+
+# Stop the Compose project and delete its volumes
+docker compose down --volumes
+
+# Watch the Compose project and rebuild changed services
+docker compose watch
+
+# List Docker networks
+docker network ls
+
+# Inspect a Docker network
+docker network inspect <network>
+
+# Create a Docker network
+docker network create <network_name>
+
+# Connect a running container to a network
+docker network connect <network> <running_container>
+
+# Disconnect a running container from a network
+docker network disconnect <network> <running_container>
+
+# Remove a Docker network
+docker network rm <network>
+
+# Remove unused Docker networks after confirmation
+docker network prune
+
+# List Docker volumes
+docker volume ls
+
+# Inspect a Docker volume
+docker volume inspect <volume>
+
+# Create a Docker volume
+docker volume create <volume_name>
+
+# Remove a Docker volume
+docker volume rm <volume>
+
+# Remove unused anonymous Docker volumes after confirmation
+docker volume prune
+
+# Remove all unused Docker volumes after confirmation
+docker volume prune --all
+
+# Log in to a container registry
+docker login <registry>
+
+# Log out from a container registry
+docker logout <registry>
+
+# Search Docker Hub for images
+docker search <search_term>
+
+# List Docker contexts
+docker context ls
+
+# Inspect a Docker context
+docker context inspect <context>
+
+# Switch the active Docker context
+docker context use <context>
+
+# Show Docker system information
+docker system info
+
+# Show detailed Docker disk usage
+docker system df --verbose
+
+# Stream Docker daemon events
+docker system events
+
+# Remove unused Docker data after confirmation
+docker system prune
+
+# Remove all unused images and anonymous volumes after confirmation
+docker system prune --all --volumes
+
+$ container: docker container ls --all --format '{{.Names}}'
+$ running_container: docker container ls --format '{{.Names}}'
+$ image: docker image ls --filter dangling=false --format '{{.Repository}}:{{.Tag}}'
+$ repository: docker image ls --filter dangling=false --format '{{.Repository}}' | sort -u
+$ container_port: docker image inspect <image> --format '{{json .Config.ExposedPorts}}' | jq -r 'keys[]?'
+$ service: docker compose config --services
+$ network: docker network ls --format '{{.Name}}'
+$ volume: docker volume ls --format '{{.Name}}'
+$ context: docker context ls --format '{{.Name}}'
+$ build_context: find . -maxdepth 3 -type f -name 'Dockerfile*' -printf '%h\n' | sort -u
+$ dockerfile: find "<build_context>" -maxdepth 2 -type f -name 'Dockerfile*'
+$ archive: find . -maxdepth 3 -type f -name '*.tar'
+$ host_path: find . -mindepth 1 -maxdepth 3 -print
+$ shell: printf 'sh\nbash\nash\n'
+$ lines: printf '100\n250\n500\nall\n'
+$ tag: docker image ls --filter dangling=false --format '{{.Tag}}' | sort -u
+$ replicas: printf '1\n2\n3\n4\n5\n'

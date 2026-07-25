@@ -808,6 +808,11 @@ mod tests {
             handled_filesystem_access(2) & LANDLOCK_ACCESS_FS_REFER,
             LANDLOCK_ACCESS_FS_REFER
         );
+        assert_eq!(abi_write_extensions(1) & LANDLOCK_ACCESS_FS_REFER, 0);
+        assert_eq!(
+            abi_write_extensions(2) & LANDLOCK_ACCESS_FS_REFER,
+            LANDLOCK_ACCESS_FS_REFER
+        );
         assert_eq!(
             handled_filesystem_access(2) & LANDLOCK_ACCESS_FS_TRUNCATE,
             0

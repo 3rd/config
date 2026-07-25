@@ -185,6 +185,7 @@ in
     git
     tree
     glib
+    gnome-screenshot
     gnumake
     graphviz
     # imhex
@@ -251,6 +252,7 @@ in
     ];
   };
 
+  services.gnome.at-spi2-core.enable = true;
   services.gnome.gnome-keyring.enable = true;
   services.gnome.gcr-ssh-agent.enable = false;
   programs.ssh.startAgent = true;

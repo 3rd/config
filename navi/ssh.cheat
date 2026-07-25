@@ -1,8 +1,32 @@
 % ssh
 
-# Mount remote directory
-mkdir -p <host_directory>
-sshfs -o reconnect <remote_host>:<remote_directory> <host_directory>
+# Connect to an SSH host
+ssh <host>
 
-# Unmount remote directory
-fusermount -u <host_directory>
+# Connect using a specific identity file
+ssh -i "<identity_file>" <host>
+
+# Show the resolved SSH configuration for a host
+ssh -G <host>
+
+# Copy a local path to a remote host
+scp -r "<local_path>" "<host>:<remote_path>"
+
+# Copy a remote path to the current directory
+scp -r "<host>:<remote_path>" .
+
+# Forward a local port through an SSH host
+ssh -N -L <local_port>:<target_host>:<target_port> <host>
+
+# Mount a remote directory over SSHFS
+mkdir -p "<mount_point>" \
+  && sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
+    "<host>:<remote_path>" "<mount_point>"
+
+# Unmount an SSHFS directory
+fusermount3 -u "<mount_point>"
+
+$ host: awk '/^Host / {for (i = 2; i <= NF; i++) if ($i !~ /[*?!]/) print $i}' "$HOME/.ssh/config"
+$ identity_file: find "$HOME/.ssh" -maxdepth 1 -type f -name 'id_*' ! -name '*.pub'
+$ local_path: find . -mindepth 1 -maxdepth 3 -print
+$ mount_point: find . -mindepth 1 -maxdepth 3 -type d -print

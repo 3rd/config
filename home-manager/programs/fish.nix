@@ -69,6 +69,38 @@
           end
         '';
       };
+      fkillcwd = {
+        description = "Fuzzy process killer for the current working directory.";
+        body = ''
+          set -l __kp__cwd (pwd -P)
+          set -l __kp__cwd_pids
+          for __kp__proc_cwd in /proc/*/cwd
+            set -l __kp__process_pid (string replace -rf '^/proc/([0-9]+)/cwd$' '$1' $__kp__proc_cwd)
+            if test -z "$__kp__process_pid"
+              continue
+            end
+
+            set -l __kp__process_cwd (readlink $__kp__proc_cwd 2>/dev/null)
+            if test "$__kp__process_cwd" = "$__kp__cwd"
+              set -a __kp__cwd_pids $__kp__process_pid
+            end
+          end
+
+          if test (count $__kp__cwd_pids) -eq 0
+            return 0
+          end
+
+          set -l __kp__pid (ps -f -p (string join , $__kp__cwd_pids) | sed 1d | eval "fzf -m --header='[kill:cwd process]'" | awk '{print $2}')
+          set -l __kp__kc $argv[1]
+          if test "x$__kp__pid" != "x"
+            if test "x$argv[1]" != "x"
+              echo $__kp__pid | xargs kill $argv[1]
+            else
+              echo $__kp__pid | xargs kill -9
+            end
+          end
+        '';
+      };
       vf = {
         description = "Fuzzy file opener.";
         body = ''
@@ -127,7 +159,8 @@
       # custom utils
       w = "work";
       pp = "promptpack";
-      r = "auto run";
+      r = "run";
+      rw = "run --watch";
       # wiki
       p = "nvim ~/brain/wiki/plan";
       ti = "nvim ~/brain/wiki/_inbox/tasks";

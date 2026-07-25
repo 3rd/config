@@ -171,6 +171,9 @@ pub(super) fn scoped_restrictions(abi: i32) -> io::Result<u64> {
 
 pub(super) fn abi_write_extensions(abi: i32) -> u64 {
     let mut access = 0;
+    if abi >= 2 {
+        access |= LANDLOCK_ACCESS_FS_REFER;
+    }
     if abi >= 3 {
         access |= LANDLOCK_ACCESS_FS_TRUNCATE;
     }

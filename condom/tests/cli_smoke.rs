@@ -1052,6 +1052,48 @@ fn landlock_runner_allows_system_trust_store_reads() {
 }
 
 #[test]
+fn landlock_runner_allows_transparent_hugepage_metadata_reads() {
+    require_fence();
+    let temp = tempfile::tempdir().unwrap();
+    let transparent_hugepage =
+        std::path::PathBuf::from("/sys/kernel/mm/transparent_hugepage/enabled");
+    assert!(transparent_hugepage.exists());
+    assert!(command_with_state(&temp)
+        .args(["init", "--root"])
+        .arg(temp.path())
+        .output()
+        .unwrap()
+        .status
+        .success());
+    let command = vec![
+        "sh".into(),
+        "-c".into(),
+        "test -r \"$1\" && head -c 1 \"$1\" >/dev/null && printf thp-ok".into(),
+        "sh".into(),
+        transparent_hugepage.display().to_string(),
+    ];
+    let config = CondomConfig::load(temp.path(), None).unwrap();
+    let snapshot = write_run_policy_snapshot(&temp, &config, &command);
+
+    let output = command_with_state(&temp)
+        .args(["__landlock-exec", "--policy-snapshot"])
+        .arg(snapshot.path)
+        .arg("--")
+        .args(command)
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "status={:?}\nstdout={}\nstderr={}",
+        output.status.code(),
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(String::from_utf8(output.stdout).unwrap(), "thp-ok");
+}
+
+#[test]
 fn review_capture_mediates_write_and_preserves_captured_content() {
     assert!(
         bwrap_supervisor_surface_available(),

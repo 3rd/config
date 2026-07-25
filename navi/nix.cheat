@@ -1,21 +1,37 @@
 % nix
 
-# list installed packages (user)
-nix-env -q
+# List packages in the user profile
+nix profile list
 
-# uninstall package (user)
-nix-env -e <user_package_name>
+# Add a package to the user profile
+nix profile add nixpkgs#<package>
 
-# find why a package is installed (why-depends)
-nix why-depends /run/current-system <system_package>
+# Upgrade every package in the user profile
+nix profile upgrade --all
 
-# analyze what takes space in the nix store
-nix-du --root /run/current-system/sw -s <max_size> -O2 | dot -Tsvg > nixstoregraph.svg
-xdg-open nixstoregraph.svg
+# Remove a package from the user profile
+nix profile remove <profile_package>
 
-# repair /nix/store
-sudo nix-store --verify --check-contents --repair
+# Explain why the current system depends on a store path
+nix why-depends /run/current-system <store_path>
 
-$ system_package: nix path-info -r /run/current-system
-$ user_package_name: nix-env -q | awk '{gsub(/-[0-9]+.*/, ""); print}'
-$ max_size: echo 100MB --- --fzf-overrides '--no-select-1'
+# Show recursive closure sizes for the current system
+nix path-info --recursive --closure-size --human-readable /run/current-system
+
+# Render the current system's store graph to SVG
+nix-du --root /run/current-system/sw --min-size <min_size> --opt-level 2 \
+  | dot -Tsvg > "<graph_file>"
+
+# Verify every Nix store path
+nix store verify --all
+
+# Repair corrupted Nix store paths
+sudo nix store verify --all --repair
+
+# Delete unreachable Nix store paths
+sudo nix store gc
+
+$ profile_package: nix profile list | sed -n 's/^Name:[[:space:]]*//p'
+$ store_path: nix path-info --recursive /run/current-system
+$ min_size: printf '100MB\n250MB\n500MB\n1GB\n'
+$ graph_file: printf 'nix-store.svg\n'

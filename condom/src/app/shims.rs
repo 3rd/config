@@ -3,6 +3,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 
+use crate::app::env::ORIGINAL_PATH_ENV;
 use crate::model::config::CondomConfig;
 
 #[cfg(unix)]
@@ -38,6 +39,7 @@ pub fn write_shims(config: &CondomConfig, shim_dir: &Path, force: bool) -> Resul
 
 pub fn ensure_direnv_shim_path(project_root: &Path) -> Result<bool> {
     let envrc = project_root.join(".envrc");
+    let original_path_line = format!(r#"export {ORIGINAL_PATH_ENV}="$PATH""#);
     let content = match fs::read_to_string(&envrc) {
         Ok(content) => content,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -49,18 +51,30 @@ pub fn ensure_direnv_shim_path(project_root: &Path) -> Result<bool> {
             return Err(error).with_context(|| format!("failed to read {}", envrc.display()));
         }
     };
-    if content
+    let has_original_path = content
         .lines()
-        .any(|line| line.trim() == DIRENV_SHIM_PATH_LINE)
-    {
+        .any(|line| line.trim() == original_path_line);
+    let has_shim_path = content
+        .lines()
+        .any(|line| line.trim() == DIRENV_SHIM_PATH_LINE);
+    if !has_original_path && has_shim_path {
         return Ok(false);
     }
-    let mut updated = content;
-    if !updated.ends_with('\n') {
+    let mut updated = if has_original_path {
+        content
+            .split_inclusive('\n')
+            .filter(|line| line.trim() != original_path_line)
+            .collect()
+    } else {
+        content
+    };
+    if !has_shim_path {
+        if !updated.is_empty() && !updated.ends_with('\n') {
+            updated.push('\n');
+        }
+        updated.push_str(DIRENV_SHIM_PATH_LINE);
         updated.push('\n');
     }
-    updated.push_str(DIRENV_SHIM_PATH_LINE);
-    updated.push('\n');
     fs::write(&envrc, updated).with_context(|| format!("failed to write {}", envrc.display()))?;
     Ok(true)
 }
@@ -91,17 +105,21 @@ mod tests {
     }
 
     #[test]
-    fn direnv_hook_adds_shim_path_once() {
+    fn direnv_hook_removes_stale_original_path_export() {
         let temp = tempfile::tempdir().unwrap();
         let envrc = temp.path().join(".envrc");
-        fs::write(&envrc, "use flake").unwrap();
+        fs::write(
+            &envrc,
+            "# begin condom\nexport CONDOM_ORIGINAL_PATH=\"$PATH\"\nPATH_add .condom/bin\n# end condom\n",
+        )
+        .unwrap();
 
         assert!(ensure_direnv_shim_path(temp.path()).unwrap());
         assert!(!ensure_direnv_shim_path(temp.path()).unwrap());
 
         assert_eq!(
             fs::read_to_string(envrc).unwrap(),
-            "use flake\nPATH_add .condom/bin\n"
+            "# begin condom\nPATH_add .condom/bin\n# end condom\n"
         );
     }
 }

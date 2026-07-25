@@ -1,4 +1,33 @@
 % syncthing
 
-# Reset index database
-curl -X POST -H "X-API-Key: <api_key>" "http://localhost:8384/rest/system/reset?folder=<folder>"
+# Check Syncthing API health
+curl --fail --silent --show-error "<url>/rest/noauth/health" | jq
+
+# Show Syncthing system status
+curl --fail --silent --show-error \
+  --header "X-API-Key: <api_key>" \
+  "<url>/rest/system/status" | jq
+
+# List configured Syncthing folders
+curl --fail --silent --show-error \
+  --header "X-API-Key: <api_key>" \
+  "<url>/rest/config/folders" \
+  | jq -r '.[] | [.id, .label, .path] | @tsv'
+
+# Show Syncthing folder status
+curl --fail --silent --show-error \
+  --header "X-API-Key: <api_key>" \
+  "<url>/rest/db/status?folder=<folder>" | jq
+
+# Rescan a Syncthing folder
+curl --fail --silent --show-error --request POST \
+  --header "X-API-Key: <api_key>" \
+  "<url>/rest/db/scan?folder=<folder>"
+
+# Erase a folder index and restart Syncthing
+curl --fail --silent --show-error --request POST \
+  --header "X-API-Key: <api_key>" \
+  "<url>/rest/system/reset?folder=<folder>"
+
+$ url: printf 'http://127.0.0.1:8384\n'
+$ folder: curl --fail --silent --header "X-API-Key: <api_key>" "<url>/rest/config/folders" | jq -r '.[].id'

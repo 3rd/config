@@ -201,8 +201,7 @@ pub fn resolve_filesystem_policy(
     config: &crate::model::config::CondomConfig,
     command: &[String],
 ) -> Result<ResolvedFilesystemPolicy> {
-    let path =
-        std::env::var_os(crate::app::env::ORIGINAL_PATH_ENV).or_else(|| std::env::var_os("PATH"));
+    let path = crate::app::env::current_source_path(&state.shim_dir);
     resolve_filesystem_policy_with_path(project, state, config, command, path.as_deref())
 }
 

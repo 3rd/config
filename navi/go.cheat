@@ -1,5 +1,42 @@
-% golang
+% go
 
-# link a relative package
-go mod edit -replace <module>=<path>
+# Initialize a Go module
+go mod init <module_path>
 
+# Add or update a module dependency
+go get <dependency>@<version>
+
+# Replace a module dependency with a local directory
+go mod edit "-replace=<dependency>=<local_path>"
+
+# Remove a local module replacement
+go mod edit "-dropreplace=<dependency>"
+
+# Synchronize go.mod and go.sum
+go mod tidy
+
+# Download module dependencies
+go mod download
+
+# List available module updates
+go list -m -u all
+
+# Test all packages
+go test ./...
+
+# Test one package
+go test <package>
+
+# Run one package
+go run <package>
+
+# Format all packages
+go fmt ./...
+
+# Vet all packages
+go vet ./...
+
+$ package: go list ./...
+$ dependency: go list -m -f '{{.Path}}' all | tail -n +2
+$ version: go list -m -versions <dependency> | tr ' ' '\n' | tail -n +2
+$ local_path: fd --type d --max-depth 3

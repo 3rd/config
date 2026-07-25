@@ -311,6 +311,7 @@ in
           inherit modifier;
           border = 2;
           criteria = [
+            { class = "Handy"; }
             { class = "Thunar"; }
             { class = "opensnitch-ui"; }
             { class = "org.gnome.FileRoller"; }
@@ -375,6 +376,7 @@ in
         default_border pixel 2
         default_floating_border pixel 2
         for_window [class="^.*"] border pixel 2
+        for_window [class="^Handy$"] border none
         for_window [window_type="notification"] border none
         for_window [instance="^condom-approval$"] floating enable, move position center
 

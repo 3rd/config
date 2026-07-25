@@ -1,6 +1,3 @@
 {
-  programs.chromium = {
-    enable = true;
-    # commandLineArgs = [ "--disable-backgrounding-occluded-windows" ];
-  };
+  programs.chromium.enable = true;
 }

@@ -1,25 +1,29 @@
 % system
 
-# systemd-analyze time
+# Show the system boot-time summary
 systemd-analyze time
 
-# systemd-analyze time (user)
-systemd-analyze time --user
-
-# systemd-analyze blame
+# Rank system units by startup time
 systemd-analyze blame
 
-# systemd-analyze blame (user)
-systemd-analyze blame --user
+# Rank user units by startup time
+systemd-analyze --user blame
 
-# systemd-analyze critical-chain
+# Show the system boot critical chain
 systemd-analyze critical-chain
 
-# systemd-analyze critical-chain (user)
-systemd-analyze critical-chain --user
+# Show the user-session critical chain
+systemd-analyze --user critical-chain
 
-# systemd-analyze dump
-systemd-analyze dump
+# Render the system boot timeline to SVG
+systemd-analyze plot > "<graph_file>"
 
-# systemd-analyze dump (user)
-systemd-analyze dump --user
+# Analyze a service's security exposure
+systemd-analyze security <unit>
+
+# Verify a systemd unit file
+systemd-analyze verify "<unit_file>"
+
+$ unit: systemctl list-unit-files --type=service --no-legend | awk '{print $1}'
+$ unit_file: fd --type f --extension service
+$ graph_file: printf 'systemd-boot.svg\n'
