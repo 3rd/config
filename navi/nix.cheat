@@ -9,7 +9,7 @@ nix profile add nixpkgs#<package>
 # Upgrade every package in the user profile
 nix profile upgrade --all
 
-# Remove a package from the user profile
+# Uninstall a package from the user profile
 nix profile remove <profile_package>
 
 # Explain why the current system depends on a store path

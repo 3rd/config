@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 
 with lib;
 
@@ -16,6 +16,10 @@ with lib;
     listToAttrs (
       map mkColorOption [
         "background"
+        "panel-background"
+        "overlay-background"
+        "overlay-active-background"
+        "overlay-selected-background"
         "foreground"
         "cursor"
         "selection-background"
@@ -124,110 +128,120 @@ with lib;
       ]
     );
 
-  config.colors = {
-    # background = "#1c1d22";
-    # background = "#1E1F27";
-    # background = "#1e1f29";
-    # background = "#21222c";
-    # background = "#23212c";
-    background = "#201f25";
-    # background = "#201e24";
-    foreground = "#DCD9E4";
-    cursor = "#f2b90d";
-    selection-background = "#303233";
-    selection-foreground = "#cacecd";
+  config = {
+    colors = rec {
+      background = "#202023";
+      panel-background = "#252528";
+      overlay-background = "#373639";
+      overlay-active-background = "#403F43";
+      overlay-selected-background = "#46434F";
+      foreground = "#DEDEEC";
+      cursor = color11;
+      selection-background = "#323039";
+      selection-foreground = "#F3F2F5";
 
-    accent = "#c20a5d";
-    accent-dark = "#f1052f";
+      accent = color5;
+      accent-dark = magenta-darkest;
 
-    gray-lightest = "#8D8A9C";
-    gray-lighter = "#848095";
-    gray-light = "#7C788D";
-    gray-medium = "#4C495E";
-    gray-darkish = "#3C394A";
-    gray-dark = "#32313E";
-    gray-darker = "#2D2A37";
-    gray-darkest = "#23222C";
+      gray-lightest = "#A3A1AD";
+      gray-lighter = "#928F9F";
+      gray-light = "#807D8F";
+      gray-medium = "#6C687D";
+      gray-darkish = "#3B3945";
+      gray-dark = selection-background;
+      gray-darker = "#2C2A33";
+      gray-darkest = background;
 
-    blue-lightest = "#9cdcfc";
-    blue-lighter = "#6acbfb";
-    blue-light = "#38b9fa";
-    blue-medium = "#06a8f9";
-    blue-dark = "#0586c7";
-    blue-darker = "#046595";
-    blue-darkest = "#034363";
+      blue-lightest = "#99DDFF";
+      blue-lighter = "#86D7FF";
+      blue-light = color12;
+      blue-medium = color4;
+      blue-darkish = "#33A2D7";
+      blue-dark = "#348AB6";
+      blue-darker = "#326D8F";
+      blue-darkest = "#2E536B";
 
-    cyan-lightest = "#9efafa";
-    cyan-lighter = "#6ef7f7";
-    cyan-light = "#3df5f5";
-    cyan-medium = "#0df2f2";
-    cyan-dark = "#0ac2c2";
-    cyan-darker = "#089191";
-    cyan-darkest = "#056161";
+      cyan-lightest = "#9BF5ED";
+      cyan-lighter = "#83F5EB";
+      cyan-light = color14;
+      cyan-medium = color6;
+      cyan-darkish = "#32BEB5";
+      cyan-dark = "#379F9A";
+      cyan-darker = "#377D7A";
+      cyan-darkest = "#345D5D";
 
-    green-lightest = "#ccf5a3";
-    green-lighter = "#b3f075";
-    green-light = "#99eb47";
-    green-medium = "#80e619";
-    green-dark = "#66b814";
-    green-darker = "#4d8a0f";
-    green-darkest = "#335c0a";
+      green-lightest = "#B0ECA1";
+      green-lighter = "#9FEB8B";
+      green-light = color10;
+      green-medium = color2;
+      green-darkish = "#65B94E";
+      green-dark = "#5A9B49";
+      green-darker = "#4D7B42";
+      green-darkest = "#405B39";
 
-    indigo-lightest = "#9e9efa";
-    indigo-lighter = "#6e6ef7";
-    indigo-light = "#3d3df5";
-    indigo-medium = "#0d0df2";
-    indigo-dark = "#0a0ac2";
-    indigo-darker = "#080891";
-    indigo-darkest = "#050561";
+      indigo-lightest = "#C7CCFC";
+      indigo-lighter = "#BEC3FE";
+      indigo-light = "#B6BBFF";
+      indigo-medium = "#9B9AF9";
+      indigo-darkish = "#8786D6";
+      indigo-dark = "#7473B4";
+      indigo-darker = "#5E5D8D";
+      indigo-darkest = "#494869";
 
-    magenta-lightest = "#eb9efa";
-    magenta-lighter = "#e06ef7";
-    magenta-light = "#d63df5";
-    magenta-medium = "#cc0df2";
-    magenta-dark = "#a30ac2";
-    magenta-darker = "#7a0891";
-    magenta-darkest = "#520561";
+      magenta-lightest = "#E9BAFC";
+      magenta-lighter = "#E7ADFE";
+      magenta-light = color13;
+      magenta-medium = color5;
+      magenta-darkish = "#B264DB";
+      magenta-dark = "#9659B8";
+      magenta-darker = "#774B90";
+      magenta-darkest = "#593D6B";
 
-    orange-lightest = "#fac49e";
-    orange-lighter = "#f7a76e";
-    orange-light = "#ff974d";
-    orange-medium = "#f26c0d";
-    orange-dark = "#c2570a";
-    orange-darker = "#914108";
-    orange-darkest = "#612b05";
+      orange-lightest = "#FDBE9F";
+      orange-lighter = "#FEB38C";
+      orange-light = "#FFA779";
+      orange-medium = "#FC8D5A";
+      orange-darkish = "#D87C53";
+      orange-dark = "#B56B4D";
+      orange-darker = "#8D5844";
+      orange-darkest = "#68453B";
 
-    red-lightest = "#faad9e";
-    red-lighter = "#f67055";
-    red-light = "#f55c3d";
-    red-medium = "#f2330d";
-    red-dark = "#c2290a";
-    red-darker = "#911f08";
-    red-darkest = "#611405";
+      red-lightest = "#FFA0A5";
+      red-lighter = "#FF8E95";
+      red-light = color9;
+      red-medium = color1;
+      red-darkish = "#DB525D";
+      red-dark = "#B84B53";
+      red-darker = "#904248";
+      red-darkest = "#6A383D";
 
-    yellow-lightest = "#fae39e";
-    yellow-lighter = "#f7d56e";
-    yellow-light = "#f5c73d";
-    yellow-medium = "#f2b90d";
-    yellow-dark = "#c2940a";
-    yellow-darker = "#916f08";
-    yellow-darkest = "#614a05";
+      yellow-lightest = "#FBDC96";
+      yellow-lighter = "#FDD680";
+      yellow-light = color11;
+      yellow-medium = color3;
+      yellow-darkish = "#D2A043";
+      yellow-dark = "#AF8841";
+      yellow-darker = "#896C3E";
+      yellow-darkest = "#645238";
 
-    color0 = "#3D364E";
-    color8 = "#504766";
-    color1 = "#c2290a";
-    color9 = "#f2330d";
-    color2 = "#66b814";
-    color10 = "#80e619";
-    color3 = "#daa60b";
-    color11 = "#f6ce55";
-    color4 = "#06a8f9";
-    color12 = "#38b9fa";
-    color5 = "#e06ef7";
-    color13 = "#eb9efa";
-    color6 = "#0ac2c2";
-    color14 = "#0df2f2";
-    color7 = "#D1C9E2";
-    color15 = "#E3DFEA";
+      color0 = gray-darker;
+      color1 = "#FF5967";
+      color2 = "#6CDB4D";
+      color3 = "#F5B942";
+      color4 = "#31BBF8";
+      color5 = "#CE70FF";
+      color6 = "#25DDD2";
+      color7 = "#CAC8D0";
+      color8 = gray-medium;
+      color9 = "#FF7A85";
+      color10 = "#8CED71";
+      color11 = "#FFD166";
+      color12 = "#70D2FF";
+      color13 = "#E5A0FF";
+      color14 = "#65F5EA";
+      color15 = selection-foreground;
+    };
+
+    xdg.configFile."theme/colors.json".text = builtins.toJSON config.colors;
   };
 }

@@ -113,7 +113,7 @@ in
     '';
     config = with config.colors; {
       "bar/common" = {
-        background = lib.mkDefault gray-darkest;
+        background = lib.mkDefault panel-background;
         font-0 = lib.mkDefault "DejaVu Sans:size=12;3";
         font-1 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-2 = lib.mkDefault "Symbols Nerd Font:size=12;3";
@@ -131,7 +131,7 @@ in
       };
       "module/tray" = {
         type = "internal/tray";
-        tray-background = gray-darkest;
+        tray-background = panel-background;
         tray-spacing = "4px";
       };
       "module/notifications" = {
@@ -150,18 +150,18 @@ in
       "module/separator" = {
         type = "custom/text";
         content = "  ";
-        content-background = gray-darkest;
+        content-background = panel-background;
       };
       "module/<" = {
         type = "custom/text";
         content = "";
         content-background = background;
-        content-foreground = gray-darkest;
+        content-foreground = panel-background;
         content-font = 3;
       };
       "module/<<" = {
         "inherit" = "module/<";
-        content-background = gray-darkest;
+        content-background = panel-background;
         content-foreground = gray-darker;
       };
       "module/<<<" = {
@@ -173,12 +173,12 @@ in
         type = "custom/text";
         content = "";
         content-background = background;
-        content-foreground = gray-darkest;
+        content-foreground = panel-background;
         content-font = 3;
       };
       "module/>>" = {
         "inherit" = "module/>";
-        content-background = gray-darkest;
+        content-background = panel-background;
         content-foreground = gray-darker;
       };
       "module/>>>" = {
@@ -202,7 +202,7 @@ in
         label-mode-foreground = foreground;
         label-mode-padding = 2;
         label-unfocused = "%icon% %name%";
-        label-unfocused-background = gray-darkest;
+        label-unfocused-background = panel-background;
         label-unfocused-foreground = foreground;
         label-unfocused-padding = 2;
         label-urgent = "%icon% %name%";
@@ -244,7 +244,7 @@ in
       };
       "module/cpu" = {
         type = "internal/cpu";
-        format-background = gray-darkest;
+        format-background = panel-background;
         format-foreground = foreground;
         format-prefix = " ";
         format-prefix-foreground = gray-lighter;
@@ -256,13 +256,13 @@ in
         type = "custom/script";
         exec = lib.getExe cpuTempScript;
         interval = 1;
-        format-background = gray-darkest;
+        format-background = panel-background;
         format-foreground = gray-lighter;
       };
       "module/mem" = {
         type = "internal/memory";
         format = "<label>";
-        format-background = gray-darkest;
+        format-background = panel-background;
         format-foreground = foreground;
         format-prefix = "󰍛 ";
         format-prefix-foreground = gray-lighter;
@@ -274,7 +274,7 @@ in
         type = "internal/fs";
         mount-0 = "/";
         interval = 60;
-        format-mounted-background = gray-darkest;
+        format-mounted-background = panel-background;
         format-mounted-foreground = foreground;
         label-mounted = "%mountpoint% %percentage_used%%";
         label-unmounted = "";
@@ -296,7 +296,7 @@ in
         exec = "${lib.getExe bluetoothControlScript} watch";
         click-left = "exec ${lib.getExe' pkgs.blueman "blueman-manager"}";
         click-right = "${lib.getExe bluetoothControlScript} toggle-power";
-        format-background = gray-darkest;
+        format-background = panel-background;
         format-foreground = gray-lighter;
         format-padding = 2;
         interval-fail = 2;
@@ -308,7 +308,7 @@ in
         time = "%H:%M:%S";
         label = "%time%";
         interval = 1;
-        format-background = gray-darkest;
+        format-background = panel-background;
         format-foreground = foreground;
         format-padding = 1;
       };

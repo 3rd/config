@@ -1,4 +1,19 @@
 local wezterm = require("wezterm")
+local installed_colors_path = wezterm.home_dir .. "/.config/theme/colors.json"
+local repository_colors_path = wezterm.config_dir .. "/../../home-manager/colors.nix"
+local palette_loader = dofile(wezterm.config_dir .. "/../theme/palette.lua")
+
+local colors_path = repository_colors_path
+local palette = palette_loader.load_nix(colors_path)
+if not palette then
+  colors_path = installed_colors_path
+  palette = palette_loader.load_json(colors_path, wezterm.json_parse)
+end
+if not palette then
+  error("Could not find theme palette at " .. installed_colors_path .. " or " .. repository_colors_path)
+end
+
+wezterm.add_to_config_reload_watch_list(colors_path)
 
 return {
   automatically_reload_config = true,
@@ -57,54 +72,35 @@ return {
   font_size = 12,
   line_height = 1,
 
-  -- colors = {
-  --   foreground = "#c5c5c5",
-  --   background = "#141414",
-  --   cursor_fg = "#ffffff",
-  --   cursor_bg = "#d78700",
-  --   cursor_border = "#d78700",
-  --   selection_fg = "#000000",
-  --   selection_bg = "#fffacd",
-  --   ansi = { "#000000", "#b22222", "#008000", "#999900", "#0066ff", "#ba55d3", "#009999", "#dddddd" },
-  --   brights = { "#808080", "#df0000", "#00d700", "#ffd700", "#5f87ff", "#875faf", "#00ffff", "#ffffff" },
-  -- },
   colors = {
-    background = "#191b1f",
-    -- foreground = "#e3e5e8",
-    foreground = "#d3d5d8",
-    cursor = "#f2b90d",
-    cursor_fg = "#191b1f",
-    cursor_bg = "#ffffff",
-    cursor_border = "#eeeeee",
-    selection_bg = "#303233",
-    selection_fg = "#cacecd",
-    scrollbar_thumb = "#16161d",
-    split = "#16161d",
+    background = palette.background,
+    foreground = palette.foreground,
+    cursor_fg = palette.background,
+    cursor_bg = palette.cursor,
+    cursor_border = palette.cursor,
+    selection_bg = palette["selection-background"],
+    selection_fg = palette["selection-foreground"],
+    scrollbar_thumb = palette["gray-darker"],
+    split = palette["gray-darkish"],
     ansi = {
-      "#282c34",
-      "#c2290a",
-      "#66b814",
-      "#f2b90d",
-      "#06a8f9",
-      "#e06ef7",
-      "#0ac2c2",
-      "#d5d7dd",
+      palette.color0,
+      palette.color1,
+      palette.color2,
+      palette.color3,
+      palette.color4,
+      palette.color5,
+      palette.color6,
+      palette.color7,
     },
     brights = {
-      "#595e68",
-      "#f2330d",
-      "#80e619",
-      "#f5c73d",
-      "#38b9fa",
-      "#eb9efa",
-      "#0df2f2",
-      "#e3e5e8",
+      palette.color8,
+      palette.color9,
+      palette.color10,
+      palette.color11,
+      palette.color12,
+      palette.color13,
+      palette.color14,
+      palette.color15,
     },
   },
-
-  -- color_scheme = "Tinacious Design (Dark)",
-  -- color_scheme = "Vice Alt (base16)",
-  -- color_scheme = "Vice Dark (base16)",
-  -- color_scheme = "Violet Dark",
-  color_scheme = "VSCodeDark+ (Gogh)",
 }

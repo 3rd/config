@@ -1,7 +1,11 @@
+{ config, ... }:
+
 {
+  imports = [ ../colors.nix ];
+
   programs.zathura = {
     enable = true;
-    options = {
+    options = with config.colors; {
       adjust-open = "best-fit";
       pages-per-row = 1;
       scroll-page-aware = "true";
@@ -12,27 +16,27 @@
       selection-clipboard = "clipboard";
 
       recolor = "false";
-      recolor-lightcolor = "#000000";
-      recolor-darkcolor = "#E0E0E0";
+      recolor-lightcolor = background;
+      recolor-darkcolor = foreground;
       recolor-reverse-video = "true";
       recolor-keephue = "true";
 
-      statusbar-fg = "#B0B0B0";
-      statusbar-bg = "#202020";
-      inputbar-bg = "#151515";
-      inputbar-fg = "#FFFFFF";
-      notification-error-bg = "#AC4142";
-      notification-error-fg = "#151515";
-      notification-warning-bg = "#AC4142";
-      notification-warning-fg = "#151515";
-      highlight-color = "#F4BF75";
-      highlight-active-color = "#6A9FB5";
-      completion-highlight-fg = "#151515";
-      completion-highlight-bg = "#90A959";
-      completion-bg = "#303030";
-      completion-fg = "#E0E0E0";
-      notification-bg = "#90A959";
-      notification-fg = "#151515";
+      statusbar-fg = gray-light;
+      statusbar-bg = gray-darkest;
+      inputbar-bg = gray-darker;
+      inputbar-fg = foreground;
+      notification-error-bg = red-darkest;
+      notification-error-fg = red-lightest;
+      notification-warning-bg = yellow-darkest;
+      notification-warning-fg = yellow-lightest;
+      highlight-color = yellow-light;
+      highlight-active-color = blue-light;
+      completion-highlight-fg = selection-foreground;
+      completion-highlight-bg = gray-darkish;
+      completion-bg = gray-darker;
+      completion-fg = foreground;
+      notification-bg = green-darkest;
+      notification-fg = green-lightest;
     };
     mappings = {
       d = "scroll half-down";
@@ -51,4 +55,3 @@
     extraConfig = "";
   };
 }
-

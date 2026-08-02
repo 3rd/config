@@ -1,3 +1,5 @@
+local colors = require("config/colors-hex")
+
 return lib.module.create({
   name = "language-support/comments",
   hosts = "*",
@@ -45,12 +47,12 @@ return lib.module.create({
           exclude = {},
         },
         colors = {
-          error = { "DiagnosticError", "ErrorMsg", "#DC2626" },
-          warning = { "DiagnosticWarn", "WarningMsg", "#FBBF24" },
-          info = { "DiagnosticInfo", "#2563EB" },
-          hint = { "DiagnosticHint", "#10B981" },
-          default = { "Identifier", "#7C3AED" },
-          test = { "Identifier", "#FF00FF" },
+          error = { "DiagnosticError", "ErrorMsg", colors.red },
+          warning = { "DiagnosticWarn", "WarningMsg", colors.yellow },
+          info = { "DiagnosticInfo", colors.blue },
+          hint = { "DiagnosticHint", colors.green },
+          default = { "Identifier", colors.indigo },
+          test = { "Identifier", colors.magenta },
         },
         search = {
           command = "rg",

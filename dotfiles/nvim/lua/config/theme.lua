@@ -3,17 +3,18 @@
 -- https://github.com/RRethy/nvim-base16/blob/4f3aa29f49b38edb6db1c52cea57e64ce3de2373/lua/base16-colorscheme.lua#L383
 -- https://github.com/ray-x/nvim/blob/8147b4d90361782d43d8a841d09868ef17d0a4c8/lua/modules/ui/galaxy.lua#L425
 
--- local colors = require("config/colors")
 local lush = require("lush")
 local hsl = lush.hsl
+local palette = require("config/palette")
 
 -- Highlighting
 -- Core: keywords, types, calls (default, special), data (containers, values)
 
 local colors = {
   none = "NONE",
-  background = hsl(250, 10, 14),
-  foreground = hsl(250, 12, 80),
+  -- background = hsl(palette.background).lighten(1),
+  background = hsl(palette.background),
+  foreground = hsl(palette.foreground),
   blue = hsl(210, 95, 74),
   cyan = hsl(180, 80, 45),
   green = hsl(80, 57, 60),
@@ -23,18 +24,36 @@ local colors = {
   pink = hsl(315, 70, 75),
   red = hsl(10, 95, 45),
   yellow = hsl(34, 80, 65),
-  visual = hsl(280, 50, 24),
+  visual = palette["selection-background"],
+  terminal = {
+    palette.color0,
+    palette.color1,
+    palette.color2,
+    palette.color3,
+    palette.color4,
+    palette.color5,
+    palette.color6,
+    palette.color7,
+    palette.color8,
+    palette.color9,
+    palette.color10,
+    palette.color11,
+    palette.color12,
+    palette.color13,
+    palette.color14,
+    palette.color15,
+  },
 }
 colors.plugins = {
   indent_guides = {
-    indent = { colors.background.lighten(10) },
-    chunk = colors.magenta.darken(40).desaturate(40),
+    indent = { palette["gray-darkish"] },
+    chunk = hsl(palette["magenta-darkest"]),
   },
 }
 
 local variable = colors.foreground
-local keyword = colors.foreground.darken(24).desaturate(10)
-local delimiter = colors.foreground.darken(39).desaturate(40)
+local keyword = colors.foreground.darken(24).desaturate(70)
+local delimiter = colors.foreground.darken(39).desaturate(80)
 local control = keyword.rotate(70).lighten(20).saturation(80)
 local operator = keyword
 
@@ -74,40 +93,40 @@ colors.common = {
   macro = keyword.lighten(40).saturate(70),
   ret = builtin,
   constructor = colors.cyan,
-  cword = colors.background.lighten(10),
-  cword_current = colors.background.lighten(18),
+  cword = palette["gray-darkish"],
+  cword_current = palette["overlay-active-background"],
 }
 colors.ui = {
   line = {
     line_nr = {
-      fg = colors.background.lighten(22),
+      fg = palette["gray-darkish"],
     },
     current_line = {
-      bg = colors.background.lighten(5),
+      bg = palette["panel-background"],
     },
     current_line_nr = {
-      bg = colors.background.lighten(10),
-      fg = colors.background.lighten(50),
+      bg = palette["gray-darkish"],
+      fg = palette["gray-medium"],
     },
     current_line_sign = {
-      bg = colors.background.lighten(10),
+      bg = palette["gray-darkish"],
       fg = colors.orange,
     },
   },
-  split = colors.background.lighten(10),
+  split = palette["gray-darkish"],
   status = {
-    a = { bg = colors.background.lighten(10), fg = colors.foreground.darken(10).desaturate(20) },
-    b = { bg = colors.background.lighten(8), fg = colors.foreground.darken(15).desaturate(20) },
-    c = { bg = colors.background.lighten(3), fg = colors.foreground.darken(20).desaturate(30) },
+    a = { bg = palette["gray-darkish"], fg = colors.foreground.darken(10).desaturate(20) },
+    b = { bg = palette["gray-dark"], fg = colors.foreground.darken(15).desaturate(20) },
+    c = { bg = palette["gray-darker"], fg = colors.foreground.darken(20).desaturate(30) },
   },
   tabs = {
     fill = { bg = colors.background, fg = colors.foreground.darken(40).desaturate(60) },
-    inactive = { bg = colors.background.lighten(3), fg = colors.foreground.darken(30).desaturate(40) },
-    active = { bg = colors.background.lighten(8), fg = colors.foreground, gui = "bold" },
+    inactive = { bg = palette["panel-background"], fg = colors.foreground.darken(30).desaturate(40) },
+    active = { bg = palette["gray-dark"], fg = colors.foreground, gui = "bold" },
   },
   breadcrumbs = {
-    normal = { bg = colors.background.lighten(7), fg = colors.foreground.darken(20).desaturate(30) },
-    separator = { fg = colors.foreground.darken(30).desaturate(40) },
+    normal = { bg = palette["gray-dark"], fg = colors.foreground.darken(20).desaturate(30) },
+    separator = { fg = palette["gray-lighter"] },
   },
 }
 colors.slang = {
@@ -124,9 +143,9 @@ colors.slang = {
   code = {
     inline = colors.orange.saturate(10),
     block = {
-      background = colors.background.lighten(3),
-      marker = colors.background.lighten(20),
-      language = colors.background.lighten(30),
+      background = palette["gray-darker"],
+      marker = palette["gray-darkish"],
+      language = palette["gray-medium"],
       content = colors.foreground,
     },
   },
@@ -235,12 +254,12 @@ local slang_headline_backgrounds = {
 local create_slang_margin_highlight = function(bg)
   return {
     bg = bg,
-    fg = colors.ui.line.line_nr.fg.lighten(12),
+    fg = hsl(colors.ui.line.line_nr.fg).lighten(12),
   }
 end
 
 local slang_margin = {
-  fg = colors.ui.line.line_nr.fg.lighten(12),
+  fg = hsl(colors.ui.line.line_nr.fg).lighten(12),
 }
 
 local slang_headline_margins = {
@@ -267,10 +286,10 @@ local theme = lush(function(injected)
   return {
     -- base
     Normal({
-      -- bg = colors.background,
+      bg = colors.background,
       fg = colors.foreground,
     }),
-    NormalFloat({ bg = colors.background.lighten(5) }),
+    NormalFloat({ bg = palette["overlay-background"] }),
     NormalNC({}),
     NonText({ fg = colors.foreground.darken(20) }),
     EndOfBuffer({ fg = colors.background }),
@@ -282,7 +301,7 @@ local theme = lush(function(injected)
     Directory({ fg = colors.blue }),
     ErrorMsg({ fg = colors.red.saturate(20) }),
     Title({ fg = colors.magenta }),
-    MatchParen({ bg = colors.background.lighten(20) }),
+    MatchParen({ bg = palette["overlay-active-background"] }),
 
     -- ui
     VertSplit({ fg = colors.ui.split }),
@@ -299,17 +318,17 @@ local theme = lush(function(injected)
     CursorLine(colors.ui.line.current_line),
     CursorLineNr(colors.ui.line.current_line_nr),
     CursorLineSign(colors.ui.line.current_line_sign),
-    Pmenu({ bg = colors.background.lighten(10), fg = colors.foreground }),
-    PmenuSel({ bg = colors.blue, fg = colors.background }),
-    PmenuSbar({ bg = colors.background.lighten(20) }),
-    PmenuThumb({ bg = colors.background.lighten(40) }),
+    Pmenu({ bg = palette["overlay-background"], fg = colors.foreground }),
+    PmenuSel({ bg = palette["overlay-selected-background"], fg = palette["selection-foreground"] }),
+    PmenuSbar({ bg = palette["overlay-active-background"] }),
+    PmenuThumb({ bg = palette["gray-medium"] }),
     Winseparator({ VertSplit }), -- Separator between window splits. Inherts from |hl-VertSplit| by default, which it will replace eventually.
     TabLine(colors.ui.tabs.inactive), -- Tab pages line, not active tab page label
     TabLineFill(colors.ui.tabs.fill), -- Tab pages line, where there are no labels
     TabLineSel(colors.ui.tabs.active), -- Tab pages line, active tab page label
     WarningMsg({}),
     WinBar({
-      bg = colors.background.lighten(7),
+      bg = palette["gray-dark"],
       fg = colors.orange,
       gui = "bold",
     }),
@@ -378,7 +397,7 @@ local theme = lush(function(injected)
     -- Ignore({}),
 
     -- LSP
-    LspReferenceText({ bg = colors.foreground.darken(20) }),
+    LspReferenceText({ bg = palette["overlay-selected-background"] }),
     LspReferenceRead({ bg = colors.yellow.darken(20) }),
     LspReferenceWrite({ bg = colors.red.darken(20) }),
     LspCodeLens({ fg = colors.foreground.darken(20) }),
@@ -570,7 +589,7 @@ local theme = lush(function(injected)
 
     -- misc
     sym("@namespace")({ sym("@type") }),
-    FloatBorder({ fg = colors.background.lighten(20) }),
+    FloatBorder({ fg = palette["overlay-active-background"] }),
 
     -- nvim-cmp
     CmpItemAbbr({ fg = colors.foreground }),
@@ -609,12 +628,12 @@ local theme = lush(function(injected)
     CmpItemKindCopilot({ fg = colors.pink }),
 
     -- nvim-tree
-    NvimTreeNormal({ bg = colors.background.lighten(2) }),
+    NvimTreeNormal({ bg = palette["panel-background"] }),
     NvimTreeWinSeparator({
-      fg = colors.common.comment.darken(50),
-      bg = colors.background.lighten(2),
+      fg = palette["gray-darkish"],
+      bg = palette["panel-background"],
     }),
-    NvimTreeNormalNC({}),
+    NvimTreeNormalNC({ NvimTreeNormal }),
     NvimTreeRootFolder({ fg = colors.blue, gui = "bold" }),
     NvimTreeGitDirty({ fg = colors.orange }),
     NvimTreeGitNew({ fg = colors.green }),
@@ -785,7 +804,7 @@ local theme = lush(function(injected)
     RenderMarkdownLink({ fg = colors.slang.link.external }),
     RenderMarkdownCode({ bg = colors.slang.code.block.background }),
     RenderMarkdownCodeInline({ fg = colors.slang.code.inline }),
-    RenderMarkdownCodeBorder({ bg = colors.slang.code.block.marker.darken(40) }),
+    RenderMarkdownCodeBorder({ bg = palette["gray-dark"] }),
 
     -- snacks profiler
     SnacksProfilerHot20({ bg = colors.red.darken(10) }),
@@ -815,11 +834,11 @@ local theme = lush(function(injected)
     NotifyBackground({ bg = colors.background }),
 
     TreesitterContext({
-      bg = colors.background.rotate(120).lighten(5),
+      bg = palette["gray-darker"],
     }),
     TreesitterContextLineNumber({
-      bg = colors.background.rotate(120).lighten(5),
-      fg = colors.ui.line.line_nr.fg.rotate(120).lighten(20),
+      bg = palette["gray-darker"],
+      fg = palette["gray-medium"],
     }),
     TreesitterContextLineNumberBottom({ gui = "underline" }),
 

@@ -1,3 +1,5 @@
+local colors = require("config/colors-hex")
+
 local config = {
   enabled = false,
   autostart = false,
@@ -19,8 +21,8 @@ local config = {
       yaml = true,
     },
     color = {
-      cterm = 244, -- "#ffffff",
-      suggestion_color = "#ffffff",
+      cterm = 244,
+      suggestion_color = colors.common.comment,
     },
   },
 }

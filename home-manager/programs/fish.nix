@@ -1,7 +1,10 @@
+{ config, lib, ... }:
+
 {
   programs.fish = {
     enable = true;
     shellInit = ''
+      set fish_color_command ${lib.removePrefix "#" config.colors.blue-medium}
       set fish_color_autosuggestion brblack
 
       # add bin to $PATH

@@ -294,7 +294,16 @@ in
   services.fwupd.enable = true;
   services.opensnitch = {
     enable = true;
-    settings.DefaultAction = "deny";
+    settings = {
+      DefaultAction = "deny";
+      InterceptUnknown = true;
+      LogLevel = 1;
+    };
+  };
+  systemd.services.opensnitchd.serviceConfig = {
+    RuntimeMaxSec = "24h";
+    RestartSec = "2s";
+    TimeoutStopSec = "5s";
   };
   services.timesyncd.enable = lib.mkDefault true;
   services.udisks2.enable = true;

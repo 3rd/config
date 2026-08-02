@@ -389,6 +389,8 @@ local setup_treesitter = function()
   register_language_aliases()
   register_syslang_parser()
 
+  vim.treesitter.query.set("nix", "injections", "")
+
   vim.g.query_lint_on = { "BufWrite" }
 
   setup_textobjects()

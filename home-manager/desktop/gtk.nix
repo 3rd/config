@@ -16,8 +16,8 @@
       package = pkgs.arc-icon-theme;
     };
     theme = {
-      name = "Arc-Dark";
-      package = pkgs.arc-theme;
+      name = "adw-gtk3-dark";
+      package = pkgs.adw-gtk3;
     };
   };
 }

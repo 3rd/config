@@ -217,24 +217,24 @@ in
             text = gray-lightest;
           };
           focusedInactive = {
-            background = gray-dark;
+            background = gray-darker;
             border = gray-darkish;
             childBorder = gray-darkish;
-            indicator = gray-dark;
+            indicator = gray-medium;
             text = gray-lightest;
           };
           unfocused = {
-            background = gray-dark;
-            border = gray-dark;
-            childBorder = gray-dark;
-            indicator = gray-dark;
-            text = gray-lightest;
+            background = gray-darkest;
+            border = gray-darker;
+            childBorder = gray-darker;
+            indicator = gray-darkish;
+            text = gray-lighter;
           };
           urgent = {
-            background = red-dark;
+            background = red-darkest;
             border = red-light;
             childBorder = red-dark;
-            indicator = red-dark;
+            indicator = red-medium;
             text = red-lightest;
           };
         };
@@ -379,6 +379,7 @@ in
         for_window [class="^Handy$"] border none
         for_window [window_type="notification"] border none
         for_window [instance="^condom-approval$"] floating enable, move position center
+        for_window [class="^Gnome-screenshot$"] floating enable
 
         bindcode ${modifier}+110 exec thunar --window
         bindcode ${modifier}+118 exec ulimit -n 999999 && ${browserExe}

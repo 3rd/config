@@ -1,50 +1,48 @@
-local hostname = vim.uv.os_gethostname()
-
 -- base colors
 local colors = {
-  background = "#212027",
-  blue = "#7EBDFC",
+  background = "#202022",
+  blue = "#31BBF8",
   common = {
     boolean = "#FF8170",
     builtin = "#EB806B",
-    comment = "#7B7986",
-    conditional = "#EF71C5",
+    comment = "#82829B",
+    conditional = "#F288E0",
     constant = "#FF8170",
     constructor = "#17CFCF",
-    cword = "#373541",
-    cword_current = "#454351",
-    delimiter = "#777486",
-    field = "#A5A0BA",
+    cword = "#3B3945",
+    cword_current = "#403F43",
+    delimiter = "#878792",
+    field = "#BBBBCE",
     ["function"] = "#7EBDFC",
-    identifier = "#C8C6D2",
-    keyword = "#9491A6",
-    macro = "#A89AEF",
+    identifier = "#DFDFEC",
+    keyword = "#A7A7B4",
+    macro = "#ACACF1",
     number = "#FF8170",
-    operator = "#9491A6",
+    operator = "#A7A7B4",
     parameter = "#E3AC63",
-    property = "#A5A0BA",
-    ["repeat"] = "#EF71C5",
+    property = "#BBBBCE",
+    ["repeat"] = "#F288E0",
     ret = "#EB806B",
     special = "#FF80AA",
     special_keyword = "#FF80AA",
     string = "#ACD35F",
     type = "#17CFCF"
   },
-  cyan = "#17CFCF",
-  foreground = "#C8C6D2",
-  green = "#ACD35F",
-  indigo = "#9485E0",
-  magenta = "#F075D1",
+  cyan = "#25DDD2",
+  foreground = "#DEDEEC",
+  green = "#6CDB4D",
+  indigo = "#9B9AF9",
+  magenta = "#CE70FF",
   none = "NONE",
-  orange = "#EB9147",
-  pink = "#EC93D6",
+  orange = "#FC8D5A",
+  pink = "#E5A0FF",
   plugins = {
     indent_guides = {
-      chunk = "#9F3885",
-      indent = { "#373541" }
+      chunk = "#593D6B",
+      indent = { "#3B3945" }
     }
   },
-  red = "#E02A06",
+  red = "#FF5967",
   slang = {
     banner = {
       bg = "#38425B",
@@ -52,45 +50,45 @@ local colors = {
     },
     code = {
       block = {
-        background = "#282730",
-        content = "#C8C6D2",
-        language = "#5F5C70",
-        marker = "#4A4757"
+        background = "#2C2A33",
+        content = "#DFDFEC",
+        language = "#6C687D",
+        marker = "#3B3945"
       },
       inline = "#ED9145"
     },
     datetime = "#FC824A",
     document = {
-      meta = "#7B7986",
+      meta = "#82829B",
       meta_field = "#F075D1",
       meta_field_key = "#EC93D6",
       title = "#C0E774"
     },
     headline = {
       five = {
-        bg = "#434B51",
-        fg = "#C8C6D2"
+        bg = "#474B4D",
+        fg = "#DFDFEC"
       },
       four = {
-        bg = "#3E444C",
-        fg = "#C8C6D2"
+        bg = "#404345",
+        fg = "#DFDFEC"
       },
-      marker = "#9D9AAC",
+      marker = "#A8A8C7",
       one = {
-        bg = "#2B2A37",
-        fg = "#C8C6D2"
+        bg = "#2B2B31",
+        fg = "#DFDFEC"
       },
       six = {
-        bg = "#49565A",
-        fg = "#C8C6D2"
+        bg = "#4C5252",
+        fg = "#DFDFEC"
       },
       three = {
-        bg = "#323848",
-        fg = "#C8C6D2"
+        bg = "#333942",
+        fg = "#DFDFEC"
       },
       two = {
-        bg = "#303141",
-        fg = "#C8C6D2"
+        bg = "#30333B",
+        fg = "#DFDFEC"
       }
     },
     label = "#E486CC",
@@ -101,8 +99,8 @@ local colors = {
     },
     list_item = {
       label = "#A294EB",
-      label_marker = "#7B7986",
-      marker = "#79787D"
+      label_marker = "#82829B",
+      marker = "#848490"
     },
     number = "#FF8170",
     outline = {
@@ -130,116 +128,74 @@ local colors = {
       active = "#17CFCF",
       cancelled = "#fa4040",
       completion = "#7378a5",
-      default = "#C8C6D2",
-      done = "#63616B",
+      default = "#DFDFEC",
+      done = "#616165",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
     },
     ticket = "#fa89f6"
   },
+  terminal = { "#2C2A33", "#FF5967", "#6CDB4D", "#F5B942", "#31BBF8", "#CE70FF", "#25DDD2", "#CAC8D0", "#6C687D", "#FF7A85", "#8CED71", "#FFD166", "#70D2FF", "#E5A0FF", "#65F5EA", "#F3F2F5" },
   ui = {
     breadcrumbs = {
       normal = {
-        bg = "#302E38",
-        fg = "#9E9CAB"
+        bg = "#323039",
+        fg = "#AAAAC5"
       },
       separator = {
-        fg = "#8A8797"
+        fg = "#928F9F"
       }
     },
     line = {
       current_line = {
-        bg = "#2B2932"
+        bg = "#252528"
       },
       current_line_nr = {
-        bg = "#373541",
-        fg = "#8A869C"
+        bg = "#3B3945",
+        fg = "#6C687D"
       },
       current_line_sign = {
-        bg = "#373541",
+        bg = "#3B3945",
         fg = "#EB9147"
       },
       line_nr = {
-        fg = "#4F4C5D"
+        fg = "#3B3945"
       }
     },
-    split = "#373541",
+    split = "#3B3945",
     status = {
       a = {
-        bg = "#373541",
-        fg = "#B3B0BF"
+        bg = "#3B3945",
+        fg = "#C4C4D9"
       },
       b = {
-        bg = "#32303B",
-        fg = "#A8A5B6"
+        bg = "#323039",
+        fg = "#B7B7D1"
       },
       c = {
-        bg = "#282730",
-        fg = "#9E9CAB"
+        bg = "#2C2A33",
+        fg = "#AAAAC5"
       }
     },
     tabs = {
       active = {
-        bg = "#32303B",
-        fg = "#C8C6D2",
+        bg = "#323039",
+        fg = "#DFDFEC",
         gui = "bold"
       },
       fill = {
-        bg = "#212027",
-        fg = "#767481"
+        bg = "#202022",
+        fg = "#7D7D97"
       },
       inactive = {
-        bg = "#282730",
-        fg = "#8A8797"
+        bg = "#252528",
+        fg = "#9292B0"
       }
     }
   },
-  visual = "#471F5C",
-  yellow = "#EDAF5E"
+  visual = "#323039",
+  yellow = "#F5B942"
 }
 
--- host-specific overrides
-if hostname == "death" then
--- colors.ui = {
---   breadcrumbs = {
---     normal = {
---       fg = "#A29CBF"
---     },
---     separator = {
---       fg = "#8D87AB"
---     }
---   },
---   line = {
---     current_line = {
---     },
---     current_line_nr = {
---       bg = "#3A3748",
---       fg = "#8D89A4"
---     },
---     current_line_sign = {
---       bg = "#3A3748",
---       fg = "#ED9A5E"
---     },
---     line_nr = {
---       fg = "#4F4B62"
---     }
---   },
---   split = "#312F3D",
---   status = {
---     a = {
---       bg = "#312F3D",
---       fg = "#BBB6D2"
---     },
---     b = {
---       bg = "#211F2D",
---       fg = "#ACA6C9"
---     },
---     c = {
---       bg = "#110F18",
---       fg = "#A29CBF"
---     }
---   }
--- }
-end
 return colors

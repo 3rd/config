@@ -10,7 +10,7 @@ SCRIPT_URL="https://github.com/Bhupesh-V/ugit/releases/latest/download/ugit"
 TMP_FILE="/tmp/ugit.sh"
 VERSION="5.0"
 
-BOLD_ORG_FG=$(tput bold)$(tput setaf 208)
+BOLD_ORG_FG=$(tput bold)$(tput setaf 3)
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 
@@ -37,7 +37,7 @@ display_menu() {
 }
 
 perror() {
-  printf "%s\n" "$(tput bold)$(tput setaf 196)ugit error$RESET: $1"
+  printf "%s\n" "$(tput bold)$(tput setaf 1)ugit error$RESET: $1"
 }
 
 undo_git_commit() {
@@ -76,7 +76,7 @@ do_git_reset() {
 undo_git_add() {
   # show prompt to unstage files interactively
   readarray -t choices < <(git ls-files 2>/dev/null | fzf --height 10% --reverse --multi \
-    --marker='🢂 ' --color 'marker:#B8CC52' \
+    --marker='🢂 ' --color 'marker:green' \
     --prompt="Choose files to unstage: " \
     --header="Use TAB to select multiple files")
 

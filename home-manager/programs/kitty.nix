@@ -22,7 +22,7 @@
       clipboard_control = "write-clipboard write-primary no-append";
       close_on_child_death = "yes";
       cursor_blink_interval = "0";
-      cursor_shape = "block";
+      cursor_shape = "beam";
       draw_minimal_borders = "yes";
       enable_audio_bell = "no";
       hide_window_decorations = "no";
@@ -55,10 +55,12 @@
       confirm_os_window_close = "0";
 
       # background
-      background_opacity = "0.98";
-      dynamic_background_opacity = "yes";
+      # background_opacity = "0.98";
+      background_opacity = "1.0";
+      # dynamic_background_opacity = "yes";
+      dynamic_background_opacity = "no";
       # background_tint = "0.5";
-      transparent_background_colors = "#312F3C@0.98 #282631@0.98 #2F2D39@0.98 #2A2833@0.98 #363442@0.98 #3F3D4D@0.98 #26232f@0.98 #494659@0.98"; # max 8
+      transparent_background_colors = "${background}@1.0 ${gray-darker}@1.0 ${gray-dark}@1.0 ${gray-darkish}@1.0 ${magenta-darkest}@1.0 ${red-darkest}@1.0 ${blue-darkest}@1.0 ${green-darkest}@1.0"; # max 8
 
       # theme
       cursor_text_color = "background";
@@ -83,12 +85,14 @@
       inherit color13;
       inherit color14;
       inherit color15;
+      palette_generate = "legacy";
 
       # text rendering
       # https://github.com/kovidgoyal/kitty/issues/6209
       # https://github.com/kovidgoyal/kitty/pull/6218
       # text_composition_strategy = "legacy";
       text_composition_strategy = "1 0"; # gamma, multiplicative contrast
+      # text_composition_strategy = "1.0 8";
       disable_ligatures = "cursor";
       undercurl_style = "thin-sparse";
       # adjust_line_height = "100%";
@@ -175,6 +179,8 @@
 
       # berkeley
       modify_font cell_width 100%
+      # modify_font cell_height 116%
+      # modify_font cell_width 102%
     '';
   };
 }

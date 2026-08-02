@@ -1,8 +1,19 @@
+local colors = require("config/colors-hex")
+
+local apply_terminal_colors = function()
+  for index = 0, 15 do
+    local color = colors.terminal[index + 1]
+    if not color then error(string.format("Missing terminal color %d", index)) end
+    vim.g["terminal_color_" .. index] = color
+  end
+end
+
 return lib.module.create({
   name = "theme",
   hosts = "*",
   setup = function()
     vim.cmd([[colorscheme static]])
+    apply_terminal_colors()
   end,
   plugins = {
     {
@@ -25,17 +36,15 @@ return lib.module.create({
         local shipwright = require("shipwright")
         local lush = require("shipwright.transform.lush")
         local patchwrite = require("shipwright.transform.patchwrite")
+        package.loaded["config/palette"] = nil
+        package.loaded["config/theme"] = nil
+        local theme = require("config/theme")
         local path_to_output = lib.path.resolve(lib.env.dirs.vim.config .. "/colors/static.lua")
         log("Building theme...")
-        shipwright.run(
-          require("config/theme"),
-          lush.to_lua,
-          { patchwrite, path_to_output, "-- PATCH_OPEN", "-- PATCH_CLOSE" }
-        )
+        shipwright.run(theme, lush.to_lua, { patchwrite, path_to_output, "-- PATCH_OPEN", "-- PATCH_CLOSE" })
         -- config/colors-hex.lua
         log("Writing colors...")
-        local colors = require("config/theme").colors
-        local hostname = vim.uv.os_gethostname()
+        local colors = theme.colors
 
         local function parse(part)
           local result = {}
@@ -52,55 +61,28 @@ return lib.module.create({
         end
 
         local hex_colors = parse(colors)
-        local template = [[
-local hostname = vim.uv.os_gethostname()
+        local palette = require("config/palette")
+        local base_palette_keys = {
+          blue = "blue-medium",
+          cyan = "cyan-medium",
+          foreground = "foreground",
+          green = "green-medium",
+          indigo = "indigo-medium",
+          magenta = "magenta-medium",
+          orange = "orange-medium",
+          pink = "magenta-light",
+          red = "red-medium",
+          visual = "selection-background",
+          yellow = "yellow-medium",
+        }
+        for color_name, palette_name in pairs(base_palette_keys) do
+          hex_colors[color_name] = palette[palette_name]
+        end
 
+        local template = [[
 -- base colors
 local colors = %s
 
--- host-specific overrides
-if hostname == "death" then
--- colors.ui = {
---   breadcrumbs = {
---     normal = {
---       fg = "#A29CBF"
---     },
---     separator = {
---       fg = "#8D87AB"
---     }
---   },
---   line = {
---     current_line = {
---     },
---     current_line_nr = {
---       bg = "#3A3748",
---       fg = "#8D89A4"
---     },
---     current_line_sign = {
---       bg = "#3A3748",
---       fg = "#ED9A5E"
---     },
---     line_nr = {
---       fg = "#4F4B62"
---     }
---   },
---   split = "#312F3D",
---   status = {
---     a = {
---       bg = "#312F3D",
---       fg = "#BBB6D2"
---     },
---     b = {
---       bg = "#211F2D",
---       fg = "#ACA6C9"
---     },
---     c = {
---       bg = "#110F18",
---       fg = "#A29CBF"
---     }
---   }
--- }
-end
 return colors]]
 
         local colors_content = string.format(template, vim.inspect(hex_colors))

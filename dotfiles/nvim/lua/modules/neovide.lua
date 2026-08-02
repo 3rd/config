@@ -33,25 +33,5 @@ return lib.module.create({
 
     -- paste with ctrl+shift+v in insert mode
     vim.keymap.set("i", "<C-S-v>", "<C-r>+", { noremap = true })
-
-    -- term colors
-    if vim.fn.exists("g:terminal_color_0") == 0 then
-      vim.api.nvim_set_var("terminal_color_0", "#352F2A")
-      vim.api.nvim_set_var("terminal_color_1", "#B65C60")
-      vim.api.nvim_set_var("terminal_color_2", "#78997A")
-      vim.api.nvim_set_var("terminal_color_3", "#EBC06D")
-      vim.api.nvim_set_var("terminal_color_4", "#9AACCE")
-      vim.api.nvim_set_var("terminal_color_5", "#B380B0")
-      vim.api.nvim_set_var("terminal_color_6", "#86A3A3")
-      vim.api.nvim_set_var("terminal_color_7", "#A38D78")
-      vim.api.nvim_set_var("terminal_color_8", "#4D453E")
-      vim.api.nvim_set_var("terminal_color_9", "#F17C64")
-      vim.api.nvim_set_var("terminal_color_10", "#99D59D")
-      vim.api.nvim_set_var("terminal_color_11", "#EBC06D")
-      vim.api.nvim_set_var("terminal_color_12", "#9AACCE")
-      vim.api.nvim_set_var("terminal_color_13", "#CE9BCB")
-      vim.api.nvim_set_var("terminal_color_14", "#88B3B2")
-      vim.api.nvim_set_var("terminal_color_15", "#C1A78E")
-    end
   end,
 })

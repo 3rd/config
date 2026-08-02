@@ -53,6 +53,7 @@ let
       export DESKTOP_OSD_VOLUME_STEP=5
       export DESKTOP_OSD_DDC_MONITORS=${lib.escapeShellArg ddcMonitorLines}
 
+      ${builtins.readFile ./xrandr-edid.sh}
       ${builtins.readFile ./desktop-osd.sh}
     '';
   };

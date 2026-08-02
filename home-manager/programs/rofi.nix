@@ -19,16 +19,17 @@ in
     location = "center";
     theme = {
       "*" = {
-        accent = mkLiteral colors.accent;
-        active-background = mkLiteral colors.gray-dark;
-        background = mkLiteral colors.gray-dark;
-        divider = mkLiteral colors.gray-medium;
+        accent = mkLiteral colors.blue-light;
+        active-background = mkLiteral colors.overlay-active-background;
+        active-foreground = mkLiteral colors.green-light;
+        background = mkLiteral colors.overlay-background;
+        divider = mkLiteral colors.overlay-active-background;
         foreground = mkLiteral colors.foreground;
-        secondary = mkLiteral colors.selection-foreground;
-        selected-background = mkLiteral colors.gray-medium;
+        secondary = mkLiteral colors.gray-lightest;
+        selected-background = mkLiteral colors.overlay-selected-background;
         urgent-background = mkLiteral colors.red-darkest;
         urgent-foreground = mkLiteral colors.red-lightest;
-        urgent-selected-background = mkLiteral colors.red-darker;
+        urgent-selected-background = mkLiteral colors.red-darkest;
       };
 
       window = {
@@ -60,7 +61,7 @@ in
 
       prompt = {
         background-color = mkLiteral "@background";
-        text-color = mkLiteral "@secondary";
+        text-color = mkLiteral "@accent";
       };
 
       "textbox-prompt-colon" = {
@@ -120,12 +121,12 @@ in
 
       "element.normal.active" = {
         background-color = mkLiteral "@active-background";
-        text-color = mkLiteral "@foreground";
+        text-color = mkLiteral "@active-foreground";
       };
 
       "element.alternate.active" = {
         background-color = mkLiteral "@active-background";
-        text-color = mkLiteral "@foreground";
+        text-color = mkLiteral "@active-foreground";
       };
 
       "element.normal.urgent" = {
@@ -140,12 +141,18 @@ in
 
       "element.selected.normal" = {
         background-color = mkLiteral "@selected-background";
+        border = mkLiteral "0px 0px 0px 2px";
+        border-color = mkLiteral "@accent";
+        padding = mkLiteral "6px 8px 6px 6px";
         text-color = mkLiteral "@foreground";
       };
 
       "element.selected.active" = {
         background-color = mkLiteral "@selected-background";
-        text-color = mkLiteral "@foreground";
+        border = mkLiteral "0px 0px 0px 2px";
+        border-color = mkLiteral "@accent";
+        padding = mkLiteral "6px 8px 6px 6px";
+        text-color = mkLiteral "@active-foreground";
       };
 
       "element.selected.urgent" = {
@@ -156,7 +163,7 @@ in
       scrollbar = {
         background-color = mkLiteral "@active-background";
         border = 0;
-        handle-color = mkLiteral "@secondary";
+        handle-color = mkLiteral "@accent";
         handle-width = mkLiteral "6px";
         padding = 0;
         width = mkLiteral "6px";
