@@ -29,8 +29,9 @@ collect_relevant_paths() {
     include+=("$host_file")
   done < <(
     find "./hosts/$HOSTNAME" -type f \
-      \( -name '*.nix' -o -name '*.mjs' \) \
+      \( -name '*.nix' -o -name '*.mjs' -o -name '*.sh' \) \
       ! -name '*.test.mjs' \
+      ! -name '*.test.sh' \
       | sort
   )
 

@@ -1,6 +1,11 @@
 { config, pkgs, ... }:
 
+let
+  applicationBackground = config.colors.selection-background;
+in
 {
+  imports = [ ../colors.nix ];
+
   dconf.settings."org/gnome/desktop/interface".toolkit-accessibility = true;
 
   gtk = {
@@ -10,7 +15,21 @@
       name = "DejaVu Sans";
       size = 9;
     };
-    gtk4.theme = config.gtk.theme;
+    gtk3.extraCss = ''
+      @define-color window_bg_color ${applicationBackground};
+      @define-color view_bg_color ${applicationBackground};
+      @define-color theme_bg_color ${applicationBackground};
+      @define-color theme_base_color ${applicationBackground};
+    '';
+    gtk4 = {
+      theme = config.gtk.theme;
+      extraCss = ''
+        @define-color window_bg_color ${applicationBackground};
+        @define-color view_bg_color ${applicationBackground};
+        @define-color theme_bg_color ${applicationBackground};
+        @define-color theme_base_color ${applicationBackground};
+      '';
+    };
     iconTheme = {
       name = "Arc";
       package = pkgs.arc-icon-theme;
