@@ -1,22 +1,11 @@
-local api = {
-  get = function(id)
-    local command = string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", id)
-    return lib.shell.exec(command)
-  end,
-  list = function()
-    local command = "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki ls | sort"
-    local entries = string.split(lib.shell.exec(command), "\n")
-    return entries
-  end,
-  list_projects = function()
-    local command = "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki ls --type project | sort"
-    local entries = string.split(lib.shell.exec(command), "\n")
-    return entries
-  end,
-}
+local api = require("modules.wiki.api")
 
 local handle_navigate_file = function()
-  local entries = api.list()
+  local entries, list_error = api.list_nodes()
+  if not entries then
+    vim.notify("Could not list wiki nodes: " .. list_error, vim.log.levels.ERROR)
+    return
+  end
 
   local fzf = require("fzf")
   coroutine.wrap(function()
@@ -40,14 +29,22 @@ local handle_navigate_file = function()
       target = result[1]
     end
 
-    local path = api.get(target)
-    local vim_command = string.format(command, path)
+    local path, resolve_error = api.resolve_node(target)
+    if not path then
+      vim.notify("Could not resolve wiki node: " .. resolve_error, vim.log.levels.ERROR)
+      return
+    end
+    local vim_command = string.format(command, vim.fn.fnameescape(path))
     vim.cmd(vim_command)
   end)()
 end
 
 local handle_navigate_project = function()
-  local entries = api.list_projects()
+  local entries, list_error = api.list_projects()
+  if not entries then
+    vim.notify("Could not list wiki projects: " .. list_error, vim.log.levels.ERROR)
+    return
+  end
 
   local fzf = require("fzf")
   coroutine.wrap(function()
@@ -68,8 +65,12 @@ local handle_navigate_project = function()
       target = result[1]
     end
 
-    local path = api.get(target)
-    local vim_command = string.format(command, path)
+    local path, resolve_error = api.resolve_node(target)
+    if not path then
+      vim.notify("Could not resolve wiki node: " .. resolve_error, vim.log.levels.ERROR)
+      return
+    end
+    local vim_command = string.format(command, vim.fn.fnameescape(path))
     vim.cmd(vim_command)
   end)()
 end

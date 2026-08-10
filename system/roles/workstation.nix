@@ -191,6 +191,7 @@ in
     # imhex
     inotify-tools
     iotop
+    sysstat
     libfaketime
     libnotify
     moreutils

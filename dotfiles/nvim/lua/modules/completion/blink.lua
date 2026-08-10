@@ -123,6 +123,9 @@ return lib.module.create({
         },
         sources = {
           default = { "lsp", "path", "snippets", "buffer", "files" },
+          per_filetype = {
+            syslang = { inherit_defaults = true, "wiki" },
+          },
           providers = {
             lsp = {
               fallbacks = { "buffer" },
@@ -167,6 +170,12 @@ return lib.module.create({
             files = {
               name = "Files",
               module = "modules.completion.file-source",
+              min_keyword_length = 0,
+            },
+            wiki = {
+              name = "Wiki",
+              module = "modules.wiki.blink-source",
+              async = true,
               min_keyword_length = 0,
             },
           },

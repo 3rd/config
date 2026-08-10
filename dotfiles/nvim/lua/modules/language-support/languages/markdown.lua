@@ -19,7 +19,61 @@ local handle_toggle_task = function()
   vim.fn.cursor(vim.fn.line("."), col)
 end
 
+local disable_fenced_code_conceal = function()
+  local highlights = vim.treesitter.query.get("markdown", "highlights")
+  if not highlights or not highlights.query.disable_pattern then return end
+
+  for _, pattern_id in ipairs({ 17, 18 }) do
+    for _, directive in ipairs(highlights.info.patterns[pattern_id] or {}) do
+      if directive[1] == "set!" and directive[2] == "conceal_lines" then
+        highlights.query:disable_pattern(pattern_id)
+        break
+      end
+    end
+  end
+end
+
+local setup_touchup = function(_, opts)
+  local codeblocks = require("touchup.codeblocks")
+  local block_query = vim.treesitter.query.parse("markdown", "(fenced_code_block) @block")
+  local fence_query = vim.treesitter.query.parse("markdown", "(fenced_code_block_delimiter) @fence")
+
+  codeblocks.render = function(namespace, bufnr, start_row, end_row, root)
+    local fence_rows = {}
+
+    for _, node in fence_query:iter_captures(root, bufnr, start_row, end_row) do
+      local row = node:range()
+      fence_rows[row] = true
+      vim.api.nvim_buf_set_extmark(bufnr, namespace, row, 0, {
+        end_row = row + 1,
+        hl_group = "TouchupCodeFence",
+        hl_eol = true,
+        ephemeral = true,
+      })
+    end
+
+    for _, node in block_query:iter_captures(root, bufnr, start_row, end_row) do
+      local block_start, _, block_end = node:range()
+      local body_start = block_start + 1
+      local body_end = fence_rows[block_end - 1] and block_end - 1 or block_end
+
+      if body_start < body_end then
+        vim.api.nvim_buf_set_extmark(bufnr, namespace, body_start, 0, {
+          end_row = body_end,
+          hl_group = "TouchupCodeBlock",
+          hl_eol = true,
+          ephemeral = true,
+        })
+      end
+    end
+  end
+
+  require("touchup").setup(opts)
+end
+
 local setup = function()
+  disable_fenced_code_conceal()
+
   vim.g.markdown_fenced_languages = {
     "ts=typescript",
     "tsx=typescriptreact",
@@ -46,7 +100,7 @@ return lib.module.create({
   plugins = {
     {
       "MeanderingProgrammer/render-markdown.nvim",
-      -- enabled = false,
+      enabled = false,
       ft = { "markdown" },
       ---@module 'render-markdown'
       ---@type render.md.UserConfig
@@ -185,6 +239,63 @@ return lib.module.create({
           style = "full", -- none, normal, language, full
         },
       },
+    },
+    {
+      "noisesfromspace/touchup.nvim",
+      ft = { "markdown" },
+      opts = {
+        filetypes = { "markdown" },
+        bullets = {
+          enabled = true,
+          icons = { "", "", "⬥", "⬦" },
+        },
+        code_blocks = {
+          enabled = true,
+        },
+        checkboxes = {
+          enabled = true,
+          icons = {
+            ["x"] = { text = "󰗠", hl = "TouchupCheckboxChecked" },
+            ["X"] = { text = "󰗠", hl = "TouchupCheckboxChecked" },
+            ["/"] = { text = "󱎖", hl = "TouchupCheckboxPending" },
+            [">"] = { text = "", hl = "TouchupCheckboxCancelled" },
+            ["<"] = { text = "󰃖", hl = "TouchupCheckboxCancelled" },
+            ["-"] = { text = "󰍶", hl = "TouchupCheckboxCancelled" },
+            ["?"] = { text = "󰋗", hl = "TouchupCheckboxPending" },
+            ["!"] = { text = "󰀦", hl = "TouchupCheckboxImportant" },
+            ["*"] = { text = "󰓎", hl = "TouchupCheckboxPending" },
+            ['"'] = { text = "󰸥", hl = "TouchupCheckboxCancelled" },
+            ["l"] = { text = "󰆋", hl = "TouchupCheckboxProgress" },
+            ["b"] = { text = "󰃀", hl = "TouchupCheckboxProgress" },
+            ["i"] = { text = "󰰄", hl = "TouchupCheckboxChecked" },
+            ["S"] = { text = "", hl = "TouchupCheckboxChecked" },
+            ["I"] = { text = "󰛨", hl = "TouchupCheckboxPending" },
+            ["p"] = { text = "", hl = "TouchupCheckboxChecked" },
+            ["c"] = { text = "", hl = "TouchupCheckboxUnchecked" },
+            ["f"] = { text = "󱠇", hl = "TouchupCheckboxUnchecked" },
+            ["k"] = { text = "", hl = "TouchupCheckboxPending" },
+            ["w"] = { text = "", hl = "TouchupCheckboxProgress" },
+            ["u"] = { text = "󰔵", hl = "TouchupCheckboxChecked" },
+            ["d"] = { text = "󰔳", hl = "TouchupCheckboxUnchecked" },
+          },
+        },
+        markers = {
+          enabled = true,
+        },
+        quotes = {
+          enabled = true,
+        },
+        admonitions = {
+          enabled = true,
+        },
+        links = {
+          enabled = true,
+        },
+        enter = {
+          enabled = true,
+        },
+      },
+      config = setup_touchup,
     },
   },
 })

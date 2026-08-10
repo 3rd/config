@@ -13,10 +13,12 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/sublime_merge \
-        --prefix PATH : ${lib.makeBinPath [
-          pkgs.coreutils
-          pkgs.jq
-        ]} \
+        --prefix PATH : ${
+          lib.makeBinPath [
+            pkgs.coreutils
+            pkgs.jq
+          ]
+        } \
         --run ${lib.escapeShellArg "${smergeLayout} \"$@\""}
     '';
     meta = pkgs.sublime-merge.meta;
@@ -68,6 +70,7 @@ in
       ".review"
       ".reviewrc.json"
       ".condom"
+      ".codegraph"
       "/specs"
       "/plan"
     ];

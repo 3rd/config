@@ -1,5 +1,3 @@
-local enable_slang_meta = vim.fn.line("$") < 200
-
 local get_upper_fold_level = function()
   local winview = vim.fn.winsaveview()
   local foldlevel = -1
@@ -78,8 +76,8 @@ local setup_ufo = function()
     return chunks
   end
 
-  local get_range_meta = function(start_line, end_line)
-    local parser = vim.treesitter.get_parser(0)
+  local get_range_meta = function(bufnr, start_line, end_line)
+    local parser = vim.treesitter.get_parser(bufnr)
     local tree = parser:parse()[1]
     local root = tree:root()
 
@@ -103,6 +101,16 @@ local setup_ufo = function()
     result.active_tasks = #filter_in_range(lib.ts.find_children(root, "task_active", true))
     result.done_tasks = #filter_in_range(lib.ts.find_children(root, "task_done", true))
 
+    local get_datetime_text = function(datetime_node)
+      local date_node = lib.ts.find_child(datetime_node, "date", true)
+      local time_node = lib.ts.find_child(datetime_node, "time", true)
+      if not date_node or not time_node then return nil end
+
+      local date = vim.treesitter.get_node_text(date_node, bufnr)
+      local time = vim.treesitter.get_node_text(time_node, bufnr)
+      return date .. " " .. time
+    end
+
     local total_time = 0
     local sessions = filter_in_range(lib.ts.find_children(root, "task_session", true))
     for _, session in ipairs(sessions) do
@@ -116,18 +124,19 @@ local setup_ufo = function()
         -- case 1: (datetimerange (datetime date time) time)
         -- 2023.12.15 16:48-16:50
         if #datetime_nodes == 1 then
-          local start_date_node = lib.ts.find_child(datetime_nodes[1], "date", true)
-          local start_time_node = lib.ts.find_child(datetime_nodes[1], "time", true)
           local end_time_node = lib.ts.find_child(datetimerange, "time", false)
 
-          if start_date_node and start_time_node and end_time_node then
-            local start_date_str = vim.treesitter.get_node_text(start_date_node, 0)
-            local start_time_str = vim.treesitter.get_node_text(start_time_node, 0)
-            local end_time_str = vim.treesitter.get_node_text(end_time_node, 0)
+          local datetime = get_datetime_text(datetime_nodes[1])
+          if datetime and end_time_node then
+            local date = datetime:match("^(%S+)")
+            local end_time = vim.treesitter.get_node_text(end_time_node, bufnr)
 
-            start_str = start_date_str .. " " .. start_time_str
-            end_str = start_date_str .. " " .. end_time_str
+            start_str = datetime
+            end_str = date .. " " .. end_time
           end
+        elseif #datetime_nodes == 2 then
+          start_str = get_datetime_text(datetime_nodes[1]) or ""
+          end_str = get_datetime_text(datetime_nodes[2]) or ""
         end
 
         if start_str ~= "" and end_str ~= "" then
@@ -137,26 +146,6 @@ local setup_ufo = function()
           -- if duration == 0 then duration = 30 * 60 end
           total_time = total_time + duration
         end
-
-        -- -- TODO: case 2: (datetimerange (datetime date time) (datetime date time))
-        -- -- 2023.12.15 16:48 - 2023.12.15 16:50
-        -- if #datetime_nodes == 2 then
-        --   local start_date_node = lib.ts.find_child(datetime_nodes[1], "date", true)
-        --   local start_time_node = lib.ts.find_child(datetime_nodes[1], "time", true)
-        --   local end_date_node = lib.ts.find_child(datetime_nodes[2], "date", true)
-        --   local end_time_node = lib.ts.find_child(datetime_nodes[2], "time", true)
-        --
-        --   local start_date_str = start_date_node and start_date_node:sexpr()
-        --   local start_time_str = start_time_node and start_time_node:sexpr()
-        --   local end_date_str = end_date_node and end_date_node:sexpr()
-        --   local end_time_str = end_time_node and end_time_node:sexpr()
-        --
-        --   if start_date_str and start_time_str and end_date_str and end_time_str then
-        --     local start_time = vim.fn.strptime(start_date_str .. " " .. start_time_str, "%Y.%m.%d %H:%M")
-        --     local end_time = vim.fn.strptime(end_date_str .. " " .. end_time_str, "%Y.%m.%d %H:%M")
-        --     total_time = total_time + (end_time - start_time)
-        --   end
-        -- end
       end
     end
     result.total_time = total_time
@@ -164,11 +153,31 @@ local setup_ufo = function()
     return result
   end
 
-  ---@diagnostic disable-next-line: unused-local
-  local virtual_text_handler = function(originalVirtualTextChunks, start_line, end_line, width, truncate)
-    if lib.buffer.current.get_filetype() == "syslang" then
+  local get_cached_range_meta = function(bufnr, start_line, end_line)
+    local changedtick = vim.api.nvim_buf_get_changedtick(bufnr)
+    local buffer_cache = vim.b[bufnr]._syslang_fold_meta_cache
+    if not buffer_cache or buffer_cache.changedtick ~= changedtick then
+      buffer_cache = {
+        changedtick = changedtick,
+        ranges = {},
+      }
+    end
+
+    local range_key = string.format("%d:%d", start_line, end_line)
+    local meta = buffer_cache.ranges[range_key]
+    if not meta then
+      meta = get_range_meta(bufnr, start_line, end_line)
+      buffer_cache.ranges[range_key] = meta
+      vim.b[bufnr]._syslang_fold_meta_cache = buffer_cache
+    end
+    return meta
+  end
+
+  local virtual_text_handler = function(originalVirtualTextChunks, start_line, end_line, width, truncate, ctx)
+    local bufnr = ctx.bufnr
+    if vim.bo[bufnr].filetype == "syslang" then
       local virtualTextChunks = slang_conceal(originalVirtualTextChunks)
-      -- local folded_lines = vim.api.nvim_buf_get_lines(0, start_line, end_line, true)
+      -- local folded_lines = vim.api.nvim_buf_get_lines(bufnr, start_line, end_line, true)
       local folded_lines_count = end_line - start_line
 
       local max_length = 80
@@ -183,8 +192,8 @@ local setup_ufo = function()
       local tasks_done_count = 0
       local tasks_total_count = 0
 
-      if enable_slang_meta then
-        meta = get_range_meta(start_line, end_line)
+      if vim.api.nvim_buf_line_count(bufnr) < 200 then
+        meta = get_cached_range_meta(bufnr, start_line, end_line)
         tasks_todo_count = meta.default_tasks + meta.active_tasks
         tasks_done_count = meta.done_tasks
         tasks_total_count = meta.default_tasks + meta.active_tasks + meta.done_tasks
@@ -192,7 +201,7 @@ local setup_ufo = function()
         local normal_task_count = 0
         local active_task_count = 0
         local completed_task_count = 0
-        local folded_lines = vim.api.nvim_buf_get_lines(0, start_line, end_line, true)
+        local folded_lines = vim.api.nvim_buf_get_lines(bufnr, start_line, end_line, true)
 
         for _, current_line in ipairs(folded_lines) do
           local text = string.trim(current_line)

@@ -1,5 +1,4 @@
 {
-  inputs,
   lib,
   config,
   pkgs,
@@ -54,15 +53,7 @@
       keep-outputs = true
     '';
   };
-  nixpkgs.config = {
-    allowUnfree = true;
-    packageOverrides = super: {
-      stable = import inputs.nixpkgs-stable {
-        inherit (super.stdenv.hostPlatform) system;
-        inherit (config.nixpkgs) config;
-      };
-    };
-  };
+  nixpkgs.config.allowUnfree = true;
 
   boot.loader.grub.configurationLimit = 50;
 
@@ -75,7 +66,6 @@
     useTmpfs = lib.mkDefault true;
     cleanOnBoot = lib.mkDefault (!config.boot.tmp.useTmpfs);
   };
-  swapDevices = lib.mkForce [ ];
   zramSwap.enable = lib.mkForce false;
   boot.kernel.sysctl = {
     "kernel.core_pattern" = lib.mkForce "";
@@ -215,7 +205,7 @@
   # oom
   services.earlyoom = {
     enable = true;
-    freeMemThreshold = 3;
+    freeMemThreshold = 5;
     freeMemKillThreshold = 2;
     freeSwapThreshold = 100;
     freeSwapKillThreshold = 100;

@@ -3,7 +3,7 @@ local setup = function()
     group = vim.api.nvim_create_augroup("highlight-on-yank", {}),
     pattern = "*",
     callback = function()
-      vim.highlight.on_yank()
+      vim.hl.hl_op()
     end,
   })
 end

@@ -1,5 +1,6 @@
+local group = vim.api.nvim_create_augroup("syslang:folds", { clear = true })
+
 local setup = function()
-  local group = vim.api.nvim_create_augroup("syslang:folds", { clear = true })
   local bufnr = vim.api.nvim_get_current_buf()
 
   vim.api.nvim_create_autocmd({ "BufWinEnter" }, {

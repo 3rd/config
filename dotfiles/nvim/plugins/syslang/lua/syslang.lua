@@ -1,11 +1,12 @@
 local folding = require("syslang/folding")
+local indent = require("syslang/indent")
 local slib = require("syslang/lib")
+local wiki = require("modules.wiki.api")
 
-_G.SyslangHeadlineGutterRows = _G.SyslangHeadlineGutterRows or {}
+local task_transition_namespace = vim.api.nvim_create_namespace("syslang:task-transition")
 
-local get_syslang_headline_gutter_rows = function()
-  _G.SyslangHeadlineGutterRows = _G.SyslangHeadlineGutterRows or {}
-  return _G.SyslangHeadlineGutterRows
+local get_instant_session_text = function(indent)
+  return string.rep(" ", indent) .. "Session: " .. os.date("%Y.%m.%d %H:%M-%H:%M")
 end
 
 local setup_options = function()
@@ -30,7 +31,7 @@ end
 _G.SyslangStatuscolumn = function()
   local row = vim.v.lnum
   local bufnr = vim.api.nvim_get_current_buf()
-  local gutter_rows = get_syslang_headline_gutter_rows()[bufnr] or {}
+  local gutter_rows = vim.b[bufnr].syslang_headline_gutter_rows or {}
   local gutter = gutter_rows[row]
   local fill_char = " "
   local fill_highlight = "SignColumn"
@@ -56,18 +57,12 @@ end
 
 --- @param task_node TSNode
 local transition_task_active_to_done = function(task_node)
-  local task_text_node = task_node:child(1)
-  if not task_text_node then return end
-  local _, _, task_text_end_row, task_text_end_col = task_text_node:range()
-
-  local indent = vim.fn.indent(vim.fn.line("."))
-
   -- store task position
   local parent = task_node:parent()
-  local child_row, _, end_row = task_node:range()
+  local child_row, _, task_end_row, task_end_col = task_node:range()
   local parent_row = parent and parent:range() or nil
 
-  while parent and parent_row and child_row == parent_row do
+  while parent and parent_row and parent:type() ~= "document" and child_row == parent_row do
     parent = parent:parent()
     parent_row = parent and parent:range() or nil
   end
@@ -105,6 +100,17 @@ local transition_task_active_to_done = function(task_node)
 
   if not index_of_task then return error("index_of_task is nil") end
 
+  local target_start_row = nil
+  local should_move = not (
+    last_done_task_index == index_of_task - 1 or (last_done_task_index == nil and first_task_index == nil)
+  )
+  if should_move then
+    local target_index = math.max(last_done_task_index or 0, first_task_index or 0)
+    local target_node = parent:named_child(target_index)
+    if not target_node then return end
+    target_start_row = target_node:range()
+  end
+
   -- handle sessions
   local sessions = lib.ts.find_children(task_node, "task_session")
   local active_sessions = {}
@@ -115,64 +121,80 @@ local transition_task_active_to_done = function(task_node)
     if #time_nodes == 1 then table.insert(active_sessions, session_node) end
   end
 
+  local active_session_edits = {}
+  for _, session_node in ipairs(active_sessions) do
+    local datetime_node = lib.ts.find_child(session_node, "datetime", true)
+    local start_date_node = lib.ts.find_child(session_node, "date", true)
+    local start_time_node = lib.ts.find_child(session_node, "time", true)
+    if not start_date_node or not start_time_node then return end
+    local start_date = vim.treesitter.get_node_text(start_date_node, 0)
+    local start_time = vim.treesitter.get_node_text(start_time_node, 0)
+    local end_date = os.date("%Y.%m.%d")
+    local end_time = os.date("%H:%M")
+    local range = slib.node_to_lsp_range(datetime_node)
+    local text = string.format("%s %s - %s %s", start_date, start_time, end_date, end_time)
+    if start_date == end_date then text = string.format("%s %s-%s", start_date, start_time, end_time) end
+    table.insert(active_session_edits, { range = range, newText = text })
+  end
+
+  local buf = vim.api.nvim_get_current_buf()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local cursor_mark = vim.api.nvim_buf_set_extmark(buf, task_transition_namespace, cursor[1] - 1, cursor[2], {
+    right_gravity = false,
+  })
+  local task_end_row_exclusive = task_end_row + (task_end_col > 0 and 1 or 0)
+  task_end_row_exclusive = math.max(task_end_row_exclusive, child_row + 1)
+
   -- if there are no sessions, create an instant one
   if #sessions == 0 then
-    local session_text = "Session: " .. os.date("%Y.%m.%d %H:%M-%H:%M") .. "\n"
-    session_text = string.rep(" ", indent + vim.bo.tabstop) .. session_text
-    local range = {
-      start = { line = task_text_end_row, character = task_text_end_col },
-      ["end"] = { line = task_text_end_row, character = task_text_end_col },
-    }
-    local edit = { range = range, newText = session_text }
-    local buf = vim.api.nvim_get_current_buf()
-    vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
-
-    -- account for the new session line
-    end_row = end_row + 1
+    local indent = vim.fn.indent(child_row + 1) + vim.fn.shiftwidth()
+    local session_text = get_instant_session_text(indent)
+    vim.api.nvim_buf_set_lines(buf, child_row + 1, child_row + 1, false, { session_text })
+    task_end_row_exclusive = task_end_row_exclusive + 1
+    if target_start_row and child_row < target_start_row then target_start_row = target_start_row + 1 end
   else
     -- if there are active sessions, close them
-    if #active_sessions ~= 0 then
-      for _, session_node in ipairs(active_sessions) do
-        local datetime_node = lib.ts.find_child(session_node, "datetime", true)
-        local start_date_node = lib.ts.find_child(session_node, "date", true)
-        local start_time_node = lib.ts.find_child(session_node, "time", true)
-        if not start_date_node or not start_time_node then return end
-        local start_date = vim.treesitter.get_node_text(start_date_node, 0)
-        local start_time = vim.treesitter.get_node_text(start_time_node, 0)
-        local end_date = os.date("%Y.%m.%d")
-        local end_time = os.date("%H:%M")
-        local range = slib.node_to_lsp_range(datetime_node)
-        local text = string.format("%s %s - %s %s", start_date, start_time, end_date, end_time)
-        if start_date == end_date then text = string.format("%s %s-%s", start_date, start_time, end_time) end
-        local edit = { range = range, newText = text }
-        local buf = vim.api.nvim_get_current_buf()
-        vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
-      end
+    for _, edit in ipairs(active_session_edits) do
+      vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
     end
   end
 
-  -- bail if first or preceded by a done task
-  if last_done_task_index == index_of_task - 1 or (last_done_task_index == nil and first_task_index == nil) then
-    -- -- auto-fold
-    -- local row = task_node:range() + 1
-    -- delayed_fold_close(row)
+  local cursor_position = vim.api.nvim_buf_get_extmark_by_id(buf, task_transition_namespace, cursor_mark, {})
+  vim.api.nvim_buf_del_extmark(buf, task_transition_namespace, cursor_mark)
+
+  if not should_move or not target_start_row then
+    local cursor_line = vim.fn.getline(cursor_position[1] + 1)
+    vim.api.nvim_win_set_cursor(0, { cursor_position[1] + 1, math.min(cursor_position[2], #cursor_line) })
     return
   end
 
-  -- get target
-  local target_index = math.max(last_done_task_index or 0, first_task_index or 0)
-  if not target_index then return end
-  local target_node = parent:named_child(target_index)
-  if not target_node then return end
+  local task_lines = vim.api.nvim_buf_get_lines(buf, child_row, task_end_row_exclusive, false)
+  local replacement = {}
+  local moved_start_row
+  local replacement_start_row
+  local replacement_end_row
+  if child_row < target_start_row then
+    local intervening_lines = vim.api.nvim_buf_get_lines(buf, task_end_row_exclusive, target_start_row + 1, false)
+    vim.list_extend(replacement, intervening_lines)
+    vim.list_extend(replacement, task_lines)
+    replacement_start_row = child_row
+    replacement_end_row = target_start_row + 1
+    moved_start_row = child_row + #intervening_lines
+  else
+    local intervening_lines = vim.api.nvim_buf_get_lines(buf, target_start_row, child_row, false)
+    vim.list_extend(replacement, task_lines)
+    vim.list_extend(replacement, intervening_lines)
+    replacement_start_row = target_start_row
+    replacement_end_row = task_end_row_exclusive
+    moved_start_row = target_start_row
+  end
 
-  local target_start_row = target_node:range()
-  if child_row < target_start_row then target_start_row = target_start_row + 1 end
+  vim.api.nvim_buf_set_lines(buf, replacement_start_row, replacement_end_row, false, replacement)
 
-  -- move the task and session
-  vim.cmd(string.format("%d,%dm%d", child_row + 1, end_row, target_start_row))
+  local cursor_row = moved_start_row + cursor_position[1] - child_row
+  local cursor_line = vim.fn.getline(cursor_row + 1)
+  vim.api.nvim_win_set_cursor(0, { cursor_row + 1, math.min(cursor_position[2], #cursor_line) })
 
-  -- TODO: fix empty line inserted when at the end of the file and there's no trailing newline
-  -- TODO: move cursor
   -- delayed_fold_close(target_start_row + 1)
 end
 
@@ -620,10 +642,28 @@ local handle_toggle_task = function(force_clear)
 
   -- no task node found, create one
   if force_clear then return end
-  local view = vim.fn.winsaveview()
-  vim.api.nvim_exec2("s/\\v\\zs\\S\\ze/[ ] \\0/g", { output = true }) -- .* -> [ ] \0
-  vim.cmd("nohl")
-  vim.fn.winrestview(view)
+  local position = vim.api.nvim_win_get_cursor(0)
+  local line = vim.api.nvim_get_current_line()
+  if line:match("^%s*$") then return end
+
+  local active_indent = line:match("^(%s*)%[%-%]%s*$")
+  if active_indent then
+    local buf = vim.api.nvim_get_current_buf()
+    local task_indent = vim.fn.indent(position[1])
+    vim.api.nvim_buf_set_lines(buf, position[1] - 1, position[1], false, {
+      active_indent .. "[x] ",
+      get_instant_session_text(task_indent + vim.fn.shiftwidth()),
+    })
+    vim.api.nvim_win_set_cursor(0, position)
+    return
+  end
+
+  local indent, text = line:match("^(%s*)(.*)$")
+  if text:sub(1, 4) == "[ ] " then return end
+
+  vim.api.nvim_set_current_line(indent .. "[ ] " .. text)
+  if position[2] >= #indent then position[2] = position[2] + 4 end
+  vim.api.nvim_win_set_cursor(0, position)
 end
 
 local handle_set_schedule = function()
@@ -672,7 +712,7 @@ local handle_set_schedule = function()
 
         local row = last_pre_node:range()
 
-        local indent = vim.fn.indent(row + 1) + (last_pre_node == target:child(0) and vim.bo.tabstop or 0)
+        local indent = vim.fn.indent(row + 1) + (last_pre_node == target:child(0) and vim.fn.shiftwidth() or 0)
         schedule_text = string.rep(" ", indent) .. schedule_text
 
         local range = {
@@ -704,6 +744,17 @@ local handle_cr = function()
     return
   end
 
+  local open_internal_link = function(target)
+    local id = target:gsub("%s+", "-"):lower()
+    local path, resolve_error = wiki.resolve_node(id)
+    if not path then
+      vim.notify("Could not resolve wiki node: " .. resolve_error, vim.log.levels.ERROR)
+      return
+    end
+
+    vim.cmd.edit(vim.fn.fnameescape(path))
+  end
+
   -- internal link
   local internal_link = lib.ts.find_parent(node, "internal_link")
   if internal_link then
@@ -712,14 +763,7 @@ local handle_cr = function()
     local target_text = vim.treesitter.get_node_text(target, 0)
     if not target_text then return end
 
-    -- node name transforms
-    target_text = string.gsub(target_text, "%s+", "-")
-    target_text = string.lower(target_text)
-
-    local command =
-      string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
-    local path = lib.shell.exec(command)
-    vim.cmd(string.format("e %s", vim.fn.fnameescape(path)))
+    open_internal_link(target_text)
 
     return
   end
@@ -740,14 +784,7 @@ local handle_cr = function()
     local target_text = vim.treesitter.get_node_text(target, 0)
     if not target_text then return end
 
-    -- node name transforms
-    target_text = string.gsub(target_text, "%s+", "-")
-    target_text = string.lower(target_text)
-
-    local command =
-      string.format("WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki core wiki resolve '%s'", target_text)
-    local path = lib.shell.exec(command)
-    vim.cmd(string.format("e %s", vim.fn.fnameescape(path)))
+    open_internal_link(target_text)
 
     return
   end
@@ -779,8 +816,8 @@ local setup_mappings = function()
   vim.keymap.set("i", "<a-j>", function()
     move_current_entry_or_noop_insert("down")
   end, { buffer = true, noremap = true })
-  -- vim.keymap.set("n", ">", handle_indent, { buffer = true })
-  -- vim.keymap.set("n", "<", handle_dedent, { buffer = true })
+  vim.keymap.set("n", ">", indent.handle_indent, { buffer = true, noremap = true })
+  vim.keymap.set("n", "<", indent.handle_dedent, { buffer = true, noremap = true })
   -- vim.keymap.set("n", "zR", handle_expand_all, { buffer = true, noremap = true })
   -- vim.keymap.set("n", "zM", handle_collapse_all, { buffer = true, noremap = true })
 end
@@ -829,6 +866,50 @@ local function fold_tasks()
   vim.fn.winrestview(view)
 end
 
+local setup_winbar = function()
+  local bufnr = vim.api.nvim_get_current_buf()
+
+  local get_metadata_end_row = function()
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    if lines[1] ~= "@meta" then return 1 end
+
+    for row, line in ipairs(lines) do
+      if line == "@end" then return row end
+    end
+
+    return #lines
+  end
+
+  local state = {
+    dirty = false,
+    metadata_end_row = get_metadata_end_row(),
+  }
+
+  local refresh = function()
+    local ok, title = pcall(slib.get_document_title)
+    if not ok or not title then return end
+
+    vim.opt_local.winbar = title
+    state.dirty = false
+    state.metadata_end_row = get_metadata_end_row()
+  end
+
+  refresh()
+
+  vim.api.nvim_buf_attach(bufnr, false, {
+    on_lines = function(_, _, _, first_line)
+      if first_line < state.metadata_end_row then state.dirty = true end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "TextChanged", "InsertLeave" }, {
+    buffer = bufnr,
+    callback = function()
+      if state.dirty then refresh() end
+    end,
+  })
+end
+
 local setup = function()
   if vim.bo.filetype ~= "syslang" then return end
   if vim.b.slang_loaded then return end
@@ -843,19 +924,7 @@ local setup = function()
   pcall(fold_tasks)
   vim.fn.winrestview(view)
 
-  do
-    local ok, title = pcall(slib.get_document_title)
-    if ok and title then vim.opt_local.winbar = title end
-  end
-  vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
-    buffer = 0,
-    callback = function()
-      -- vim.opt_local.winbar = slib.get_document_title()
-      -- with pcall
-      local ok, title = pcall(slib.get_document_title)
-      if ok then vim.opt_local.winbar = title end
-    end,
-  })
+  setup_winbar()
 
   -- TODO: top gutter attempt with extmarks
   -- local bufnr = vim.api.nvim_get_current_buf()

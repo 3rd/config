@@ -53,6 +53,7 @@
   "tiny-code-action.nvim": { "branch": "main", "commit": "81d405d7dc86d527c27b63cafec5d0d4892c6f21" },
   "tmux.nvim": { "branch": "main", "commit": "32ceaf2793582955ef9576809730878c4d2d9426" },
   "todo-comments.nvim": { "branch": "main", "commit": "31e3c38ce9b29781e4422fc0322eb0a21f4e8668" },
+  "touchup.nvim": { "branch": "main", "commit": "1f07cc5299d750feb963a12c86b2e0c19de82971" },
   "treesj": { "branch": "main", "commit": "79aedb401bbdc7e4202f7881eab5f6feb2105b0a" },
   "ts-comments.nvim": { "branch": "main", "commit": "a59d6092213447450191122c9346f309161504cb" },
   "ts-error-translator.nvim": { "branch": "main", "commit": "558abff11b9e8f4cefc0de09df780c56841c7a4b" },

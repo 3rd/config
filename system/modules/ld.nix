@@ -12,11 +12,11 @@
       ] ++ [ config.boot.kernelPackages.nvidia_x11 ];
   };
 
-  system.activationScripts.ldso = {
-    deps = [ ];
-    text = ''
-      mkdir -p /lib64
-      ln -sfn ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
-    '';
-  };
+  # system.activationScripts.ldso = {
+  #   deps = [ ];
+  #   text = ''
+  #     mkdir -p /lib64
+  #     ln -sfn ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
+  #   '';
+  # };
 }

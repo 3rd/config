@@ -22,6 +22,26 @@ local build_github_link = function(start_line, end_line)
   return link
 end
 
+local dedent_code_block = function(content)
+  local lines = vim.split(content, "\n", { plain = true, trimempty = false })
+  local common_indent
+
+  for _, line in ipairs(lines) do
+    if line:find("%S") then
+      local line_indent = #line:match("^%s*")
+      common_indent = common_indent and math.min(common_indent, line_indent) or line_indent
+    end
+  end
+
+  if not common_indent or common_indent == 0 then return content end
+
+  for index, line in ipairs(lines) do
+    lines[index] = line:sub(common_indent + 1)
+  end
+
+  return table.concat(lines, "\n")
+end
+
 local handle_smart_yank = function()
   local file_path = vim.fn.expand("%:p")
   local start_line, end_line
@@ -50,7 +70,7 @@ local handle_smart_yank = function()
         local code_block_content = lib.ts.find_child(code_block, "code_block_content", true)
         if code_block_content then
           local content = vim.treesitter.get_node_text(code_block_content, 0)
-          vim.fn.setreg("+", content)
+          vim.fn.setreg("+", dedent_code_block(content))
           vim.notify("Yanked code block content")
           return
         end

@@ -30,7 +30,7 @@ STYLUA_CONFIG=$(SOURCE)/linters/stylua.toml
 FORMAT_LUA_TARGETS?=init.lua lua after colors plugins specs
 
 .DEFAULT_GOAL = help
-.PHONY: help clean dev format profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup doctor doctor-tools doctor-runtime update
+.PHONY: help clean dev format profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup test doctor doctor-tools doctor-runtime update
 
 help: ## help
 	@echo "🔥 ${YELLOW}nvim${RESET}"
@@ -97,6 +97,14 @@ benchmark-startup: ## run startup benchmark
 	@rg Time < profile-bench-startup.log | awk '{print $$11}' | xargs -0 printf '│ • ${CYAN}User${RESET}: ${YELLOW}%s${RESET}'
 	@rg Time < profile-bench-startup.log | awk '{print $$14}'| xargs -0 printf '│ • ${CYAN}System${RESET}: ${YELLOW}%s${RESET}'
 	$(call print_mod_end)
+
+test: ## run headless specs
+	@for spec in $$(rg --files -g '*_spec.lua' "$(SOURCE)/specs"); do \
+		nvim -n -i NONE --headless --clean \
+			--cmd "set runtimepath^=$(SOURCE)" \
+			--cmd 'lua vim.opt.runtimepath:append(vim.fn.stdpath("data") .. "/site")' \
+			-l "$$spec"; \
+	done
 
 doctor: doctor-tools doctor-runtime ## verify external tools and runtime smoke checks
 

@@ -75,6 +75,7 @@ return lib.module.create({
             enabled = true,
             cmdline = true,
             pairs = {
+              ["$"] = {},
               ['"'] = default_quote_pairs,
             },
           },

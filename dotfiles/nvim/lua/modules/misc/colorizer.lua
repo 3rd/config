@@ -36,6 +36,7 @@ return lib.module.create({
             },
           },
           always_update = false,
+          debounce_ms = 30,
         },
       },
     },

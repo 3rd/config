@@ -23,6 +23,7 @@ in
     '';
     gtk4 = {
       theme = config.gtk.theme;
+      extraConfig."gtk-interface-color-scheme" = "dark";
       extraCss = ''
         @define-color window_bg_color ${applicationBackground};
         @define-color view_bg_color ${applicationBackground};

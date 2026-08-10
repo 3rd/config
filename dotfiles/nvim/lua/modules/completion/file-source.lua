@@ -2,6 +2,14 @@
 
 local M = {}
 
+local empty_response = function()
+  return {
+    is_incomplete_forward = false,
+    is_incomplete_backward = false,
+    items = {},
+  }
+end
+
 M.new = function()
   local self = setmetatable({}, { __index = M })
   return self
@@ -35,6 +43,11 @@ function M:should_show_items(context)
 end
 
 function M:get_completions(context, callback)
+  if not self:should_show_items(context) then
+    callback(empty_response())
+    return
+  end
+
   local cwd = vim.fn.getcwd()
 
   local context_line = context.line
@@ -56,10 +69,19 @@ function M:get_completions(context, callback)
     .. vim.fn.shellescape(cwd)
     .. " -type f -not -path '*/\\.git/*' 2>/dev/null"
 
-  vim.fn.jobstart(cmd, {
+  local canceled = false
+  local completed = false
+  local complete = function(response)
+    if canceled or completed then return end
+
+    completed = true
+    callback(response)
+  end
+
+  local job_id = vim.fn.jobstart(cmd, {
     stdout_buffered = true,
     on_stdout = function(_, data)
-      if not data then return end
+      if canceled or not data then return end
 
       local items = {}
       for _, line in ipairs(data) do
@@ -112,7 +134,7 @@ function M:get_completions(context, callback)
         end
       end
 
-      callback({
+      complete({
         is_incomplete_forward = false,
         is_incomplete_backward = false,
         items = items,
@@ -120,15 +142,21 @@ function M:get_completions(context, callback)
     end,
     on_stderr = function(_, data) end,
     on_exit = function(_, code)
-      if code ~= 0 then
-        callback({
-          is_incomplete_forward = false,
-          is_incomplete_backward = false,
-          items = {},
-        })
-      end
+      if code ~= 0 then complete(empty_response()) end
     end,
   })
+
+  if job_id <= 0 then
+    complete(empty_response())
+    return
+  end
+
+  return function()
+    if canceled or completed then return end
+
+    canceled = true
+    vim.fn.jobstop(job_id)
+  end
 end
 
 return M
