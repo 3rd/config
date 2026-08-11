@@ -49,6 +49,8 @@
               "a2dp_sink"
             ];
             "bluez5.codecs" = [
+              "ldac"
+              "aptx"
               "aac"
               "sbc_xq"
               "sbc"

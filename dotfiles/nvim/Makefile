@@ -28,9 +28,14 @@ DEV_FEEDKEYS=:e\n
 DEV_EXTRA_ARGS=init.lua
 STYLUA_CONFIG=$(SOURCE)/linters/stylua.toml
 FORMAT_LUA_TARGETS?=init.lua lua after colors plugins specs
+THEME_NVIM=env XDG_CONFIG_HOME=$(dir $(SOURCE)) NVIM_LOG_FILE=/tmp/nvim-theme.log nvim -n -i NONE --headless --clean \
+	--cmd 'set runtimepath^=$(SOURCE)' \
+	--cmd 'lua vim.opt.runtimepath:prepend(vim.fn.stdpath("data") .. "/lazy/shipwright.nvim"); vim.opt.runtimepath:prepend(vim.fn.stdpath("data") .. "/lazy/lush.nvim"); require("lib")' \
+	-c 'lua local action = require("modules/theme").exports[vim.env.NVIM_THEME_ACTION]; local ok, error_message = xpcall(action, debug.traceback); if not ok then vim.api.nvim_err_writeln(error_message); vim.cmd("cquit 1") end' \
+	-c 'qa!'
 
 .DEFAULT_GOAL = help
-.PHONY: help clean dev format profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup test doctor doctor-tools doctor-runtime update
+.PHONY: help clean dev format theme theme-check profile profile-viml profile-startup benchmark benchmark-baseline benchmark-startup test doctor doctor-tools doctor-runtime update
 
 help: ## help
 	@echo "🔥 ${YELLOW}nvim${RESET}"
@@ -41,6 +46,12 @@ clean: ## clean-up profiling artifacts
 
 format: ## format lua files
 	@stylua --config-path "$(STYLUA_CONFIG)" --respect-ignores $(FORMAT_LUA_TARGETS)
+
+theme: ## regenerate theme artifacts
+	@NVIM_THEME_ACTION=build $(THEME_NVIM)
+
+theme-check: ## verify generated theme artifacts
+	@NVIM_THEME_ACTION=check $(THEME_NVIM)
 
 dev: ## watch
 	@watchexec --stop-timeout=0 --no-process-group -e ".lua,.vim" -i "**/sandbox/**" -r -c clear "nvim -c \"call feedkeys(\\\"$(DEV_FEEDKEYS)\\\")\" $(DEV_EXTRA_ARGS)"

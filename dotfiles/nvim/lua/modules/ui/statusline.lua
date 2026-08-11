@@ -1,7 +1,18 @@
 local colors = require("config/colors-hex")
 
+local defer_git_branch_lookup_for_empty_buffers = function()
+  local git_branch = require("lualine.components.branch.git_branch")
+  local find_git_dir = git_branch.find_git_dir
+
+  git_branch.find_git_dir = function(dir_path)
+    if dir_path == nil and vim.api.nvim_buf_get_name(0) == "" then return nil end
+    return find_git_dir(dir_path)
+  end
+end
+
 local setup = function()
   local lualine = require("lualine")
+  defer_git_branch_lookup_for_empty_buffers()
 
   local theme = {
     normal = {

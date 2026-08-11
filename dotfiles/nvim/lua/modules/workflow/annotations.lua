@@ -610,17 +610,14 @@ local function handle_annotation_prompt()
           remove_annotation(existing_annotation)
           render_buffer(target.bufnr)
           refresh_statusline()
-          vim.notify("Annotation removed")
         end
         return
       end
 
       if existing_annotation then
         update_annotation(existing_annotation, target, existing_range, captured_code, comment)
-        vim.notify("Annotation updated")
       else
         create_annotation(target, captured_code, comment)
-        vim.notify("Annotation added")
       end
 
       refresh_statusline()

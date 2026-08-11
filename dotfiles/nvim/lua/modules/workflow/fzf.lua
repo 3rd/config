@@ -487,6 +487,7 @@ end
 local wrap_fff_picker = function(open_picker)
   return function(...)
     local picker_ui = patch_fff_picker_ui()
+    patch_fff_grep_renderer()
     set_last_picker_backend("fff")
 
     if picker_ui._previous_winborder == nil then picker_ui._previous_winborder = vim.o.winborder end
@@ -600,9 +601,6 @@ local setup_fff = function(_, opts)
   fff.setup(vim.tbl_deep_extend("force", {
     base_path = sticky_cwd,
   }, opts or {}))
-
-  patch_fff_picker_ui()
-  patch_fff_grep_renderer()
 
   if fff._single_border_wrapped then return end
 
@@ -786,6 +784,7 @@ return lib.module.create({
       build = get_fff_build(),
       config = setup_fff,
       opts = {
+        lazy_sync = true,
         debug = {
           enabled = false,
           show_scores = false,
@@ -798,7 +797,7 @@ return lib.module.create({
           move_down = { "<Down>", "<C-n>", "<C-j>" },
         },
       },
-      lazy = false,
+      lazy = true,
     },
   },
   exports = {

@@ -8,6 +8,9 @@
 let
   scripts = {
     tmux-workspace = pkgs.writeShellScriptBin "tmux-workspace" (builtins.readFile ./tmux-workspace.sh);
+    tmux-duplicate-window = pkgs.writeShellScriptBin "tmux-duplicate-window" (
+      builtins.readFile ./tmux-duplicate-window.sh
+    );
   };
 in
 {
@@ -40,9 +43,12 @@ in
   '';
 
   home.packages = with pkgs; [
-    tmux
+    # pinned to stable: tmux 3.7b wedges the server when an ssh client dies
+    # uncleanly (tmux/tmux#5455); also limits client/server version drift
+    pkgs-stable.tmux
     pkgs-stable.tmuxp
     scripts.tmux-workspace
+    scripts.tmux-duplicate-window
   ];
   programs.fish.shellAliases = {
     t = "tmux-workspace";
