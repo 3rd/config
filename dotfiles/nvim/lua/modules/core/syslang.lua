@@ -1,4 +1,7 @@
 vim.filetype.add({
+  extension = {
+    slang = "syslang",
+  },
   pattern = {
     [".*"] = {
       priority = -math.huge,

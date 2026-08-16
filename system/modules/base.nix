@@ -57,7 +57,7 @@
   };
   nixpkgs.config.allowUnfree = true;
 
-  boot.loader.grub.configurationLimit = 50;
+  boot.loader.systemd-boot.configurationLimit = 10;
 
   # initrd-find-nixos-closure fucked after:
   # https://github.com/NixOS/nixpkgs/pull/435781

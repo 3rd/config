@@ -1,4 +1,7 @@
 require("lib")
+require("modules/core/syslang")
+
+assert(vim.filetype.match({ filename = "notes.slang" }) == "syslang", ".slang files do not use the Syslang filetype")
 
 vim.opt.runtimepath:append(vim.fn.getcwd() .. "/plugins/syslang")
 
@@ -233,4 +236,4 @@ end
 assert(fold_buffers[task_buffer], "opening later Syslang buffers removed the first buffer's fold autocmds")
 assert(fold_buffers[link_buffer], "the latest Syslang buffer has no fold autocmds")
 
-print("ok: Syslang task, schedule, movement, winbar, link, and fold behavior")
+print("ok: Syslang filetype, task, schedule, movement, winbar, link, and fold behavior")

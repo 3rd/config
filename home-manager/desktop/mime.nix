@@ -3,10 +3,10 @@
 let
   browserDesktop = "google-chrome.desktop";
   claudeDesktop = "claude-desktop.desktop";
-  libreOfficeCalc = "libreoffice-calc.desktop";
-  libreOfficeDraw = "libreoffice-draw.desktop";
-  libreOfficeImpress = "libreoffice-impress.desktop";
-  libreOfficeWriter = "libreoffice-writer.desktop";
+  libreOfficeCalc = "calc.desktop";
+  libreOfficeDraw = "draw.desktop";
+  libreOfficeImpress = "impress.desktop";
+  libreOfficeWriter = "writer.desktop";
   zathura = "org.pwmt.zathura.desktop";
   defaultApplications = {
     "application/7z" = "org.gnome.FileRoller.desktop";
@@ -68,6 +68,9 @@ let
     "Default Applications" = lib.mapAttrs (
       _: desktopFile: if desktopFile == "" then "" else "${desktopFile};"
     ) defaultApplications;
+    "Removed Associations" = {
+      "application/zip" = "org.pwmt.zathura-cb.desktop;";
+    };
   };
 in
 {

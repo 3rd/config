@@ -20,8 +20,17 @@ if [[ -z "$slug" ]]; then
   slug="root"
 fi
 
-scratch_file="$state_dir/$slug.md"
+scratch_file="$state_dir/$slug.slang"
+markdown_file="$state_dir/$slug.md"
 
 mkdir -p "$state_dir"
-touch "$scratch_file"
+if [[ -e "$markdown_file" ]]; then
+  if [[ -e "$scratch_file" ]]; then
+    printf "vv: cannot rename %s: %s already exists\n" "$markdown_file" "$scratch_file" >&2
+    exit 1
+  fi
+  mv "$markdown_file" "$scratch_file"
+else
+  touch "$scratch_file"
+fi
 exec nvim "$scratch_file"

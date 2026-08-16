@@ -247,6 +247,16 @@ docker system events
 # Remove unused Docker data after confirmation
 docker system prune
 
+# Clean stale Docker data
+printf '\n' && \
+  docker system df --format '{{.Type}}\t{{.TotalCount}}\t{{.Active}}\t{{.Size}}\t{{.Reclaimable}}' | \
+    awk -F '\t' 'BEGIN { printf "%-16s %5s %6s %10s %s\n", "TYPE", "TOTAL", "UNUSED", "SIZE", "RECLAIMABLE" } $1 != "Local Volumes" { printf "%-16s %5d %6d %10s %s\n", $1, $2, $2 - $3, $4, $5 }' && \
+  printf 'Prune stale Docker data? [y/N] ' && \
+  read -r confirmation && \
+  case "$confirmation" in \
+    y|Y) docker system prune --all --force --filter "until=168h" ;; \
+  esac
+
 # Remove all unused images and anonymous volumes after confirmation
 docker system prune --all --volumes
 

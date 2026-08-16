@@ -89,5 +89,6 @@ local plugins = table.join(
 lib.lazy.install()
 vim.opt.rtp:prepend(lib.env.dirs.vim.lazy.plugin)
 lib.lazy.setup(plugins, require("config/lazy"))
+require("config/startup-path").setup()
 -- package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?/init.lua;"
 -- package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?.lua;"
