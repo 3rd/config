@@ -4,6 +4,7 @@
   modifications = final: prev: {
     opensnitch-ui = prev.opensnitch-ui.overrideAttrs (oldAttrs: {
       patches = (oldAttrs.patches or [ ]) ++ [
+        ./opensnitch-context-menu-screen.patch
         ./opensnitch-ignore-generic-desktop-launchers.patch
       ];
     });

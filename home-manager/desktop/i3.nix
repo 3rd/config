@@ -24,17 +24,64 @@ let
   };
   desktopMenuExe = lib.getExe desktopMenu;
   polybarMsgExe = lib.getExe' config.services.polybar.package "polybar-msg";
-  workspaces = {
-    one = "main";
-    two = "dev";
-    three = "work";
-    four = "comm";
-    five = "extra";
-    last = "sys";
-  };
+  columnLabels = [
+    "main"
+    "dev"
+    "work"
+    "comm"
+    "extra"
+  ];
+  bands = [
+    {
+      prefix = 0;
+      mark = "";
+    }
+    {
+      prefix = 1;
+      mark = "▴";
+    }
+    {
+      prefix = 2;
+      mark = "▾";
+    }
+  ];
+  sysNumber = 9;
+  sysLabel = "sys";
+  bandStateFile = "/tmp/workspace-grid-band";
+  wsName = num: icon: label: "${toString num}: ${icon} ${label}";
+  gridWorkspaces = lib.concatMap (
+    band:
+    lib.imap1 (column: label: {
+      num = band.prefix * 10 + column;
+      label = "${band.mark}${label}";
+    }) columnLabels
+  ) bands;
+  allWorkspaces = gridWorkspaces ++ [
+    {
+      num = sysNumber;
+      label = sysLabel;
+    }
+  ];
   iconLeft = "◧";
   iconCenter = "▣";
   iconRight = "◨";
+  monitors = [
+    { output = monLeft; icon = iconLeft; }
+    { output = monCenter; icon = iconCenter; }
+    { output = monRight; icon = iconRight; }
+  ];
+  workspaceOutputConfig = lib.concatMapStrings (
+    ws:
+    lib.concatMapStrings (
+      mon: "workspace \"${wsName ws.num mon.icon ws.label}\" output ${mon.output}\n"
+    ) monitors
+  ) allWorkspaces;
+  labelCaseEntries = lib.concatMapStrings (
+    ws: "${toString ws.num}) echo \"${ws.label}\" ;;\n    "
+  ) allWorkspaces;
+  markCaseEntries = lib.concatMapStrings (
+    band: "${toString band.prefix}) mark=\"${band.mark}\" ;;\n    "
+  ) bands;
 in
 {
   imports = [
@@ -165,6 +212,208 @@ in
 
         echo "$CURRENT_TIME" > "$TIMESTAMP_FILE"
       '';
+      workspace-grid = super.writeScriptBin "workspace-grid" ''
+        #!${pkgs.bash}/bin/bash
+
+        set -eu
+
+        I3_MSG="${pkgs.i3}/bin/i3-msg"
+        JQ="${pkgs.jq}/bin/jq"
+        ACTION="''${1:-}"
+
+        label_for() {
+          case "$1" in
+            ${labelCaseEntries}esac
+        }
+
+        ws() {
+          echo "$1: $2 $(label_for "$1")"
+        }
+
+        switch_all() {
+          if [ "$1" -ne ${toString sysNumber} ]; then
+            echo "$(($1 / 10))" > "${bandStateFile}"
+          fi
+          "$I3_MSG" "workspace \"$(ws "$1" "${iconLeft}")\"; workspace \"$(ws "$1" "${iconRight}")\"; workspace \"$(ws "$1" "${iconCenter}")\"" >/dev/null
+        }
+
+        move_to() {
+          "$I3_MSG" "move container to workspace \"$(ws "$1" "$focused_icon")\"" >/dev/null
+        }
+
+        apply() {
+          case "$ACTION" in
+            move-*) move_to "$1" ;;
+            *) switch_all "$1" ;;
+          esac
+        }
+
+        workspaces_json="$("$I3_MSG" -t get_workspaces)"
+        focused_num="$(printf '%s' "$workspaces_json" | "$JQ" -r '[.[] | select(.focused == true) | .num][0] // 1')"
+        focused_icon="$(printf '%s' "$workspaces_json" | "$JQ" -r '([.[] | select(.focused == true) | .name][0] // "") | split(" ")[1] // ""')"
+        [ -n "$focused_icon" ] || focused_icon="${iconCenter}"
+        band=$((focused_num / 10))
+        column=$((focused_num % 10))
+        on_sys=0
+        if [ "$focused_num" -eq ${toString sysNumber} ]; then
+          on_sys=1
+          if [ -r "${bandStateFile}" ]; then
+            band="$(< "${bandStateFile}")"
+          fi
+          case "$band" in
+            0 | 1 | 2) ;;
+            *) band=0 ;;
+          esac
+        fi
+
+        case "$ACTION" in
+          switch)
+            switch_all "$((band * 10 + ''${2:?}))"
+            ;;
+          move)
+            "$I3_MSG" "move container to workspace \"$(ws "$((band * 10 + ''${2:?}))" "${iconCenter}")\"" >/dev/null
+            ;;
+          up | down | move-up | move-down)
+            direction="''${ACTION#move-}"
+            if [ "$on_sys" -eq 1 ]; then
+              case "$ACTION" in
+                move-*) exit 0 ;;
+              esac
+              case "$direction:$band" in
+                up:0) band=1 ;;
+                up:2) band=0 ;;
+                down:0) band=2 ;;
+                down:1) band=0 ;;
+                *) exit 0 ;;
+              esac
+              echo "$band" > "${bandStateFile}"
+              "$I3_MSG" -t send_tick workspace-grid-band >/dev/null
+              exit 0
+            fi
+            if [ "$column" -lt 1 ] || [ "$column" -gt 5 ]; then
+              exit 0
+            fi
+            case "$direction:$band" in
+              up:0) band=1 ;;
+              up:2) band=0 ;;
+              down:0) band=2 ;;
+              down:1) band=0 ;;
+              *) exit 0 ;;
+            esac
+            apply "$((band * 10 + column))"
+            ;;
+          left | move-left)
+            if [ "$on_sys" -eq 1 ]; then
+              apply "$((band * 10 + 5))"
+              exit 0
+            fi
+            if [ "$column" -lt 2 ] || [ "$column" -gt 5 ]; then
+              exit 0
+            fi
+            apply "$((band * 10 + column - 1))"
+            ;;
+          right | move-right)
+            if [ "$on_sys" -eq 1 ] || [ "$column" -lt 1 ]; then
+              exit 0
+            fi
+            if [ "$column" -eq 5 ]; then
+              apply "${toString sysNumber}"
+              exit 0
+            fi
+            apply "$((band * 10 + column + 1))"
+            ;;
+          sys)
+            switch_all "${toString sysNumber}"
+            ;;
+          *) exit 1 ;;
+        esac
+      '';
+      workspace-band-status = super.writeScriptBin "workspace-band-status" ''
+        #!${pkgs.bash}/bin/bash
+
+        set -eu
+
+        I3_MSG="${pkgs.i3}/bin/i3-msg"
+        JQ="${pkgs.jq}/bin/jq"
+        WORKSPACE_GRID="${lib.getExe' self.workspace-grid "workspace-grid"}"
+
+        labels=(${lib.concatMapStringsSep " " (label: "\"${label}\"") columnLabels})
+
+        render() {
+          local workspaces_json focused_num focused_icon urgent_nums urgent_num hidden_urgent band mark mark_color icon_color mode out col label num cell
+
+          workspaces_json="$("$I3_MSG" -t get_workspaces)"
+          focused_num="$(printf '%s' "$workspaces_json" | "$JQ" -r '[.[] | select(.focused == true) | .num][0] // 1')"
+          focused_icon="$(printf '%s' "$workspaces_json" | "$JQ" -r '([.[] | select(.focused == true) | .name][0] // "") | split(" ")[1] // ""')"
+          urgent_nums="$(printf '%s' "$workspaces_json" | "$JQ" -r '[.[] | select(.urgent == true) | .num | tostring] | join(" ")')"
+          band=$((focused_num / 10))
+          if [ "$focused_num" -eq ${toString sysNumber} ]; then
+            if [ -r "${bandStateFile}" ]; then
+              band="$(< "${bandStateFile}")"
+            fi
+            case "$band" in
+              0 | 1 | 2) ;;
+              *) band=0 ;;
+            esac
+          fi
+
+          mark=""
+          case "$band" in
+            ${markCaseEntries}esac
+          mark_color="${config.colors.gray-lighter}"
+          if [ -z "$mark" ]; then
+            # invisible placeholder; ▴ matches the ▴/▾ advance width in DejaVu Sans exactly
+            mark="▴"
+            mark_color="${config.colors.panel-background}"
+          fi
+
+          # a red icon signals an urgent workspace in a band that is not displayed
+          hidden_urgent=0
+          for urgent_num in $urgent_nums; do
+            if [ "$urgent_num" -ne ${toString sysNumber} ] && [ $((urgent_num / 10)) -ne "$band" ]; then
+              hidden_urgent=1
+            fi
+          done
+          icon_color="${config.colors.gray-lighter}"
+          if [ "$hidden_urgent" -eq 1 ]; then
+            icon_color="${config.colors.red-light}"
+          fi
+
+          out="%{F$mark_color} $mark %{F-}%{F$icon_color}$focused_icon %{F-}%{F${config.colors.foreground}}"
+          col=1
+          for label in "''${labels[@]}"; do
+            num=$((band * 10 + col))
+            cell="  $label  "
+            if [ "$num" -eq "$focused_num" ]; then
+              cell="%{B${config.colors.gray-dark}}$cell%{B-}"
+            elif [[ " $urgent_nums " == *" $num "* ]]; then
+              cell="%{B${config.colors.red-medium}}$cell%{B-}"
+            fi
+            out+="%{A1:$WORKSPACE_GRID switch $col:}$cell%{A}"
+            col=$((col + 1))
+          done
+
+          cell="  ${sysLabel}  "
+          if [ "$focused_num" -eq ${toString sysNumber} ]; then
+            cell="%{B${config.colors.gray-dark}}$cell%{B-}"
+          elif [[ " $urgent_nums " == *" ${toString sysNumber} "* ]]; then
+            cell="%{B${config.colors.red-medium}}$cell%{B-}"
+          fi
+          out+="%{A1:$WORKSPACE_GRID sys:}$cell%{A}"
+
+          mode="$("$I3_MSG" -t get_binding_state | "$JQ" -r '.name')"
+          if [ "$mode" != "default" ]; then
+            out+=" %{B${config.colors.red-dark}}  $mode  %{B-}"
+          fi
+
+          printf '%s%%{F-}\n' "$out"
+        }
+
+        render
+        "$I3_MSG" -t subscribe -m '["workspace","mode","tick"]' | while read -r _; do
+          render
+        done
+      '';
     })
   ];
 
@@ -177,6 +426,7 @@ in
       feh
       alt-tab-scratchpad
       screen-cycle
+      workspace-grid
       desktopMenu
     ]
     ++ (with pkgs-stable; [ xss-lock ]);
@@ -385,45 +635,35 @@ in
         bindcode ${modifier}+118 exec ulimit -n 999999 && ${browserExe}
         bindcode ${modifier}+115 exec ulimit -n 999999 && ${browserExe}
 
-        # workspaces
-        workspace "1: ${iconLeft} ${workspaces.one}" output ${monLeft}
-        workspace "2: ${iconLeft} ${workspaces.two}" output ${monLeft}
-        workspace "3: ${iconLeft} ${workspaces.three}" output ${monLeft}
-        workspace "4: ${iconLeft} ${workspaces.four}" output ${monLeft}
-        workspace "5: ${iconLeft} ${workspaces.five}" output ${monLeft}
-        workspace "9: ${iconLeft} ${workspaces.last}" output ${monLeft}
+        # workspaces: 3 bands x 5 columns per monitor, plus one global sys workspace
+        ${workspaceOutputConfig}
+        bindsym ${modifier}+1 exec --no-startup-id workspace-grid switch 1
+        bindsym ${modifier}+2 exec --no-startup-id workspace-grid switch 2
+        bindsym ${modifier}+3 exec --no-startup-id workspace-grid switch 3
+        bindsym ${modifier}+4 exec --no-startup-id workspace-grid switch 4
+        bindsym ${modifier}+5 exec --no-startup-id workspace-grid switch 5
+        bindsym ${modifier}+0 workspace "${wsName sysNumber iconLeft sysLabel}"; workspace "${wsName sysNumber iconRight sysLabel}"; workspace "${wsName sysNumber iconCenter sysLabel}"
 
-        workspace "1: ${iconCenter} ${workspaces.one}" output ${monCenter}
-        workspace "2: ${iconCenter} ${workspaces.two}" output ${monCenter}
-        workspace "3: ${iconCenter} ${workspaces.three}" output ${monCenter}
-        workspace "4: ${iconCenter} ${workspaces.four}" output ${monCenter}
-        workspace "5: ${iconCenter} ${workspaces.five}" output ${monCenter}
-        workspace "9: ${iconCenter} ${workspaces.last}" output ${monCenter}
-
-        workspace "1: ${iconRight} ${workspaces.one}" output ${monRight}
-        workspace "2: ${iconRight} ${workspaces.two}" output ${monRight}
-        workspace "3: ${iconRight} ${workspaces.three}" output ${monRight}
-        workspace "4: ${iconRight} ${workspaces.four}" output ${monRight}
-        workspace "5: ${iconRight} ${workspaces.five}" output ${monRight}
-        workspace "9: ${iconRight} ${workspaces.last}" output ${monRight}
-
-        bindsym ${modifier}+1 workspace "1: ${iconLeft} ${workspaces.one}"; workspace "1: ${iconRight} ${workspaces.one}"; workspace "1: ${iconCenter} ${workspaces.one}"
-        bindsym ${modifier}+2 workspace "2: ${iconLeft} ${workspaces.two}"; workspace "2: ${iconRight} ${workspaces.two}"; workspace "2: ${iconCenter} ${workspaces.two}"
-        bindsym ${modifier}+3 workspace "3: ${iconLeft} ${workspaces.three}"; workspace "3: ${iconRight} ${workspaces.three}"; workspace "3: ${iconCenter} ${workspaces.three}"
-        bindsym ${modifier}+4 workspace "4: ${iconLeft} ${workspaces.four}"; workspace "4: ${iconRight} ${workspaces.four}"; workspace "4: ${iconCenter} ${workspaces.four}"
-        bindsym ${modifier}+5 workspace "5: ${iconLeft} ${workspaces.five}"; workspace "5: ${iconRight} ${workspaces.five}"; workspace "5: ${iconCenter} ${workspaces.five}"
-        bindsym ${modifier}+0 workspace "9: ${iconLeft} ${workspaces.last}"; workspace "9: ${iconRight} ${workspaces.last}"; workspace "9: ${iconCenter} ${workspaces.last}"
+        # grid navigation
+        bindsym ${modifier}+Up exec --no-startup-id workspace-grid up
+        bindsym ${modifier}+Down exec --no-startup-id workspace-grid down
+        bindsym ${modifier}+Left exec --no-startup-id workspace-grid left
+        bindsym ${modifier}+Right exec --no-startup-id workspace-grid right
+        bindsym ${modifier}+Shift+Up exec --no-startup-id workspace-grid move-up
+        bindsym ${modifier}+Shift+Down exec --no-startup-id workspace-grid move-down
+        bindsym ${modifier}+Shift+Left exec --no-startup-id workspace-grid move-left
+        bindsym ${modifier}+Shift+Right exec --no-startup-id workspace-grid move-right
 
         # move to workspace
-        bindsym ${modifier}+Shift+1 move container to workspace "1: ${iconCenter} ${workspaces.one}"
-        bindsym ${modifier}+Shift+2 move container to workspace "2: ${iconCenter} ${workspaces.two}"
-        bindsym ${modifier}+Shift+3 move container to workspace "3: ${iconCenter} ${workspaces.three}"
-        bindsym ${modifier}+Shift+4 move container to workspace "4: ${iconCenter} ${workspaces.four}"
-        bindsym ${modifier}+Shift+5 move container to workspace "5: ${iconCenter} ${workspaces.five}"
-        bindsym ${modifier}+Shift+0 move container to workspace "9: ${iconCenter} ${workspaces.last}"
+        bindsym ${modifier}+Shift+1 exec --no-startup-id workspace-grid move 1
+        bindsym ${modifier}+Shift+2 exec --no-startup-id workspace-grid move 2
+        bindsym ${modifier}+Shift+3 exec --no-startup-id workspace-grid move 3
+        bindsym ${modifier}+Shift+4 exec --no-startup-id workspace-grid move 4
+        bindsym ${modifier}+Shift+5 exec --no-startup-id workspace-grid move 5
+        bindsym ${modifier}+Shift+0 move container to workspace "${wsName sysNumber iconCenter sysLabel}"
 
         # default to the first workspace
-        exec --no-startup-id i3-msg 'workspace "1: ${iconLeft} ${workspaces.one}"; workspace "1: ${iconRight} ${workspaces.one}"; workspace "1: ${iconCenter} ${workspaces.one}"'
+        exec --no-startup-id workspace-grid switch 1
 
         # resize (mouse)
         bindsym --whole-window --border ${modifier}+shift+button4 resize grow height 5 px or 5 ppt

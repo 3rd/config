@@ -11,7 +11,7 @@
     pkgs.urh
     pkgs.inspectrum
     # pkgs.qimgv
-  ] ++ (if (pkgs.system == "x86_64-linux") then
+  ] ++ (if (pkgs.stdenv.hostPlatform.system == "x86_64-linux") then
     [
       # davinci-resolve
     ]

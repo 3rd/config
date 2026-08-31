@@ -1,0 +1,76 @@
+diff --git a/opensnitch/dialogs/stats.py b/opensnitch/dialogs/stats.py
+index 3852e075..c5cdb776 100644
+--- a/opensnitch/dialogs/stats.py
++++ b/opensnitch/dialogs/stats.py
+@@ -1105,7 +1105,7 @@ class StatsDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
+             if not selection:
+                 return False
+ 
+-            menu = QtWidgets.QMenu()
++            menu = QtWidgets.QMenu(table)
+             _menu_details = menu.addAction(QC.translate("stats", "Details"))
+             rulesMenu = QtWidgets.QMenu(QC.translate("stats", "Rules"))
+             _menu_new_rule = rulesMenu.addAction(QC.translate("stats", "New"))
+@@ -1113,7 +1113,7 @@ class StatsDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
+ 
+             # move away menu a few pixels to the right, to avoid clicking on it by mistake
+             point = QtCore.QPoint(pos.x()+10, pos.y()+5)
+-            action = menu.exec(table.mapToGlobal(point))
++            action = menu.exec(table.viewport().mapToGlobal(point))
+ 
+             model = table.model()
+ 
+@@ -1135,7 +1135,7 @@ class StatsDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
+             cur_idx = self.tabWidget.currentIndex()
+             table = self._get_active_table()
+             model = table.model()
+-            menu = QtWidgets.QMenu()
++            menu = QtWidgets.QMenu(table)
+             exportMenu = QtWidgets.QMenu(QC.translate("stats", "Export"))
+ 
+             selection = table.selectionModel().selectedRows()
+@@ -1171,7 +1171,7 @@ class StatsDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
+ 
+             # move away menu a few pixels to the right, to avoid clicking on it by mistake
+             point = QtCore.QPoint(pos.x()+10, pos.y()+5)
+-            action = menu.exec(table.mapToGlobal(point))
++            action = menu.exec(table.viewport().mapToGlobal(point))
+ 
+             model = table.model()
+ 
+@@ -1210,7 +1210,7 @@ class StatsDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
+ 
+             selection = table.selectedRows()
+ 
+-            menu = QtWidgets.QMenu()
++            menu = QtWidgets.QMenu(table)
+             durMenu = QtWidgets.QMenu(self.COL_STR_DURATION)
+             actionMenu = QtWidgets.QMenu(self.COL_STR_ACTION)
+             nodesMenu = QtWidgets.QMenu(QC.translate("stats", "Apply to"))
+@@ -1259,7 +1259,7 @@ class StatsDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
+ 
+             # move away menu a few pixels to the right, to avoid clicking on it by mistake
+             point = QtCore.QPoint(pos.x()+10, pos.y()+5)
+-            action = menu.exec(table.mapToGlobal(point))
++            action = menu.exec(table.viewport().mapToGlobal(point))
+ 
+             model = table.model()
+ 
+@@ -1326,7 +1326,7 @@ class StatsDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
+             if not selection:
+                 return False
+ 
+-            menu = QtWidgets.QMenu()
++            menu = QtWidgets.QMenu(table)
+             exportMenu = QtWidgets.QMenu(QC.translate("stats", "Export"))
+ 
+             #is_rule_enabled = model.index(selection[0].row(), self.COL_R_ENABLED).data()
+@@ -1344,7 +1344,7 @@ class StatsDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
+ 
+             # move away menu a few pixels to the right, to avoid clicking on it by mistake
+             point = QtCore.QPoint(pos.x()+10, pos.y()+5)
+-            action = menu.exec(table.mapToGlobal(point))
++            action = menu.exec(table.viewport().mapToGlobal(point))
+ 
+             model = table.model()
+ 

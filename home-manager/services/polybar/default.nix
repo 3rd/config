@@ -122,7 +122,7 @@ in
       };
       "bar/top" = {
         "inherit" = "bar/common";
-        modules-left = "i3";
+        modules-left = "bands";
         modules-center = "task";
         modules-right = "ai_usage separator battery separator pulseaudio notifications bluetooth cpu cpu_temp separator mem separator fs separator clock tray";
         enable-ipc = true;
@@ -186,34 +186,12 @@ in
         content-background = gray-darker;
         content-foreground = gray-dark;
       };
-      "module/i3" = {
-        type = "internal/i3";
-        enable-click = true;
-        enable-scroll = true;
-        format = "<label-state> <label-mode>";
-        fuzzy-match = true;
-        index-sort = true;
-        label-focused = "%icon% %name%";
-        label-focused-background = gray-dark;
-        label-focused-foreground = foreground;
-        label-focused-padding = 2;
-        label-mode = "%mode%";
-        label-mode-background = red-dark;
-        label-mode-foreground = foreground;
-        label-mode-padding = 2;
-        label-unfocused = "%icon% %name%";
-        label-unfocused-background = panel-background;
-        label-unfocused-foreground = foreground;
-        label-unfocused-padding = 2;
-        label-urgent = "%icon% %name%";
-        label-urgent-background = red-medium;
-        label-urgent-foreground = foreground;
-        label-urgent-padding = 2;
-        label-visible-padding = 2;
-        pin-workspaces = true;
-        reverse-scroll = false;
-        strip-wsnumbers = true;
-        wrapping-scroll = false;
+      "module/bands" = {
+        type = "custom/script";
+        exec = lib.getExe' pkgs.workspace-band-status "workspace-band-status";
+        tail = true;
+        scroll-up = "${lib.getExe' pkgs.workspace-grid "workspace-grid"} right";
+        scroll-down = "${lib.getExe' pkgs.workspace-grid "workspace-grid"} left";
       };
       "module/battery" = {
         type = "internal/battery";

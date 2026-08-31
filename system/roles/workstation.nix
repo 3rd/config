@@ -233,7 +233,7 @@ in
     portal = {
       enable = true;
       extraPortals = with pkgs; [ xdg-desktop-portal-gtk ];
-      xdgOpenUsePortal = true;
+      xdgOpenUsePortal = false;
       config.common.default = "gtk";
     };
   };
@@ -253,6 +253,7 @@ in
     ];
   };
 
+  services.displayManager.defaultSession = lib.mkDefault "home-manager";
   services.gnome.at-spi2-core.enable = true;
   services.gnome.gnome-keyring.enable = true;
   services.gnome.gcr-ssh-agent.enable = false;
@@ -263,7 +264,6 @@ in
   };
   services.xserver.displayManager = {
     lightdm.enable = lib.mkDefault true;
-    defaultSession = lib.mkDefault "home-manager";
     session = lib.mkAfter [
       {
         name = "home-manager";
@@ -301,17 +301,12 @@ in
       LogLevel = 1;
     };
   };
-  systemd.services.opensnitchd.serviceConfig = {
-    RuntimeMaxSec = "24h";
-    RestartSec = "2s";
-    TimeoutStopSec = "5s";
-  };
   services.timesyncd.enable = lib.mkDefault true;
   services.udisks2.enable = true;
 
   services.atd.enable = true;
   services.gvfs.enable = true; # trash, MTP
-  services.logind.killUserProcesses = true;
+  services.logind.settings.Login.KillUserProcesses = true;
   services.irqbalance.enable = true;
   # services.devmon.enable = true;
 

@@ -40,6 +40,7 @@
     ../desktop/qt.nix
     ../layers/utilities.nix
     ../services/frpc.nix
+    ../services/hister.nix
     # ../services/nerdctl.nix
     # ../programs/ghostty.nix
   ];

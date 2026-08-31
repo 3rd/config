@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+die() {
+  printf 'error: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  die "usage: xt X command [args...]"
+}
+
+[[ -n "${TMUX:-}" ]] || die "not inside tmux"
+[[ $# -ge 2 ]] || usage
+[[ "$1" =~ ^[1-9][0-9]*$ ]] || usage
+
+count="$1"
+shift
+cmd="$*"
+
+if [[ "$count" -eq 1 ]]; then
+  exec sh -c "$cmd"
+fi
+
+# Layout: rows = floor(count/2), 2 columns per row, first row gets 3 when odd.
+rows=$((count / 2))
+extra=$((count - 2 * rows))
+
+row_panes=("$TMUX_PANE")
+for ((i = 1; i < rows; i++)); do
+  pane="$(tmux split-window -v -t "$TMUX_PANE" -P -F '#{pane_id}' -- sh -c "$cmd")"
+  row_panes+=("$pane")
+done
+tmux select-layout -t "$TMUX_PANE" even-vertical >/dev/null
+
+for ((r = 0; r < rows; r++)); do
+  pane="${row_panes[r]}"
+  if [[ "$r" -eq 0 && "$extra" -eq 1 ]]; then
+    mid="$(tmux split-window -h -p 66 -t "$pane" -P -F '#{pane_id}' -- sh -c "$cmd")"
+    tmux split-window -h -p 50 -t "$mid" -- sh -c "$cmd"
+  else
+    tmux split-window -h -t "$pane" -- sh -c "$cmd"
+  fi
+done
+
+tmux select-pane -t "$TMUX_PANE"
+exec sh -c "$cmd"

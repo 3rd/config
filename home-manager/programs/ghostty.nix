@@ -4,6 +4,6 @@
   imports = [ ../colors.nix ];
 
   programs.ghostty.enable = true;
-  programs.ghostty.package = inputs.ghostty.packages.${pkgs.system}.default;
+  programs.ghostty.package = inputs.ghostty.packages.${pkgs.stdenv.hostPlatform.system}.default;
 }
 

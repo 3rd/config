@@ -1,4 +1,5 @@
 local api = require("modules.wiki.api")
+local vv_root = lib.path.resolve(lib.env.dirs.home, ".local", "state", "vv")
 
 local handle_navigate_file = function()
   local entries, list_error = api.list_nodes()
@@ -72,6 +73,32 @@ local handle_navigate_project = function()
     end
     local vim_command = string.format(command, vim.fn.fnameescape(path))
     vim.cmd(vim_command)
+  end)()
+end
+
+local handle_navigate_vv = function()
+  local entries = {}
+  for _, path in ipairs(vim.fn.globpath(vv_root, "*", false, true)) do
+    if vim.fn.filereadable(path) == 1 then entries[#entries + 1] = vim.fn.fnamemodify(path, ":t") end
+  end
+  table.sort(entries)
+
+  local fzf = require("fzf")
+  coroutine.wrap(function()
+    local win_options = { height = 10, relative = "win" }
+    vim.cmd([[20 new]])
+    local result = fzf.provided_win_fzf(entries, "--print-query --nth 1 --expect=ctrl-s,ctrl-v", win_options)
+    if not result then return end
+
+    local command = "e %s"
+    if result[2] == "ctrl-s" then
+      command = "sp %s"
+    elseif result[2] == "ctrl-v" then
+      command = "vs %s"
+    end
+
+    local path = lib.path.resolve(vv_root, result[3])
+    vim.cmd(string.format(command, vim.fn.fnameescape(path)))
   end)()
 end
 
@@ -195,5 +222,6 @@ return lib.module.create({
     { "n", "<M-n>", handle_navigate_file },
     { "n", "<M-m>", handle_navigate_search },
     { "n", "<M-p>", handle_navigate_project },
+    { "n", "<M-v>", handle_navigate_vv },
   },
 })

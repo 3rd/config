@@ -2,6 +2,7 @@
 
 {
   home.packages = with pkgs; [
+    alloy6
     hyperfine # https://github.com/sharkdp/hyperfine
     k6 # https://github.com/grafana/k6
     scc # https://github.com/boyter/scc

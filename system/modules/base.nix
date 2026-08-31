@@ -59,11 +59,6 @@
 
   boot.loader.systemd-boot.configurationLimit = 10;
 
-  # initrd-find-nixos-closure fucked after:
-  # https://github.com/NixOS/nixpkgs/pull/435781
-  # https://discourse.nixos.org/t/breaking-changes-announcement-for-unstable/17574/130
-  boot.initrd.systemd.enable = lib.mkForce false;
-
   boot.tmp = {
     useTmpfs = lib.mkDefault true;
     cleanOnBoot = lib.mkDefault (!config.boot.tmp.useTmpfs);

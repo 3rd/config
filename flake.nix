@@ -11,6 +11,7 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hister.url = "github:asciimoo/hister";
 
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
@@ -93,7 +94,8 @@
         };
       };
       keyringPinOverlay = final: prev: {
-        gnome-keyring = inputs.nixpkgs-keyring.legacyPackages.${prev.system}.gnome-keyring;
+        gnome-keyring =
+          inputs.nixpkgs-keyring.legacyPackages.${prev.stdenv.hostPlatform.system}.gnome-keyring;
       };
       mkNightlyNeovimPackage =
         system:
