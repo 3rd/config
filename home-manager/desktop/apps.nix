@@ -90,7 +90,7 @@ let
 in
 {
   home.packages = [
-    pkgs.libreoffice-qt-fresh
+    pkgs.libreoffice-qt-stable
     pkgs.hunspell
     pkgs.hunspellDicts.en_US
     appLaunchScript

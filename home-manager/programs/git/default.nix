@@ -45,7 +45,6 @@ in
     lazygit
     meld
     sublime-merge-with-layout
-    gh
     smartgit
     # custom
     scripts.git-branch
@@ -54,6 +53,17 @@ in
     scripts.git-status-deep
     scripts.git-standup
   ];
+
+  programs.gh = {
+    enable = true;
+    settings = {
+      git_protocol = "ssh";
+      prompt = "enabled";
+      aliases.co = "pr checkout";
+      telemetry = "disabled";
+    };
+    gitCredentialHelper.enable = false;
+  };
 
   programs.git = {
     enable = true;

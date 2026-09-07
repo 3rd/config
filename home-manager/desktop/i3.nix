@@ -23,6 +23,22 @@ let
     text = builtins.readFile ./desktop-menu.sh;
   };
   desktopMenuExe = lib.getExe desktopMenu;
+  cheshireRestart = pkgs.writeShellApplication {
+    name = "cheshire-restart";
+    runtimeInputs = [ pkgs.procps ];
+    text = ''
+      processName=cheshire-dev
+      pkill -u "$UID" -x "$processName" || test "$?" -eq 1
+      pidwait -u "$UID" -x "$processName" || test "$?" -eq 1
+      exec "$HOME/.local/bin/cheshire-dev" --autostart
+    '';
+  };
+  cheshireLauncherConfig = pkgs.writeText "i3-cheshire-launcher.conf" ''
+    exec_always --no-startup-id ${lib.getExe cheshireRestart}
+  '';
+  rofiLauncherConfig = pkgs.writeText "i3-rofi-launcher.conf" ''
+    bindsym ${alt}+space exec ${pkgs.rofi}/bin/rofi -show drun
+  '';
   polybarMsgExe = lib.getExe' config.services.polybar.package "polybar-msg";
   columnLabels = [
     "main"
@@ -238,7 +254,15 @@ in
         }
 
         move_to() {
-          "$I3_MSG" "move container to workspace \"$(ws "$1" "$focused_icon")\"" >/dev/null
+          target_workspace="$(ws "$1" "$focused_icon")"
+          case "$ACTION" in
+            move-left | move-right)
+              "$I3_MSG" "move container to workspace \"$target_workspace\"; workspace \"$target_workspace\"" >/dev/null
+              ;;
+            *)
+              "$I3_MSG" "move container to workspace \"$target_workspace\"" >/dev/null
+              ;;
+          esac
         }
 
         apply() {
@@ -340,12 +364,14 @@ in
         labels=(${lib.concatMapStringsSep " " (label: "\"${label}\"") columnLabels})
 
         render() {
-          local workspaces_json focused_num focused_icon urgent_nums urgent_num hidden_urgent band mark mark_color icon_color mode out col label num cell
+          local workspaces_json tree_json focused_num focused_icon urgent_nums occupied_nums urgent_num hidden_urgent band mark mark_color icon_color mode out col label num cell
 
           workspaces_json="$("$I3_MSG" -t get_workspaces)"
+          tree_json="$("$I3_MSG" -t get_tree)"
           focused_num="$(printf '%s' "$workspaces_json" | "$JQ" -r '[.[] | select(.focused == true) | .num][0] // 1')"
           focused_icon="$(printf '%s' "$workspaces_json" | "$JQ" -r '([.[] | select(.focused == true) | .name][0] // "") | split(" ")[1] // ""')"
           urgent_nums="$(printf '%s' "$workspaces_json" | "$JQ" -r '[.[] | select(.urgent == true) | .num | tostring] | join(" ")')"
+          occupied_nums="$(printf '%s' "$tree_json" | "$JQ" -r '[.. | objects | select(.type? == "workspace") | select(any(.. | objects; .window? != null)) | .num | tostring] | join(" ")')"
           band=$((focused_num / 10))
           if [ "$focused_num" -eq ${toString sysNumber} ]; then
             if [ -r "${bandStateFile}" ]; then
@@ -383,6 +409,10 @@ in
           col=1
           for label in "''${labels[@]}"; do
             num=$((band * 10 + col))
+            if [ "$num" -ne "$focused_num" ] && [[ " $occupied_nums " != *" $num "* ]]; then
+              col=$((col + 1))
+              continue
+            fi
             cell="  $label  "
             if [ "$num" -eq "$focused_num" ]; then
               cell="%{B${config.colors.gray-dark}}$cell%{B-}"
@@ -393,13 +423,15 @@ in
             col=$((col + 1))
           done
 
-          cell="  ${sysLabel}  "
-          if [ "$focused_num" -eq ${toString sysNumber} ]; then
-            cell="%{B${config.colors.gray-dark}}$cell%{B-}"
-          elif [[ " $urgent_nums " == *" ${toString sysNumber} "* ]]; then
-            cell="%{B${config.colors.red-medium}}$cell%{B-}"
+          if [ "$focused_num" -eq ${toString sysNumber} ] || [[ " $occupied_nums " == *" ${toString sysNumber} "* ]]; then
+            cell="  ${sysLabel}  "
+            if [ "$focused_num" -eq ${toString sysNumber} ]; then
+              cell="%{B${config.colors.gray-dark}}$cell%{B-}"
+            elif [[ " $urgent_nums " == *" ${toString sysNumber} "* ]]; then
+              cell="%{B${config.colors.red-medium}}$cell%{B-}"
+            fi
+            out+="%{A1:$WORKSPACE_GRID sys:}$cell%{A}"
           fi
-          out+="%{A1:$WORKSPACE_GRID sys:}$cell%{A}"
 
           mode="$("$I3_MSG" -t get_binding_state | "$JQ" -r '.name')"
           if [ "$mode" != "default" ]; then
@@ -410,7 +442,7 @@ in
         }
 
         render
-        "$I3_MSG" -t subscribe -m '["workspace","mode","tick"]' | while read -r _; do
+        "$I3_MSG" -t subscribe -m '["workspace","window","mode","tick"]' | while read -r _; do
           render
         done
       '';
@@ -554,7 +586,6 @@ in
           "${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad toggle";
           "ctrl+${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad store";
           "${modifier}+space" = "exec --no-startup-id ${desktopMenuExe}";
-          "${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show drun";
           "ctrl+${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show window";
         };
         floating = {
@@ -615,6 +646,8 @@ in
         ];
       };
       extraConfig = ''
+        include $(if test -x "$HOME/.local/bin/cheshire-dev"; then echo ${cheshireLauncherConfig}; else echo ${rofiLauncherConfig}; fi)
+
         # settings
         workspace_auto_back_and_forth yes
         workspace_layout default
@@ -627,6 +660,7 @@ in
         default_floating_border pixel 2
         for_window [class="^.*"] border pixel 2
         for_window [class="^Handy$"] border none
+        for_window [class="^cheshire-dev$"] border none
         for_window [window_type="notification"] border none
         for_window [instance="^condom-approval$"] floating enable, move position center
         for_window [class="^Gnome-screenshot$"] floating enable
