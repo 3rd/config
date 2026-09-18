@@ -114,7 +114,7 @@
           nvim "$file"
         '';
       };
-      work = {
+      w = {
         description = "Work manager";
         body = ''
           begin
@@ -160,7 +160,6 @@
       "@aa" = "cd ~/brain/config/workflow/agents/config";
       "@trash" = "cd ~/.local/share/Trash/files";
       # custom utils
-      w = "work";
       pp = "promptpack";
       r = "run";
       rw = "run --watch";

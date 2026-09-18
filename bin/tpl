@@ -8,7 +8,7 @@ TEMPLATES_DIR=~/brain/projects/templates
 
 pick_template() {
   cd "$TEMPLATES_DIR"
-  fd . -td -d 1 | fzf
+  fd --hidden --type file --glob .root --exclude /archive --format '{//}' | fzf
 }
 
 main() {
@@ -27,7 +27,7 @@ main() {
 
   # apply
   if [ -d "$destination" ]; then
-    cp -r "$source""/*" "$destination"
+    cp -r "$source/." "$destination"
   else
     cp -r "$source" "$destination"
   fi

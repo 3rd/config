@@ -26,6 +26,34 @@ local setup = function()
     filename = { "filename", path = 1 },
     filetype = { "filetype", path = 1 },
     location = { "location" },
+    lsp_status = {
+      "lsp_status",
+      icon = "",
+      show_name = false,
+      symbols = { done = "" },
+      fmt = vim.trim,
+      on_click = function()
+        vim.cmd("LspInfo")
+      end,
+    },
+    searchcount = { "searchcount", maxcount = 9999, timeout = 50 },
+    selectioncount = {
+      "selectioncount",
+      cond = function()
+        return vim.fn.mode():match("^[vV\22]") ~= nil
+      end,
+      fmt = function(count)
+        return "SEL " .. count
+      end,
+    },
+    recording = function()
+      local register = vim.fn.reg_recording()
+      if register ~= "" then return "REC @" .. register end
+      return ""
+    end,
+    maximize = function()
+      return vim.t.maximized and "ZOOM" or ""
+    end,
     git_branch = { "branch" },
     git_diff = {
       "diff",
@@ -125,13 +153,18 @@ local setup = function()
     lualine_b = { components.filename },
     lualine_c = { components.git_diff, components.diagnostics },
     lualine_x = {
+      components.recording,
+      components.maximize,
       annotations_status,
       cursor_status,
       copilot_status,
     },
     lualine_y = { components.filetype },
-    lualine_z = { components.location },
+    lualine_z = { components.searchcount, components.selectioncount, components.location },
   }
+
+  local inactive_sections = vim.deepcopy(sections)
+  table.insert(sections.lualine_x, 3, components.lsp_status)
 
   lualine.setup({
     options = {
@@ -144,7 +177,7 @@ local setup = function()
       always_show_tabline = false,
     },
     sections = vim.deepcopy(sections),
-    inactive_sections = vim.deepcopy(sections),
+    inactive_sections = inactive_sections,
     tabline = {
       lualine_a = { components.tabs },
     },

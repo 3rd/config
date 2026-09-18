@@ -11,7 +11,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hister.url = "github:asciimoo/hister";
+    buildprof = {
+      url = "github:LalitMaganti/buildprof/v0.2.6";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hister.url = "github:asciimoo/hister?rev=ac9498e63d443897ffd4992310d3f8254e609859";
 
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";

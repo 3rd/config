@@ -13,11 +13,12 @@ local annotation_icon = "󰙏"
 ---@field end_col number
 ---@field source "normal"|"visual"
 ---@field selection_kind "line"|"linewise"|"charwise"|"block"
+---@field segments AnnotationRange[]|nil
 
 ---@class Annotation
 ---@field id number
 ---@field bufnr number
----@field range_id number|nil
+---@field range_ids number[]
 ---@field comment string
 ---@field original_code string
 
@@ -33,8 +34,10 @@ local state = {
 
 local function discard_restore_backup()
   for _, annotation in ipairs(state.restore_backup or {}) do
-    if annotation.range_id and vim.api.nvim_buf_is_valid(annotation.bufnr) then
-      pcall(vim.api.nvim_buf_del_extmark, annotation.bufnr, range_namespace, annotation.range_id)
+    if vim.api.nvim_buf_is_valid(annotation.bufnr) then
+      for _, range_id in ipairs(annotation.range_ids) do
+        pcall(vim.api.nvim_buf_del_extmark, annotation.bufnr, range_namespace, range_id)
+      end
     end
   end
 
@@ -86,6 +89,16 @@ end
 ---@param right AnnotationRange
 ---@return boolean
 local function ranges_equal(left, right)
+  if left.segments or right.segments then
+    local left_segments = left.segments or { left }
+    local right_segments = right.segments or { right }
+    if #left_segments ~= #right_segments then return false end
+    for index, segment in ipairs(left_segments) do
+      if not ranges_equal(segment, right_segments[index]) then return false end
+    end
+    return true
+  end
+
   return left.start_row == right.start_row
     and left.start_col == right.start_col
     and left.end_row == right.end_row
@@ -96,6 +109,15 @@ end
 ---@param right AnnotationRange
 ---@return boolean
 local function ranges_overlap(left, right)
+  if left.segments or right.segments then
+    for _, left_segment in ipairs(left.segments or { left }) do
+      for _, right_segment in ipairs(right.segments or { right }) do
+        if ranges_overlap(left_segment, right_segment) then return true end
+      end
+    end
+    return false
+  end
+
   return is_before(left.start_row, left.start_col, right.end_row, right.end_col)
     and is_before(right.start_row, right.start_col, left.end_row, left.end_col)
 end
@@ -117,37 +139,49 @@ end
 local function get_annotation_range(annotation)
   if not vim.api.nvim_buf_is_valid(annotation.bufnr) then return nil end
 
-  local ok, extmark =
-    pcall(vim.api.nvim_buf_get_extmark_by_id, annotation.bufnr, range_namespace, annotation.range_id, {
-      details = true,
-    })
-  if not ok or not extmark or vim.tbl_isempty(extmark) then return nil end
+  local segments = {}
+  for _, range_id in ipairs(annotation.range_ids) do
+    local ok, extmark =
+      pcall(vim.api.nvim_buf_get_extmark_by_id, annotation.bufnr, range_namespace, range_id, { details = true })
+    if not ok or not extmark or vim.tbl_isempty(extmark) then return nil end
 
-  local details = extmark[3] or {}
-  local end_row = details.end_row
-  local end_col = details.end_col
-  if end_row == nil or end_col == nil then return nil end
+    local details = extmark[3] or {}
+    local end_row = details.end_row
+    local end_col = details.end_col
+    if end_row == nil or end_col == nil then return nil end
 
-  local start_row, start_col = clamp_position(annotation.bufnr, extmark[1], extmark[2])
-  end_row, end_col = clamp_position(annotation.bufnr, end_row, end_col)
+    local start_row, start_col = clamp_position(annotation.bufnr, extmark[1], extmark[2])
+    end_row, end_col = clamp_position(annotation.bufnr, end_row, end_col)
+    segments[#segments + 1] = {
+      bufnr = annotation.bufnr,
+      start_row = start_row,
+      start_col = start_col,
+      end_row = end_row,
+      end_col = end_col,
+      source = "normal",
+      selection_kind = "line",
+    }
+  end
+
+  if #segments == 1 then return segments[1] end
 
   return {
     bufnr = annotation.bufnr,
-    start_row = start_row,
-    start_col = start_col,
-    end_row = end_row,
-    end_col = end_col,
+    start_row = segments[1].start_row,
+    start_col = segments[1].start_col,
+    end_row = segments[#segments].end_row,
+    end_col = segments[#segments].end_col,
     source = "normal",
-    selection_kind = "line",
+    selection_kind = "block",
+    segments = segments,
   }
 end
 
 ---@param target AnnotationRange
 ---@return string
 local function capture_original_code(target)
-  if target.selection_kind == "charwise" then
-    local lines =
-      vim.api.nvim_buf_get_text(target.bufnr, target.start_row, target.start_col, target.end_row, target.end_col, {})
+  if target.source == "visual" then
+    local lines = vim.fn.getregion(vim.fn.getpos("v"), vim.fn.getpos("."), { type = vim.fn.mode() })
     return table.concat(lines, "\n")
   end
 
@@ -157,13 +191,13 @@ end
 
 ---@param comment string
 ---@return table[]
-local function build_virtual_lines(comment)
+local function build_virtual_lines(comment, padding)
   local lines = vim.split(comment, "\n", { plain = true, trimempty = false })
 
   if #lines <= 1 then
     return {
       {
-        { "╰─ ", "AnnotationsGuide" },
+        { padding .. "╰─ ", "AnnotationsGuide" },
         { annotation_icon .. " ", "AnnotationsIcon" },
         { lines[1] or "", "AnnotationsText" },
       },
@@ -172,7 +206,7 @@ local function build_virtual_lines(comment)
 
   local virt_lines = {
     {
-      { "╭─ ", "AnnotationsGuide" },
+      { padding .. "╭─ ", "AnnotationsGuide" },
       { annotation_icon .. " note", "AnnotationsIcon" },
     },
   }
@@ -180,7 +214,7 @@ local function build_virtual_lines(comment)
   for index, line in ipairs(lines) do
     local prefix = index == #lines and "╰  " or "│  "
     virt_lines[#virt_lines + 1] = {
-      { prefix, "AnnotationsGuide" },
+      { padding .. prefix, "AnnotationsGuide" },
       { line, "AnnotationsText" },
     }
   end
@@ -189,9 +223,13 @@ local function build_virtual_lines(comment)
 end
 
 local function apply_highlights()
-  vim.api.nvim_set_hl(0, "AnnotationsGuide", { fg = colors.common.comment })
-  vim.api.nvim_set_hl(0, "AnnotationsIcon", { fg = colors.yellow, bold = true })
-  vim.api.nvim_set_hl(0, "AnnotationsText", { fg = colors.ui.status.c.fg })
+  vim.api.nvim_set_hl(0, "AnnotationsGuide", { fg = colors.yellow })
+  vim.api.nvim_set_hl(0, "AnnotationsIcon", { fg = colors.yellow })
+  vim.api.nvim_set_hl(0, "AnnotationsText", { fg = colors.yellow })
+  vim.api.nvim_set_hl(0, "AnnotationsRange", { bg = "#443923" })
+  local editor_background = "#2E291F"
+  vim.api.nvim_set_hl(0, "AnnotationsEditor", { fg = colors.foreground, bg = editor_background })
+  vim.api.nvim_set_hl(0, "AnnotationsEditorBorder", { fg = colors.yellow, bg = editor_background })
 end
 
 ---@param bufnr number
@@ -224,7 +262,9 @@ local function remove_annotation(annotation, opts)
   opts = opts or {}
 
   if not opts.skip_range_delete and vim.api.nvim_buf_is_valid(annotation.bufnr) then
-    pcall(vim.api.nvim_buf_del_extmark, annotation.bufnr, range_namespace, annotation.range_id)
+    for _, range_id in ipairs(annotation.range_ids) do
+      pcall(vim.api.nvim_buf_del_extmark, annotation.bufnr, range_namespace, range_id)
+    end
   end
 
   detach_annotation(annotation)
@@ -244,8 +284,22 @@ local function render_buffer(bufnr)
     if not annotation or not range then
       if annotation then stale_annotations[#stale_annotations + 1] = annotation end
     else
+      for _, segment in ipairs(range.segments or { range }) do
+        vim.api.nvim_buf_set_extmark(bufnr, render_namespace, segment.start_row, segment.start_col, {
+          end_row = segment.end_row,
+          end_col = segment.end_col,
+          hl_group = "AnnotationsRange",
+          priority = 150,
+          strict = false,
+        })
+      end
+      local line = vim.api.nvim_buf_get_lines(bufnr, range.start_row, range.start_row + 1, false)[1]
+      local column = math.max(range.start_col, #line:match("^%s*"))
+      local width = vim.api.nvim_buf_call(bufnr, function()
+        return vim.fn.strdisplaywidth(line:sub(1, column))
+      end)
       vim.api.nvim_buf_set_extmark(bufnr, render_namespace, range.end_row, 0, {
-        virt_lines = build_virtual_lines(annotation.comment),
+        virt_lines = build_virtual_lines(annotation.comment, string.rep(" ", width)),
         virt_lines_above = false,
         virt_lines_leftcol = false,
         virt_lines_overflow = "trunc",
@@ -316,18 +370,22 @@ end
 ---@param annotation Annotation
 ---@param target AnnotationRange
 local function set_annotation_range(annotation, target)
-  local opts = {
-    end_row = target.end_row,
-    end_col = target.end_col,
-    right_gravity = false,
-    end_right_gravity = true,
-    strict = false,
-  }
-
-  if annotation.range_id and annotation.range_id > 0 then opts.id = annotation.range_id end
-
-  annotation.range_id =
-    vim.api.nvim_buf_set_extmark(annotation.bufnr, range_namespace, target.start_row, target.start_col, opts)
+  local segments = target.segments or { target }
+  for index, segment in ipairs(segments) do
+    annotation.range_ids[index] =
+      vim.api.nvim_buf_set_extmark(annotation.bufnr, range_namespace, segment.start_row, segment.start_col, {
+        id = annotation.range_ids[index],
+        end_row = segment.end_row,
+        end_col = segment.end_col,
+        right_gravity = false,
+        end_right_gravity = true,
+        strict = false,
+      })
+  end
+  for index = #annotation.range_ids, #segments + 1, -1 do
+    vim.api.nvim_buf_del_extmark(annotation.bufnr, range_namespace, annotation.range_ids[index])
+    table.remove(annotation.range_ids, index)
+  end
 end
 
 ---@param target AnnotationRange
@@ -339,7 +397,7 @@ local function create_annotation(target, original_code, comment)
   local annotation = {
     id = state.next_id,
     bufnr = target.bufnr,
-    range_id = nil,
+    range_ids = {},
     comment = comment,
     original_code = original_code,
   }
@@ -397,6 +455,41 @@ end
 local function get_code_fence_language(bufnr)
   local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
   return filetype or ""
+end
+
+local function burn_annotations()
+  cleanup_invalid_annotations()
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  local annotations = {}
+  for _, annotation in ipairs(get_buffer_annotations(bufnr)) do
+    local range = get_annotation_range(annotation)
+    if range then annotations[#annotations + 1] = { annotation = annotation, range = range } end
+  end
+
+  if #annotations == 0 then return end
+
+  table.sort(annotations, function(left, right)
+    if left.range.end_row == right.range.end_row then return left.range.start_col > right.range.start_col end
+    return left.range.end_row > right.range.end_row
+  end)
+
+  for index, item in ipairs(annotations) do
+    local range = item.range
+    local lines = { "<annotation>", "<original>" }
+    vim.list_extend(lines, vim.split(item.annotation.original_code, "\n", { plain = true, trimempty = false }))
+    vim.list_extend(lines, { "</original>", "<comment>" })
+    vim.list_extend(lines, vim.split(item.annotation.comment, "\n", { plain = true, trimempty = false }))
+    vim.list_extend(lines, { "</comment>", "</annotation>" })
+
+    if index > 1 then vim.cmd("undojoin") end
+    vim.api.nvim_buf_set_lines(bufnr, range.end_row + 1, range.end_row + 1, false, lines)
+    remove_annotation(item.annotation)
+  end
+
+  render_buffer(bufnr)
+  refresh_statusline()
+  return true
 end
 
 local function export_annotations()
@@ -546,9 +639,8 @@ local function get_target_range()
     }
   end
 
-  local visual_mode = vim.fn.visualmode()
   local start_pos = vim.fn.getpos("v")
-  local end_pos = vim.fn.getcurpos()
+  local end_pos = vim.fn.getpos(".")
 
   local start_row = start_pos[2] - 1
   local start_col = start_pos[3]
@@ -560,7 +652,7 @@ local function get_target_range()
     start_col, end_col = end_col, start_col
   end
 
-  if visual_mode == "V" or visual_mode == "\22" then
+  if mode == "V" then
     return {
       bufnr = bufnr,
       start_row = start_row,
@@ -568,18 +660,43 @@ local function get_target_range()
       end_row = end_row,
       end_col = get_line_byte_length(bufnr, end_row),
       source = "visual",
-      selection_kind = visual_mode == "\22" and "block" or "linewise",
+      selection_kind = "linewise",
     }
+  end
+
+  local positions = vim.fn.getregionpos(start_pos, end_pos, { type = mode, eol = true })
+  local first = positions[1][1]
+  local last = positions[#positions][2]
+  start_row, start_col = clamp_position(bufnr, first[2] - 1, first[3] - 1)
+  end_row, end_col = clamp_position(bufnr, last[2] - 1, last[3])
+
+  local segments
+  if mode == "\22" then
+    segments = {}
+    for _, position in ipairs(positions) do
+      local segment_start_row, segment_start_col = clamp_position(bufnr, position[1][2] - 1, position[1][3] - 1)
+      local segment_end_row, segment_end_col = clamp_position(bufnr, position[2][2] - 1, position[2][3])
+      segments[#segments + 1] = {
+        bufnr = bufnr,
+        start_row = segment_start_row,
+        start_col = segment_start_col,
+        end_row = segment_end_row,
+        end_col = segment_end_col,
+        source = "visual",
+        selection_kind = "charwise",
+      }
+    end
   end
 
   return {
     bufnr = bufnr,
     start_row = start_row,
-    start_col = math.max(start_col - 1, 0),
+    start_col = start_col,
     end_row = end_row,
     end_col = end_col,
     source = "visual",
-    selection_kind = "charwise",
+    selection_kind = mode == "\22" and "block" or "charwise",
+    segments = segments,
   }
 end
 
@@ -593,35 +710,111 @@ local function handle_annotation_prompt()
 
   local target = get_target_range()
   local captured_code = capture_original_code(target)
-  local existing_annotation, existing_range = find_matching_annotation(target)
+  local existing_annotation = find_matching_annotation(target)
+  local source_window = vim.api.nvim_get_current_win()
 
   if target.source == "visual" then leave_visual_mode() end
 
-  vim.schedule(function()
-    vim.ui.input({
-      prompt = existing_annotation and "Edit annotation: " or "Add annotation: ",
-      default = existing_annotation and existing_annotation.comment or "",
-    }, function(input)
-      if input == nil then return end
+  local draft = { bufnr = target.bufnr, range_ids = {} }
+  set_annotation_range(draft, target)
 
-      local comment = vim.trim(input)
+  vim.schedule(function()
+    local buffer = vim.api.nvim_create_buf(false, true)
+    vim.b[buffer].completion = false
+    vim.bo[buffer].buftype = "acwrite"
+    vim.bo[buffer].bufhidden = "wipe"
+    vim.api.nvim_buf_set_name(buffer, "annotation://" .. buffer)
+    vim.api.nvim_buf_set_lines(
+      buffer,
+      0,
+      -1,
+      false,
+      vim.split(existing_annotation and existing_annotation.comment or "", "\n", { plain = true })
+    )
+    vim.bo[buffer].modified = false
+    local width = math.max(1, math.min(64, vim.api.nvim_win_get_width(source_window) - 2))
+    local height = math.max(
+      1,
+      math.min(math.max(4, vim.api.nvim_buf_line_count(buffer)), 8, vim.api.nvim_win_get_height(source_window) - 2)
+    )
+    local source_line = vim.api.nvim_buf_get_lines(target.bufnr, target.start_row, target.start_row + 1, false)[1]
+    local column = math.max(target.start_col, #source_line:match("^%s*"))
+    local screen_row = vim.fn.screenpos(source_window, target.end_row + 1, column + 1).row
+    local below = screen_row + height + 2 <= vim.o.lines - vim.o.cmdheight
+    local window = vim.api.nvim_open_win(buffer, true, {
+      relative = "win",
+      win = source_window,
+      bufpos = { target.end_row, column },
+      width = width,
+      height = height,
+      row = below and 1 or 0,
+      col = 0,
+      anchor = below and "NW" or "SW",
+      style = "minimal",
+      border = "rounded",
+      title = existing_annotation and " Edit annotation " or " Add annotation ",
+    })
+    vim.wo[window].wrap = true
+    vim.wo[window].winblend = 0
+    vim.wo[window].winhighlight =
+      "Normal:AnnotationsEditor,NormalFloat:AnnotationsEditor,FloatBorder:AnnotationsEditorBorder,FloatTitle:AnnotationsEditorBorder"
+
+    local close = function()
+      vim.cmd.stopinsert()
+      vim.api.nvim_win_close(window, true)
+    end
+
+    vim.api.nvim_create_autocmd("BufWipeout", {
+      buffer = buffer,
+      once = true,
+      callback = function()
+        if vim.api.nvim_buf_is_valid(draft.bufnr) then
+          for _, id in ipairs(draft.range_ids) do
+            vim.api.nvim_buf_del_extmark(draft.bufnr, range_namespace, id)
+          end
+        end
+      end,
+    })
+
+    local submit = function()
+      local range = get_annotation_range(draft)
+      if not range then
+        vim.notify("Annotation source is no longer available", vim.log.levels.ERROR)
+        return
+      end
+      range.source = target.source
+      local comment = vim.trim(table.concat(vim.api.nvim_buf_get_lines(buffer, 0, -1, false), "\n"))
       if comment == "" then
         if existing_annotation then
           remove_annotation(existing_annotation)
           render_buffer(target.bufnr)
           refresh_statusline()
         end
+        close()
         return
       end
 
       if existing_annotation then
-        update_annotation(existing_annotation, target, existing_range, captured_code, comment)
+        update_annotation(
+          existing_annotation,
+          range,
+          get_annotation_range(existing_annotation),
+          captured_code,
+          comment
+        )
       else
-        create_annotation(target, captured_code, comment)
+        create_annotation(range, captured_code, comment)
       end
 
       refresh_statusline()
-    end)
+      close()
+    end
+
+    vim.api.nvim_create_autocmd("BufWriteCmd", { buffer = buffer, nested = true, callback = submit })
+    vim.api.nvim_create_autocmd("QuitPre", { buffer = buffer, nested = true, callback = close })
+    vim.keymap.set({ "n", "i" }, "<C-s>", submit, { buffer = buffer, desc = "Submit annotation" })
+    vim.keymap.set("n", "q", close, { buffer = buffer, desc = "Cancel annotation" })
+    vim.cmd.startinsert()
   end)
 end
 
@@ -667,12 +860,24 @@ return lib.module.create({
   name = "workflow/annotations",
   hosts = "*",
   setup = setup,
+  actions = {
+    {
+      "n",
+      "Annotations: Burn annotations into current file",
+      burn_annotations,
+      function()
+        cleanup_invalid_annotations()
+        return #(state.by_buffer[vim.api.nvim_get_current_buf()] or {}) > 0
+      end,
+    },
+  },
   mappings = {
     { { "n", "v" }, "<leader>n", handle_annotation_prompt, { desc = "Annotations: Add or edit" } },
     { { "n", "v" }, "<leader>N", export_annotations, { desc = "Annotations: Copy all" } },
     { { "n", "v" }, "<leader><leader>n", clear_annotations, { desc = "Annotations: Clear all" } },
   },
   exports = {
+    burn = burn_annotations,
     count = count_annotations,
     statusline = statusline_component,
   },

@@ -102,12 +102,16 @@ in
 
   services.polybar = {
     enable = true;
-    package = pkgs-stable.polybar.override {
-      # i3GapsSupport = true;
-      i3Support = true;
-      mpdSupport = true;
-      pulseSupport = true;
-    };
+    package =
+      (pkgs-stable.polybar.override {
+        # i3GapsSupport = true;
+        i3Support = true;
+        mpdSupport = true;
+        pulseSupport = true;
+      }).overrideAttrs
+        (oldAttrs: {
+          patches = (oldAttrs.patches or [ ]) ++ [ ./polybar-script-restart.patch ];
+        });
     script = ''
       polybar top -r &
     '';

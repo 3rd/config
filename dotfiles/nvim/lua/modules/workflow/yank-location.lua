@@ -1,21 +1,46 @@
 -- builds a github permalink for the current file, returns nil if not in a github repo
-local build_github_link = function(start_line, end_line)
+local build_github_link = function(start_line, end_line, revision)
   local file_path = vim.fn.expand("%:p")
-  local git_root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
-  if vim.v.shell_error ~= 0 or #git_root == 0 then return nil end
-
-  local git_remote = vim.fn.systemlist("git config --get remote.origin.url")[1]
-  local git_branch = vim.fn.systemlist("git rev-parse --abbrev-ref HEAD")[1]
-  if not (git_remote:find("github") or not git_remote:find("@")) then return nil end
-
-  local github_path = git_remote:gsub(".*:", ""):gsub(".git", "")
+  local directory = vim.fs.dirname(file_path)
+  local git = function(arguments)
+    local command = { "git", "-C", directory }
+    vim.list_extend(command, arguments)
+    local result = vim.system(command, { text = true }):wait()
+    if result.code ~= 0 then return nil end
+    return vim.trim(result.stdout)
+  end
+  local git_root = git({ "rev-parse", "--show-toplevel" })
+  if not git_root then return nil end
+  local git_remote = git({ "config", "--get", "remote.origin.url" })
+  if not git_remote then return nil end
+  local github_path = git_remote:match("^git@github%.com:(.+)$")
+    or git_remote:match("^https?://github%.com/(.+)$")
+    or git_remote:match("^ssh://git@github%.com/(.+)$")
+  if not github_path then return nil end
+  github_path = github_path:gsub("/+$", ""):gsub("%.git$", "")
+  local reference = git(revision == "branch" and { "symbolic-ref", "--short", "HEAD" } or { "rev-parse", "HEAD" })
+  if not reference then return nil end
+  local relative_path = vim.fs.relpath(git_root, file_path)
+  if not relative_path then return nil end
+  local changed = git({ "status", "--porcelain", "--", relative_path })
+  if vim.bo.modified or (changed and changed ~= "") then
+    vim.notify("GitHub link refers to committed content; local changes are not included", vim.log.levels.WARN)
+  end
+  local encode_path = function(path)
+    return path:gsub("[^%w%-%._~/]", function(character)
+      return string.format("%%%02X", string.byte(character))
+    end)
+  end
   local link = "https://github.com/"
     .. github_path
     .. "/blob/"
-    .. git_branch
+    .. encode_path(reference)
     .. "/"
-    .. file_path:sub(#git_root + 2)
+    .. encode_path(relative_path)
   if start_line then
+    if end_line and end_line < start_line then
+      start_line, end_line = end_line, start_line
+    end
     link = link .. "#L" .. start_line
     if end_line and end_line ~= start_line then link = link .. "-L" .. end_line end
   end
@@ -96,9 +121,9 @@ local handle_relative_path_yank = function()
   vim.notify("Yanked: " .. file_path)
 end
 
-local handle_github_link_yank = function()
+local handle_github_link_yank = function(revision)
   local line = vim.fn.line(".")
-  local link = build_github_link(line, line)
+  local link = build_github_link(line, line, revision)
   if not link then
     vim.notify("Not in a GitHub repository", vim.log.levels.WARN)
     return
@@ -107,10 +132,10 @@ local handle_github_link_yank = function()
   vim.notify("Yanked: " .. link)
 end
 
-local handle_github_link_visual_yank = function()
+local handle_github_link_visual_yank = function(revision)
   local start_line = vim.fn.line("'<")
   local end_line = vim.fn.line("'>")
-  local link = build_github_link(start_line, end_line)
+  local link = build_github_link(start_line, end_line, revision)
   if not link then
     vim.notify("Not in a GitHub repository", vim.log.levels.WARN)
     return
@@ -122,6 +147,22 @@ end
 return lib.module.create({
   name = "workflow/yank-location",
   hosts = "*",
+  actions = {
+    {
+      "n",
+      "File: Copy GitHub branch link",
+      function()
+        handle_github_link_yank("branch")
+      end,
+    },
+    {
+      "v",
+      "File: Copy GitHub branch link to selection",
+      function()
+        handle_github_link_visual_yank("branch")
+      end,
+    },
+  },
   mappings = {
     { { "n", "v" }, "<leader>y", handle_smart_yank, { desc = "Yank location (smart)" } },
     { { "n", "v" }, "<leader>Y", handle_path_yank, { desc = "Yank location (path)" } },

@@ -11,6 +11,9 @@ let
     tmux-duplicate-window = pkgs.writeShellScriptBin "tmux-duplicate-window" (
       builtins.readFile ./tmux-duplicate-window.sh
     );
+    tmux-desktop-environment = pkgs.writeShellScriptBin "tmux-desktop-environment" (
+      builtins.readFile ./tmux-desktop-environment.sh
+    );
   };
 in
 {
@@ -49,6 +52,7 @@ in
     pkgs-stable.tmuxp
     scripts.tmux-workspace
     scripts.tmux-duplicate-window
+    scripts.tmux-desktop-environment
   ];
   programs.fish.shellAliases = {
     t = "tmux-workspace";

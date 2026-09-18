@@ -146,11 +146,6 @@ return lib.module.create({
               name = "Buffer",
               module = "blink.cmp.sources.buffer",
               min_keyword_length = 1,
-              enabled = function()
-                local clients = vim.lsp.get_clients({ bufnr = 0 })
-                if #clients > 0 then return false end
-                return true
-              end,
             },
             snippets = {
               name = "Snippets",

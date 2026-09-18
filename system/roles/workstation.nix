@@ -248,7 +248,7 @@ in
     # TODO: remove this and switch to dbus-broker with nixos-rebuild boot + reboot.
     implementation = "dbus";
     packages = [
-      pkgs.gcr
+      pkgs.gcr_3
       pkgs.gnome-keyring
     ];
   };

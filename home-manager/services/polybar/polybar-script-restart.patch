@@ -1,0 +1,54 @@
+--- a/src/utils/command.cpp
++++ b/src/utils/command.cpp
+@@ -1,5 +1,6 @@
+ #include "utils/command.hpp"
+ 
++#include <pthread.h>
+ #include <sys/wait.h>
+ #include <unistd.h>
+ 
+@@ -128,11 +129,24 @@ command<output_policy::REDIRECTED>::~command() {
+  * Execute the command
+  */
+ int command<output_policy::REDIRECTED>::exec(bool wait_for_completion, const vector<pair<string, string>>& env) {
++  sigset_t termination_signal;
++  sigset_t previous_mask;
++  sigemptyset(&termination_signal);
++  sigaddset(&termination_signal, SIGTERM);
++  pthread_sigmask(SIG_BLOCK, &termination_signal, &previous_mask);
++
+   if ((m_forkpid = fork()) == -1) {
++    pthread_sigmask(SIG_SETMASK, &previous_mask, nullptr);
+     throw system_error("Failed to fork process");
+   }
+ 
+   if (process_util::in_forked_process(m_forkpid)) {
++    struct sigaction termination_action {};
++    termination_action.sa_handler = SIG_DFL;
++    sigemptyset(&termination_action.sa_mask);
++    sigaction(SIGTERM, &termination_action, nullptr);
++    pthread_sigmask(SIG_SETMASK, &previous_mask, nullptr);
++
+     if (dup2(m_stdin[PIPE_READ], STDIN_FILENO) == -1) {
+       throw command_error("Failed to redirect stdin in child process");
+     }
+@@ -139,9 +153,6 @@ int command<output_policy::REDIRECTED>::exec(bool wait_for_completion, const vector
+     if (dup2(m_stdout[PIPE_WRITE], STDOUT_FILENO) == -1) {
+       throw command_error("Failed to redirect stdout in child process");
+     }
+-    if (dup2(m_stdout[PIPE_WRITE], STDERR_FILENO) == -1) {
+-      throw command_error("Failed to redirect stderr in child process");
+-    }
+ 
+     // Close file descriptors that won't be used by the child
+     if ((m_stdin[PIPE_READ] = close(m_stdin[PIPE_READ])) == -1) {
+@@ -160,6 +171,9 @@ int command<output_policy::REDIRECTED>::exec(bool wait_for_completion, const vector
+     setpgid(m_forkpid, 0);
+     process_util::exec_sh(m_cmd.c_str(), env);
+   } else {
++    setpgid(m_forkpid, m_forkpid);
++    pthread_sigmask(SIG_SETMASK, &previous_mask, nullptr);
++
+     // Close file descriptors that won't be used by the parent
+     if ((m_stdin[PIPE_READ] = close(m_stdin[PIPE_READ])) == -1) {
+       throw command_error("Failed to close fd");

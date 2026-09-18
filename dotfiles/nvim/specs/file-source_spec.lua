@@ -25,7 +25,7 @@ end
 
 local hidden_context = {
   line = "plain text",
-  cursor = { row = 0, col = 10 },
+  pos = { row = 0, col = 10 },
   trigger = { initial_kind = "keyword" },
   providers = { "lsp", "files" },
 }
@@ -37,7 +37,7 @@ assert(#responses == 1 and #responses[1].items == 0, "hidden file completion did
 responses = {}
 local manual_context = {
   line = "plain text",
-  cursor = { row = 0, col = 10 },
+  pos = { row = 0, col = 10 },
   trigger = { initial_kind = "manual" },
   providers = { "files" },
 }
@@ -55,7 +55,7 @@ assert(#responses == 0, "canceled file completion emitted a response")
 responses = {}
 local visible_context = {
   line = "@file",
-  cursor = { row = 0, col = 5 },
+  pos = { row = 0, col = 5 },
   trigger = { initial_kind = "keyword" },
   providers = { "lsp", "files" },
 }
@@ -69,6 +69,31 @@ visible_job.opts.on_exit(visible_job.id, 0)
 assert(#responses == 1, "visible file completion did not emit exactly one response")
 assert(#responses[1].items == 1, "visible file completion did not return the scanned file")
 assert(responses[1].items[1].label == "file.lua", "visible file completion changed the file label")
+
+for _, case in ipairs({
+  { line = "see @first and @src/ne later", col = 22, start_col = 16, end_col = 22 },
+  { line = "@src/new.lua later", col = 7, start_col = 1, end_col = 12 },
+  { line = "界 @src/ne", col = 11, start_col = 5, end_col = 11 },
+}) do
+  responses = {}
+  source:get_completions({ line = case.line, pos = { row = 2, col = case.col } }, callback)
+  local job = started_jobs[#started_jobs]
+  job.opts.on_stdout(job.id, { "src/new.lua", "" })
+  local item = responses[1].items[1]
+  assert(item.sortText == "40_src/new.lua", "file completion must rank the reference under the cursor")
+  assert(
+    vim.deep_equal(item.textEdit, {
+      newText = "src/new.lua",
+      range = {
+        start = { line = 2, character = case.start_col },
+        ["end"] = { line = 2, character = case.end_col },
+      },
+    }),
+    vim.inspect(item.textEdit)
+  )
+end
+assert(not source:should_show_items({ line = "@first plain", pos = { row = 0, col = 12 } }))
+assert(not source:should_show_items({ line = "name@example", pos = { row = 0, col = 12 } }))
 
 responses = {}
 vim.fn.jobstart = function()

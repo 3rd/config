@@ -140,3 +140,75 @@ api.list_nodes_async = original_list_nodes_async
 vim.system = original_system
 
 print("ok: wiki API and Blink link completion")
+
+require("modules/wiki").setup()
+local directory = vim.fn.tempname()
+vim.fn.mkdir(directory .. "/notes/project", "p")
+vim.fn.mkdir(directory .. "/notes/.attachments/images", "p")
+vim.fn.mkdir(directory .. "/elsewhere/.attachments/images", "p")
+local cwd = vim.fn.getcwd()
+vim.fn.chdir(directory .. "/elsewhere")
+local buffer = vim.api.nvim_create_buf(false, true)
+vim.api.nvim_set_current_buf(buffer)
+vim.api.nvim_buf_set_name(buffer, directory .. "/notes/project/example")
+vim.bo.filetype = "syslang"
+local paste = vim.fn.maparg("p", "n", false, true).callback
+local png =
+  vim.base64.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=")
+local image_failed = false
+vim.system = function(command)
+  assert(command[1] == "xclip")
+  local result = { code = 0, stdout = png, stderr = "" }
+  if command[#command] == "TARGETS" then
+    result.stdout = "image/png\n"
+  elseif image_failed then
+    result = { code = 1, stdout = "", stderr = "image unavailable" }
+  end
+  return {
+    wait = function()
+      return result
+    end,
+  }
+end
+local clipboard = vim.o.clipboard
+vim.o.clipboard = "unnamedplus"
+paste()
+local inserted = vim.api.nvim_get_current_line()
+local relative_path = assert(inserted:match("%]%((.+)%)"))
+assert(relative_path:match("^%.%./%.attachments/images/example%-%d+%.png$"), inserted)
+local image_path = directory .. "/notes/project/" .. relative_path
+local file = assert(io.open(image_path, "rb"))
+assert(file:read("*a") == png, "image bytes must be preserved")
+file:close()
+local parser = vim.treesitter.get_parser(buffer, "syslang")
+local query = vim.treesitter.query.parse("syslang", "(image (image_url) @url)")
+local captured
+for _, node in query:iter_captures(parser:parse()[1]:root(), buffer) do
+  captured = vim.treesitter.get_node_text(node, buffer)
+end
+assert(captured == relative_path, "pasted link must remain readable by the Syslang image integration")
+local notification = vim.notify
+local paste_error
+vim.notify = function(message)
+  paste_error = message
+end
+image_failed = true
+paste()
+assert(paste_error == "image unavailable" and vim.api.nvim_get_current_line() == inserted)
+image_failed = false
+local writefile = vim.fn.writefile
+vim.fn.writefile = function()
+  return -1
+end
+paste()
+assert(paste_error:find("Could not save pasted image", 1, true) and vim.api.nvim_get_current_line() == inserted)
+vim.fn.writefile = writefile
+vim.notify = notification
+vim.system = original_system
+vim.o.clipboard = clipboard
+vim.fn.chdir(cwd)
+vim.api.nvim_buf_delete(buffer, { force = true })
+assert(vim.fn.delete(directory, "rf") == 0)
+print(
+  "ok: image paste follows the note root, writes binary data, inserts relative links, and preserves text on failure"
+)

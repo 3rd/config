@@ -152,22 +152,31 @@ local handle_navigate_to_symbol = function()
 end
 
 local get_asset_dir = function()
-  local cwd = vim.fn.getcwd()
-  ---@type string|nil
-  local asset_dir = cwd .. "/_media/images"
-  if vim.fn.isdirectory(asset_dir) == 0 then asset_dir = nil end
-  return asset_dir
+  local directory = vim.fn.expand("%:p:h")
+  local prefix = ""
+  while directory do
+    local asset_dir = directory .. "/.attachments/images"
+    if vim.fn.isdirectory(asset_dir) == 1 then return asset_dir, prefix .. ".attachments/images/" end
+    if directory == lib.env.dirs.home or directory == "/" then break end
+    directory = vim.fs.dirname(directory)
+    prefix = prefix .. "../"
+  end
+  return vim.fn.expand("%:p:h"), ""
 end
 
 local get_image_path = function()
   local relative_path = vim.fn.expand("%:t:r") .. "-" .. os.time() .. ".png"
-  local asset_dir = get_asset_dir()
-  if asset_dir then return vim.fn.expand(asset_dir .. "/" .. relative_path) end
-  return vim.fn.expand("%:p:h") .. "/" .. relative_path
+  local asset_dir, prefix = get_asset_dir()
+  return asset_dir .. "/" .. relative_path, prefix .. relative_path
 end
 
 local handle_paste = function()
-  local clipboard_content = lib.shell.exec("xclip -selection clipboard -o -t TARGETS")
+  local targets = vim.system({ "xclip", "-selection", "clipboard", "-o", "-t", "TARGETS" }, { text = true }):wait()
+  if targets.code ~= 0 then
+    vim.notify(targets.stderr, vim.log.levels.ERROR)
+    return
+  end
+  local clipboard_content = targets.stdout
 
   local is_image = string.match(clipboard_content, "image/")
   -- local is_text = string.match(clipboard_content, "UTF8_STRING")
@@ -184,16 +193,24 @@ local handle_paste = function()
     -- local current_dir = vim.fn.fnamemodify(current_file, ":h")
     -- local path = current_dir .. "/" .. name .. ".png"
 
-    local path = get_image_path()
+    local path, relative_path = get_image_path()
 
     -- write image to file
-    local command = string.format("xclip -selection clipboard -t image/png -o > '%s'", path)
-    lib.shell.exec(command)
+    local image = vim.system({ "xclip", "-selection", "clipboard", "-t", "image/png", "-o" }):wait()
+    if image.code ~= 0 then
+      vim.notify(image.stderr, vim.log.levels.ERROR)
+      return
+    end
+    local ok, result = pcall(vim.fn.writefile, image.stdout, path, "b")
+    if not ok or result ~= 0 then
+      vim.notify("Could not save pasted image: " .. path, vim.log.levels.ERROR)
+      return
+    end
 
     -- insert image
     local alt_date = os.date("%Y-%m-%d %H:%M")
     local alt = "Paste: " .. alt_date
-    local formatted_image = string.format("![%s](%s)", alt, path)
+    local formatted_image = string.format("![%s](%s)", alt, relative_path)
     vim.fn.setreg("+", formatted_image)
     vim.cmd("normal! p")
     return

@@ -1,6 +1,17 @@
 return lib.module.create({
   name = "ui/notifications",
   hosts = "*",
+  actions = {
+    {
+      "n",
+      "Notifications: Search history",
+      function()
+        local telescope = require("telescope")
+        telescope.load_extension("notify")
+        telescope.extensions.notify.notify()
+      end,
+    },
+  },
   plugins = {
     {
       "rcarriga/nvim-notify",
@@ -16,7 +27,7 @@ return lib.module.create({
         })
         -- https://github.com/rmagatti/goto-preview/issues/129
         ---@diagnostic disable-next-line: duplicate-set-field
-        vim.notify = function(msg, ...)
+        vim.notify = function(msg, level, opts)
           if
             msg
             and (
@@ -27,7 +38,12 @@ return lib.module.create({
           then
             return
           end
-          return notify(msg, ...)
+          opts = vim.tbl_extend("keep", opts or {}, {
+            timeout = (level == vim.log.levels.ERROR or level == "error") and 10000
+              or (level == vim.log.levels.WARN or level == "warn") and 6000
+              or 2000,
+          })
+          return notify(msg, level, opts)
         end
       end,
     },

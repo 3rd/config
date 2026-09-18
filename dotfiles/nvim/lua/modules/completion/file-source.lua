@@ -2,6 +2,15 @@
 
 local M = {}
 
+local find_file_reference = function(context)
+  if not context.line or not context.pos then return end
+  local prefix = context.line:sub(1, context.pos.col)
+  local start_col, query = prefix:match("()@([^%s]*)$")
+  if not start_col then return end
+  if start_col > 1 and not prefix:sub(start_col - 1, start_col - 1):match("%s") then return end
+  return start_col, query
+end
+
 local empty_response = function()
   return {
     is_incomplete_forward = false,
@@ -31,15 +40,7 @@ function M:should_show_items(context)
     return true
   end
 
-  local line = context.line
-  local cursor = context.cursor
-
-  if not line or not cursor then return false end
-
-  local starts_with_at = line:match("^@")
-  local has_space_at = line:match("%s@")
-
-  return starts_with_at ~= nil or has_space_at ~= nil
+  return find_file_reference(context) ~= nil
 end
 
 function M:get_completions(context, callback)
@@ -50,19 +51,14 @@ function M:get_completions(context, callback)
 
   local cwd = vim.fn.getcwd()
 
-  local context_line = context.line
-  local cursor = context.cursor
-  local query = ""
-
-  if context_line and cursor then
-    local at_start_match = context_line:match("^@([^%s]*)")
-    local at_space_match = context_line:match("%s@([^%s]*)")
-
-    if at_start_match then
-      query = at_start_match
-    elseif at_space_match then
-      query = at_space_match
-    end
+  local start_col, query = find_file_reference(context)
+  local text_range
+  if start_col then
+    local suffix = context.line:sub(context.pos.col + 1):match("^%S*")
+    text_range = {
+      start = { line = context.pos.row, character = start_col },
+      ["end"] = { line = context.pos.row, character = context.pos.col + #suffix },
+    }
   end
 
   local cmd = "fd --type f --hidden --exclude .git 2>/dev/null || find "
@@ -124,6 +120,7 @@ function M:get_completions(context, callback)
             label = relative_path,
             kind = require("blink.cmp.types").CompletionItemKind.File,
             insertText = relative_path,
+            textEdit = text_range and { newText = relative_path, range = text_range } or nil,
             filterText = relative_path,
             sortText = sort_text,
             documentation = {

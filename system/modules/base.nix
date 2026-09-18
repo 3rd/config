@@ -3,6 +3,7 @@
   config,
   pkgs,
   options,
+  utils,
   ...
 }:
 
@@ -19,7 +20,6 @@
       cores = lib.mkDefault 5;
       substituters = [
         "https://cache.nixos-cuda.org"
-        "https://cuda-maintainers.cachix.org"
         "https://nix-community.cachix.org"
         "https://codex-desktop-linux.cachix.org"
         "https://cache.nixos.org/"
@@ -27,7 +27,6 @@
       ];
       trusted-public-keys = [
         "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
-        "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "codex-desktop-linux.cachix.org-1:nX/xy6AdK9hQE24A8ALGjkCKj2ObFmcnemiL5Cid4nk="
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
@@ -79,6 +78,15 @@
       "nodiratime"
     ];
   };
+
+  assertions = lib.mapAttrsToList (mountPoint: fileSystem: {
+    assertion =
+      (config.boot.initrd.enable && config.boot.initrd.systemd.enable && utils.fsNeededForBoot fileSystem)
+      -> lib.elem "x-initrd.mount" fileSystem.options;
+    message = ''
+      fileSystems."${mountPoint}".options must include "x-initrd.mount" when using the systemd initrd because this filesystem is needed for boot. Remove overrides such as lib.mkForce that discard required filesystem options.
+    '';
+  }) config.fileSystems;
 
   # networking
   networking = {

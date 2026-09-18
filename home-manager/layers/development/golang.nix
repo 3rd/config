@@ -28,7 +28,7 @@
       GOPATH = "${config.home.homeDirectory}/go";
       GOBIN = "${config.home.homeDirectory}/go/bin";
     };
-    # package = pkgs.go_1_21;
+    package = pkgs.go_1_27;
   };
 
   home.sessionPath = [ "$HOME/go/bin" ];
