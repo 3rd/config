@@ -44,6 +44,20 @@
                   <int>100</int>
               </edit>
           </match>
+          <!-- 2.017 ships with no fpgm/prep/cvt, so the bytecode interpreter
+               has nothing to run and stems land off-grid at terminal sizes.
+               hintfull was tried and distorts the outlines badly -->
+          <match target="font">
+              <test name="family">
+                  <string>MonoLisa</string>
+              </test>
+              <edit name="autohint" mode="assign">
+                  <bool>true</bool>
+              </edit>
+              <edit name="hintstyle" mode="assign">
+                  <const>hintslight</const>
+              </edit>
+          </match>
           <match target="scan">
               <test name="family">
                   <string>Monaspace Neon</string>

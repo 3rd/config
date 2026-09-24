@@ -14,6 +14,17 @@ let
     tmux-desktop-environment = pkgs.writeShellScriptBin "tmux-desktop-environment" (
       builtins.readFile ./tmux-desktop-environment.sh
     );
+    tmux-pane-handles-navigation =
+      pkgs.runCommand "tmux-pane-handles-navigation"
+        {
+          nativeBuildInputs = [ pkgs.stdenv.cc ];
+        }
+        ''
+          mkdir -p "$out/bin"
+          cc -std=c11 -O2 -Wall -Wextra -Werror \
+            ${./tmux-pane-handles-navigation.c} \
+            -o "$out/bin/tmux-pane-handles-navigation"
+        '';
   };
 in
 {
@@ -53,6 +64,7 @@ in
     scripts.tmux-workspace
     scripts.tmux-duplicate-window
     scripts.tmux-desktop-environment
+    scripts.tmux-pane-handles-navigation
   ];
   programs.fish.shellAliases = {
     t = "tmux-workspace";

@@ -24,7 +24,7 @@ local setup_options = function()
   vim.opt_local.formatlistpat = [[ ^\s*(\d)\+\s* ]]
   vim.opt_local.formatoptions = "cqrt"
   vim.opt_local.cinwords = "*,-"
-  vim.opt_local.textwidth = 130
+  vim.opt_local.textwidth = 85
   vim.opt_local.concealcursor = "nc"
 end
 

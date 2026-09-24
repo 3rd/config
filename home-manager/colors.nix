@@ -130,7 +130,7 @@ with lib;
 
   config = {
     colors = rec {
-      background = "#202023";
+      background = "#222225";
       panel-background = "#252528";
       overlay-background = "#373639";
       overlay-active-background = "#403F43";

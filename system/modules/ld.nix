@@ -9,7 +9,7 @@
     libraries = with pkgs;
       [
         stdenv.cc.cc
-      ] ++ [ config.boot.kernelPackages.nvidia_x11 ];
+      ] ++ [ config.hardware.nvidia.package ];
   };
 
   # system.activationScripts.ldso = {

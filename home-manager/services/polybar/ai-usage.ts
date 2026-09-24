@@ -7,6 +7,7 @@ import {
   existsSync,
   mkdirSync,
   openSync,
+  readdirSync,
   readFileSync,
   renameSync,
   rmSync,
@@ -23,17 +24,14 @@ const LOCK_PATH = "/tmp/polybar-ai-usage.lock";
 const CLAUDE_STATUSLINE_CACHE_PATH = "/tmp/polybar-ai-usage-claude-statusline.json";
 const CLAUDE_STATUSLINE_CACHE_PATH_2 = "/tmp/polybar-ai-usage-claude-statusline-2.json";
 const CLAUDE_STATUSLINE_CACHE_PATH_3 = "/tmp/polybar-ai-usage-claude-statusline-3.json";
-const CLAUDE_STATUSLINE_CACHE_PATH_4 = "/tmp/polybar-ai-usage-claude-statusline-4.json";
 const REFRESH_FLAG = "--refresh";
 
-const OPENAI_TOKEN_URL = "https://auth.openai.com/oauth/token";
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 
 const CURSOR_USAGE_URL = "https://cursor.com/api/dashboard/get-current-period-usage";
 const CURSOR_ORIGIN = "https://cursor.com";
 const CURSOR_REFERER = "https://cursor.com/dashboard/spending";
 
-const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 const JSON_CONTENT_TYPE = "application/json";
 const USER_AGENT = "polybar-ai-usage";
 
@@ -48,6 +46,12 @@ const DAY_SECONDS = 24 * HOUR_SECONDS;
 const WEEKLY_RESET_WARNING_SECONDS = 4 * DAY_SECONDS;
 const WEEKLY_RESET_CRITICAL_SECONDS = 2 * DAY_SECONDS;
 const CLAUDE_STATUSLINE_MAX_AGE_SECONDS = 8 * DAY_SECONDS;
+const CODEX_WINDOW_DURATION_SECONDS = {
+  session: 5 * HOUR_SECONDS,
+  weekly: 7 * DAY_SECONDS,
+} as const;
+const CODEX_WINDOW_DURATION_TOLERANCE = 0.05;
+const CODEX_QUOTA_ORDER = ["session", "weekly"] as const;
 
 const SEGMENT_GAP = "   ";
 const RESET_COLOR = "%{F-}";
@@ -63,10 +67,10 @@ const PROVIDER_COLORS = {
 } as const;
 
 type ProviderName = "claude" | "codex" | "cursor";
-type ApiProviderName = Exclude<ProviderName, "claude">;
 type ProviderSource = "api" | "statusline";
 type ProviderErrorCode = "unavailable";
 type ProviderQuotaKind = "session" | "weekly" | "billingTotal" | "billingApi";
+type CodexQuotaKind = Extract<ProviderQuotaKind, "session" | "weekly">;
 type ResetAtValue = number | string | null;
 type JsonObject = Record<string, unknown>;
 
@@ -103,6 +107,9 @@ const PROVIDER_COMMANDS = {
 
 const CODEX_AUTH_PATHS = ["~/.codex/auth.json", "~/.config/codex/auth.json"] as const;
 
+const CODEX_ACCOUNTS_DIR_DEFAULT = "~/brain/config/workflow/agents/config/custom/codex/accounts";
+const CODEX_ACCOUNTS_STATE_FILE = "state.json";
+
 const CURSOR_STATE_DB_PATHS = [
   "~/.config/Cursor/User/globalStorage/state.vscdb",
   "~/.config/cursor/User/globalStorage/state.vscdb",
@@ -110,8 +117,8 @@ const CURSOR_STATE_DB_PATHS = [
 const CURSOR_AUTH_TOKEN_KEY = "cursorAuth/accessToken";
 
 const CODEX_PERCENT_HEADERS = {
-  session: "x-codex-primary-used-percent",
-  weekly: "x-codex-secondary-used-percent",
+  primary: "x-codex-primary-used-percent",
+  secondary: "x-codex-secondary-used-percent",
 } as const;
 
 const UNAUTHORIZED_STATUSES = new Set([401, 403]);
@@ -145,12 +152,27 @@ interface BuildProviderQuotaOptions {
   resetAt?: ResetAtValue;
 }
 
+interface BuildCodexQuotaOptions extends BuildProviderQuotaOptions {
+  kind: CodexQuotaKind;
+}
+
+interface CodexAccountEntry {
+  name: string | null;
+  active: boolean;
+  entry: ProviderEntry;
+}
+
+interface ProviderSegment {
+  label: string | null;
+  labelColor: string | null;
+  entry: ProviderEntry | undefined;
+}
+
 interface CacheData {
   claude?: ProviderEntry;
   claude2?: ProviderEntry;
   claude3?: ProviderEntry;
-  claude4?: ProviderEntry;
-  codex?: ProviderEntry;
+  codexAccounts?: CodexAccountEntry[];
   cursor?: ProviderEntry;
   updatedAt?: number;
 }
@@ -178,14 +200,11 @@ interface BuildProviderEntryOptions {
 
 interface CodexTokensRecord extends JsonObject {
   access_token?: unknown;
-  refresh_token?: unknown;
-  id_token?: unknown;
   account_id?: unknown;
 }
 
 interface CodexAuthFile extends JsonObject {
   tokens: CodexTokensRecord;
-  last_refresh?: unknown;
 }
 
 interface ErrnoLikeError {
@@ -225,8 +244,6 @@ const availableProviders = (): ProviderName[] =>
 
 const nowEpoch = (): number => Math.floor(Date.now() / 1000);
 
-const isoNow = (): string => new Date().toISOString();
-
 const expandHomePath = (filePath: string): string =>
   filePath.startsWith("~/") ? `${homeDirectory()}/${filePath.slice(2)}` : filePath;
 
@@ -262,24 +279,6 @@ const asProviderQuotaKind = (value: unknown): ProviderQuotaKind | null =>
   value === "session" || value === "weekly" || value === "billingTotal" || value === "billingApi"
     ? value
     : null;
-
-const firstString = (value: unknown): string | null => {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (!Array.isArray(value)) {
-    return null;
-  }
-
-  for (const item of value) {
-    if (typeof item === "string") {
-      return item;
-    }
-  }
-
-  return null;
-};
 
 const clampPercent = (value: unknown): number | null => {
   const parsed = asNumber(value);
@@ -540,13 +539,43 @@ const readClaudeStatuslineEntry = (cachePath: string): ProviderEntry | undefined
   });
 };
 
-const normalizeCacheData = (value: unknown): CacheData => {
+const normalizeCodexAccount = (value: unknown): CodexAccountEntry | undefined => {
+  if (!isJsonObject(value)) {
+    return undefined;
+  }
+
+  const entry = normalizeProviderEntry("codex", value.entry);
+  if (!entry) {
+    return undefined;
+  }
+
+  return {
+    name: asString(value.name),
+    active: value.active === true,
+    entry,
+  };
+};
+
+const normalizeCodexAccounts = (value: unknown): CodexAccountEntry[] | undefined => {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  const accounts = value.flatMap((item) => {
+    const account = normalizeCodexAccount(item);
+    return account ? [account] : [];
+  });
+
+  return accounts.length > 0 ? accounts : undefined;
+};
+
+export const normalizeCacheData = (value: unknown): CacheData => {
   if (!isJsonObject(value)) {
     return {};
   }
 
   return {
-    codex: normalizeProviderEntry("codex", value.codex),
+    codexAccounts: normalizeCodexAccounts(value.codexAccounts ?? value.codex_accounts),
     cursor: normalizeProviderEntry("cursor", value.cursor),
     updatedAt: asNumber(value.updatedAt ?? value.updated_at) ?? undefined,
   };
@@ -559,7 +588,6 @@ const readCache = (): CacheData => {
     claude: readClaudeStatuslineEntry(CLAUDE_STATUSLINE_CACHE_PATH),
     claude2: readClaudeStatuslineEntry(CLAUDE_STATUSLINE_CACHE_PATH_2),
     claude3: readClaudeStatuslineEntry(CLAUDE_STATUSLINE_CACHE_PATH_3),
-    claude4: readClaudeStatuslineEntry(CLAUDE_STATUSLINE_CACHE_PATH_4),
   };
 };
 
@@ -567,18 +595,23 @@ const writeCache = (cache: CacheData): void => {
   writeJsonAtomic(CACHE_PATH, cache);
 };
 
-const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
-  const entry = cache[provider];
-  if (!entry) {
-    return false;
-  }
-
+const entryIsFresh = (entry: ProviderEntry, provider: ProviderName): boolean => {
   if (hasRetryWindow(entry.retryAt)) {
     return true;
   }
 
   const ttlSeconds = entry.error === null ? PROVIDER_TTLS[provider] : ERROR_TTL_SECONDS;
   return Date.now() - entry.fetchedAt * 1000 < ttlSeconds * 1000;
+};
+
+const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
+  if (provider === "codex") {
+    const accounts = cache.codexAccounts ?? [];
+    return accounts.length > 0 && accounts.every((account) => entryIsFresh(account.entry, provider));
+  }
+
+  const entry = cache[provider];
+  return entry ? entryIsFresh(entry, provider) : false;
 };
 
 const cacheNeedsRefresh = (cache: CacheData): boolean =>
@@ -649,7 +682,7 @@ const formatRemainingTime = (remainingSeconds: number | null): string | null => 
 
 const UNKNOWN_PAIR = `%{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}/%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
 
-const formatEntryValues = (entry?: ProviderEntry): string => {
+export const formatEntryValues = (entry?: ProviderEntry): string => {
   if (!entry) return UNKNOWN_PAIR;
 
   const availableValues = entry.quotas.map((quota) => quota.remaining).filter(isNumber);
@@ -682,21 +715,53 @@ const formatEntryValues = (entry?: ProviderEntry): string => {
   return `${remainingPart}${VALUE_DIVIDER}${timePart}${RESET_COLOR}`;
 };
 
-const formatProviderOutput = (
-  provider: ProviderName,
-  entries: readonly (ProviderEntry | undefined)[],
-): string => {
-  const label = `%{F${PROVIDER_ICON_COLORS[provider]}}%{T${PROVIDER_ICON_FONT_INDICES[provider]}}${PROVIDER_ICONS[provider]}%{T-}${RESET_COLOR}`;
-  const entryDivider = provider === "claude" ? SEGMENT_GAP : VALUE_DIVIDER;
-  return entries.map((entry) => `${label} ${formatEntryValues(entry)}`).join(entryDivider);
+const formatProviderLabel = (provider: ProviderName, label: string | null, labelColor: string | null): string => {
+  const labelText = label === null ? "" : labelColor === null ? label : `%{F${labelColor}}${label}`;
+  return `%{F${PROVIDER_ICON_COLORS[provider]}}%{T${PROVIDER_ICON_FONT_INDICES[provider]}}${PROVIDER_ICONS[provider]}%{T-}${labelText}${RESET_COLOR}`;
 };
 
-const providerEntries = (cache: CacheData, provider: ProviderName): (ProviderEntry | undefined)[] =>
-  provider === "claude" ? [cache.claude, cache.claude2, cache.claude3, cache.claude4] : [cache[provider]];
+const formatProviderOutput = (provider: ProviderName, segments: readonly ProviderSegment[]): string =>
+  segments
+    .map((segment) => `${formatProviderLabel(provider, segment.label, segment.labelColor)} ${formatEntryValues(segment.entry)}`)
+    .join(SEGMENT_GAP);
+
+const claudeSegments = (cache: CacheData): ProviderSegment[] => {
+  const entries = [cache.claude, cache.claude2, cache.claude3];
+  const showEntryNumbers = entries.filter(hasProviderEntry).length > 1;
+  return entries.map((entry, index) => ({
+    label: showEntryNumbers ? String(index + 1) : null,
+    labelColor: null,
+    entry,
+  }));
+};
+
+export const codexSegments = (accounts: readonly CodexAccountEntry[]): ProviderSegment[] => {
+  if (accounts.length === 0) {
+    return [{ label: null, labelColor: null, entry: undefined }];
+  }
+
+  return accounts.map((account) => ({
+    label: account.name,
+    labelColor: account.active ? PROVIDER_ICON_COLORS.codex : PROVIDER_COLORS.icon,
+    entry: account.entry,
+  }));
+};
+
+const providerSegments = (cache: CacheData, provider: ProviderName): ProviderSegment[] => {
+  if (provider === "claude") {
+    return claudeSegments(cache);
+  }
+
+  if (provider === "codex") {
+    return codexSegments(cache.codexAccounts ?? []);
+  }
+
+  return [{ label: null, labelColor: null, entry: cache[provider] }];
+};
 
 const formatOutput = (cache: CacheData): string =>
   availableProviders()
-    .map((provider) => formatProviderOutput(provider, providerEntries(cache, provider)))
+    .map((provider) => formatProviderOutput(provider, providerSegments(cache, provider)))
     .join(SEGMENT_GAP);
 
 const unavailableEntry = (provider: ProviderName): ProviderEntry =>
@@ -727,93 +792,19 @@ const httpJson = async (url: string, init?: RequestInit): Promise<HttpJsonRespon
   };
 };
 
-const httpForm = async (
-  url: string,
-  data: Record<string, string>,
-  headers?: RequestInit["headers"],
-): Promise<HttpJsonResponse> =>
-  httpJson(url, {
-    method: "POST",
-    headers,
-    body: new URLSearchParams(data),
-  });
-
 const isCodexAuthFile = (value: unknown): value is CodexAuthFile =>
   isJsonObject(value) && isJsonObject(value.tokens);
 
-const loadCodexAuth = (): { path: string; auth: CodexAuthFile } | null => {
+const loadCodexAuth = () => {
   for (const candidatePath of CODEX_AUTH_PATHS) {
     const path = expandHomePath(candidatePath);
     const file = parseJsonFile(path);
     if (isCodexAuthFile(file)) {
-      return {
-        path,
-        auth: file,
-      };
+      return file;
     }
   }
 
   return null;
-};
-
-const resolveCodexClientId = (tokens: CodexTokensRecord): string | null => {
-  const accessClaims = decodeJwtPayload(asString(tokens.access_token));
-  const idClaims = decodeJwtPayload(asString(tokens.id_token));
-
-  return asString(accessClaims?.client_id) ?? firstString(idClaims?.aud) ?? firstString(accessClaims?.aud);
-};
-
-const persistRefreshedCodexTokens = (
-  authPath: string,
-  auth: CodexAuthFile,
-  payload: JsonObject,
-): string | null => {
-  const accessToken = asString(payload.access_token);
-  if (!accessToken) {
-    return null;
-  }
-
-  auth.tokens.access_token = accessToken;
-
-  const refreshToken = asString(payload.refresh_token);
-  if (refreshToken) {
-    auth.tokens.refresh_token = refreshToken;
-  }
-
-  const idToken = asString(payload.id_token);
-  if (idToken) {
-    auth.tokens.id_token = idToken;
-  }
-
-  auth.last_refresh = isoNow();
-  writeJsonAtomic(authPath, auth);
-  return accessToken;
-};
-
-const refreshCodexAccessToken = async (authPath: string, auth: CodexAuthFile): Promise<string | null> => {
-  const refreshToken = asString(auth.tokens.refresh_token);
-  const clientId = resolveCodexClientId(auth.tokens);
-  if (!refreshToken || !clientId) {
-    return null;
-  }
-
-  const response = await httpForm(
-    OPENAI_TOKEN_URL,
-    {
-      grant_type: "refresh_token",
-      client_id: clientId,
-      refresh_token: refreshToken,
-    },
-    {
-      "Content-Type": FORM_CONTENT_TYPE,
-    },
-  );
-
-  if (response.status !== 200 || !isJsonObject(response.payload)) {
-    return null;
-  }
-
-  return persistRefreshedCodexTokens(authPath, auth, response.payload);
 };
 
 const requestCodexUsage = async (accessToken: string, accountId: string | null): Promise<HttpJsonResponse> =>
@@ -826,65 +817,145 @@ const requestCodexUsage = async (accessToken: string, accountId: string | null):
     },
   });
 
-const buildCodexEntry = (payload: JsonObject, response: HttpJsonResponse): ProviderEntry => {
-  const rateLimit = isJsonObject(payload.rate_limit) ? payload.rate_limit : {};
-  const primaryWindow = isJsonObject(rateLimit.primary_window) ? rateLimit.primary_window : {};
-  const secondaryWindow = isJsonObject(rateLimit.secondary_window) ? rateLimit.secondary_window : {};
+const isApproximateWindowDuration = (actualSeconds: number, expectedSeconds: number): boolean =>
+  Math.abs(actualSeconds - expectedSeconds) <= expectedSeconds * CODEX_WINDOW_DURATION_TOLERANCE;
 
-  const sessionUsed = clampPercent(
-    response.headers.get(CODEX_PERCENT_HEADERS.session) ?? primaryWindow.used_percent,
-  );
-  const weeklyUsed = clampPercent(
-    response.headers.get(CODEX_PERCENT_HEADERS.weekly) ?? secondaryWindow.used_percent,
-  );
+const codexQuotaKindForDuration = (
+  durationSeconds: number | null,
+  fallbackKind: CodexQuotaKind,
+): CodexQuotaKind => {
+  if (durationSeconds === null) {
+    return fallbackKind;
+  }
+
+  if (isApproximateWindowDuration(durationSeconds, CODEX_WINDOW_DURATION_SECONDS.session)) {
+    return "session";
+  }
+
+  if (isApproximateWindowDuration(durationSeconds, CODEX_WINDOW_DURATION_SECONDS.weekly)) {
+    return "weekly";
+  }
+
+  return fallbackKind;
+};
+
+const buildCodexQuota = (
+  value: unknown,
+  fallbackKind: CodexQuotaKind,
+  percentHeader: string,
+  response: HttpJsonResponse,
+): BuildCodexQuotaOptions | null => {
+  if (!isJsonObject(value)) {
+    return null;
+  }
+
+  return {
+    kind: codexQuotaKindForDuration(asNumber(value.limit_window_seconds), fallbackKind),
+    used: clampPercent(response.headers.get(percentHeader) ?? value.used_percent),
+    resetAt: asResetAtValue(value.reset_at),
+  };
+};
+
+const orderedCodexQuotas = (
+  quotas: readonly (BuildCodexQuotaOptions | null)[],
+): BuildCodexQuotaOptions[] =>
+  quotas
+    .filter((quota): quota is BuildCodexQuotaOptions => quota !== null)
+    .sort(
+      (left, right) => CODEX_QUOTA_ORDER.indexOf(left.kind) - CODEX_QUOTA_ORDER.indexOf(right.kind),
+    );
+
+export const buildCodexEntry = (payload: JsonObject, response: HttpJsonResponse): ProviderEntry => {
+  const rateLimit = isJsonObject(payload.rate_limit) ? payload.rate_limit : {};
+  const quotas = orderedCodexQuotas([
+    buildCodexQuota(
+      rateLimit.primary_window,
+      "session",
+      CODEX_PERCENT_HEADERS.primary,
+      response,
+    ),
+    buildCodexQuota(
+      rateLimit.secondary_window,
+      "weekly",
+      CODEX_PERCENT_HEADERS.secondary,
+      response,
+    ),
+  ]);
 
   return buildProviderEntry({
     provider: "codex",
     source: "api",
     plan: asString(payload.plan_type),
-    quotas: [
-      {
-        kind: "session",
-        used: sessionUsed,
-        resetAt: asResetAtValue(primaryWindow.reset_at),
-      },
-      {
-        kind: "weekly",
-        used: weeklyUsed,
-        resetAt: asResetAtValue(secondaryWindow.reset_at),
-      },
-    ],
+    quotas,
   });
 };
 
-const fetchCodexUsage = async (): Promise<ProviderEntry> => {
-  const codexAuth = loadCodexAuth();
-  if (!codexAuth) {
-    throw new Error("codex auth.json not found");
+const codexAccountsDir = (): string => {
+  const fromEnv = process.env.AGENTS_CODEX_ACCOUNTS_DIR;
+  if (fromEnv !== undefined && fromEnv !== "") {
+    return fromEnv;
   }
 
-  const accessToken = asString(codexAuth.auth.tokens.access_token);
-  const accountId = asString(codexAuth.auth.tokens.account_id);
+  return expandHomePath(CODEX_ACCOUNTS_DIR_DEFAULT);
+};
+
+const listCodexProfiles = (): { name: string; path: string }[] => {
+  const dir = codexAccountsDir();
+  let fileNames: string[];
+  try {
+    fileNames = readdirSync(dir);
+  } catch {
+    return [];
+  }
+
+  return fileNames
+    .filter((fileName) => fileName.endsWith(".json") && fileName !== CODEX_ACCOUNTS_STATE_FILE)
+    .map((fileName) => ({
+      name: fileName.slice(0, -".json".length),
+      path: join(dir, fileName),
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+};
+
+const readCodexActiveProfileName = (): string | null => {
+  const state = parseJsonFile(join(codexAccountsDir(), CODEX_ACCOUNTS_STATE_FILE));
+  return isJsonObject(state) ? asString(state.active) : null;
+};
+
+const fetchCodexUsageForAuth = async (auth: CodexAuthFile): Promise<ProviderEntry> => {
+  const accessToken = asString(auth.tokens.access_token);
+  const accountId = asString(auth.tokens.account_id);
   if (!accessToken) {
     throw new Error("codex access token missing");
   }
 
-  let currentToken = accessToken;
-  let response = await requestCodexUsage(currentToken, accountId);
-
+  const response = await requestCodexUsage(accessToken, accountId);
   if (UNAUTHORIZED_STATUSES.has(response.status)) {
-    const refreshedToken = await refreshCodexAccessToken(codexAuth.path, codexAuth.auth);
-    if (refreshedToken) {
-      currentToken = refreshedToken;
-      response = await requestCodexUsage(currentToken, accountId);
-    }
+    return unavailableEntry("codex");
   }
-
   if (response.status !== 200 || !isJsonObject(response.payload)) {
     throw new Error(`codex usage request failed (${response.status})`);
   }
 
   return buildCodexEntry(response.payload, response);
+};
+
+const fetchLiveCodexEntry = async (): Promise<ProviderEntry> => {
+  const codexAuth = loadCodexAuth();
+  if (!codexAuth) {
+    throw new Error("codex auth.json not found");
+  }
+
+  return fetchCodexUsageForAuth(codexAuth);
+};
+
+const fetchStoredCodexEntry = async (profilePath: string): Promise<ProviderEntry> => {
+  const auth = parseJsonFile(profilePath);
+  if (!isCodexAuthFile(auth)) {
+    throw new Error(`invalid codex profile: ${profilePath}`);
+  }
+
+  return fetchCodexUsageForAuth(auth);
 };
 
 const readCursorSessionToken = (): string | null => {
@@ -939,7 +1010,7 @@ const requestCursorUsage = async (cookie: string): Promise<HttpJsonResponse> =>
     body: "{}",
   });
 
-const buildCursorEntry = (payload: JsonObject): ProviderEntry => {
+export const buildCursorEntry = (payload: JsonObject): ProviderEntry => {
   const planUsage = isJsonObject(payload.planUsage) ? payload.planUsage : {};
   const resetAt = asResetAtValue(payload.billingCycleEnd);
 
@@ -950,11 +1021,6 @@ const buildCursorEntry = (payload: JsonObject): ProviderEntry => {
       {
         kind: "billingTotal",
         used: clampPercent(planUsage.totalPercentUsed),
-        resetAt,
-      },
-      {
-        kind: "billingApi",
-        used: clampPercent(planUsage.apiPercentUsed),
         resetAt,
       },
     ],
@@ -1003,21 +1069,69 @@ const recoverProviderEntry = (
   return unavailableEntry(provider);
 };
 
-const refreshApiProvider = async (
-  provider: ApiProviderName,
+const previousCodexEntriesByName = (cache: CacheData): Map<string | null, ProviderEntry> =>
+  new Map((cache.codexAccounts ?? []).map((account) => [account.name, account.entry]));
+
+export const fetchCodexAccounts = async (
+  previousEntriesByName: ReadonlyMap<string | null, ProviderEntry>,
+): Promise<CodexAccountEntry[]> => {
+  const profiles = listCodexProfiles();
+
+  if (profiles.length === 0) {
+    let entry: ProviderEntry;
+    try {
+      entry = await fetchLiveCodexEntry();
+    } catch {
+      entry = recoverProviderEntry("codex", previousEntriesByName.get(null));
+    }
+
+    return [{ name: null, active: true, entry }];
+  }
+
+  const activeName = readCodexActiveProfileName();
+  return Promise.all(
+    profiles.map(async (profile) => {
+      let entry: ProviderEntry;
+      try {
+        entry = await fetchStoredCodexEntry(profile.path);
+      } catch {
+        entry = recoverProviderEntry("codex", previousEntriesByName.get(profile.name));
+      }
+
+      return {
+        name: profile.name,
+        active: profile.name === activeName,
+        entry,
+      };
+    }),
+  );
+};
+
+const refreshCodexAccounts = async (
   previousCache: CacheData,
   enabledProviders: ProviderName[],
-  fetchUsage: () => Promise<ProviderEntry>,
+  forceRefresh: boolean,
+): Promise<CodexAccountEntry[] | undefined> => {
+  if (!enabledProviders.includes("codex") || !shouldRefreshProvider(previousCache, "codex", forceRefresh)) {
+    return previousCache.codexAccounts;
+  }
+
+  return fetchCodexAccounts(previousCodexEntriesByName(previousCache));
+};
+
+const refreshCursorEntry = async (
+  previousCache: CacheData,
+  enabledProviders: ProviderName[],
   forceRefresh: boolean,
 ): Promise<ProviderEntry> => {
-  if (!enabledProviders.includes(provider) || !shouldRefreshProvider(previousCache, provider, forceRefresh)) {
-    return previousCache[provider] ?? unavailableEntry(provider);
+  if (!enabledProviders.includes("cursor") || !shouldRefreshProvider(previousCache, "cursor", forceRefresh)) {
+    return previousCache.cursor ?? unavailableEntry("cursor");
   }
 
   try {
-    return await fetchUsage();
+    return await fetchCursorUsage();
   } catch {
-    return recoverProviderEntry(provider, previousCache[provider]);
+    return recoverProviderEntry("cursor", previousCache.cursor);
   }
 };
 
@@ -1030,17 +1144,16 @@ const refreshCache = async (
   const enabledProviders = availableProviders();
   const forceRefresh = options.forceRefresh ?? false;
 
-  const [codex, cursor] = await Promise.all([
-    refreshApiProvider("codex", previousCache, enabledProviders, fetchCodexUsage, forceRefresh),
-    refreshApiProvider("cursor", previousCache, enabledProviders, fetchCursorUsage, forceRefresh),
+  const [codexAccounts, cursor] = await Promise.all([
+    refreshCodexAccounts(previousCache, enabledProviders, forceRefresh),
+    refreshCursorEntry(previousCache, enabledProviders, forceRefresh),
   ]);
 
   const nextCache: CacheData = {
     claude: previousCache.claude,
     claude2: previousCache.claude2,
     claude3: previousCache.claude3,
-    claude4: previousCache.claude4,
-    codex,
+    codexAccounts,
     cursor,
     updatedAt: nowEpoch(),
   };
@@ -1141,6 +1254,8 @@ const main = async (): Promise<number> => {
   return 0;
 };
 
-void main().then((exitCode) => {
-  process.exit(exitCode);
-});
+if (import.meta.main) {
+  void main().then((exitCode) => {
+    process.exit(exitCode);
+  });
+}

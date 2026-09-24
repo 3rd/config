@@ -91,8 +91,9 @@
       # https://github.com/kovidgoyal/kitty/issues/6209
       # https://github.com/kovidgoyal/kitty/pull/6218
       # text_composition_strategy = "legacy";
-      text_composition_strategy = "1 0"; # gamma, multiplicative contrast
+      # text_composition_strategy = "1 0"; # gamma, multiplicative contrast
       # text_composition_strategy = "1.0 8";
+      text_composition_strategy = "1.0 2";
       disable_ligatures = "cursor";
       undercurl_style = "thin-sparse";
       # adjust_line_height = "100%";
@@ -108,13 +109,14 @@
       # font_family = lib.mkDefault "Comic Code Ligatures";
       # font_size = lib.mkDefault "10.5";
 
-      # font_family = lib.mkDefault "MonoLisa";
+      font_family = lib.mkDefault "MonoLisa";
       # font_size = lib.mkDefault "9";
       # font_size = lib.mkDefault "9.4";
+      font_size = lib.mkDefault "10.1";
 
-      font_family = lib.mkDefault "Berkeley Mono";
+      # font_family = lib.mkDefault "Berkeley Mono";
       # font_size = lib.mkDefault "9.4";
-      font_size = lib.mkDefault "9.9";
+      # font_size = lib.mkDefault "9.9";
       # font_size = lib.mkDefault "10";
       # font_size = lib.mkDefault "9.9";
       # font_size = lib.mkDefault "10.4";
@@ -146,7 +148,7 @@
       "ctrl+6" = "goto_tab 6";
       "ctrl+7" = "goto_tab 7";
       # change font size
-      "ctrl+shift+0" = "change_font_size all 8.5";
+      "ctrl+shift+0" = "change_font_size all 9.1";
       "ctrl+shift+minus" = "change_font_size all -0.1";
       "ctrl+shift+equal" = "change_font_size all +0.1";
       "ctrl+shift+backspace" = "change_font_size all 0";
@@ -174,11 +176,13 @@
       map ctrl+i send_text all \x1b[105;5u
 
       # https://www.monolisa.dev/faq#how-to-enable-stylistic-sets-for-the-kitty-terminal
-      font_features MonoLisa-Medium +zero +ss04 +ss07 +ss08 +ss09
-      font_features MonoLisa-MediumItalic +zero +ss04 +ss07 +ss08 +ss09
+      font_features MonoLisa-Regular +zero +ss04
+      font_features MonoLisa-Bold +zero +ss04
+      font_features MonoLisa-RegularItalic +zero
+      font_features MonoLisa-BoldItalic +zero
 
       # berkeley
-      modify_font cell_width 100%
+      # modify_font cell_width 100%
       # modify_font cell_height 116%
       # modify_font cell_width 102%
     '';

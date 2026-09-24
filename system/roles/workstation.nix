@@ -197,6 +197,8 @@ in
     moreutils
     openssl
     pciutils
+    perf
+    python3
     ripgrep
     unzip
     usbutils
