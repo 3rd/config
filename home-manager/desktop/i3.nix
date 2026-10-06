@@ -105,6 +105,7 @@ in
     ./desktop-osd.nix
     ../colors.nix
     ./xresources.nix
+    ../programs/copyq
     ../services/polybar
     ../services/xfce4-notifyd.nix
     ../services/fastcompmgr.nix
@@ -483,7 +484,7 @@ in
       config = {
         bars = [ ];
         fonts = {
-          names = [ "DejaVu Sans" ];
+          names = [ "Noto Sans" ];
           size = 9.0;
         };
         gaps = {
@@ -610,7 +611,6 @@ in
             always = true;
             command = "--no-startup-id ${pkgs-stable.xss-lock}/bin/xss-lock -l -- ${pkgs.lock}/bin/lock";
           }
-          { command = "--no-startup-id ${pkgs.copyq}/bin/copyq"; }
           {
             command = "--no-startup-id ${pkgs-stable.flameshot}/bin/flameshot";
           }

@@ -29,9 +29,10 @@ collect_relevant_paths() {
     include+=("$host_file")
   done < <(
     find "./hosts/$HOSTNAME" -type f \
-      \( -name '*.nix' -o -name '*.mjs' -o -name '*.sh' \) \
+      \( -name '*.nix' -o -name '*.mjs' -o -name '*.sh' -o -name '*.py' -o -name '*.json' \) \
       ! -name '*.test.mjs' \
       ! -name '*.test.sh' \
+      ! -name '*.test.py' \
       | sort
   )
 
@@ -84,7 +85,9 @@ nix_switch() {
   copy_relevant_files_to_tmpdir
   cd "$TMPDIR"
   # sudo nixos-rebuild switch --impure --flake .#"$HOSTNAME"
-  sudo nixos-rebuild switch --show-trace --impure --flake .#"$HOSTNAME"
+  sudo /run/current-system/sw/bin/env \
+    PATH="/run/current-system/sw/bin:$PATH" \
+    /run/current-system/sw/bin/nixos-rebuild switch --show-trace --impure --flake .#"$HOSTNAME"
 }
 
 nix_update() {
@@ -105,6 +108,22 @@ help() {
   grep '^#/' "$0" | cut -c4-
 }
 
+cleanup() {
+  local exitStatus=$?
+
+  cd "$ROOT"
+
+  if [[ "$exitStatus" -eq 0 && -f "$TMPDIR/flake.lock" ]]; then
+    mv "$TMPDIR/flake.lock" .
+  fi
+
+  rm -rf -- "$TMPDIR"
+}
+
+if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
+  trap cleanup EXIT
+fi
+
 if expr "$*" : ".*--nix" >/dev/null; then
   nix_switch
 elif expr "$*" : ".*--update" >/dev/null; then
@@ -115,15 +134,4 @@ elif expr "$*" : ".*--list" >/dev/null; then
   list_relevant_files
 else
   help
-fi
-
-cleanup() {
-  cd "$ROOT"
-  if [[ -f "$TMPDIR/flake.lock" ]]; then
-    mv "$TMPDIR/flake.lock" .
-  fi
-  rm -rf "$TMPDIR"
-}
-if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
-  trap cleanup EXIT
 fi

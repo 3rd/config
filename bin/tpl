@@ -11,6 +11,19 @@ pick_template() {
   fd --hidden --type file --glob .root --exclude /archive --format '{//}' | fzf
 }
 
+copy_template() {
+  local source=$1 destination=$2 path
+  [[ -d $destination ]] || mkdir "$destination"
+  git -C "$source" ls-files -z --cached --others --exclude-standard \
+    | while IFS= read -r -d '' path; do
+      if [[ -e $source/$path || -L $source/$path ]]; then
+        printf '%s\0' "$path"
+      fi
+    done \
+    | tar -C "$source" --null -T - -cf - \
+    | tar -C "$destination" -xf -
+}
+
 main() {
   # select template
   local selected_template source destination
@@ -26,11 +39,7 @@ main() {
   read -i "$CWD/" -e -r destination
 
   # apply
-  if [ -d "$destination" ]; then
-    cp -r "$source/." "$destination"
-  else
-    cp -r "$source" "$destination"
-  fi
+  copy_template "$source" "$destination"
   cd "$destination"
   git init
 }

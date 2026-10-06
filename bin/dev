@@ -13,8 +13,10 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   if [ -f "Makefile" ]; then
     if grep -q "dev:" "Makefile"; then
       make dev
+      exit 0
     elif grep -q "watch:" "Makefile"; then
       make watch
+      exit 0
     fi
   fi
 

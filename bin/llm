@@ -15,10 +15,13 @@ readonly DEFAULT_CTX="${LLM_DEFAULT_CTX:-65536}"
 readonly DEFAULT_BATCH="${LLM_DEFAULT_BATCH:-256}"
 readonly DEFAULT_UBATCH="${LLM_DEFAULT_UBATCH:-128}"
 readonly DEFAULT_FIT_TARGET="512"
+readonly LLAMA_BACKEND="llama.cpp"
+readonly STRATA_BACKEND="strata"
+readonly STRATA_DEFAULT_VRAM_RESERVE_MIB=2048
 JSON_OUTPUT=0
 
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 usage: llm <command> [args]
 
 commands:
@@ -27,6 +30,8 @@ commands:
   search <query>               search Hugging Face GGUF repos
   info [repo|url|model|path]   show repo, file, or registry details
   pull <repo|url> [options]    download and register a selected GGUF
+  strata setup [quant] [opts]  prepare and register Strata (default: IQ3_S)
+  strata calibrate [id]        fit and tune a registered Strata model while all models are unloaded
   cache ls|prune               inspect or prune Hugging Face cache
   ls [--long|--registered|--unregistered|--enabled|--disabled|--missing]
                                list local models and registry state
@@ -65,6 +70,12 @@ bench opts:
 bench env:
   LLM_BENCH_PROMPT_TOKENS      default synthetic prompt size
   LLM_BENCH_GEN_TOKENS         default generated token limit
+
+strata setup opts:
+  --vram-reserve-mib n         expert-cache VRAM reserve target (new config: $STRATA_DEFAULT_VRAM_RESERVE_MIB MiB)
+  --max-tokens n|default       explicit output default; default removes it
+  --thinking-tokens n|default  explicit thinking budget; default removes it; 0: no budget
+                               existing settings stay unless an option is supplied
 EOF
 }
 
@@ -258,6 +269,16 @@ require_startable_model() {
   fi
 }
 
+isStrataModel() {
+  jq -e --arg id "$1" --arg backend "$STRATA_BACKEND" '.models[$id].backend == $backend' "$MODELS_JSON" >/dev/null
+}
+
+requireLlamaModel() {
+  if isStrataModel "$1"; then
+    die "$1 uses Strata; llm set, optimize, and rm only handle llama.cpp models"
+  fi
+}
+
 select_model_id() {
   require_cmd jq
   require_cmd fzf
@@ -296,7 +317,12 @@ select_model_id() {
       local state="enabled" size="missing"
       [[ "$enabled" == "false" ]] && state="disabled"
       if [[ -f "$path" ]]; then
-        size="$(du -h "$path" | awk '{print $1}')"
+        if isStrataModel "$id"; then
+          size="-"
+          gpu="-"
+        else
+          size="$(du -h "$path" | awk '{print $1}')"
+        fi
       fi
       printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$state" "$size" "$ctx" "$gpu" "${aliases:-"-"}"
     done
@@ -370,6 +396,7 @@ register_model() {
   require_cmd jq
   ensure_registry
   local id="$1" path="$2" aliases_json="$3" ctx="$4" gpu_layers="$5" batch="$6" ubatch="$7" ttl="$8" source="$9"
+  local backend="${10:-$LLAMA_BACKEND}"
   local existing_path tmp
   path="$(assert_under_llm_root "$path")"
   [[ -f "$path" ]] || die "$path does not exist"
@@ -388,8 +415,17 @@ register_model() {
     --argjson ubatch "$ubatch" \
     --argjson ttl "$ttl" \
     --arg source "$source" \
+    --arg backend "$backend" \
+    --arg strataBackend "$STRATA_BACKEND" \
     --arg updatedAt "$(date -Is)" \
-    '.models[$id] = ((.models[$id] // {}) + {path:$path, aliases:$aliases, ctx:$ctx, gpuLayers:$gpuLayers, batch:$batch, ubatch:$ubatch, ttl:$ttl, enabled:true, source:$source, updatedAt:$updatedAt})' \
+    '(.models[$id] // {}) as $existing
+    | .models[$id] = ($existing + if $backend == $strataBackend then
+        {path:$path, aliases:($existing.aliases // $aliases), ctx:$ctx, ttl:($existing.ttl // $ttl),
+          enabled:(if $existing | has("enabled") then $existing.enabled else true end),
+          source:$source, updatedAt:$updatedAt, backend:$backend}
+      else
+        {path:$path, aliases:$aliases, ctx:$ctx, gpuLayers:$gpuLayers, batch:$batch, ubatch:$ubatch, ttl:$ttl, enabled:true, source:$source, updatedAt:$updatedAt}
+      end)' \
     "$MODELS_JSON" >"$tmp"
   mv "$tmp" "$MODELS_JSON"
   render_config
@@ -401,7 +437,8 @@ render_config() {
   local tmp backup
   tmp="$(mktemp "$REGISTRY_DIR/llama-swap.yaml.tmp.XXXXXX")"
   backup="$REGISTRY_DIR/llama-swap.yaml.last-good"
-  jq -r --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" '
+  jq -r --argjson defaultCtx "$DEFAULT_CTX" --argjson defaultBatch "$DEFAULT_BATCH" --argjson defaultUbatch "$DEFAULT_UBATCH" --argjson defaultFitTarget "$DEFAULT_FIT_TARGET" \
+    --arg llamaBackend "$LLAMA_BACKEND" --arg strataBackend "$STRATA_BACKEND" '
     def shell_args($args):
       if (($args // []) | length) > 0 then
         " " + (($args // []) | map(@sh) | join(" "))
@@ -431,6 +468,11 @@ render_config() {
           + (if ($draft.cacheTypeV // "") != "" then " --cache-type-v-draft " + $draft.cacheTypeV else "" end)
         end;
     def cmd($model):
+      if $model.backend == $strataBackend then
+        "      strata-server --host 127.0.0.1 --port ${PORT} --config " + ($model.path | @sh)
+      elif ($model.backend // $llamaBackend) != $llamaBackend then
+        error("unknown model backend: " + $model.backend)
+      else
       "      llama-server --host 127.0.0.1 --port ${PORT} --model " + ($model.path | @sh)
       + " --ctx-size " + (($model.ctx // $defaultCtx) | tostring)
       + (if (($model.fitTarget // "") != "") then "" elif ($model | has("gpuLayers")) then " --n-gpu-layers " + ($model.gpuLayers | tostring) else " --n-gpu-layers 99" end)
@@ -450,7 +492,8 @@ render_config() {
       + (if ($model.noKvOffload // false) == true then " --no-kv-offload" else "" end)
       + (if ($model.mlock // false) == true then " --mlock" else "" end)
       + draft_args($model)
-      + shell_args($model.serverArgs);
+      + shell_args($model.serverArgs)
+      end;
     "healthCheckTimeout: 500\nlogLevel: info\nlogToStdout: proxy\nstartPort: 12000\nincludeAliasesInList: true\nglobalTTL: 0\nmodels:\n"
     + (
       [.models | to_entries[] | select(.value.enabled != false)] as $entries
@@ -499,7 +542,7 @@ wait_for_served_model() {
 
 cmd_doctor() {
   local failed=0
-  for cmd in hf jq fzf curl llama-server llama-swap; do
+  for cmd in hf jq fzf curl llama-server llama-swap strata-server strata-setup; do
     if have "$cmd"; then
       echo "ok: $cmd"
     else
@@ -708,7 +751,12 @@ cmd_ls() {
     local state="$1" id="$2" path="$3" ctx="$4" gpu="$5" ttl="$6" source="$7" aliases="$8"
     local size="missing"
     if [[ -f "$path" ]]; then
-      size="$(du -h "$path" | awk '{print $1}')"
+      if isStrataModel "$id"; then
+        size="-"
+        gpu="-"
+      else
+        size="$(du -h "$path" | awk '{print $1}')"
+      fi
     fi
     case "$filter" in
       all) ;;
@@ -804,6 +852,195 @@ cmd_add() {
   echo "added: $id"
 }
 
+requireStrataConfig() {
+  local config="$1"
+  jq -e '
+    type == "object"
+    and (.exe | type == "string" and length > 0)
+    and (.cwd | type == "string" and length > 0)
+    and (.tokenizer | type == "string" and length > 0)
+    and (.args | type == "array" and all(.[]; type == "string"))
+  ' "$config" >/dev/null || die "Strata returned an invalid engine config: $config"
+}
+
+requireUnloadedStrataRuntime() {
+  require_cmd curl
+  local running
+  running="$(curl -fsS --connect-timeout 2 --max-time 5 -H "authorization: Bearer $OPENAI_KEY" "$API_BASE/running")" \
+    || die "cannot verify unloaded models at $API_BASE/running; Strata setup/calibration will not run"
+  jq -e 'type == "object" and (.running | type == "array")' <<<"$running" >/dev/null \
+    || die "invalid model state from $API_BASE/running; Strata setup/calibration will not run"
+  [[ "$(jq '.running | length' <<<"$running")" -eq 0 ]] \
+    || die "unload all models with llm stop or llm clear before Strata setup/calibration"
+}
+
+writeStrataBudgets() {
+  local config="$1" maxTokens="$2" thinkingTokens="$3" sharedConfig tmp
+  sharedConfig="${config%.json}.shared-settings.json"
+
+  if [[ -n "$thinkingTokens" ]]; then
+    tmp="$(mktemp "$config.tmp.XXXXXX")"
+    jq --arg value "$thinkingTokens" '
+      if $value == "default" then del(.reasoning_budget_tokens)
+      else .reasoning_budget_tokens = ($value | fromjson) end
+    ' "$config" >"$tmp"
+    mv "$tmp" "$config"
+  fi
+
+  if [[ -z "$maxTokens" || ( "$maxTokens" == default && ! -f "$sharedConfig" ) ]]; then
+    return
+  fi
+
+  tmp="$(mktemp "$sharedConfig.tmp.XXXXXX")"
+
+  if [[ -f "$sharedConfig" ]]; then
+    jq --arg value "$maxTokens" '
+      if $value == "default" then del(.max_tokens)
+      else .max_tokens = ($value | fromjson) end
+    ' "$sharedConfig" >"$tmp"
+  else
+    jq -n --argjson max "$maxTokens" '{max_tokens:$max}' >"$tmp"
+  fi
+
+  mv "$tmp" "$sharedConfig"
+}
+
+prepareStrata() {
+  require_cmd strata-setup
+  require_cmd jq
+  local quant=IQ3_S vramReserve="" maxTokens="" thinkingTokens="" ctx="$DEFAULT_CTX"
+  local hasExplicitVramReserve=0
+
+  if [[ $# -gt 0 && "$1" != --* ]]; then
+    quant="$1"
+    shift
+  fi
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --vram-reserve-mib|--max-tokens|--thinking-tokens)
+        [[ $# -ge 2 ]] || die "$1 needs a whole number or default"
+        local value
+        if [[ "$2" == default && "$1" != --vram-reserve-mib ]]; then
+          value=default
+        else
+          [[ "$2" =~ ^[0-9]+$ ]] || die "$1 needs a whole number of tokens or MiB"
+          value="$(jq -n --arg value "$2" '$value | tonumber')"
+        fi
+
+        case "$1" in
+          --vram-reserve-mib)
+            vramReserve="$value"
+            hasExplicitVramReserve=1
+            ;;
+          --max-tokens)
+            [[ "$value" == default || "$value" -gt 0 ]] || die "--max-tokens must be a positive integer"
+            maxTokens="$value"
+            ;;
+          --thinking-tokens) thinkingTokens="$value" ;;
+        esac
+
+        shift 2
+        ;;
+      *) die "unknown Strata setup option: $1" ;;
+    esac
+  done
+
+  case "$quant" in
+    IQ3_S|IQ3_XXS|IQ2_XS|Q2_0) ;;
+    *) die "unsupported Strata quantization: $quant" ;;
+  esac
+
+  local strataRoot="$LLM_ROOT/strata" config sharedConfig id
+  config="$strataRoot/strata-${quant,,}.json"
+  sharedConfig="${config%.json}.shared-settings.json"
+  id="strata-$(printf '%s' "$quant" | tr '[:upper:]_' '[:lower:]-')"
+
+  if [[ -f "$config" ]]; then
+    requireStrataConfig "$config"
+    requireUnloadedStrataRuntime
+    ctx="$(jq -er '.args as $args | ($args | index("--max-context")) as $i | if $i == null then error("missing context") else $args[$i + 1] | tonumber end' "$config")"
+
+    if [[ -z "$vramReserve" ]]; then
+      vramReserve="$(jq -er '.args as $args | ($args | index("--vram-reserve-mib")) as $i | if $i == null then "" else $args[$i + 1] | tonumber end' "$config")"
+    fi
+
+    if [[ -z "$thinkingTokens" ]]; then
+      thinkingTokens="$(jq -cr 'if has("reasoning_budget_tokens") then .reasoning_budget_tokens | tojson else "" end' "$config")"
+      [[ -z "$thinkingTokens" ]] || jq -en --argjson value "$thinkingTokens" '$value == null or ($value | type == "number" and floor == .)' >/dev/null \
+        || die "invalid reasoning_budget_tokens in $config"
+    fi
+  elif [[ -z "$vramReserve" ]]; then
+    vramReserve="$STRATA_DEFAULT_VRAM_RESERVE_MIB"
+  fi
+
+  if [[ -f "$sharedConfig" ]]; then
+    jq -e 'type == "object" and ((has("max_tokens") | not) or .max_tokens == null or .max_tokens == "" or (.max_tokens | type == "number" and . > 0 and floor == .))' "$sharedConfig" >/dev/null \
+      || die "invalid Strata shared settings: $sharedConfig"
+
+    if [[ -z "$maxTokens" ]]; then
+      maxTokens="$(jq -cr 'if has("max_tokens") then .max_tokens | tojson else "" end' "$sharedConfig")"
+    fi
+  fi
+
+  if [[ "$maxTokens" != default && "$thinkingTokens" != default ]]; then
+    jq -en --argjson max "${maxTokens:-null}" --argjson thinking "${thinkingTokens:-null}" '
+      if ($max | type == "number") and ($thinking | type == "number") and $max > 0 and $thinking > 0 then
+        $thinking < $max
+      else
+        true
+      end
+    ' >/dev/null || die "thinking budget ($thinkingTokens) must be less than output limit ($maxTokens) to leave room for an answer"
+  fi
+
+  local reserveArgs=()
+
+  if [[ -n "$vramReserve" ]]; then
+    jq -en --argjson value "$vramReserve" '$value | type == "number" and . >= 0 and floor == .' >/dev/null \
+      || die "invalid --vram-reserve-mib in $config"
+    reserveArgs=(--vram-reserve-mib "$vramReserve")
+  fi
+
+  if [[ "$hasExplicitVramReserve" -eq 1 ]]; then
+    reserveArgs+=(--reset-calibration)
+  fi
+
+  log "preparing Strata $quant; model files are downloaded and cached on the first run"
+  STRATA_ROOT="$strataRoot" strata-setup --yes --family qwen --model "$quant" \
+    --context "$ctx" --kv int8 --gpu 0 --parallel 1 --vision no --no-browser \
+    "${reserveArgs[@]}" --experimental-speed-projection off \
+    --data-dir "$strataRoot/data-store"
+  requireStrataConfig "$config"
+  ctx="$(jq -er '.args as $args | ($args | index("--max-context")) as $i | if $i == null then error("missing context") else $args[$i + 1] | tonumber end' "$config")"
+  writeStrataBudgets "$config" "$maxTokens" "$thinkingTokens"
+  register_model "$id" "$config" '[]' "$ctx" 0 0 0 600 "$STRATA_BACKEND" "$STRATA_BACKEND"
+  echo "prepared: $id"
+  echo "start with: llm start $id"
+}
+
+calibrateStrata() {
+  [[ $# -le 1 ]] || die "usage: llm strata calibrate [id]"
+  require_cmd strata-setup
+  require_cmd jq
+  local id config
+  id="$(model_id_or_select "calibrate" 0 "${1:-}")"
+  isStrataModel "$id" || die "$id does not use Strata; use llm optimize for llama.cpp models"
+  config="$(assert_under_llm_root "$(model_path "$id")")"
+  requireStrataConfig "$config"
+  requireUnloadedStrataRuntime
+  log "calibrating: $id; finding a working startup configuration, then measuring hardware settings (5-10 minutes plus fitting)"
+  STRATA_ROOT="$(dirname "$config")" strata-setup --calibrate --config "$config"
+  echo "calibrated: $id"
+}
+
+runStrataCommand() {
+  case "${1:-}" in
+    setup) shift; prepareStrata "$@" ;;
+    calibrate) shift; calibrateStrata "$@" ;;
+    *) die "usage: llm strata setup [quant] [opts] | llm strata calibrate [id]" ;;
+  esac
+}
+
 cmd_set() {
   require_cmd jq
   ensure_registry
@@ -817,6 +1054,7 @@ cmd_set() {
   else
     id="$(model_id_or_select "set" 1)"
   fi
+  requireLlamaModel "$id"
   [[ $# -gt 0 ]] || die "usage: llm set [id] [runtime options]"
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -1049,15 +1287,21 @@ clear_runtime() {
 }
 
 chat_request() {
-  local model="$1" prompt="$2" max_tokens="${3:-128}"
-  jq -cn --arg model "$model" --arg prompt "$prompt" --argjson max "$max_tokens" \
-    '{model:$model,max_tokens:$max,messages:[{role:"user",content:$prompt}]}'
+  local model="$1" prompt="$2" max_tokens="${3-128}"
+  local reasoningEffort="${4:-}" isStrata=false
+  if isStrataModel "$model"; then
+    isStrata=true
+  fi
+
+  jq -cn --arg model "$model" --arg prompt "$prompt" --argjson max "${max_tokens:-null}" \
+    --argjson isStrata "$isStrata" --arg effort "$reasoningEffort" \
+    '{model:$model,messages:[{role:"user",content:$prompt}]}
+      + if $max != null then {max_tokens:$max} else {} end
+      + if $isStrata and $effort != "" then {reasoning_effort:$effort} else {} end'
 }
 
 bench_request() {
-  local model="$1" prompt="$2" max_tokens="$3"
-  jq -cn --arg model "$model" --arg prompt "$prompt" --argjson max "$max_tokens" \
-    '{model:$model,max_tokens:$max,temperature:0,messages:[{role:"user",content:$prompt}]}'
+  chat_request "$1" "$2" "$3" none | jq -c '. + {temperature:0}'
 }
 
 post_chat() {
@@ -1077,8 +1321,13 @@ post_chat() {
 
 warm_served_model() {
   local id="$1" attempts="${2:-30}" output=""
+  if isStrataModel "$id"; then
+    chat_request "$id" "ping" 4 none | post_chat >/dev/null
+    return
+  fi
+
   for attempt in $(seq 1 "$attempts"); do
-    if output="$({ chat_request "$id" "ping" 4 | post_chat >/dev/null; } 2>&1)"; then
+    if output="$({ chat_request "$id" "ping" 4 none | post_chat >/dev/null; } 2>&1)"; then
       return 0
     fi
     if (( attempt % 10 == 0 )); then
@@ -1136,6 +1385,12 @@ bench_metrics() {
 
 diagnose_start_failure() {
   local id="$1" path ctx gpu batch ubatch mmap flash_attn fit_target port
+  if isStrataModel "$id"; then
+    echo "Strata failed to start; check free RAM, nvidia-smi, and the engine log in $LLM_ROOT/strata" >&2
+    journalctl -u llama-swap -n 30 --no-pager >&2
+    return
+  fi
+
   local cpu_moe cache_type_k cache_type_v threads threads_batch split_mode tensor_split main_gpu no_kv_offload mlock
   local draft_model draft_hf draft_n_max draft_n_min draft_ctx draft_gpu_layers draft_cache_type_k draft_cache_type_v
   path="$(model_path "$id")"
@@ -1266,6 +1521,7 @@ cmd_rm() {
   local path id=""
   if registry_entry "$target" >/dev/null 2>&1 || model_id_from_alias "$target" >/dev/null 2>&1; then
     id="$(model_id_from_alias "$target")"
+    requireLlamaModel "$id"
     path="$(model_path "$id")"
   else
     path="$(assert_under_llm_root "$target")"
@@ -1382,7 +1638,7 @@ cmd_test() {
   require_startable_model "$id"
   log "testing: $id"
   local response
-  response="$(chat_request "$id" "Respond with the single word OK." 128 | post_chat | jq -r '.choices[0].message.content // .choices[0].text // empty')"
+  response="$(chat_request "$id" "Respond with the single word OK." 128 none | post_chat | jq -r '.choices[0].message.content // .choices[0].text // empty')"
   [[ -n "$response" ]] || die "test returned empty response"
   printf '%s\n' "$response"
 }
@@ -1399,7 +1655,12 @@ cmd_chat() {
     model="$(select_loaded_model_id "chat")"
   fi
   log "chat: $model"
-  chat_request "$model" "$*" 512 | post_chat | jq -r '.choices[0].message.content // .choices[0].text // .'
+  local maxTokens=512
+  if isStrataModel "$model"; then
+    maxTokens=""
+  fi
+
+  chat_request "$model" "$*" "$maxTokens" | post_chat | jq -r '.choices[0].message.content // .choices[0].text // .'
 }
 
 cmd_bench() {
@@ -1483,6 +1744,7 @@ cmd_optimize() {
     id="$(model_id_or_select "optimize" 0 "" "chat")"
   fi
   require_startable_model "$id"
+  requireLlamaModel "$id"
   log "clearing current llama runtime before optimization"
   clear_runtime
   local script_dir
@@ -1504,6 +1766,7 @@ main() {
     search) shift; cmd_search "$@" ;;
     info) shift; cmd_info "$@" ;;
     pull) shift; cmd_pull "$@" ;;
+    strata) shift; runStrataCommand "$@" ;;
     cache) shift; cmd_cache "$@" ;;
     ls) shift; cmd_ls "$@" ;;
     add) shift; cmd_add "$@" ;;

@@ -41,7 +41,6 @@ return lib.module.create({
             astro = web_formatters,
             css = web_formatters,
             json = { "fixjson", "prettierd" },
-            jsonc = { "fixjson", "prettierd" },
             html = { "prettierd" },
             yaml = { "prettierd" },
             graphql = { "prettierd" },

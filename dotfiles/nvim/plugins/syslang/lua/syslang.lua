@@ -4,6 +4,7 @@ local slib = require("syslang/lib")
 local wiki = require("modules.wiki.api")
 
 local task_transition_namespace = vim.api.nvim_create_namespace("syslang:task-transition")
+local recurring_completion_jobs = {}
 
 local get_instant_session_text = function(indent)
   return string.rep(" ", indent) .. "Session: " .. os.date("%Y.%m.%d %H:%M-%H:%M")
@@ -242,6 +243,87 @@ local task_types = {
   { task = "task_cancelled", marker = "task_marker_cancelled", next_text = "[ ]" },
 }
 
+local function has_task_recurrence(node)
+  for _, schedule in ipairs(lib.ts.find_children(node, "task_schedule")) do
+    if lib.ts.find_child(schedule, "task_recurrence") then return true end
+  end
+
+  return false
+end
+
+local function apply_recurring_completion_result(bufnr, changedtick, result)
+  if not vim.api.nvim_buf_is_valid(bufnr) or not vim.api.nvim_buf_is_loaded(bufnr) then return end
+
+  if result.code ~= 0 then
+    local message = vim.trim(result.stderr or "")
+    if message == "" then message = "core task edit exited with code " .. result.code end
+
+    vim.notify(message, vim.log.levels.ERROR)
+    return
+  end
+
+  if vim.api.nvim_buf_get_changedtick(bufnr) ~= changedtick then
+    vim.notify("Recurring completion was not applied because the buffer changed", vim.log.levels.WARN)
+    return
+  end
+
+  if type(result.stdout) ~= "string" or result.stdout == "" then
+    vim.notify("core task edit returned an empty document", vim.log.levels.ERROR)
+    return
+  end
+
+  local lines = vim.split(result.stdout, "\n", { plain = true })
+  if lines[#lines] == "" then table.remove(lines) end
+
+  vim.bo[bufnr].undolevels = vim.bo[bufnr].undolevels
+  local did_apply, apply_error = pcall(vim.api.nvim_buf_set_lines, bufnr, 0, -1, false, lines)
+  if not did_apply then vim.notify(tostring(apply_error), vim.log.levels.ERROR) end
+end
+
+local function toggle_recurring_completion(node)
+  local bufnr = vim.api.nvim_get_current_buf()
+  if recurring_completion_jobs[bufnr] then
+    vim.notify("A recurring completion is already running for this buffer", vim.log.levels.WARN)
+    return
+  end
+
+  local changedtick = vim.api.nvim_buf_get_changedtick(bufnr)
+  local source = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+  if vim.bo[bufnr].endofline then source = source .. "\n" end
+
+  local task_row = node:range()
+  local job = { is_cancelled = false }
+  recurring_completion_jobs[bufnr] = job
+  local cleanup_autocmd = vim.api.nvim_create_autocmd({ "BufUnload", "BufWipeout" }, {
+    buffer = bufnr,
+    once = true,
+    callback = function()
+      job.is_cancelled = true
+      recurring_completion_jobs[bufnr] = nil
+      if job.process then job.process:kill(15) end
+    end,
+  })
+
+  local command = { "core", "task", "edit", "--action", "toggle-completion", "--line", tostring(task_row + 1) }
+  local did_start, process = pcall(vim.system, command, { stdin = source }, function(result)
+    vim.schedule(function()
+      if job.is_cancelled then return end
+
+      recurring_completion_jobs[bufnr] = nil
+      vim.api.nvim_del_autocmd(cleanup_autocmd)
+      apply_recurring_completion_result(bufnr, changedtick, result)
+    end)
+  end)
+
+  if did_start then
+    job.process = process
+  else
+    recurring_completion_jobs[bufnr] = nil
+    vim.api.nvim_del_autocmd(cleanup_autocmd)
+    vim.notify(tostring(process), vim.log.levels.ERROR)
+  end
+end
+
 local function toggle_task(node, force_clear)
   if force_clear then
     if node:type() == "task_default" then
@@ -251,6 +333,13 @@ local function toggle_task(node, force_clear)
     end
     return true
   end
+
+  local has_recurrence = has_task_recurrence(node)
+  if has_recurrence and node:type() == "task_active" then
+    toggle_recurring_completion(node)
+    return true
+  end
+
   for _, task_node_type in ipairs(task_types) do
     if node:type() == task_node_type.task then
       local marker_node = node:child(0)
@@ -260,7 +349,7 @@ local function toggle_task(node, force_clear)
         local edit = { range = range, newText = task_node_type.next_text }
         local buf = vim.api.nvim_get_current_buf()
         vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
-        if task_node_type.next_cb then task_node_type.next_cb(node) end
+        if task_node_type.next_cb and not has_recurrence then task_node_type.next_cb(node) end
         return true
       end
     end

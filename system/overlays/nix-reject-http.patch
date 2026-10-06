@@ -1,0 +1,43 @@
+diff --git a/src/libstore/include/nix/store/filetransfer.hh b/src/libstore/include/nix/store/filetransfer.hh
+--- a/src/libstore/include/nix/store/filetransfer.hh
++++ b/src/libstore/include/nix/store/filetransfer.hh
+@@ -19,6 +19,9 @@
+     Setting<std::string> userAgentSuffix{
+         this, "", "user-agent-suffix", "String appended to the user agent in HTTP requests."};
+ 
++    Setting<bool> isHttpAllowed{
++        this, true, "allow-http", "Whether to allow unencrypted HTTP transfers, including redirects."};
++
+     Setting<size_t> httpConnections{
+         this,
+         25,
+diff --git a/src/libstore/filetransfer.cc b/src/libstore/filetransfer.cc
+--- a/src/libstore/filetransfer.cc
++++ b/src/libstore/filetransfer.cc
+@@ -356,6 +356,26 @@
+             curl_easy_setopt(req, CURLOPT_FOLLOWLOCATION, 1L);
+             curl_easy_setopt(req, CURLOPT_MAXREDIRS, 10);
+             curl_easy_setopt(req, CURLOPT_NOSIGNAL, 1);
++
++            if (!fileTransferSettings.isHttpAllowed) {
++                std::string allowedProtocols;
++
++                for (auto protocol = curl_version_info(CURLVERSION_NOW)->protocols; *protocol; ++protocol) {
++                    if (std::string_view(*protocol) == "http") continue;
++
++                    if (!allowedProtocols.empty()) {
++                        allowedProtocols += ',';
++                    }
++
++                    allowedProtocols += *protocol;
++                }
++
++                auto protocolResult = curl_easy_setopt(req, CURLOPT_PROTOCOLS_STR, allowedProtocols.c_str());
++                if (protocolResult != CURLE_OK) {
++                    throw nix::Error("cannot disable HTTP transfers: %s", curl_easy_strerror(protocolResult));
++                }
++            }
++
+             curl_easy_setopt(
+                 req,
+                 CURLOPT_USERAGENT,

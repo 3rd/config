@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  pkgs-master,
   pkgs-stable,
   ...
 }:
@@ -45,7 +46,7 @@ in
     lazygit
     meld
     sublime-merge-with-layout
-    smartgit
+    pkgs-master.smartgit
     # custom
     scripts.git-branch
     scripts.git-id
@@ -86,6 +87,20 @@ in
     ];
     settings = {
       alias = {
+        unstage = ''
+          !unstage_paths() {
+            if [ "$#" -eq 0 ]; then
+              printf 'Unstage all changes? Type yes to confirm: ' >&2
+
+              if ! read -r confirmation || [ "$confirmation" != "yes" ]; then
+                return 1
+              fi
+
+              set -- :/
+            fi
+
+            git -C "./$GIT_PREFIX" reset -- "$@"
+          }; unstage_paths'';
         undo = ''
           !f() {\
             git-undo; \

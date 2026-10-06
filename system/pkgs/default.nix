@@ -9,5 +9,6 @@ in
     claude-desktop = claudeDesktop;
   };
   qimgv = pkgs.callPackage ./qimgv { };
+  strata = pkgs.callPackage ./strata { };
 }
 // (import ./tts { inherit pkgs; })

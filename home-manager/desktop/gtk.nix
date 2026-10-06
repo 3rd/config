@@ -12,7 +12,7 @@ in
     enable = true;
     colorScheme = "dark";
     font = {
-      name = "DejaVu Sans";
+      name = "Noto Sans";
       size = 9;
     };
     gtk3.extraCss = ''

@@ -58,6 +58,7 @@ in
   environment.systemPackages = [
     llamaCppPackage
     llamaSwapPackage
+    pkgs.strata
     pkgs.curl
     pkgs.fzf
     pkgs.jq
@@ -71,6 +72,7 @@ in
     "d ${llmRoot}/cache 0775 ${llmUser} users - -"
     "d ${llmRoot}/cache/huggingface 0775 ${llmUser} users - -"
     "d ${llmRoot}/registry 0775 ${llmUser} users - -"
+    "d ${llmRoot}/strata 0775 ${llmUser} users - -"
     "f ${llmRoot}/registry/models.json 0664 ${llmUser} users - {\"models\":{}}"
     "f ${llamaSwapConfig} 0664 ${llmUser} users - models: {}"
   ];
@@ -79,9 +81,11 @@ in
     description = "Local OpenAI-compatible model swapper";
     after = [ "network.target" ];
     wantedBy = [ "multi-user.target" ];
+    unitConfig.RequiresMountsFor = llmRoot;
     path = [
       llamaCppPackage
       llamaSwapPackage
+      pkgs.strata
     ];
     serviceConfig = {
       ExecStart = "${lib.getExe llamaSwapPackage} --listen 127.0.0.1:${toString llamaSwapPort} --config ${llamaSwapConfig} --watch-config";
@@ -94,12 +98,15 @@ in
         "HF_XET_CACHE=${llmRoot}/cache/huggingface/xet"
       ];
       ReadWritePaths = [ llmRoot ];
+      LimitMEMLOCK = "infinity";
+      TimeoutStopSec = "90s";
     };
   };
 
   services.open-webui = {
     package = pkgs.open-webui;
     enable = true;
+    host = "127.0.0.1";
     port = 9999;
     environment = {
       ANONYMIZED_TELEMETRY = "False";

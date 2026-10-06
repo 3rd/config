@@ -1,0 +1,150 @@
+diff --git a/setup.py b/setup.py
+--- a/setup.py
++++ b/setup.py
+@@ -57,7 +57,7 @@
+ import zipfile
+ from pathlib import Path
+ 
+-ROOT = Path(__file__).resolve().parent
++ROOT = Path(os.environ.get("STRATA_ROOT", Path(__file__).resolve().parent)).resolve()
+ WIN = os.name == "nt"
+ # #214: every Hugging Face file comes from a fixed commit of its repository (the `sha` of
+ # https://huggingface.co/api/models/<repo> when this was pinned), so a checkout installs the same files on any
+@@ -2520,5 +2520,3 @@
+ def settings_path() -> Path:
+-    if WIN:
+-        return Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / "Strata" / "settings.json"
+-    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "strata" / "settings.json"
++    return ROOT / "settings.json"
+ 
+@@ -2533,9 +2531,11 @@
+-def save_settings(s: dict) -> None:
++def save_settings(s: dict) -> bool:
+     try:
+         settings_path().parent.mkdir(parents=True, exist_ok=True)
+         settings_path().write_text(json.dumps(s, indent=1), encoding="utf-8")
++        return True
+     except OSError as e:
+         warn(f"could not save {settings_path()} ({e})")
++        return False
+ 
+ 
+ def has_data(folder: Path) -> bool:
+@@ -2939,7 +2939,7 @@
+-    sys.path.insert(0, str(ROOT / "tools"))
++    sys.path.insert(0, str(Path(os.environ["STRATA_ASSETS_DIR"]) / "tools"))
+     import calibrate as CAL
+     cfg = json.loads(cfg_path.read_text(encoding="utf-8-sig"))
+     say()
+     say("  Tuning Strata for this PC: the output speed is measured with a few engine settings (the PCIe share, the")
+     say("  draft depth, the CPU threads). It takes about 5-10 minutes; the PC is busy meanwhile.")
+     try:
+@@ -2962,7 +2962,9 @@
+-    save_settings(st)
++    if not save_settings(st):
++        return False
++
+     if res["settings"]:
+         ok("tuned for this PC: " + ", ".join(f"{k} {v}" for k, v in res["settings"].items())
+            + (f" ({res['report']['tok_s']} tok/s)" if res["report"].get("tok_s") else ""))
+     else:
+         ok("tuned for this PC: the default settings are already the fastest here"
+            + (f" ({res['report']['tok_s']} tok/s)" if res["report"].get("tok_s") else ""))
+@@ -3595,3 +3597,4 @@
+     ap.add_argument("--calibrate", action="store_true",
+-                    help="tune the engine's settings for this PC (about 5-10 minutes), then start the model")
++                    help="tune the packaged engine for this PC (about 5-10 minutes), without starting the server")
++    ap.add_argument("--config", help="absolute model config to tune with --calibrate")
+     ap.add_argument("--draft-vocab", choices=list(DRAFT_VOCABS),
+@@ -3622,6 +3625,55 @@
+                          "sycl = Intel Arc, EXPERIMENTAL: Linux, built from source (docs/INTEL_ARC.md)")
+     ap.add_argument("--skip-build", action="store_true", help=argparse.SUPPRESS)
+     a = ap.parse_args()
++
++    if not os.environ.get("STRATA_ROOT"):
++        ap.error("use llm strata setup, or set STRATA_ROOT to a writable model workspace")
++
++    hasUnsupportedEngineOptions = a.build or a.update or a.backend not in (None, "cuda") or a.cuda not in (None, "auto", "13")
++    if hasUnsupportedEngineOptions:
++        ap.error("this Nix package prepares models with its packaged CUDA 13 engine; update or rebuild through Nix")
++
++    if a.vision not in (None, "no", "none"):
++        ap.error("this Nix package is text-only; use --vision no")
++
++    if a.config and not a.calibrate:
++        ap.error("--config requires --calibrate")
++
++    if a.calibrate:
++        if not a.config or not Path(a.config).is_absolute():
++            ap.error("--calibrate requires --config with an absolute model config path")
++        cfg_path = Path(a.config)
++        try:
++            cfg = json.loads(cfg_path.read_text(encoding="utf-8-sig"))
++        except (OSError, ValueError) as e:
++            ap.error(f"cannot read calibration config {cfg_path}: {e}")
++
++        if not isinstance(cfg, dict):
++            ap.error("calibration config must be a JSON object")
++        if not isinstance(cfg.get("exe"), str) or not cfg["exe"] or not isinstance(cfg.get("tokenizer"), str) or not cfg["tokenizer"]:
++            ap.error("calibration config needs string exe and tokenizer paths")
++        if not isinstance(cfg.get("args"), list) or not all(isinstance(v, str) for v in cfg["args"]):
++            ap.error("calibration config needs a list of string engine arguments")
++        if cfg.get("backend") not in (None, "cuda") or cfg.get("vision") is not None:
++            ap.error("calibration config must use the text-only CUDA engine")
++
++        engine = (Path(os.environ["STRATA_ENGINE_DIR"]) / EXE).resolve()
++        if not Path(cfg["exe"]).is_absolute() or Path(cfg["exe"]).resolve() != engine or not engine.is_file():
++            ap.error("calibration config must use this Nix package's engine; run llm strata setup after rebuilding")
++
++        return 0 if calibrate_config(cfg_path) else 1
++
++    a.backend, a.vision = "cuda", "no"
++    a.setup, a.no_start = True, True
++
++    ROOT.mkdir(parents=True, exist_ok=True)
++
++    for name in ("tools", "serve", "data", "CMakeLists.txt"):
++        target = ROOT / name
++        if target.is_symlink():
++            target.unlink()
++        target.symlink_to(Path(os.environ["STRATA_ASSETS_DIR"]) / name)
++
+     if a.backend == "sycl":                            # Intel Arc: the SYCL port's own setup (sycl/setup_intel.py)
+         return sycl_setup(sys.argv[1:])
+     if a.resident_budget_gib is not None and not a.resident_budget_gib > 0:
+@@ -4090,32 +4142,12 @@
+     # ---- 3. python packages
+     step(3, "Python packages")
+-    pip_install(requirement_lines() if REQUIREMENTS.exists() else PY_PACKAGES,
+-                "numpy, jinja2, regex, pyyaml, tqdm, requests, cmake, ninja, pillow, psutil")
++    ok("Python packages supplied by Nix")
+ 
+     # ---- 4. the engine
+     step(4, "the Strata engine")
+-    llama = get_llama_cpp()
++    llama = Path(os.environ["STRATA_LLAMA_DIR"])
+     ok(f"llama.cpp {LLAMA_CPP_COMMIT[:7]} (gguf-py, ggml, mtmd)")
+-    if hip and WIN:                                    # AMD on Windows: the ready-made HIP engine (no compiler)
+-        eng = None if a.build else get_prebuilt_hip(a.prebuilt, gpu)
+-        if eng is None:
+-            fail("no ready-made AMD engine for this Strata version" + (" (--build)" if a.build else ""),
+-                 "compiling it on Windows: tools\\hip\\build_windows.bat makes strata-windows-x64-hip.zip, then run "
+-                 "START-HERE.bat --backend hip --prebuilt <its dist folder> (docs/AMD_HIP.md)")
+-        gpu = hip_card(eng, gpu, amd)
+-        a.gpu = gpu["index"] if gpu["count"] > 1 else a.gpu
+-    else:
+-        eng = None if a.build or hip else get_prebuilt(a.prebuilt, gpu, vision, **({"toolkit": 12} if cuda_tk == 12
+-                                                                                    else {}))
+-    if eng is not None and not hip and json.loads((eng / "BUILD.json").read_text()).get("source") != "local":
+-        pip_cuda_libs(cuda_tk)
+-        if vision != "none" and not (eng / VEXE).exists():
+-            warn("the ready-made engine has no image encoder: compiling it")
+-            eng = None
+-        else:
+-            vision = prebuilt_vision(json.loads((eng / "BUILD.json").read_text()), gpu, vision)
+-    if eng is None:
+-        eng = build_engine_hip(gpu, llama, vision) if hip else build_engine(gpu, vision, a.yes, llama, toolkit=cuda_tk)
++    eng = Path(os.environ["STRATA_ENGINE_DIR"])
+     meta = json.loads((eng / "BUILD.json").read_text())
+     if hip and WIN:                                    # the ready-made engine's rocm/bin, first on the engine's PATH
+         lib_dirs = [str(d) for d in hip_lib_dirs(eng)]

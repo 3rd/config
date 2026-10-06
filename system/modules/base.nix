@@ -10,7 +10,10 @@
 {
   # nix
   nix = {
+    package = pkgs.nix.appendPatches [ ../overlays/nix-reject-http.patch ];
+    envVars.NIX_CURL_FLAGS = "--proto -http --proto-redir -http";
     settings = {
+      allow-http = false;
       experimental-features = [
         "nix-command"
         "flakes"

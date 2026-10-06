@@ -16,7 +16,7 @@ let
   };
   qtctFonts = {
     fixed = ''"Berkeley Mono,9"'';
-    general = ''"DejaVu Sans,9"'';
+    general = ''"Noto Sans,9"'';
   };
 in
 {

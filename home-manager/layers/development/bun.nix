@@ -1,6 +1,8 @@
 { ... }:
 
 {
+  home.sessionVariables.BUN_OPTIONS = "--no-install";
+
   xdg.configFile.".bunfig.toml".text = ''
     telemetry = false
 

@@ -118,11 +118,12 @@ in
     config = with config.colors; {
       "bar/common" = {
         background = lib.mkDefault panel-background;
-        font-0 = lib.mkDefault "DejaVu Sans:size=12;3";
+        font-0 = lib.mkDefault "Noto Sans:size=12;3";
         font-1 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-2 = lib.mkDefault "Symbols Nerd Font:size=12;3";
         font-3 = lib.mkDefault "Font Awesome 7 Brands:size=12;3";
         font-4 = lib.mkDefault "Font Awesome 7 Free Solid:size=12;3";
+        font-5 = lib.mkDefault "DejaVu Sans:size=12;3";
       };
       "bar/top" = {
         "inherit" = "bar/common";
@@ -321,7 +322,7 @@ in
       # };
       "module/task" = {
         type = "custom/script";
-        exec = "WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki $HOME/.config/polybar/task.sh";
+        exec = "TASK_ERROR_COLOR=${red-light} WIKI_ROOT=$HOME/brain/wiki TASK_ROOT=$HOME/brain/wiki $HOME/.config/polybar/task.sh";
         format-background = gray-dark;
         format-foreground = foreground;
         format-padding = 2;

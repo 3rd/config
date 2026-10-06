@@ -1,0 +1,940 @@
+--- a/tools/calibrate.py
++++ b/tools/calibrate.py
+@@ -33,6 +33,11 @@
+ PCIE_FRACS = (0.0, 0.2, 0.35, 0.55, 0.75)
+ SPEC_MIN_PS = (0.3, 0.5, 0.7)
+ MAX_NEW = 128
++MAX_FIT_STARTS = 8
++MAX_RESERVE_STARTS = 3
++KV_RESIDENT_MIN = 20480
++FIT_VALUES = ("--kv-resident", "--spec", "--vram-reserve-mib")
++FIT_INPUTS = FIT_VALUES + ("--max-context", "--kv", "--mtp", "--expert-cache", "--prefill")
+ PROMPTS = (
+     "Write a Python function that merges two sorted lists into one sorted list, with a docstring and two tests.",
+     "Explain in two paragraphs how a refrigerator moves heat from inside to outside.",
+@@ -102,9 +107,10 @@
+             self.rate()
+ 
+ 
+-def run(cfg: dict, say=print, start_engine=None) -> dict:
++def run(cfg: dict, say=print, start_engine=None, previousFit=None) -> dict:
+     """Measure on the engine `cfg` describes; returns {"settings": {flag: value}, "report": {...}}.
+     `start_engine(args)` returns a started engine (serve.server.StrataEngine or a stand-in in tests)."""
++    started = time.time()
+     if start_engine is None:
+         from serve.server import StrataEngine, child_env
+ 
+@@ -119,7 +125,181 @@
+     tok = ST.Tokenizer(toks, (tpath / "merges.txt").read_text(encoding="utf-8").split("\n"),
+                        json.loads((tpath / "token_type.json").read_text()))
+     ids_list = [chat_ids(tok, p) for p in PROMPTS]
+-    return measure(engine_args(cfg), ids_list, start_engine, say)
++    fitIds = ids_list + [chat_ids(tok, "Summarize this fictional report in three sentences:\n" +
++                                 "The lighthouse keeper records the weather, repairs the lamps, and checks each boat's arrival.\n" * 32)]
++    args = engine_args(cfg)
++    if not supportsFit(args):
++        say("  Startup fitting is unavailable for this custom engine layout; measuring its existing configuration.")
++        return measure(args, ids_list, start_engine, say)
++
++    if hasMatchingFit(args, previousFit):
++        args = apply(args, previousFit["baseline"])
++
++    baseline = readFitInputs(args)
++    reserve = int(arg_value(args, "--vram-reserve-mib") or "700")
++    fitted, engine, attempts = findStartupFit(apply(args, {}), fitIds, start_engine, reserve, cfg.get("log"), say)
++    result = measure(fitted, ids_list, start_engine, say, initialEngine=engine)
++    settings = {flag: arg_value(fitted, flag) for flag in FIT_VALUES}
++    settings["--vram-elastic"] = True
++    result["settings"].update(settings)
++    selected = apply(engine_args(cfg), result["settings"])
++    selected, engine, finalAttempts = findStartupFit(selected, fitIds, start_engine, reserve, cfg.get("log"), say,
++                                                    shouldTryProfiles=False, maxStarts=MAX_RESERVE_STARTS)
++    try:
++        rate = Session(engine, fitIds).rate()
++        if rate <= 0:
++            raise RuntimeError("the selected configuration did not produce a measurable generation")
++
++        free = readFreeVram(engine)
++        if free < reserve:
++            raise VramFitError(f"the final generation left {free} MiB free; {reserve} MiB is required")
++    finally:
++        engine.close()
++
++    result["settings"]["--vram-reserve-mib"] = arg_value(selected, "--vram-reserve-mib")
++    fitSettings = {flag: result["settings"][flag] for flag in (*FIT_VALUES, "--vram-elastic")}
++    result["fit"] = {"baseline": baseline, "settings": fitSettings}
++    result["report"].update(fit_attempts=attempts, finalAttempts=finalAttempts,
++                            vram_free_mib=free, reserve_mib=reserve, tok_s=round(rate, 1),
++                            seconds=round(time.time() - started))
++    say(f"  Verified the selected configuration after a cold start and generation: {free} MiB free "
++        f"(target {reserve} MiB), {rate:.1f} tok/s.")
++    return result
++
++
++def supportsFit(args: list[str]) -> bool:
++    unsupported = ("--layer-split", "--resident-experts", "--peer-device", "--expert-cache-device1",
++                   "--expert-cache-device2", "--expert-cache-device3")
++    return ("--native" in args and arg_value(args, "--expert-cache") == "auto"
++            and not any(flag in args for flag in unsupported))
++
++
++def readFitInputs(args: list[str]) -> dict:
++    return {**{flag: arg_value(args, flag) for flag in FIT_INPUTS}, "--vram-elastic": "--vram-elastic" in args}
++
++
++def hasMatchingFit(args: list[str], fit) -> bool:
++    if not isinstance(fit, dict):
++        return False
++
++    baseline, settings = fit.get("baseline"), fit.get("settings")
++    if not isinstance(baseline, dict) or set(baseline) != set((*FIT_INPUTS, "--vram-elastic")):
++        return False
++    if not all(value is None or isinstance(value, str) for flag, value in baseline.items() if flag != "--vram-elastic"):
++        return False
++    if not isinstance(baseline["--vram-elastic"], bool) or not isinstance(settings, dict):
++        return False
++    if set(settings) != set((*FIT_VALUES, "--vram-elastic")) or settings["--vram-elastic"] is not True:
++        return False
++    if not all(value is None or isinstance(value, str) for flag, value in settings.items() if flag != "--vram-elastic"):
++        return False
++    if any(value is not None and (not value.isascii() or not value.isdigit())
++           for flag in FIT_VALUES for value in (baseline[flag], settings[flag])):
++        return False
++    if int(settings["--vram-reserve-mib"] or "700") < int(baseline["--vram-reserve-mib"] or "700"):
++        return False
++
++    current = readFitInputs(args)
++    return all(value == baseline[flag] or (flag in settings and value == settings[flag])
++               for flag, value in current.items())
++
++
++class VramFitError(RuntimeError):
++    pass
++
++
++def readFreeVram(engine) -> int:
++    free = engine.vram(0).get("vram_free_mib")
++    if not isinstance(free, int) or isinstance(free, bool) or free < 0:
++        raise RuntimeError("the engine did not report valid free-VRAM telemetry")
++    return free
++
++
++def buildFitProfiles(args: list[str]) -> list[list[str]]:
++    profiles = [list(args)]
++    resident = int(arg_value(args, "--kv-resident") or "0")
++    if resident > KV_RESIDENT_MIN:
++        args = with_arg(args, "--kv-resident", str(KV_RESIDENT_MIN))
++        profiles.append(args)
++
++    depth = int(arg_value(args, "--spec") or "1")
++    for value in (2, 1):
++        if depth > value:
++            args = with_arg(args, "--spec", str(value))
++            profiles.append(args)
++            depth = value
++    return profiles
++
++
++def findStartupFit(args, idsList, startEngine, reserve, log, say, *, shouldTryProfiles=True, maxStarts=MAX_FIT_STARTS):
++    from serve.server import EngineStuck
++
++    args = list(args)
++    if "--vram-elastic" not in args:
++        args.append("--vram-elastic")
++
++    profiles = buildFitProfiles(args) if shouldTryProfiles else [args]
++    attempts = []
++    for profile in profiles:
++        candidate = profile
++        for _ in range(MAX_RESERVE_STARTS):
++            if len(attempts) >= maxStarts:
++                break
++
++            since = Path(log).stat().st_size if log and Path(log).is_file() else 0
++            engine = None
++            isFit = False
++            summary = {flag: arg_value(candidate, flag) for flag in FIT_VALUES}
++            say(f"  Checking startup fit {len(attempts) + 1}/{maxStarts}: "
++                + ", ".join(f"{flag} {value}" for flag, value in summary.items() if value is not None))
++            attempt = {"settings": summary}
++            attempts.append(attempt)
++            try:
++                engine = startEngine(candidate)
++                if not engine.info.get("vram_elastic"):
++                    raise VramFitError("the automatic expert cache has no elastic VRAM allocation")
++
++                rate = Session(engine, idsList).rate()
++                if rate <= 0:
++                    raise RuntimeError("the startup candidate did not produce a measurable generation")
++
++                free = readFreeVram(engine)
++                attempt["vram_free_mib"] = free
++                if free >= reserve:
++                    isFit = True
++                    return candidate, engine, attempts
++
++                attempt["error"] = f"{free} MiB free after generation; target {reserve} MiB"
++                allocatedReserve = int(arg_value(candidate, "--vram-reserve-mib") or "700")
++                adjusted = allocatedReserve + reserve - free + 64
++                candidate = with_arg(candidate, "--vram-reserve-mib", str(adjusted))
++                say(f"    {attempt['error']}; increasing the cache reserve to {adjusted} MiB.")
++            except Exception as error:
++                if isinstance(error, EngineStuck):
++                    raise
++
++                reason = engine_error(log, since) or str(error)
++                isGpuOom = ("out of memory" in reason.lower()
++                            and any(marker in reason for marker in ("CUDA", "cuda", "VRAM", "native head upload", "strata mtp")))
++                gpuAllocationErrors = ("session state allocation failed", "no VRAM is left for the expert cache",
++                                       "mtp: the 512 experts do not fit in VRAM", "mtp: the K/V state does not fit",
++                                       "mtp: buffers do not fit", "mtp: the draft logits do not fit",
++                                       "mtp: the draft head does not fit")
++                isMemoryFailure = (isinstance(error, VramFitError) or isGpuOom
++                                   or any(marker in reason for marker in gpuAllocationErrors))
++                if not isMemoryFailure:
++                    raise
++
++                attempt["error"] = reason
++                say(f"    This configuration does not fit: {reason}")
++                break
++            finally:
++                if engine is not None and not isFit:
++                    engine.close()
++
++    raise VramFitError(f"no configuration passed startup, generation, and the {reserve} MiB free-VRAM target "
++                       f"within {len(attempts)} fit attempts; model, context, KV precision, and generation limits "
++                       "were kept unchanged. Last failure: " + attempts[-1]["error"])
+ 
+ 
+ def engine_args(cfg: dict) -> list[str]:
+@@ -145,12 +325,12 @@
+     return next((x for x in reversed(lines) if x.startswith(("strata", "ERR"))), lines[-1] if lines else None)
+ 
+ 
+-def measure(base_args: list[str], ids_list, start_engine, say=print) -> dict:
++def measure(base_args: list[str], ids_list, start_engine, say=print, initialEngine=None) -> dict:
+     t0 = time.time()
+     report: dict = {}
+     say("  Loading the model for the measurements ...")
+     base_args = apply(base_args, {})                   # the product defaults: what the measurements must beat
+-    eng = start_engine(base_args)
++    eng = initialEngine if initialEngine is not None else start_engine(base_args)
+     try:
+         info = dict(getattr(eng, "info", {}) or {})
+         d_pcie = float(info.get("pcie_frac", 0.55))
+@@ -183,7 +363,7 @@
+                       min_p_sweep={str(k): v for k, v in by_minp.items()},
+                       confirm={f"{k[0]}/{k[1]}": v for k, v in confirm.items()})
+     finally:
+-        close(eng)
++        eng.close()
+     settings = {}
+     if chosen != dflt:
+         settings["--pcie-frac"] = f"{chosen[0]:.2f}"
+@@ -202,7 +382,7 @@
+                 by_workers[w] = [sw.rate(), sw.rate()]
+                 say(f"    {w} workers: {statistics.median(by_workers[w]):.1f} tok/s")
+             finally:
+-                close(e)
++                e.close()
+         w_best = pick(by_workers, d_workers)
+         report["workers"] = {str(k): v for k, v in by_workers.items()}
+         if w_best != d_workers:
+@@ -215,29 +395,22 @@
+     return {"settings": settings, "report": report}
+ 
+ 
+-def close(eng):
+-    proc = getattr(eng, "proc", None)
+-    if proc is None:
+-        return
+-    try:
+-        proc.stdin.write("QUIT\n")
+-        proc.stdin.flush()
+-        proc.stdin.close()
+-        proc.wait(60)
+-    except Exception:
+-        proc.kill()
+-
+-
+ DEFAULTS = {"--pcie-frac": None, "--spec-min-p": "0.5", "--pool-workers": None}   # None: the engine's own choice
+ 
+ 
+ def apply(args: list[str], settings: dict) -> list[str]:
+-    """`args` with the calibrated settings; a setting the calibration did not change goes back to the product
+-    default (setup's --spec-min-p 0.5, the engine's own PCIe share and worker count), so an older calibration's
+-    values never linger."""
++    """`args` with calibrated settings; absent throughput settings return to the product defaults (setup's
++    --spec-min-p 0.5, the engine's own PCIe share and worker count). Fit arguments change only when supplied."""
+     out = list(args)
+     for flag, default in DEFAULTS.items():
+         out = with_arg(out, flag, settings.get(flag, default))
++    for flag in FIT_VALUES:
++        if flag in settings:
++            out = with_arg(out, flag, settings[flag])
++    if "--vram-elastic" in settings:
++        out = [value for value in out if value != "--vram-elastic"]
++        if settings["--vram-elastic"]:
++            out.append("--vram-elastic")
+     return out
+ 
+ 
+--- a/tools/test_calibrate.py
++++ b/tools/test_calibrate.py
+@@ -6,6 +6,9 @@
+ from __future__ import annotations
+ 
+ import json
++import io
++import contextlib
++import importlib.util
+ import os
+ import sys
+ import tempfile
+@@ -40,6 +43,9 @@
+             yield 1
+         self.last = {"generated": max_new, "decode_ms": max_new / rate * 1000.0}
+ 
++    def close(self):
++        pass
++
+ 
+ BASE = ["--pack", "p", "--spec", "4", "--spec-min-p", "0.5", "--max-context", "8192"]
+ 
+@@ -151,21 +157,353 @@
+         self.assertEqual(CAL.pick({}, "a"), "a")
+ 
+ 
++FIT_BASE = ["--native", "model.gguf", "--pack", "p", "--expert-cache", "auto", "--prefill", "auto",
++            "--mtp", "mtp", "--spec", "4", "--spec-min-p", "0.5", "--max-context", "65536",
++            "--kv", "int8", "--kv-resident", "32768", "--vram-reserve-mib", "2048"]
++
++
++class FitProcess:
++    def __init__(self):
++        self.stdin = io.StringIO()
++        self.stdout = io.StringIO()
++        self.isRunning = True
++
++    def wait(self, timeout=None):
++        self.isRunning = False
++        return 0
++
++    def kill(self):
++        self.isRunning = False
++
++
++class FitEngine(FakeEngine):
++    def __init__(self, args, free=2048, error=None):
++        super().__init__(args, lambda f, p, w: 50.0, info_workers=1)
++        self.proc = FitProcess()
++        self.log = io.StringIO()
++        self.info["vram_elastic"] = 1
++        self.free = free
++        self.error = error
++        self.generations = 0
++        self.promptLengths = []
++
++    def generate(self, ids, max_new, sampling, cancel):
++        if self.error:
++            raise self.error
++
++        self.generations += 1
++        self.promptLengths.append(len(ids))
++        yield from super().generate(ids, max_new, sampling, cancel)
++
++    def vram(self, reserve):
++        if reserve != 0:
++            raise AssertionError("the telemetry probe must not resize the cache")
++        return {"vram_free_mib": self.free}
++
++    def close(self):
++        self.proc.wait()
++        self.proc.stdin.close()
++        self.proc.stdout.close()
++        self.log.close()
++
++
++class StartupFit(unittest.TestCase):
++    def runFit(self, start_engine, args=FIT_BASE, previousFit=None):
++        with tempfile.TemporaryDirectory() as directory:
++            path = Path(directory)
++            (path / "vocab.json").write_text(json.dumps({"a": 0}))
++            (path / "merges.txt").write_text("")
++            (path / "token_type.json").write_text(json.dumps([1]))
++            tokenizer = type("ST", (), {"Tokenizer": lambda *a: type("T", (), {"encode": lambda s, t, **k: [0] * len(t.split())})()})
++            with mock.patch.dict(sys.modules, {"strata_tokenizer": tokenizer}):
++                return CAL.run({"tokenizer": directory, "args": args, "gpu": 0}, say=lambda *_: None,
++                               start_engine=start_engine, previousFit=previousFit)
++
++    def assertClosed(self, engines):
++        for engine in engines:
++            self.assertFalse(engine.proc.isRunning)
++            self.assertTrue(engine.proc.stdin.closed)
++            self.assertTrue(engine.proc.stdout.closed)
++            self.assertTrue(engine.log.closed)
++
++    def test_head_oom_finds_target_only_decode_without_changing_quality_contract(self):
++        starts, engines = [], []
++
++        def start(args):
++            starts.append(args)
++            if int(CAL.arg_value(args, "--spec")) > 1:
++                raise RuntimeError("strata generate: native head upload: out of memory")
++
++            engine = FitEngine(args)
++            engines.append(engine)
++            return engine
++
++        result = self.runFit(start)
++        self.assertEqual([CAL.arg_value(args, "--spec") for args in starts], ["4", "4", "2", "1", "1"])
++        self.assertEqual(result["settings"]["--kv-resident"], "20480")
++        self.assertEqual(result["settings"]["--spec"], "1")
++        self.assertEqual(result["report"]["vram_free_mib"], 2048)
++        self.assertEqual(len(result["report"]["fit_attempts"]), 4)
++        for args in starts:
++            self.assertEqual(CAL.arg_value(args, "--native"), "model.gguf")
++            self.assertEqual(CAL.arg_value(args, "--max-context"), "65536")
++            self.assertEqual(CAL.arg_value(args, "--kv"), "int8")
++            self.assertEqual(CAL.arg_value(args, "--vram-reserve-mib"), "2048")
++            self.assertNotIn("--max-new", args)
++        self.assertGreater(engines[-1].generations, 0)
++        self.assertTrue(any(length > 64 for length in engines[-1].promptLengths))
++        self.assertTrue(any(length <= 64 for length in engines[-1].promptLengths))
++        self.assertClosed(engines)
++
++    def test_measured_headroom_deficit_increases_reserve_and_verifies_saved_arguments(self):
++        starts, engines = [], []
++
++        def start(args):
++            starts.append(args)
++            reserve = int(CAL.arg_value(args, "--vram-reserve-mib"))
++            engine = FitEngine(args, free=reserve - 384)
++            engines.append(engine)
++            return engine
++
++        result = self.runFit(start)
++        self.assertEqual(result["settings"]["--vram-reserve-mib"], "2496")
++        self.assertEqual(starts[-1], CAL.apply(FIT_BASE, result["settings"]))
++        self.assertEqual(result["report"]["reserve_mib"], 2048)
++        self.assertEqual(result["report"]["vram_free_mib"], 2112)
++        self.assertEqual(CAL.arg_value(starts[-1], "--expert-cache"), "auto")
++        self.assertClosed(engines)
++
++    def test_fit_search_has_a_finite_startup_budget(self):
++        engines = []
++
++        def start(args):
++            engine = FitEngine(args, free=10)
++            engines.append(engine)
++            return engine
++
++        with self.assertRaisesRegex(CAL.VramFitError, "within 8 fit attempts"):
++            CAL.findStartupFit(FIT_BASE, [[0]], start, 2048, None, lambda *_: None)
++        self.assertEqual(len(engines), 8)
++        self.assertClosed(engines)
++
++    def test_cold_start_combines_the_fitted_reserve_and_measured_worker_count(self):
++        starts, engines = [], []
++
++        def start(args):
++            starts.append(args)
++            engine = FitEngine(args, free=int(CAL.arg_value(args, "--vram-reserve-mib")) - 384)
++            engine.info["pool_workers"] = 6
++            engine.workers = int(CAL.arg_value(args, "--pool-workers") or "6")
++            engine.speed = lambda f, p, workers: 60.0 if workers == 3 else 50.0
++            engines.append(engine)
++            return engine
++
++        result = self.runFit(start)
++        self.assertEqual(result["settings"]["--pool-workers"], "3")
++        self.assertEqual(result["settings"]["--vram-reserve-mib"], "2496")
++        self.assertEqual(starts[-1], CAL.apply(FIT_BASE, result["settings"]))
++        self.assertClosed(engines)
++
++    def test_unrelated_generation_error_stops_and_releases_the_candidate(self):
++        engine = FitEngine(FIT_BASE, error=ValueError("invalid request"))
++        with self.assertRaisesRegex(ValueError, "invalid request"):
++            CAL.findStartupFit(FIT_BASE, [[0]], lambda args: engine, 2048, None, lambda *_: None)
++        self.assertClosed([engine])
++
++    def test_previous_log_oom_does_not_mask_a_new_unrelated_startup_error(self):
++        with tempfile.TemporaryDirectory() as directory:
++            log = Path(directory) / "engine.log"
++            log.write_text("strata generate: native head upload: out of memory\n")
++            starts = []
++
++            def start(args):
++                starts.append(args)
++                with log.open("a") as output:
++                    output.write("strata generate: model tensor is missing\n")
++                raise RuntimeError("engine exited before it was ready")
++
++            with self.assertRaisesRegex(RuntimeError, "engine exited"):
++                CAL.findStartupFit(FIT_BASE, [[0]], start, 2048, str(log), lambda *_: None)
++            self.assertEqual(len(starts), 1)
++
++    def test_missing_vram_telemetry_stops_instead_of_claiming_fit(self):
++        engine = FitEngine(FIT_BASE, free=None)
++        with self.assertRaisesRegex(RuntimeError, "valid free-VRAM telemetry"):
++            CAL.findStartupFit(FIT_BASE, [[0]], lambda args: engine, 2048, None, lambda *_: None)
++        self.assertClosed([engine])
++
++    def test_host_memory_error_does_not_trigger_gpu_fit_retries(self):
++        starts = []
++
++        def start(args):
++            starts.append(args)
++            raise RuntimeError("strata generate: host expert arena: out of memory")
++
++        with self.assertRaisesRegex(RuntimeError, "host expert arena"):
++            CAL.findStartupFit(FIT_BASE, [[0]], start, 2048, None, lambda *_: None)
++        self.assertEqual(len(starts), 1)
++
++    def test_mtp_allocation_failures_find_a_target_only_configuration(self):
++        reasons = ("mtp: the 512 experts do not fit in VRAM", "mtp: the K/V state does not fit",
++                   "mtp: buffers do not fit", "mtp: the draft logits do not fit", "mtp: the draft head does not fit")
++        for reason in reasons:
++            with self.subTest(reason=reason):
++                engines = []
++
++                def start(args):
++                    if int(CAL.arg_value(args, "--spec")) > 1:
++                        raise RuntimeError("strata generate: " + reason)
++
++                    engine = FitEngine(args)
++                    engines.append(engine)
++                    return engine
++
++                result = self.runFit(start)
++                self.assertEqual(result["settings"]["--spec"], "1")
++                self.assertClosed(engines)
++
++    def test_empty_generation_cannot_pass_startup_fit(self):
++        engine = FitEngine(FIT_BASE)
++        engine.generate = lambda *args: iter(())
++        with self.assertRaisesRegex(RuntimeError, "did not produce a measurable generation"):
++            CAL.findStartupFit(FIT_BASE, [[0]], lambda args: engine, 2048, None, lambda *_: None)
++        self.assertClosed([engine])
++
++    def test_cold_start_failure_prevents_a_successful_result(self):
++        engines = []
++
++        def start(args):
++            if engines:
++                raise RuntimeError("strata generate: native head upload: out of memory")
++
++            engine = FitEngine(args)
++            engines.append(engine)
++            return engine
++
++        with self.assertRaisesRegex(CAL.VramFitError, "within 1 fit attempts"):
++            self.runFit(start)
++        self.assertClosed(engines)
++
++    def test_recalibration_restores_the_original_fit_constraints(self):
++        fit = {"baseline": CAL.readFitInputs(FIT_BASE),
++               "settings": {"--spec": "1", "--kv-resident": "20480", "--vram-reserve-mib": "2496",
++                            "--vram-elastic": True}}
++        args = CAL.apply(FIT_BASE, fit["settings"])
++        starts, engines = [], []
++
++        def start(args):
++            starts.append(args)
++            engine = FitEngine(args)
++            engines.append(engine)
++            return engine
++
++        result = self.runFit(start, args, fit)
++        self.assertEqual(CAL.arg_value(starts[0], "--spec"), "4")
++        self.assertEqual(CAL.arg_value(starts[0], "--kv-resident"), "32768")
++        self.assertEqual(CAL.arg_value(starts[0], "--vram-reserve-mib"), "2048")
++        self.assertEqual(result["settings"]["--spec"], "4")
++        self.assertClosed(engines)
++
++    def test_changed_constraints_or_invalid_records_do_not_reuse_fit(self):
++        fit = {"baseline": CAL.readFitInputs(FIT_BASE),
++               "settings": {"--spec": "1", "--kv-resident": "20480", "--vram-reserve-mib": "2496",
++                            "--vram-elastic": True}}
++        self.assertTrue(CAL.hasMatchingFit(FIT_BASE, fit))
++        self.assertTrue(CAL.hasMatchingFit(CAL.apply(FIT_BASE, fit["settings"]), fit))
++        for flag, value in (("--vram-reserve-mib", "3072"), ("--kv", "q4_0"), ("--max-context", "131072")):
++            self.assertFalse(CAL.hasMatchingFit(CAL.with_arg(FIT_BASE, flag, value), fit))
++        self.assertFalse(CAL.hasMatchingFit(FIT_BASE, {"baseline": {}, "settings": {}}))
++        self.assertFalse(CAL.hasMatchingFit(FIT_BASE, {**fit, "settings": {**fit["settings"], "--spec": 1}}))
++        self.assertFalse(CAL.hasMatchingFit(FIT_BASE, {**fit, "settings": {**fit["settings"], "--spec": "invalid"}}))
++        self.assertFalse(CAL.hasMatchingFit(FIT_BASE, {**fit, "settings": {**fit["settings"], "--vram-reserve-mib": "700"}}))
++
++    def test_custom_gpu_and_resident_layouts_keep_speed_only_calibration(self):
++        for flag in ("--layer-split", "--resident-experts", "--peer-device", "--expert-cache-device1",
++                     "--expert-cache-device2", "--expert-cache-device3"):
++            with self.subTest(flag=flag):
++                self.assertFalse(CAL.supportsFit([*FIT_BASE, flag, "1"]))
++        self.assertFalse(CAL.supportsFit(CAL.with_arg(FIT_BASE, "--expert-cache", "256")))
++
++
++class PackagedFit(unittest.TestCase):
++    def setUp(self):
++        self.stack = contextlib.ExitStack()
++        self.addCleanup(self.stack.close)
++        directory = self.stack.enter_context(tempfile.TemporaryDirectory())
++        self.root = Path(directory)
++        self.stack.enter_context(mock.patch.dict(os.environ, {"STRATA_ROOT": directory, "STRATA_ASSETS_DIR": str(ROOT)}))
++        spec = importlib.util.spec_from_file_location("fit_setup", ROOT / "setup.py")
++        self.setup = importlib.util.module_from_spec(spec)
++        spec.loader.exec_module(self.setup)
++        self.stack.enter_context(mock.patch.object(self.setup, "hardware_key", return_value="synthetic-fit-hardware"))
++        self.stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
++        self.path = self.root / "strata-test.json"
++        self.config = {"exe": "synthetic-engine", "args": FIT_BASE, "tokenizer": directory,
++                       "sampling": {"temperature": 0.6}, "custom": "keep"}
++        self.path.write_text(json.dumps(self.config))
++        (self.root / "vocab.json").write_text(json.dumps({"a": 0}))
++        (self.root / "merges.txt").write_text("")
++        (self.root / "token_type.json").write_text(json.dumps([1]))
++        tokenizer = type("ST", (), {"Tokenizer": lambda *a: type("T", (), {"encode": lambda s, t, **k: [0] * len(t.split())})()})
++        self.stack.enter_context(mock.patch.dict(sys.modules, {"strata_tokenizer": tokenizer}))
++
++    def test_actual_fit_is_saved_reused_and_invalidated_by_new_constraints(self):
++        from serve import server
++        self.stack.enter_context(mock.patch.object(server, "StrataEngine", side_effect=lambda exe, args, **kw:
++                                FitEngine(args, free=int(CAL.arg_value(args, "--vram-reserve-mib")) - 384)))
++        self.assertTrue(self.setup.calibrate_config(self.path))
++        written = json.loads(self.path.read_text())
++        self.assertEqual(CAL.arg_value(written["args"], "--vram-reserve-mib"), "2496")
++        self.assertEqual(written["sampling"], self.config["sampling"])
++        self.assertEqual(written["custom"], "keep")
++        self.assertNotIn("max_tokens", written)
++        self.assertNotIn("reasoning_budget_tokens", written)
++        record = self.setup.saved_calibration(written)
++        self.assertEqual(record["fit"]["baseline"], CAL.readFitInputs(FIT_BASE))
++        self.assertEqual(record["settings"], self.setup.setup_calibration(self.config, False)["settings"])
++        changed = {**written, "args": CAL.with_arg(written["args"], "--vram-reserve-mib", "3072")}
++        self.assertIsNone(self.setup.setup_calibration(changed, False))
++
++    def test_exhausted_fit_keeps_configuration_and_saved_settings_unchanged(self):
++        from serve import server
++        self.stack.enter_context(mock.patch.object(server, "StrataEngine", side_effect=RuntimeError("native head upload: out of memory")))
++        self.setup.save_settings({"custom": "keep"})
++        config_bytes = self.path.read_bytes()
++        settings_bytes = self.setup.settings_path().read_bytes()
++        self.assertFalse(self.setup.calibrate_config(self.path))
++        self.assertEqual(self.path.read_bytes(), config_bytes)
++        self.assertEqual(self.setup.settings_path().read_bytes(), settings_bytes)
++
++    def test_explicit_reset_forgets_only_the_selected_models_calibration(self):
++        record = {"settings": {"--vram-reserve-mib": "2496"}, "custom": "keep"}
++        self.setup.save_settings({"calibration": {"synthetic-fit-hardware": record, "other-model": record},
++                                 "custom": "keep"})
++        self.assertTrue(self.setup.discardCalibration(self.config))
++        self.assertIsNone(self.setup.saved_calibration(self.config))
++        self.assertEqual(self.setup.load_settings(), {"calibration": {"other-model": record}, "custom": "keep"})
++
++
+ class SetupIntegration(unittest.TestCase):
+     def setUp(self):
+         self.tmp = tempfile.TemporaryDirectory()
+-        self.old = {k: os.environ.get(k) for k in ("APPDATA", "XDG_CONFIG_HOME")}
++        self.old = {k: os.environ.get(k) for k in ("APPDATA", "XDG_CONFIG_HOME", "STRATA_ROOT", "STRATA_ASSETS_DIR", "STRATA_ENGINE_DIR")}
+         os.environ["APPDATA"] = self.tmp.name
+         os.environ["XDG_CONFIG_HOME"] = self.tmp.name
++        os.environ["STRATA_ROOT"] = self.tmp.name
++        os.environ["STRATA_ASSETS_DIR"] = str(ROOT)
++        os.environ["STRATA_ENGINE_DIR"] = self.tmp.name
++        self.engine = Path(self.tmp.name) / "strata"
++        self.engine.write_text("synthetic engine identity; never executed")
+         import setup as S
+         self.S = S
+-        self.saved = (S.gpu_info, S.cpu_info, S.ram_gb, CAL.run)
++        self.saved = (S.gpu_info, S.cpu_info, S.ram_gb, CAL.run, S.ROOT)
++        S.ROOT = Path(self.tmp.name)
+         S.gpu_info = lambda pick=None: {"name": "RTX Test", "vram_gb": 12.0, "arch": "120", "count": 1, "index": 0}
+         S.cpu_info = lambda: ("Test CPU", True, True)
+         S.ram_gb = lambda: 64.0
+ 
+     def tearDown(self):
+-        self.S.gpu_info, self.S.cpu_info, self.S.ram_gb, CAL.run = self.saved
++        self.S.gpu_info, self.S.cpu_info, self.S.ram_gb, CAL.run, self.S.ROOT = self.saved
+         for k, v in self.old.items():
+             if v is None:
+                 os.environ.pop(k, None)
+@@ -177,7 +515,7 @@
+         cfg_path = Path(self.tmp.name) / "strata-q2_0.json"
+         cfg = {"exe": "x", "args": list(BASE), "model_name": "qwen3.8-flash-next-q2_0"}
+         cfg_path.write_text(json.dumps(cfg))
+-        CAL.run = lambda c, say=print, start_engine=None: {"settings": {"--pcie-frac": "0.20"}, "report": {"tok_s": 61.2}}
++        CAL.run = lambda c, say=print, start_engine=None, previousFit=None: {"settings": {"--pcie-frac": "0.20"}, "report": {"tok_s": 61.2}}
+         self.assertTrue(self.S.calibrate_config(cfg_path))
+         written = json.loads(cfg_path.read_text())
+         self.assertEqual(CAL.arg_value(written["args"], "--pcie-frac"), "0.20")
+@@ -201,13 +539,13 @@
+         self.assertIsNone(self.S.saved_calibration({"args": BASE, "model_name": "m"}))
+ 
+     def test_failed_calibration_says_the_engines_reason(self):
+-        # #447: the engine's last error line is printed, and the --calibrate run repeats the failure before it starts
++        # #447: the engine's last error line is printed by the packaged --calibrate entrypoint.
+         import contextlib
+         import io
+         log = Path(self.tmp.name) / "strata-q2_0.log"
+         log.write_text("strata generate: an error of an earlier start\n", encoding="utf-8")
+         cfg_path = Path(self.tmp.name) / "strata-q2_0.json"
+-        cfg_path.write_text(json.dumps({"exe": "x", "args": list(BASE), "model_name": "m", "log": str(log)}))
++        cfg_path.write_text(json.dumps({"exe": str(self.engine), "tokenizer": self.tmp.name, "args": list(BASE), "model_name": "m", "log": str(log)}))
+ 
+         def boom(*a, **k):
+             with open(log, "a", encoding="utf-8") as f:
+@@ -220,14 +558,10 @@
+         self.assertIn("the engine said: strata generate: --expert-cache-remote with a layer split", out.getvalue())
+         self.assertNotIn("an earlier start", out.getvalue())
+         out = io.StringIO()
+-        with mock.patch.object(self.S, "ROOT", Path(self.tmp.name)), \
+-                mock.patch.object(self.S, "data_folder", lambda d: (Path(self.tmp.name) / "data", [])), \
+-                mock.patch.object(self.S, "update_installed_engine", lambda *a: None), \
+-                mock.patch.object(sys, "argv", ["setup.py", "--calibrate", "--no-start"]), \
++        with mock.patch.object(sys, "argv", ["setup.py", "--calibrate", "--config", str(cfg_path)]), \
+                 contextlib.redirect_stdout(out):
+-            self.assertEqual(self.S.main(), 0)
+-        self.assertIn("this PC is NOT tuned: the tuning failed (the reason is above); the model keeps the default "
+-                      "settings", out.getvalue())
++            self.assertEqual(self.S.main(), 1)
++        self.assertIn("the existing configuration is unchanged", out.getvalue())
+ 
+ 
+ if __name__ == "__main__":
+--- a/setup.py
++++ b/setup.py
+@@ -2940,16 +2940,18 @@
+     import calibrate as CAL
+     cfg = json.loads(cfg_path.read_text(encoding="utf-8-sig"))
+     say()
+-    say("  Tuning Strata for this PC: the output speed is measured with a few engine settings (the PCIe share, the")
+-    say("  draft depth, the CPU threads). It takes about 5-10 minutes; the PC is busy meanwhile.")
++    say("  Calibration first finds a configuration that starts and generates with the requested VRAM headroom,")
++    say("  then measures PCIe share, draft confidence, and CPU workers. Speed tuning takes about 5-10 minutes;")
++    say("  startup fitting can take longer. The model, context, KV precision, and generation limits stay unchanged.")
+     try:
+         since = os.path.getsize(cfg["log"]) if cfg.get("log") and os.path.isfile(cfg["log"]) else 0
+     except OSError:
+         since = 0
+     try:
+-        res = CAL.run(cfg, say=say)
++        previous = saved_calibration(cfg)
++        res = CAL.run(cfg, say=say, previousFit=(previous or {}).get("fit"))
+     except Exception as e:                             # never stops an install: the defaults stay
+-        warn(f"the tuning did not finish ({e}): the default settings stay")
++        warn(f"the tuning did not finish ({e}): the existing configuration is unchanged")
+         why = CAL.engine_error(cfg.get("log"), since)  # #447: the engine's own reason, not only "see the log"
+         if why:
+             say(f"       the engine said: {why}")
+@@ -2959,6 +2961,8 @@
+     st = load_settings()
+     st.setdefault("calibration", {})[hardware_key(cfg)] = {"settings": res["settings"], "tok_s": res["report"].get("tok_s"),
+                                                            "date": time.strftime("%Y-%m-%d")}
++    if "fit" in res:
++        st["calibration"][hardware_key(cfg)]["fit"] = res["fit"]
+     if not save_settings(st):
+         return False
+ 
+@@ -2973,7 +2977,14 @@
+ 
+ def saved_calibration(cfg: dict) -> dict | None:
+     """The settings an earlier calibration found for this PC and model, if any."""
+-    return (load_settings().get("calibration") or {}).get(hardware_key(cfg))
++    record = (load_settings().get("calibration") or {}).get(hardware_key(cfg))
++    if record and "fit" in record:
++        sys.path.insert(0, str(Path(os.environ["STRATA_ASSETS_DIR"]) / "tools"))
++        import calibrate as CAL
++        if not CAL.hasMatchingFit(CAL.engine_args(cfg), record["fit"]):
++            return None
++
++    return record
+ 
+ 
+ def setup_calibration(cfg: dict, hip: bool) -> dict | None:
+@@ -2986,6 +2997,21 @@
+     return saved_calibration(cfg)
+ 
+ 
++def discardCalibration(cfg: dict) -> bool:
++    settings = load_settings()
++    records = settings.get("calibration", {})
++    if not isinstance(records, dict):
++        warn("cannot reset calibration: settings.json calibration must be an object")
++        return False
++
++    key = hardware_key(cfg)
++    if key not in records:
++        return True
++
++    del records[key]
++    return save_settings(settings)
++
++
+ def upgrade_config(cfg_path: Path, cfg: dict) -> dict:
+     """Configs written before v0.1.13 read prompts in fixed 2048-token chunks; the engine now picks the chunk
+     itself (`--prefill auto`: up to 8192, as the free VRAM allows - about 2x faster on long prompts).  Under WSL,
+@@ -3597,6 +3623,8 @@
+     ap.add_argument("--calibrate", action="store_true",
+                     help="tune the packaged engine for this PC (about 5-10 minutes), without starting the server")
+     ap.add_argument("--config", help="absolute model config to tune with --calibrate")
++    ap.add_argument("--reset-calibration", dest="shouldResetCalibration", action="store_true",
++                    help="discard saved calibration for the model being prepared")
+     ap.add_argument("--draft-vocab", choices=list(DRAFT_VOCABS),
+                     help="the draft layer's tokens: cjk = with Chinese, Japanese and Korean (default), en = English "
+                          "and code only (~110 MiB less VRAM, English answers 1-2%% faster), cyrillic = English, code "
+@@ -3639,6 +3667,9 @@
+     if a.config and not a.calibrate:
+         ap.error("--config requires --calibrate")
+ 
++    if a.calibrate and a.shouldResetCalibration:
++        ap.error("--reset-calibration is a setup option; omit it when measuring")
++
+     if a.calibrate:
+         if not a.config or not Path(a.config).is_absolute():
+             ap.error("--calibrate requires --config with an absolute model config path")
+@@ -4405,6 +4436,9 @@
+     elif a.vision_tokens is not None:
+         warn("--vision-tokens: images are off for this model, so it is not used")
+     cfg_path = ROOT / f"strata-{tag.lower()}.json"
++    if a.shouldResetCalibration and not discardCalibration(cfg):
++        return 1
++
+     cal = setup_calibration(cfg, hip)                  # #566: Linux HIP too; the tuning is offered on NVIDIA only
+     if cal is not None:
+         sys.path.insert(0, str(ROOT / "tools"))
+--- a/serve/server.py
++++ b/serve/server.py
+@@ -455,26 +455,24 @@
+                                      stderr=self.log, text=True, encoding="utf-8", bufsize=1, env=env)
+         contain(self.proc)                               # ends with the server, however it ends (Windows)
+         self.max_context = 0
+-        for line in self.proc.stdout:
+-            if line.startswith("INFO "):
+-                for kv in line.split()[1:]:
+-                    k, _, v = kv.partition("=")
+-                    self.info[k] = int(v) if v.lstrip("-").isdigit() else v
+-            if line.startswith("READY"):
+-                f = line.split()
+-                self.max_context = int(f[1])
+-                self.can_stop = "stop" in f[2:]
+-                break
++        try:
++            for line in self.proc.stdout:
++                if line.startswith("INFO "):
++                    for kv in line.split()[1:]:
++                        k, _, v = kv.partition("=")
++                        self.info[k] = int(v) if v.lstrip("-").isdigit() else v
++                if line.startswith("READY"):
++                    f = line.split()
++                    self.max_context = int(f[1])
++                    self.can_stop = "stop" in f[2:]
++                    break
++        except BaseException:
++            loading.set()
++            self.close()
++            raise
+         loading.set()
+         if self.max_context <= 0:
+-            try:                                        # its pipes and our handle on its log (the log stays)
+-                self.proc.wait(timeout=5)
+-                self.proc.stdin.close()
+-                self.proc.stdout.close()
+-                if log:
+-                    self.log.close()
+-            except (OSError, subprocess.TimeoutExpired):
+-                pass
++            self.close()
+             raise RuntimeError("the engine exited before it was ready" + (f" (see {log})" if log else "") +
+                                start_failure_hint(log, log_start) + start_log_tail(log, log_start))
+         self.known_ctx = self.max_context   # survives a failed restart: requests keep their limit and restart it
+@@ -592,10 +590,7 @@
+                     self.__init__(*self.spawn)
+                     break
+                 except RuntimeError:
+-                    try:
+-                        self.proc.wait(timeout=60)
+-                    except (subprocess.TimeoutExpired, OSError):
+-                        pass
++                    self.close()
+                     if i == tries - 1:
+                         raise
+                     print(f"[strata] the engine did not start (try {i + 1} of {tries}); again in "
+@@ -1250,7 +1245,12 @@
+             if self.proc.poll() is not None:
+                 if self.pump is not None:
+                     self.pump.join(timeout=2)
+-                self.proc.stdin.close()
++
++                try:
++                    self.proc.stdin.close()
++                except BrokenPipeError:
++                    pass
++
+                 self.proc.stdout.close()
+                 if self.log not in (None, subprocess.DEVNULL):
+                     self.log.close()
+--- a/serve/test_server.py
++++ b/serve/test_server.py
+@@ -1205,6 +1205,26 @@
+ class StartFailureLog(unittest.TestCase):
+     """#496: whatever stopped the engine before READY, the error carries this start's last log lines."""
+ 
++    def test_broken_stdin_during_cleanup_keeps_the_startup_error_and_closes_resources(self):
++        import serve.server as server
++
++        class BrokenPipe(io.StringIO):
++            def close(self):
++                super().close()
++                raise BrokenPipeError
++
++        proc = mock.Mock(stdin=BrokenPipe(), stdout=io.StringIO())
++        proc.poll.return_value = 1
++        with tempfile.TemporaryDirectory() as directory:
++            log = Path(directory) / "strata.log"
++            with mock.patch.object(server.subprocess, "Popen", return_value=proc) as spawn, \
++                    mock.patch.object(server, "narrate_start", lambda *a, **k: None):
++                with self.assertRaisesRegex(RuntimeError, "exited before it was ready"):
++                    StrataEngine("strata", [], log=str(log))
++                self.assertTrue(spawn.call_args.kwargs["stderr"].closed)
++        self.assertTrue(proc.stdin.closed)
++        self.assertTrue(proc.stdout.closed)
++
+     def test_the_last_lines_of_this_start(self):
+         from serve.server import start_log_tail
+         d = tempfile.mkdtemp()
+@@ -2264,6 +2284,35 @@
+     """#344: while the engine restarts it is not alive (a request waits for the restart instead of reading
+     max_context 0), and a request that still meets max_context 0 gets a 503 "starting", not a 400 about its prompt."""
+ 
++    def test_interrupted_startup_reaps_the_child_and_closes_its_pipes(self):
++        from unittest import mock
++        import serve.server as server
++
++        class InterruptedPipe(io.StringIO):
++            def __iter__(self):
++                raise KeyboardInterrupt
++
++        class Process:
++            def __init__(self):
++                self.stdin = io.StringIO()
++                self.stdout = InterruptedPipe()
++                self.isReaped = False
++
++            def poll(self):
++                return 0 if self.isReaped else None
++
++            def wait(self, timeout=None):
++                self.isReaped = True
++                return 0
++
++        proc = Process()
++        with mock.patch.object(server.subprocess, "Popen", return_value=proc):
++            with self.assertRaises(KeyboardInterrupt):
++                StrataEngine("strata", [])
++        self.assertTrue(proc.isReaped)
++        self.assertTrue(proc.stdin.closed)
++        self.assertTrue(proc.stdout.closed)
++
+     def test_not_alive_until_ready(self):
+         from unittest import mock
+         import serve.server as server

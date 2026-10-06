@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+scratch_file=$(mktemp -t "vt.XXXXXXXX.slang")
+
+exec nvim "$scratch_file"

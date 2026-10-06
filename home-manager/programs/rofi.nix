@@ -15,8 +15,10 @@ in
 
   programs.rofi = {
     enable = true;
-    font = "DejaVu Sans 14";
-    location = "center";
+    settings = {
+      font = "Noto Sans 14";
+      location = 0;
+    };
     theme = {
       "*" = {
         accent = mkLiteral colors.blue-light;

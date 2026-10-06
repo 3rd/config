@@ -1,0 +1,932 @@
+diff --git a/server/api/rating/imdb-sonarr-proxy.ts b/server/api/rating/imdb-sonarr-proxy.ts
+new file mode 100644
+--- /dev/null
++++ b/server/api/rating/imdb-sonarr-proxy.ts
+@@ -0,0 +1,68 @@
++import ExternalAPI from '@server/api/externalapi';
++import type { IMDBRating } from '@server/api/rating/imdbRadarrProxy';
++import cacheManager from '@server/lib/cache';
++import { getAppVersion } from '@server/utils/appVersion';
++
++class IMDBSonarrProxy extends ExternalAPI {
++  constructor() {
++    super(
++      'https://skyhook.sonarr.tv/v1/tvdb',
++      {},
++      {
++        headers: { 'User-Agent': `Seerr/${getAppVersion()}` },
++        nodeCache: cacheManager.getCache('sonarr').data,
++        timeout: 10000,
++      }
++    );
++  }
++
++  public async getSeriesRatings(tvdbId: number, imdbId: string) {
++    const data = await this.get<unknown>(
++      `/shows/en/${tvdbId}`,
++      undefined,
++      43200
++    );
++    if (
++      typeof data !== 'object' ||
++      data === null ||
++      !('tvdbId' in data) ||
++      data.tvdbId !== tvdbId ||
++      !('imdbId' in data) ||
++      data.imdbId !== imdbId ||
++      !('title' in data) ||
++      typeof data.title !== 'string' ||
++      !('rating' in data)
++    ) {
++      return null;
++    }
++    const rating = data.rating;
++    if (
++      typeof rating !== 'object' ||
++      rating === null ||
++      !('value' in rating) ||
++      (typeof rating.value !== 'number' && typeof rating.value !== 'string') ||
++      !('count' in rating) ||
++      typeof rating.count !== 'number' ||
++      !Number.isInteger(rating.count) ||
++      rating.count <= 0
++    ) {
++      return null;
++    }
++    const score = Number(rating.value);
++    const isScoreValid = Number.isFinite(score) && score > 0 && score <= 10;
++    if (!isScoreValid) {
++      return null;
++    }
++
++    const ratings = {
++      title: data.title,
++      url: `https://www.imdb.com/title/${imdbId}`,
++      criticsScore: score,
++      criticsScoreCount: rating.count,
++    } satisfies IMDBRating;
++
++    return ratings;
++  }
++}
++
++export default IMDBSonarrProxy;
+diff --git a/server/api/rating/imdbRadarrProxy.ts b/server/api/rating/imdbRadarrProxy.ts
+--- a/server/api/rating/imdbRadarrProxy.ts
++++ b/server/api/rating/imdbRadarrProxy.ts
+@@ -165,6 +165,7 @@
+           Accept: 'application/json',
+         },
+         nodeCache: cacheManager.getCache('imdb').data,
++        timeout: 10000,
+       }
+     );
+   }
+diff --git a/server/routes/movie.ts b/server/routes/movie.ts
+--- a/server/routes/movie.ts
++++ b/server/routes/movie.ts
+@@ -184,6 +184,40 @@
+   }
+ });
+ 
++movieRoutes.get('/:id/ratings/imdb', async (req, res, next) => {
++  const tmdb = new TheMovieDb();
++  const imdbApi = new IMDBRadarrProxy();
++
++  try {
++    const movie = await tmdb.getMovie({ movieId: Number(req.params.id) });
++    const imdbId = movie.imdb_id;
++    const hasRatingId = typeof imdbId === 'string' && /^tt\d+$/.test(imdbId);
++    let imdbRatings = null;
++
++    if (hasRatingId) {
++      imdbRatings = await imdbApi.getMovieRatings(imdbId);
++    }
++
++    if (!imdbRatings) {
++      return next({ status: 404, message: 'IMDb ratings not found.' });
++    }
++
++    const ratings: RatingResponse = { imdb: imdbRatings };
++
++    return res.status(200).json(ratings);
++  } catch (error) {
++    logger.debug('Something went wrong retrieving movie IMDb ratings', {
++      label: 'API',
++      errorMessage: error instanceof Error ? error.message : String(error),
++      movieId: req.params.id,
++    });
++    return next({
++      status: 500,
++      message: 'Unable to retrieve movie IMDb ratings.',
++    });
++  }
++});
++
+ /**
+  * Endpoint combining RottenTomatoes and IMDB
+  */
+diff --git a/server/routes/tv.ts b/server/routes/tv.ts
+--- a/server/routes/tv.ts
++++ b/server/routes/tv.ts
+@@ -1,5 +1,7 @@
+ import { getMetadataProvider } from '@server/api/metadata';
++import IMDBSonarrProxy from '@server/api/rating/imdb-sonarr-proxy';
+ import RottenTomatoes from '@server/api/rating/rottentomatoes';
++import type { RatingResponse } from '@server/api/ratings';
+ import TheMovieDb from '@server/api/themoviedb';
+ import { ANIME_KEYWORD_ID } from '@server/api/themoviedb/constants';
+ import type { TmdbKeyword } from '@server/api/themoviedb/interfaces';
+@@ -221,5 +223,47 @@
+     });
+   }
+ });
++
++tvRoutes.get('/:id/ratings/imdb', async (req, res, next) => {
++  const tmdb = new TheMovieDb();
++  const imdbApi = new IMDBSonarrProxy();
++
++  try {
++    const tv = await tmdb.getTvShow({ tvId: Number(req.params.id) });
++    const { tvdb_id: tvdbId, imdb_id: imdbId } = tv.external_ids;
++    const hasRatingIds =
++      typeof tvdbId === 'number' &&
++      Number.isInteger(tvdbId) &&
++      tvdbId > 0 &&
++      typeof imdbId === 'string' &&
++      /^tt\d+$/.test(imdbId);
++    let imdbRatings = null;
++
++    if (hasRatingIds) {
++      imdbRatings = await imdbApi.getSeriesRatings(tvdbId, imdbId);
++    }
++
++    if (!imdbRatings) {
++      return next({
++        status: 404,
++        message: 'IMDb ratings not found.',
++      });
++    }
++
++    const ratings: RatingResponse = { imdb: imdbRatings };
++
++    return res.status(200).json(ratings);
++  } catch (error) {
++    logger.debug('Something went wrong retrieving series IMDb ratings', {
++      label: 'API',
++      errorMessage: error instanceof Error ? error.message : String(error),
++      tvId: req.params.id,
++    });
++    return next({
++      status: 500,
++      message: 'Unable to retrieve series IMDb ratings.',
++    });
++  }
++});
+ 
+ export default tvRoutes;
+diff --git a/src/components/Common/ImdbRating/index.tsx b/src/components/Common/ImdbRating/index.tsx
+new file mode 100644
+--- /dev/null
++++ b/src/components/Common/ImdbRating/index.tsx
+@@ -0,0 +1,137 @@
++import ImdbLogo from '@app/assets/services/imdb.svg';
++import Tooltip from '@app/components/Common/Tooltip';
++import defineMessages from '@app/utils/defineMessages';
++import axios from 'axios';
++import { useIntl } from 'react-intl';
++
++const messages = defineMessages('components.Common.ImdbRating', {
++  imdbFailed: 'Could not fetch IMDb rating',
++  imdbLoading: 'Fetching IMDb rating',
++  imdbRating: 'IMDb rating: {score}/10',
++  imdbUnavailable: 'IMDb rating unavailable',
++  imdbVotes: 'IMDb rating: {score}/10 – votes: {formattedCount}',
++});
++
++interface ImdbRatingProps {
++  ratings: unknown;
++  error: unknown;
++  isLoading: boolean;
++  variant: 'card' | 'detail';
++  imdbId?: string;
++}
++
++const readImdbRating = (ratings: unknown) => {
++  if (typeof ratings !== 'object' || ratings === null || !('imdb' in ratings)) {
++    return;
++  }
++
++  const imdb = ratings.imdb;
++  if (typeof imdb !== 'object' || imdb === null || !('criticsScore' in imdb)) {
++    return;
++  }
++
++  const score = imdb.criticsScore;
++  if (
++    typeof score !== 'number' ||
++    !Number.isFinite(score) ||
++    score <= 0 ||
++    score > 10
++  ) {
++    return;
++  }
++
++  let voteCount;
++
++  if (
++    'criticsScoreCount' in imdb &&
++    typeof imdb.criticsScoreCount === 'number' &&
++    Number.isInteger(imdb.criticsScoreCount) &&
++    imdb.criticsScoreCount > 0
++  ) {
++    voteCount = imdb.criticsScoreCount;
++  }
++
++  return { score, voteCount };
++};
++
++const ImdbRating = ({
++  ratings,
++  error,
++  isLoading,
++  variant,
++  imdbId,
++}: ImdbRatingProps) => {
++  const intl = useIntl();
++  const rating = readImdbRating(ratings);
++  const isRatingUnavailable =
++    axios.isAxiosError(error) && error.response?.status === 404;
++  let label = intl.formatMessage(messages.imdbUnavailable);
++
++  if (rating !== undefined) {
++    if (variant === 'detail' && rating.voteCount !== undefined) {
++      label = intl.formatMessage(messages.imdbVotes, {
++        score: rating.score,
++        formattedCount: intl.formatNumber(rating.voteCount, {
++          notation: 'compact',
++          compactDisplay: 'short',
++          maximumFractionDigits: 1,
++        }),
++      });
++    } else {
++      label = intl.formatMessage(messages.imdbRating, { score: rating.score });
++    }
++  } else if (isLoading) {
++    label = intl.formatMessage(messages.imdbLoading);
++  } else if (error !== undefined && !isRatingUnavailable) {
++    label = intl.formatMessage(messages.imdbFailed);
++  }
++
++  const content = (
++    <>
++      <ImdbLogo
++        className={variant === 'card' ? 'h-3 w-6' : 'mr-1 w-6'}
++        aria-hidden="true"
++      />
++      <span>{rating === undefined ? '?' : rating.score.toFixed(1)}</span>
++    </>
++  );
++
++  if (variant === 'card') {
++    return (
++      <span
++        className="flex items-center gap-1 text-sm font-medium"
++        aria-label={label}
++        title={label}
++      >
++        {content}
++      </span>
++    );
++  }
++
++  const hasImdbLink = typeof imdbId === 'string' && /^tt\d+$/.test(imdbId);
++  if (hasImdbLink) {
++    return (
++      <Tooltip content={label}>
++        <a
++          href={`https://www.imdb.com/title/${imdbId}`}
++          className="media-rating"
++          aria-label={label}
++          target="_blank"
++          rel="noreferrer"
++        >
++          {content}
++        </a>
++      </Tooltip>
++    );
++  }
++
++  return (
++    <Tooltip content={label}>
++      <span className="media-rating" aria-label={label}>
++        {content}
++      </span>
++    </Tooltip>
++  );
++};
++
++export default ImdbRating;
+diff --git a/src/hooks/useImdbRating.ts b/src/hooks/useImdbRating.ts
+new file mode 100644
+--- /dev/null
++++ b/src/hooks/useImdbRating.ts
+@@ -0,0 +1,18 @@
++import type { MediaType } from '@server/models/Search';
++import useSWR from 'swr';
++
++const useImdbRating = (mediaType: MediaType, id?: number) => {
++  const canShowImdbRating = mediaType === 'movie' || mediaType === 'tv';
++  const ratingsPath =
++    canShowImdbRating && id !== undefined
++      ? `/api/v1/${mediaType}/${id}/ratings/imdb`
++      : null;
++  const { data, error, isLoading } = useSWR<unknown, unknown>(ratingsPath, {
++    revalidateOnFocus: false,
++    shouldRetryOnError: false,
++  });
++
++  return { data, error, isLoading, canShowImdbRating };
++};
++
++export default useImdbRating;
+diff --git a/src/components/TitleCard/index.tsx b/src/components/TitleCard/index.tsx
+--- a/src/components/TitleCard/index.tsx
++++ b/src/components/TitleCard/index.tsx
+@@ -2,11 +2,13 @@
+ import BlocklistModal from '@app/components/BlocklistModal';
+ import Button from '@app/components/Common/Button';
+ import CachedImage from '@app/components/Common/CachedImage';
++import ImdbRating from '@app/components/Common/ImdbRating';
+ import StatusBadgeMini from '@app/components/Common/StatusBadgeMini';
+ import Tooltip from '@app/components/Common/Tooltip';
+ import RequestModal from '@app/components/RequestModal';
+ import ErrorCard from '@app/components/TitleCard/ErrorCard';
+ import Placeholder from '@app/components/TitleCard/Placeholder';
++import useImdbRating from '@app/hooks/useImdbRating';
+ import { useIsTouch } from '@app/hooks/useIsTouch';
+ import useToasts from '@app/hooks/useToasts';
+ import { Permission, UserType, useUser } from '@app/hooks/useUser';
+@@ -74,6 +76,7 @@
+   const [isUpdating, setIsUpdating] = useState(false);
+   const [currentStatus, setCurrentStatus] = useState(status);
+   const [showDetail, setShowDetail] = useState(false);
++  const [openedCardKey, setOpenedCardKey] = useState<string>();
+   const [showRequestModal, setShowRequestModal] = useState(false);
+   const { addToast } = useToasts();
+   const [toggleWatchlist, setToggleWatchlist] =
+@@ -81,6 +84,19 @@
+   const [showBlocklistModal, setShowBlocklistModal] = useState(false);
+   const cardRef = useRef<HTMLDivElement>(null);
+ 
++  const cardKey = `${mediaType}:${id}`;
++  const {
++    data: ratings,
++    error: ratingsError,
++    isLoading: isRatingLoading,
++    canShowImdbRating,
++  } = useImdbRating(mediaType, openedCardKey === cardKey ? id : undefined);
++
++  const openCard = () => {
++    setOpenedCardKey(cardKey);
++    setShowDetail(true);
++  };
++
+   // Just to get the year from the date
+   if (year) {
+     year = year.slice(0, 4);
+@@ -359,14 +375,14 @@
+         }}
+         onMouseEnter={() => {
+           if (!isTouch) {
+-            setShowDetail(true);
++            openCard();
+           }
+         }}
+         onMouseLeave={() => setShowDetail(false)}
+-        onClick={() => setShowDetail(true)}
++        onClick={openCard}
+         onKeyDown={(e) => {
+           if (e.key === 'Enter') {
+-            setShowDetail(true);
++            openCard();
+           }
+         }}
+         role="link"
+@@ -519,7 +535,19 @@
+                         : 'pb-11'
+                     }`}
+                   >
+-                    {year && <div className="text-sm font-medium">{year}</div>}
++                    <div className="flex items-center gap-2">
++                      {year && (
++                        <div className="text-sm font-medium">{year}</div>
++                      )}
++                      {canShowImdbRating && (
++                        <ImdbRating
++                          ratings={ratings}
++                          error={ratingsError}
++                          isLoading={isRatingLoading}
++                          variant="card"
++                        />
++                      )}
++                    </div>
+ 
+                     <h1
+                       className="whitespace-normal text-xl font-bold leading-tight"
+diff --git a/src/components/MovieDetails/index.tsx b/src/components/MovieDetails/index.tsx
+--- a/src/components/MovieDetails/index.tsx
++++ b/src/components/MovieDetails/index.tsx
+@@ -2,12 +2,12 @@
+ import RTAudRotten from '@app/assets/rt_aud_rotten.svg';
+ import RTFresh from '@app/assets/rt_fresh.svg';
+ import RTRotten from '@app/assets/rt_rotten.svg';
+-import ImdbLogo from '@app/assets/services/imdb.svg';
+ import Spinner from '@app/assets/spinner.svg';
+ import TmdbLogo from '@app/assets/tmdb_logo.svg';
+ import BlocklistModal from '@app/components/BlocklistModal';
+ import Button from '@app/components/Common/Button';
+ import CachedImage from '@app/components/Common/CachedImage';
++import ImdbRating from '@app/components/Common/ImdbRating';
+ import LoadingSpinner from '@app/components/Common/LoadingSpinner';
+ import PageTitle from '@app/components/Common/PageTitle';
+ import type { PlayButtonLink } from '@app/components/Common/PlayButton';
+@@ -23,6 +23,7 @@
+ import Slider from '@app/components/Slider';
+ import StatusBadge from '@app/components/StatusBadge';
+ import useDeepLinks from '@app/hooks/useDeepLinks';
++import useImdbRating from '@app/hooks/useImdbRating';
+ import useLocale from '@app/hooks/useLocale';
+ import useSettings from '@app/hooks/useSettings';
+ import useToasts from '@app/hooks/useToasts';
+@@ -48,7 +49,7 @@
+   ChevronDoubleDownIcon,
+   ChevronDoubleUpIcon,
+ } from '@heroicons/react/24/solid';
+-import { type RatingResponse } from '@server/api/ratings';
++import type { RTRating } from '@server/api/rating/rottentomatoes';
+ import { IssueStatus } from '@server/constants/issue';
+ import { MediaStatus, MediaType } from '@server/constants/media';
+ import { MediaServerType } from '@server/constants/server';
+@@ -99,7 +100,6 @@
+   rtcriticsscore: 'Rotten Tomatoes Tomatometer',
+   rtaudiencescore: 'Rotten Tomatoes Audience Score',
+   tmdbuserscore: 'TMDB User Score',
+-  imdbuserscore: 'IMDB User Score – votes: {formattedCount}',
+   watchlistSuccess: '<strong>{title}</strong> added to watchlist successfully!',
+   watchlistDeleted:
+     '<strong>{title}</strong> Removed from watchlist successfully!',
+@@ -146,10 +146,16 @@
+     ),
+   });
+ 
+-  const { data: ratingData } = useSWR<RatingResponse>(
+-    `/api/v1/movie/${router.query.movieId}/ratingscombined`
++  const { data: ratingData } = useSWR<RTRating>(
++    data ? `/api/v1/movie/${data.id}/ratings` : null
+   );
+ 
++  const {
++    data: imdbRatings,
++    error: imdbError,
++    isLoading: isImdbLoading,
++  } = useImdbRating('movie', data?.id);
++
+   const sortedCrew = useMemo(
+     () => sortCrewPriority(data?.credits.crew ?? []),
+     [data]
+@@ -770,92 +776,65 @@
+             </div>
+           )}
+           <div className="media-facts">
+-            {(!!data.voteCount ||
+-              (ratingData?.rt?.criticsRating &&
+-                typeof ratingData?.rt?.criticsScore === 'number') ||
+-              (ratingData?.rt?.audienceRating &&
+-                !!ratingData?.rt?.audienceScore) ||
+-              ratingData?.imdb?.criticsScore) && (
+-              <div className="media-ratings">
+-                {ratingData?.rt?.criticsRating &&
+-                  typeof ratingData?.rt?.criticsScore === 'number' && (
+-                    <Tooltip
+-                      content={intl.formatMessage(messages.rtcriticsscore)}
+-                    >
+-                      <a
+-                        href={ratingData.rt.url}
+-                        className="media-rating"
+-                        target="_blank"
+-                        rel="noreferrer"
+-                      >
+-                        {ratingData.rt.criticsRating === 'Rotten' ? (
+-                          <RTRotten className="w-6" />
+-                        ) : (
+-                          <RTFresh className="w-6" />
+-                        )}
+-                        <span>{ratingData.rt.criticsScore}%</span>
+-                      </a>
+-                    </Tooltip>
+-                  )}
+-                {ratingData?.rt?.audienceRating &&
+-                  !!ratingData?.rt?.audienceScore && (
+-                    <Tooltip
+-                      content={intl.formatMessage(messages.rtaudiencescore)}
+-                    >
+-                      <a
+-                        href={ratingData.rt.url}
+-                        className="media-rating"
+-                        target="_blank"
+-                        rel="noreferrer"
+-                      >
+-                        {ratingData.rt.audienceRating === 'Spilled' ? (
+-                          <RTAudRotten className="w-6" />
+-                        ) : (
+-                          <RTAudFresh className="w-6" />
+-                        )}
+-                        <span>{ratingData.rt.audienceScore}%</span>
+-                      </a>
+-                    </Tooltip>
+-                  )}
+-                {ratingData?.imdb?.criticsScore && (
++            <div className="media-ratings">
++              {ratingData?.criticsRating &&
++                typeof ratingData?.criticsScore === 'number' && (
+                   <Tooltip
+-                    content={intl.formatMessage(messages.imdbuserscore, {
+-                      formattedCount: intl.formatNumber(
+-                        ratingData.imdb.criticsScoreCount,
+-                        {
+-                          notation: 'compact',
+-                          compactDisplay: 'short',
+-                          maximumFractionDigits: 1,
+-                        }
+-                      ),
+-                    })}
++                    content={intl.formatMessage(messages.rtcriticsscore)}
+                   >
+                     <a
+-                      href={ratingData.imdb.url}
+-                      className="media-rating"
+-                      target="_blank"
+-                      rel="noreferrer"
+-                    >
+-                      <ImdbLogo className="mr-1 w-6" />
+-                      <span>{ratingData.imdb.criticsScore}</span>
+-                    </a>
+-                  </Tooltip>
+-                )}
+-                {!!data.voteCount && (
+-                  <Tooltip content={intl.formatMessage(messages.tmdbuserscore)}>
+-                    <a
+-                      href={`https://www.themoviedb.org/movie/${data.id}?language=${locale}`}
++                      href={ratingData.url}
+                       className="media-rating"
+                       target="_blank"
+                       rel="noreferrer"
+                     >
+-                      <TmdbLogo className="mr-1 w-6" />
+-                      <span>{Math.round(data.voteAverage * 10)}%</span>
++                      {ratingData.criticsRating === 'Rotten' ? (
++                        <RTRotten className="w-6" />
++                      ) : (
++                        <RTFresh className="w-6" />
++                      )}
++                      <span>{ratingData.criticsScore}%</span>
+                     </a>
+                   </Tooltip>
+                 )}
+-              </div>
+-            )}
++              {ratingData?.audienceRating && !!ratingData?.audienceScore && (
++                <Tooltip content={intl.formatMessage(messages.rtaudiencescore)}>
++                  <a
++                    href={ratingData.url}
++                    className="media-rating"
++                    target="_blank"
++                    rel="noreferrer"
++                  >
++                    {ratingData.audienceRating === 'Spilled' ? (
++                      <RTAudRotten className="w-6" />
++                    ) : (
++                      <RTAudFresh className="w-6" />
++                    )}
++                    <span>{ratingData.audienceScore}%</span>
++                  </a>
++                </Tooltip>
++              )}
++              <ImdbRating
++                ratings={imdbRatings}
++                error={imdbError}
++                isLoading={isImdbLoading}
++                variant="detail"
++                imdbId={data.externalIds.imdbId}
++              />
++              {!!data.voteCount && (
++                <Tooltip content={intl.formatMessage(messages.tmdbuserscore)}>
++                  <a
++                    href={`https://www.themoviedb.org/movie/${data.id}?language=${locale}`}
++                    className="media-rating"
++                    target="_blank"
++                    rel="noreferrer"
++                  >
++                    <TmdbLogo className="mr-1 w-6" />
++                    <span>{Math.round(data.voteAverage * 10)}%</span>
++                  </a>
++                </Tooltip>
++              )}
++            </div>
+             {data.originalTitle &&
+               data.originalLanguage !== locale.slice(0, 2) && (
+                 <div className="media-fact">
+@@ -1097,7 +1076,7 @@
+                 tmdbId={data.id}
+                 tvdbId={data.externalIds.tvdbId}
+                 imdbId={data.externalIds.imdbId}
+-                rtUrl={ratingData?.rt?.url}
++                rtUrl={ratingData?.url}
+                 mediaUrl={
+                   data.mediaInfo?.mediaUrl ?? data.mediaInfo?.mediaUrl4k
+                 }
+diff --git a/src/components/TvDetails/index.tsx b/src/components/TvDetails/index.tsx
+--- a/src/components/TvDetails/index.tsx
++++ b/src/components/TvDetails/index.tsx
+@@ -8,6 +8,7 @@
+ import Badge from '@app/components/Common/Badge';
+ import Button from '@app/components/Common/Button';
+ import CachedImage from '@app/components/Common/CachedImage';
++import ImdbRating from '@app/components/Common/ImdbRating';
+ import LoadingSpinner from '@app/components/Common/LoadingSpinner';
+ import PageTitle from '@app/components/Common/PageTitle';
+ import type { PlayButtonLink } from '@app/components/Common/PlayButton';
+@@ -26,6 +27,7 @@
+ import StatusBadge from '@app/components/StatusBadge';
+ import Season from '@app/components/TvDetails/Season';
+ import useDeepLinks from '@app/hooks/useDeepLinks';
++import useImdbRating from '@app/hooks/useImdbRating';
+ import useLocale from '@app/hooks/useLocale';
+ import useSettings from '@app/hooks/useSettings';
+ import useToasts from '@app/hooks/useToasts';
+@@ -148,6 +150,12 @@
+     `/api/v1/tv/${router.query.tvId}/ratings`
+   );
+ 
++  const {
++    data: imdbRatings,
++    error: imdbError,
++    isLoading: isImdbLoading,
++  } = useImdbRating('tv', data?.id);
++
+   const sortedCrew = useMemo(
+     () => sortCrewPriority(data?.credits.crew ?? []),
+     [data]
+@@ -1096,63 +1104,62 @@
+         </div>
+         <div className="media-overview-right">
+           <div className="media-facts">
+-            {(!!data.voteCount ||
+-              (ratingData?.criticsRating && !!ratingData?.criticsScore) ||
+-              (ratingData?.audienceRating && !!ratingData?.audienceScore)) && (
+-              <div className="media-ratings">
+-                {ratingData?.criticsRating && !!ratingData?.criticsScore && (
+-                  <Tooltip
+-                    content={intl.formatMessage(messages.rtcriticsscore)}
++            <div className="media-ratings">
++              {ratingData?.criticsRating && !!ratingData?.criticsScore && (
++                <Tooltip content={intl.formatMessage(messages.rtcriticsscore)}>
++                  <a
++                    href={ratingData.url}
++                    className="media-rating"
++                    target="_blank"
++                    rel="noreferrer"
+                   >
+-                    <a
+-                      href={ratingData.url}
+-                      className="media-rating"
+-                      target="_blank"
+-                      rel="noreferrer"
+-                    >
+-                      {ratingData.criticsRating === 'Rotten' ? (
+-                        <RTRotten className="mr-1 w-6" />
+-                      ) : (
+-                        <RTFresh className="mr-1 w-6" />
+-                      )}
+-                      <span>{ratingData.criticsScore}%</span>
+-                    </a>
+-                  </Tooltip>
+-                )}
+-                {ratingData?.audienceRating && !!ratingData?.audienceScore && (
+-                  <Tooltip
+-                    content={intl.formatMessage(messages.rtaudiencescore)}
++                    {ratingData.criticsRating === 'Rotten' ? (
++                      <RTRotten className="mr-1 w-6" />
++                    ) : (
++                      <RTFresh className="mr-1 w-6" />
++                    )}
++                    <span>{ratingData.criticsScore}%</span>
++                  </a>
++                </Tooltip>
++              )}
++              {ratingData?.audienceRating && !!ratingData?.audienceScore && (
++                <Tooltip content={intl.formatMessage(messages.rtaudiencescore)}>
++                  <a
++                    href={ratingData.url}
++                    className="media-rating"
++                    target="_blank"
++                    rel="noreferrer"
+                   >
+-                    <a
+-                      href={ratingData.url}
+-                      className="media-rating"
+-                      target="_blank"
+-                      rel="noreferrer"
+-                    >
+-                      {ratingData.audienceRating === 'Spilled' ? (
+-                        <RTAudRotten className="mr-1 w-6" />
+-                      ) : (
+-                        <RTAudFresh className="mr-1 w-6" />
+-                      )}
+-                      <span>{ratingData.audienceScore}%</span>
+-                    </a>
+-                  </Tooltip>
+-                )}
+-                {!!data.voteCount && (
+-                  <Tooltip content={intl.formatMessage(messages.tmdbuserscore)}>
+-                    <a
+-                      href={`https://www.themoviedb.org/tv/${data.id}?language=${locale}`}
+-                      className="media-rating"
+-                      target="_blank"
+-                      rel="noreferrer"
+-                    >
+-                      <TmdbLogo className="mr-1 w-6" />
+-                      <span>{Math.round(data.voteAverage * 10)}%</span>
+-                    </a>
+-                  </Tooltip>
+-                )}
+-              </div>
+-            )}
++                    {ratingData.audienceRating === 'Spilled' ? (
++                      <RTAudRotten className="mr-1 w-6" />
++                    ) : (
++                      <RTAudFresh className="mr-1 w-6" />
++                    )}
++                    <span>{ratingData.audienceScore}%</span>
++                  </a>
++                </Tooltip>
++              )}
++              <ImdbRating
++                ratings={imdbRatings}
++                error={imdbError}
++                isLoading={isImdbLoading}
++                variant="detail"
++                imdbId={data.externalIds.imdbId}
++              />
++              {!!data.voteCount && (
++                <Tooltip content={intl.formatMessage(messages.tmdbuserscore)}>
++                  <a
++                    href={`https://www.themoviedb.org/tv/${data.id}?language=${locale}`}
++                    className="media-rating"
++                    target="_blank"
++                    rel="noreferrer"
++                  >
++                    <TmdbLogo className="mr-1 w-6" />
++                    <span>{Math.round(data.voteAverage * 10)}%</span>
++                  </a>
++                </Tooltip>
++              )}
++            </div>
+             {data.originalName &&
+               data.originalLanguage !== locale.slice(0, 2) && (
+                 <div className="media-fact">
+diff --git a/src/i18n/locale/en.json b/src/i18n/locale/en.json
+--- a/src/i18n/locale/en.json
++++ b/src/i18n/locale/en.json
+@@ -21,6 +21,11 @@
+   "components.CollectionDetails.removefromblocklistpartialcount": "{removeLabel} ({count, plural, one {# movie} other {# movies}})",
+   "components.CollectionDetails.requestcollection": "Request Collection",
+   "components.CollectionDetails.requestcollection4k": "Request Collection in 4K",
++  "components.Common.ImdbRating.imdbFailed": "Could not fetch IMDb rating",
++  "components.Common.ImdbRating.imdbLoading": "Fetching IMDb rating",
++  "components.Common.ImdbRating.imdbRating": "IMDb rating: {score}/10",
++  "components.Common.ImdbRating.imdbUnavailable": "IMDb rating unavailable",
++  "components.Common.ImdbRating.imdbVotes": "IMDb rating: {score}/10 – votes: {formattedCount}",
+   "components.Common.QuickConnectModal.error": "Error",
+   "components.Common.QuickConnectModal.expired": "Code Expired",
+   "components.Common.QuickConnectModal.expiredMessage": "This Quick Connect code has expired. Please try again.",
+@@ -343,7 +348,6 @@
+   "components.MovieDetails.cast": "Cast",
+   "components.MovieDetails.digitalrelease": "Digital Release",
+   "components.MovieDetails.downloadstatus": "Download Status",
+-  "components.MovieDetails.imdbuserscore": "IMDB User Score – votes: {formattedCount}",
+   "components.MovieDetails.managemovie": "Manage Movie",
+   "components.MovieDetails.mark4kavailable": "Mark as Available in 4K",
+   "components.MovieDetails.markavailable": "Mark as Available",
+diff --git a/seerr-api.yml b/seerr-api.yml
+--- a/seerr-api.yml
++++ b/seerr-api.yml
+@@ -48,6 +48,18 @@
+ 
+ components:
+   schemas:
++    IMDBRating:
++      type: object
++      properties:
++        title:
++          type: string
++          example: I am Legend
++        url:
++          type: string
++          example: 'https://www.imdb.com/title/tt0480249'
++        criticsScore:
++          type: number
++          example: 6.5
+     Blocklist:
+       type: object
+       properties:
+@@ -6879,6 +6891,34 @@
+                   audienceRating:
+                     type: string
+                     enum: ['Spilled', 'Upright']
++  /movie/{movieId}/ratings/imdb:
++    get:
++      summary: Get IMDb movie ratings
++      description: Returns IMDb ratings from Radarr's metadata service for the provided TMDb movieId.
++      tags:
++        - movies
++      parameters:
++        - in: path
++          name: movieId
++          required: true
++          schema:
++            type: integer
++            minimum: 1
++          example: 1573
++      responses:
++        '200':
++          description: Ratings returned
++          content:
++            application/json:
++              schema:
++                type: object
++                properties:
++                  imdb:
++                    $ref: '#/components/schemas/IMDBRating'
++        '404':
++          description: No matching IMDb rating is available.
++        '500':
++          description: Unable to retrieve movie IMDb ratings.
+   /movie/{movieId}/ratingscombined:
+     get:
+       summary: Get RT and IMDB movie ratings combined
+@@ -6925,17 +6965,7 @@
+                         type: string
+                         enum: ['Spilled', 'Upright']
+                   imdb:
+-                    type: object
+-                    properties:
+-                      title:
+-                        type: string
+-                        example: I am Legend
+-                      url:
+-                        type: string
+-                        example: 'https://www.imdb.com/title/tt0480249'
+-                      criticsScore:
+-                        type: number
+-                        example: 6.5
++                    $ref: '#/components/schemas/IMDBRating'
+   /tv/{tvId}:
+     get:
+       summary: Get TV details
+@@ -7118,6 +7148,34 @@
+                   criticsRating:
+                     type: string
+                     enum: ['Rotten', 'Fresh']
++  /tv/{tvId}/ratings/imdb:
++    get:
++      summary: Get IMDb TV ratings
++      description: Returns IMDb ratings from Sonarr's metadata service for the provided TMDb tvId.
++      tags:
++        - tv
++      parameters:
++        - in: path
++          name: tvId
++          required: true
++          schema:
++            type: integer
++            minimum: 1
++            example: 95396
++      responses:
++        '200':
++          description: Ratings returned
++          content:
++            application/json:
++              schema:
++                type: object
++                properties:
++                  imdb:
++                    $ref: '#/components/schemas/IMDBRating'
++        '404':
++          description: No matching IMDb rating is available.
++        '500':
++          description: Unable to retrieve series IMDb ratings.
+   /person/{personId}:
+     get:
+       summary: Get person details

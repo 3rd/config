@@ -75,7 +75,7 @@ link: ## link dotfiles
 	$(call link,bin,~/.config/bin)
 	@mkdir -p ~/.local/share/fonts
 	$(call link,assets/fonts,~/.local/share/fonts/custom)
-	$(call link,ssh,~/.ssh)
+	@bash "$(SOURCE)/scripts/link-ssh.sh" "$(SOURCE)/ssh" "$(USER_HOME)/.ssh"
 	@mkdir -p ~/.config/tmux
 	$(call link,home-manager/programs/tmux/tmux.conf,~/.config/tmux/tmux.conf)
 	$(call linkdot,nvim,~/.config/nvim)
