@@ -2,7 +2,10 @@
 
 let
   fastcompmgr = pkgs.fastcompmgr.overrideAttrs (oldAttrs: {
-    patches = (oldAttrs.patches or [ ]) ++ [ ./fastcompmgr-i3-restart.patch ];
+    patches = (oldAttrs.patches or [ ]) ++ [
+      ./fastcompmgr-i3-restart.patch
+      ./fastcompmgr-restack-unknown-sibling.patch
+    ];
   });
 in
 {

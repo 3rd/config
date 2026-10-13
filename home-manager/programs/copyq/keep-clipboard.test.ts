@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 
 const clipboardScript = readFileSync(new URL("./keep-clipboard.js", import.meta.url), "utf8");
+const MIME_OWNER = "application/x-copyq-owner";
 
 const createClipboardData = (value: string) => ({
   toBase64: () => Buffer.from(value).toString("base64"),
@@ -17,6 +18,7 @@ type ClipboardFixture = {
 const runClipboardScript = ({ capturedItem, currentItem }: ClipboardFixture) => {
   const copies: Record<string, string>[] = [];
   runInNewContext(clipboardScript, {
+    mimeOwner: MIME_OWNER,
     isClipboard: () => true,
     hasData: () => Object.values(capturedItem).some((value) => value.trim().length > 0),
     dataFormats: () => Object.keys(capturedItem),
@@ -38,10 +40,10 @@ test("retains the current clipboard instead of a stale automatic-command event",
     capturedItem: { "text/plain": "Earlier copy", "image/png": "Earlier image" },
     currentItem: {
       TIMESTAMP: "2",
-      "?": "TIMESTAMP\ntext/plain\ntext/html\napplication/x-copyq-owner\nTARGETS\n",
+      "?": "TIMESTAMP\ntext/plain\ntext/html\napplication/x-copyq-item-notes\nTARGETS\n",
       "text/plain": "Latest copy",
       "text/html": "<b>Latest copy</b>",
-      "application/x-copyq-owner": "current owner",
+      "application/x-copyq-item-notes": "Internal note",
       TARGETS: "text/plain",
     },
   });
@@ -51,13 +53,26 @@ test("retains the current clipboard instead of a stale automatic-command event",
   }]);
 });
 
+test("does not replace CopyQ-owned data when handling an earlier clipboard event", () => {
+  const copies = runClipboardScript({
+    capturedItem: { "text/plain": "Earlier copy" },
+    currentItem: {
+      TIMESTAMP: "2",
+      "?": `TIMESTAMP\ntext/plain\n${MIME_OWNER}\n`,
+      "text/plain": "Already preserved copy",
+      [MIME_OWNER]: "copyq provideClipboard/1",
+    },
+  });
+  expect(copies).toEqual([]);
+});
+
 test("does not replace a clipboard with no usable current formats", () => {
   const copies = runClipboardScript({
     capturedItem: { "text/plain": "Earlier copy" },
     currentItem: {
       TIMESTAMP: "2",
-      "?": "TIMESTAMP\napplication/x-copyq-owner\n",
-      "application/x-copyq-owner": "current owner",
+      "?": "TIMESTAMP\nTARGETS\n",
+      TARGETS: "TIMESTAMP",
     },
   });
   expect(copies).toEqual([]);

@@ -116,17 +116,7 @@ local setup_lsp_buffer = function(bufnr)
   pcall(disable_default_lsp_mappings)
 
   -- mappings
-  for _, mapping in ipairs(require("config/mappings").lsp) do
-    local mode, lhs, rhs, opts_or_desc = mapping[1], mapping[2], mapping[3], mapping[4]
-    local opts = {}
-    if lib.is.string(opts_or_desc) then
-      opts.desc = opts_or_desc
-    elseif lib.is.table(opts_or_desc) then
-      opts = table.clone(opts_or_desc)
-    end
-    opts.buffer = bufnr
-    lib.map.map(mode, lhs, rhs, opts)
-  end
+  lib.map.map_all(require("config/mappings").lsp, { buffer = bufnr })
 end
 
 vim.api.nvim_create_autocmd("LspAttach", {

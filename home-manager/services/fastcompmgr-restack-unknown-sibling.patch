@@ -1,0 +1,19 @@
+Keep a window in place when its new stacking sibling is unknown.
+
+add_win drops windows destroyed before their attributes are read, such as
+the window Chromium creates and destroys on every X11 drag motion. Restacking
+the drag image above that unknown window used to move it to the bottom of the
+paint list, hiding it until the next motion.
+
+--- a/fastcompmgr.c
++++ b/fastcompmgr.c
+@@ -1775,6 +1775,9 @@
+   if (old_above != new_above) {
+     win **prev;
+ 
++    if (new_above != None && !find_win(new_above))
++      return;
++
+     /* unhook */
+     for (prev = &list; *prev; prev = &(*prev)->next) {
+       if ((*prev) == w) break;

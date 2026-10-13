@@ -25,6 +25,23 @@ local map = function(mode, lhs, rhs, optionsOrDescription)
   vim.keymap.set(mode, lhs, rhs, opts)
 end
 
+local map_all = function(mappings, options)
+  options = options or {}
+
+  for _, mapping in ipairs(mappings) do
+    local opts_or_desc = mapping[4]
+    local opts = table.merge(
+      options.defaults or {},
+      type(opts_or_desc) == "string" and { desc = opts_or_desc } or opts_or_desc or {}
+    )
+
+    if options.buffer ~= nil then opts.buffer = options.buffer end
+
+    map(mapping[1], mapping[2], mapping[3], opts)
+  end
+end
+
 return {
   map = map,
+  map_all = map_all,
 }

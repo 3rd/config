@@ -51,7 +51,7 @@
 }:
 
 let
-  buildId = "12dcfa973ef51585fd1b35df6839fc9d1d7fd6aa";
+  buildId = "33103062f95061ccf9c81c5b365d37ab152c3b66";
   runtimeLibs = [
     libdrm
     libGL
@@ -68,11 +68,11 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "grok-bot";
-  version = "0.44.0";
+  version = "0.68.1";
 
   src = fetchurl {
     url = "https://downloads.cursor.com/grokbot/stable/${buildId}/linux/x64/grok-bot_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-3e0YstPUSxwy1rn2NEbSsnvKaLPeeiqgKM55VulpQWQ=";
+    hash = "sha256-sr6BBtKz6uB9mD1fHKd7ZXrM3mZtxEDbKkCUIez/M1k=";
   };
 
   nativeBuildInputs = [

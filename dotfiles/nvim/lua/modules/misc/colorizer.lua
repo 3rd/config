@@ -29,6 +29,7 @@ return lib.module.create({
           },
           display = {
             mode = "background",
+            priority = { default = vim.hl.priorities.user },
             virtualtext = {
               char = "■",
               position = "eol",

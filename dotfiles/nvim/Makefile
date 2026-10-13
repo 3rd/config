@@ -110,8 +110,10 @@ benchmark-startup: ## run startup benchmark
 	$(call print_mod_end)
 
 test: ## run headless specs
-	@for spec in $$(rg --files -g '*_spec.lua' "$(SOURCE)/specs"); do \
-		nvim -n -i NONE --headless --clean \
+	@test_state_dir=$$(mktemp -d); \
+	trap 'rm -rf "$${test_state_dir:?}"' EXIT; \
+	for spec in $$(rg --threads 1 --files -g '*_spec.lua' "$(SOURCE)/specs"); do \
+		XDG_STATE_HOME="$$test_state_dir/$$(basename "$$spec")" nvim -n -i NONE --headless --clean \
 			--cmd "set runtimepath^=$(SOURCE)" \
 			--cmd 'lua vim.opt.runtimepath:append(vim.fn.stdpath("data") .. "/site")' \
 			-l "$$spec"; \

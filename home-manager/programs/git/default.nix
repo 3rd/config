@@ -221,7 +221,7 @@ in
       clone = "git clone";
       fetch = "git fetch";
       pull = "git pull";
-      push = "git push";
+      push = "git-push";
       rebase = "git rebase";
       merge = "git merge";
       stash = "git stash";

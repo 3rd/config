@@ -1,6 +1,8 @@
 { config, pkgs, options, ... }:
 
 {
+  programs.i3lock.enable = true;
+
   environment.systemPackages = with pkgs; [
     #
     libinput

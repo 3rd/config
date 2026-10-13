@@ -45,6 +45,7 @@ let
     "image/gif" = "qimgv.desktop";
     "image/jpeg" = "qimgv.desktop";
     "image/png" = "qimgv.desktop";
+    "image/svg+xml" = "org.gnome.eog.desktop";
     "image/tiff" = zathura;
     "image/vnd.djvu+multipage" = zathura;
     "image/x-bzeps" = zathura;

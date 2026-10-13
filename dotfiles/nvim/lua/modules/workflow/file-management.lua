@@ -34,9 +34,15 @@ local setup_tree = function()
       custom = {},
     },
     git = {
-      enable = false,
+      enable = true,
       ignore = false,
-      timeout = 500,
+      timeout = 5000,
+    },
+    renderer = {
+      highlight_git = "name",
+      icons = {
+        git_placement = "right_align",
+      },
     },
     view = {
       width = 36,

@@ -27,9 +27,9 @@ test("preserves successful running-task output", () => {
   expect(output).toBe("%{F#f97e48}  Example - Task (1s)\n");
 });
 
-test("reports a successful empty observation neutrally", () => {
+test("shows the original reminder when no task is running", () => {
   const output = runTaskScript("return 0");
-  expect(output).toBe("No running task\n");
+  expect(output).toBe("  EVERY SECOND COUNTS\n");
 });
 
 test("rejects failed-command stdout and keeps diagnostic text private", () => {

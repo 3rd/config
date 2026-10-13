@@ -24,7 +24,7 @@ if [ "$task_status" -eq 0 ]; then
   if [ -n "$task_output" ]; then
     result="%{F#f97e48}  $task_output"
   else
-    result="No running task"
+    result="  EVERY SECOND COUNTS"
   fi
 elif [[ "$timeout_messages" == *"timeout: sending signal "* ]]; then
   result="${error_style}  Task status timed out%{F-}"

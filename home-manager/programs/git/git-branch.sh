@@ -46,7 +46,7 @@ if [ "$#" -eq 0 ]; then
   BRANCH=$(trim "$(git branch --all --sort=-committerdate --format='%(refname:short)' | rg -v "^\*" | sed "s/origin\///g" | awk '!x[$0]++' | grep -v HEAD | fzf)")
   if [[ -n "$BRANCH" ]]; then
     echo "Switching to $BRANCH"
-    git checkout --ignore-other-worktrees "$BRANCH"
+    git checkout --ignore-other-worktrees -m "$BRANCH"
   fi
 else
   BRANCH=$1

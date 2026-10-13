@@ -76,6 +76,13 @@ return lib.module.create({
           return filtered
         end
 
+        local get_format_options = function(bufnr)
+          return {
+            lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
+            formatters = filter_formatters(vim.bo[bufnr].filetype),
+          }
+        end
+
         config.format_on_save = function(bufnr)
           if slow_format_filetypes[vim.bo[bufnr].filetype] then return end
 
@@ -83,20 +90,14 @@ return lib.module.create({
             if err and err:match("timeout$") then slow_format_filetypes[vim.bo[bufnr].filetype] = true end
           end
 
-          return {
-            timeout_ms = 2000,
-            lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
-            formatters = filter_formatters(vim.bo[bufnr].filetype),
-          },
-            on_format
+          local options = get_format_options(bufnr)
+          options.timeout_ms = 2000
+          return options, on_format
         end
 
         config.format_after_save = function(bufnr)
           if not slow_format_filetypes[vim.bo[bufnr].filetype] then return end
-          return {
-            lsp_fallback = vim.tbl_contains(fts_with_lsp_formatting, vim.bo[bufnr].filetype) and "always" or true,
-            formatters = filter_formatters(vim.bo[bufnr].filetype),
-          }
+          return get_format_options(bufnr)
         end
 
         conform.setup(config)

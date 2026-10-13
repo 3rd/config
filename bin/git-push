@@ -1,0 +1,279 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail() {
+  printf 'push: %s\n' "$*" >&2
+  exit 1
+}
+
+get_repository_identity() {
+  local url=$1 authority repository host ssh_address
+
+  case "$url" in
+    https://* | http://* | ssh://*)
+      authority=${url#*://}
+      repository=${authority#*/}
+      authority=${authority%%/*}
+      host=${authority##*@}
+      host=${host%%:*}
+      ssh_address=${authority%:*}
+
+      if [[ "$authority" != *:* ]]; then
+        ssh_address=$authority
+      fi
+      ;;
+    *:*)
+      ssh_address=${url%%:*}
+      repository=${url#*:}
+      host=${ssh_address##*@}
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+
+  repository=${repository%/}
+  repository=${repository%.git}
+  repository=${repository#/}
+  if [[ ! "$repository" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
+    return 1
+  fi
+
+  if [[ "$url" != http://* && "$url" != https://* ]]; then
+    if [[ "$ssh_address" == -* ]]; then
+      return 1
+    fi
+
+    host=$(ssh -G "$ssh_address" 2>/dev/null | awk '$1 == "hostname" { print $2 }') || return 1
+  fi
+
+  printf '%s/%s\n' "${host,,}" "${repository,,}"
+}
+
+get_repository_url() {
+  local url=$1 repository=$2
+  if [[ ! "$url" =~ ^(.+[:/])[^/:]+/[^/]+/?$ ]]; then
+    return 1
+  fi
+
+  printf '%s%s.git\n' "${BASH_REMATCH[1]}" "$repository"
+}
+
+uses_default_ssh_host() {
+  local url=$1 host=$2
+  [[ "$url" == "git@$host:"* || "$url" == "ssh://git@$host/"* ]]
+}
+
+if [[ $# -gt 0 || ! -t 0 || ! -t 2 ]]; then
+  exec git push "$@"
+fi
+
+branch=$(git symbolic-ref --quiet --short HEAD) || exec git push
+local_oid=$(git rev-parse --verify HEAD) || exec git push
+push_mode=$(git config get --default simple push.default)
+if [[ "$push_mode" != simple && "$push_mode" != current ]]; then
+  exec git push
+fi
+
+push_remote=$(git for-each-ref --format='%(push:remotename)' "refs/heads/$branch")
+if [[ -z "$push_remote" ]]; then
+  for key in "branch.$branch.pushRemote" remote.pushDefault "branch.$branch.remote"; do
+    push_remote=$(git config get --default '' "$key")
+    if [[ -n "$push_remote" ]]; then
+      break
+    fi
+  done
+
+  if [[ -z "$push_remote" ]]; then
+    remotes=$(git remote)
+    if [[ -n "$remotes" && "$remotes" != *$'\n'* ]]; then
+      push_remote=$remotes
+    elif git remote get-url origin >/dev/null 2>&1; then
+      push_remote=origin
+    else
+      exec git push
+    fi
+  fi
+fi
+
+if git config get --all "remote.$push_remote.push" >/dev/null; then
+  exec git push
+fi
+
+is_mirror=$(git config get --type bool --default false "remote.$push_remote.mirror")
+if [[ "$is_mirror" == true ]]; then
+  exec git push
+fi
+
+has_named_push_remote=false
+if push_url=$(git remote get-url --push --all "$push_remote" 2>/dev/null); then
+  has_named_push_remote=true
+
+  if [[ "$push_url" == *$'\n'* ]]; then
+    exec git push
+  fi
+else
+  push_url=$push_remote
+fi
+
+repository_identity=$(get_repository_identity "$push_url") || exec git push
+if ! command -v gh >/dev/null || ! command -v jq >/dev/null; then
+  exec git push
+fi
+
+pr_json=$(gh pr view --json number,url,state,headRefName,headRefOid,headRepository 2>/dev/null) || exec git push
+if ! jq -e '
+  .state == "OPEN"
+  and (.number | type == "number")
+  and (.url | type == "string")
+  and (.headRefName | type == "string")
+  and (.headRefOid | type == "string" and test("^[0-9a-f]{40}$"))
+  and (.headRepository.nameWithOwner | type == "string" and test("^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$"))
+' <<<"$pr_json" >/dev/null; then
+  exec git push
+fi
+
+mapfile -t pr_fields < <(jq -r '.number, .url, .headRefName, .headRefOid, .headRepository.nameWithOwner' <<<"$pr_json")
+pr_number=${pr_fields[0]}
+pr_url=${pr_fields[1]}
+pr_branch=${pr_fields[2]}
+pr_oid=${pr_fields[3]}
+pr_repository=${pr_fields[4]}
+pr_ref="refs/heads/$pr_branch"
+git check-ref-format "$pr_ref" || fail 'The PR has an invalid branch name.'
+
+if [[ ! "$pr_url" =~ ^https://([^/]+)/([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)/pull/([0-9]+)$ ]]; then
+  fail 'The PR has an invalid URL.'
+fi
+
+pr_host=${BASH_REMATCH[1]}
+base_repository=${BASH_REMATCH[2]}
+if [[ "${BASH_REMATCH[3]}" != "$pr_number" ]]; then
+  fail 'The PR number does not match its URL.'
+fi
+
+upstream_remote=$(git config get --default '' "branch.$branch.remote")
+upstream_ref=$(git config get --default '' "branch.$branch.merge")
+can_push_normally=false
+normal_ref="refs/heads/$branch"
+if [[ "$push_mode" == current || ( -n "$upstream_remote" && "$push_remote" != "$upstream_remote" ) ]]; then
+  can_push_normally=true
+elif [[ -n "$upstream_remote" && "$upstream_ref" == "$normal_ref" ]]; then
+  can_push_normally=true
+fi
+
+if [[ "$can_push_normally" == true && "$normal_ref" != "$pr_ref" ]]; then
+  exec git push
+fi
+
+if [[ "$repository_identity" != "${pr_host,,}/${pr_repository,,}" ]]; then
+  if [[ "$can_push_normally" == true || "$repository_identity" != "${pr_host,,}/${base_repository,,}" ]]; then
+    exec git push
+  fi
+
+  push_url=$(get_repository_url "$push_url" "$pr_repository") || fail 'Cannot derive the PR destination from the configured push URL.'
+fi
+
+if [[ "$has_named_push_remote" == false ]] && uses_default_ssh_host "$push_url" "$pr_host"; then
+  pr_ssh_url=''
+  remotes=$(git remote)
+
+  while IFS= read -r remote; do
+    if [[ -z "$remote" ]]; then
+      continue
+    fi
+
+    candidate_url=$(git remote get-url --push --all "$remote")
+    if [[ "$candidate_url" == *$'\n'* || "$candidate_url" == http://* || "$candidate_url" == https://* ]]; then
+      continue
+    fi
+
+    if uses_default_ssh_host "$candidate_url" "$pr_host"; then
+      continue
+    fi
+
+    candidate_identity=$(get_repository_identity "$candidate_url") || continue
+    if [[ "$candidate_identity" != "${pr_host,,}/${base_repository,,}" ]]; then
+      continue
+    fi
+
+    candidate_url=$(get_repository_url "$candidate_url" "$pr_repository") || fail 'Cannot derive the PR destination from the configured SSH remote.'
+    if [[ -n "$pr_ssh_url" && "$pr_ssh_url" != "$candidate_url" ]]; then
+      fail 'Multiple SSH identities are configured for the PR base repository. Configure a named push remote to select one.'
+    fi
+
+    pr_ssh_url=$candidate_url
+  done <<<"$remotes"
+
+  if [[ -n "$pr_ssh_url" ]]; then
+    push_url=$pr_ssh_url
+    can_push_normally=false
+  fi
+fi
+
+remote_output=$(git ls-remote --exit-code "$push_url" "$pr_ref")
+IFS=$'\t' read -r remote_oid remote_ref <<<"$remote_output"
+if [[ "$remote_output" == *$'\n'* || "$remote_ref" != "$pr_ref" || "$remote_oid" != "$pr_oid" ]]; then
+  fail 'The PR branch changed during inspection. Run push again to review its current state.'
+fi
+
+if ! git cat-file -e "$remote_oid^{commit}" 2>/dev/null; then
+  git fetch --no-tags --no-write-fetch-head "$push_url" "$remote_oid"
+fi
+
+needs_rewrite=false
+if git merge-base --is-ancestor "$remote_oid" "$local_oid"; then
+  if [[ "$can_push_normally" == true ]]; then
+    exec git push
+  fi
+else
+  ancestry_status=$?
+  if [[ "$ancestry_status" -ne 1 ]]; then
+    exit "$ancestry_status"
+  fi
+
+  needs_rewrite=true
+fi
+
+printf '\nPR #%s: %s\nDestination: %s → %s\nRemote: %.12s\nLocal:  %.12s\n' \
+  "$pr_number" "$pr_url" "$pr_repository" "$pr_branch" "$remote_oid" "$local_oid" >&2
+
+if [[ "$needs_rewrite" == true ]]; then
+  remote_commit_count=$(git rev-list --count "$local_oid..$remote_oid")
+  printf '\nThis rewrites the PR branch history. %s remote commit(s) are absent from local history:\n' \
+    "$remote_commit_count" >&2
+  git --no-pager log --format='  %h %s' --max-count=20 "$local_oid..$remote_oid" >&2
+
+  if [[ "$remote_commit_count" -gt 20 ]]; then
+    printf '  ... and %s more\n' "$((remote_commit_count - 20))" >&2
+  fi
+
+  printf '\nForce-push this PR branch with lease? [y/N] ' >&2
+else
+  printf '\nPush to this PR branch? [y/N] ' >&2
+fi
+
+if ! read -r confirmation; then
+  printf '\n' >&2
+  exit 1
+fi
+
+case "$confirmation" in
+  y | Y | yes | YES | Yes)
+    ;;
+  *)
+    printf 'Push canceled.\n' >&2
+    exit 1
+    ;;
+esac
+
+if [[ "$(git symbolic-ref --quiet --short HEAD)" != "$branch" || "$(git rev-parse --verify HEAD)" != "$local_oid" ]]; then
+  fail 'The local branch changed during confirmation. Run push again to review its current state.'
+fi
+
+push_options=(--no-follow-tags)
+if [[ "$needs_rewrite" == true ]]; then
+  push_options+=("--force-with-lease=$pr_ref:$remote_oid")
+fi
+
+exec git push "${push_options[@]}" "$push_url" "$local_oid:$pr_ref"

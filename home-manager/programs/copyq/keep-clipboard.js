@@ -6,6 +6,8 @@ const keepClipboardAlive = () => {
     if (isClipboardSecret) return;
 
     const formats = new Set(str(clipboard("?")).split("\n"));
+    if (formats.has(mimeOwner)) return;
+
     const item = {};
 
     for (const format of formats) {

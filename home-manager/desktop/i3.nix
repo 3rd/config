@@ -8,8 +8,19 @@
 
 let
   browserExe = config.programs.chromium.finalPackage.meta.mainProgram or "chromium";
+  i3lockExe = "/run/current-system/sw/bin/i3lock";
   modifier = "Mod3";
   alt = "Mod1";
+  scratchpadSizes = {
+    altTab = {
+      width = 2193;
+      height = 1238;
+    };
+    altHyper = {
+      width = 1830;
+      height = 1090;
+    };
+  };
   monLeft = "DP-0";
   monCenter = "DP-2";
   monRight = "HDMI-0";
@@ -121,14 +132,14 @@ in
         # BLURTYPE="0x6" # 2.90s
         # ${pkgs.scrot}/bin/scrot "$IMAGE"
         # ${pkgs.imagemagick}/bin/convert $IMAGE -blur $BLURTYPE $IMAGE
-        # ${pkgs.i3lock}/bin/i3lock -i $IMAGE
+        # ${i3lockExe} -i $IMAGE
         # ${pkgs.coreutils}/bin/rm $IMAGE
         # ${pkgs.i3}/bin/i3 mode default
 
         IMAGE=/home/rabbit/brain/config/dotfiles/lock.png
         SIZE=$(xdpyinfo | grep dimensions | sed -r 's/^[^0-9]*([0-9]+x[0-9]+).*$/\1/' | head -n1)
         ${pkgs.imagemagick}/bin/convert -resize "$SIZE^" -extent "$SIZE" -gravity center "$IMAGE" /tmp/lock.png
-        ${pkgs.i3lock}/bin/i3lock -i /tmp/lock.png
+        ${i3lockExe} -i /tmp/lock.png
         ${pkgs.i3}/bin/i3 mode default
       '';
       alt-tab-scratchpad = super.writeScriptBin "alt-tab-scratchpad" ''
@@ -136,7 +147,7 @@ in
 
         set -eu
 
-        MARK="alt-tab"
+        MARK="''${2:-alt-tab}"
         I3_MSG="${pkgs.i3}/bin/i3-msg"
         JQ="${pkgs.jq}/bin/jq"
         ACTION="''${1:-toggle}"
@@ -187,6 +198,12 @@ in
           eject_marked
 
           "$I3_MSG" "[con_id=$focused_id] mark --replace $MARK; [con_id=$focused_id] move scratchpad" >/dev/null
+
+          if [ "$MARK" = "alt-tab" ]; then
+            "$I3_MSG" "[con_id=$focused_id] resize set ${toString scratchpadSizes.altTab.width} px ${toString scratchpadSizes.altTab.height} px" >/dev/null
+          elif [ "$MARK" = "alt-hyper" ]; then
+            "$I3_MSG" "[con_id=$focused_id] resize set ${toString scratchpadSizes.altHyper.width} px ${toString scratchpadSizes.altHyper.height} px" >/dev/null
+          fi
         }
 
         case "$ACTION" in
@@ -454,7 +471,6 @@ in
     with pkgs;
     [
       lock
-      i3lock
       scrot
       feh
       alt-tab-scratchpad
@@ -586,6 +602,8 @@ in
           "Print" = "exec ${pkgs-stable.flameshot}/bin/flameshot gui";
           "${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad toggle";
           "ctrl+${alt}+Tab" = "exec --no-startup-id alt-tab-scratchpad store";
+          "${alt}+Hyper_R" = "exec --no-startup-id alt-tab-scratchpad toggle alt-hyper";
+          "ctrl+${alt}+Hyper_R" = "exec --no-startup-id alt-tab-scratchpad store alt-hyper";
           "${modifier}+space" = "exec --no-startup-id ${desktopMenuExe}";
           "ctrl+${alt}+space" = "exec ${pkgs.rofi}/bin/rofi -show window";
         };
@@ -661,6 +679,8 @@ in
         for_window [class="^.*"] border pixel 2
         for_window [class="^Handy$"] border none
         for_window [class="^cheshire-dev$"] border none
+        for_window [class="^electron$" title="^Bench$"] border none
+        for_window [window_role="^bench-popup$"] border none
         for_window [window_type="notification"] border none
         for_window [instance="^condom-approval$"] floating enable, move position center
         for_window [class="^Gnome-screenshot$"] floating enable
@@ -707,7 +727,7 @@ in
 
         # core
         bindsym ${modifier}+t exec ~/.config/bin/task-add
-        bindsym ${modifier}+c exec ~/brain/config/core/wiki-consume
+        bindsym ${modifier}+c nop bench-popup project-manager /capture
       '';
     };
     preferStatusNotifierItems = true;

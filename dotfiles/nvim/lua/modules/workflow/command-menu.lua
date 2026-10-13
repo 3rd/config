@@ -210,46 +210,10 @@ local commands = {
   },
 }
 
----@type table<"normal"|"visual", table<string, fun(): boolean>>
-local conditions = {
-  normal = {},
-  visual = {},
-}
-
 local open_normal_menu = nil
 local open_visual_menu = nil
 
 local setup = function()
-  -- load module actions
-  local modules = lib.module.get_enabled_modules()
-  for _, module in ipairs(modules) do
-    if module.actions then
-      -- { "n", "Action name", command or function }
-      for _, action in ipairs(module.actions) do
-        local mode = action[1]
-        local name = action[2]
-        local command = action[3]
-        local cond = action[4]
-        if mode == "n" then
-          commands.normal[name] = command
-          conditions.normal[name] = cond
-        elseif mode == "v" then
-          commands.visual[name] = command
-          conditions.visual[name] = cond
-        end
-      end
-    end
-  end
-
-  local create_source = function(cmds, conds)
-    local result = {}
-    for name, _ in pairs(cmds) do
-      local cond = conds[name]
-      if cond == nil or cond() then table.insert(result, name) end
-    end
-    return result
-  end
-
   local create_handler = function(cmds)
     return vim.schedule_wrap(function(action_name)
       if action_name == "" then return end
@@ -270,11 +234,11 @@ local setup = function()
     end)
   end
 
-  local create_menu = function(cmds, conds)
-    local handler = create_handler(cmds)
-
+  local create_menu = function(mode, cmds)
     return function()
-      local source = create_source(cmds, conds)
+      local menu_actions = vim.tbl_extend("force", cmds, require("lib/commands").get_actions(mode))
+      local handler = create_handler(menu_actions)
+      local source = vim.tbl_keys(menu_actions)
       local fzf = require("fzf")
       coroutine.wrap(function()
         local options = {
@@ -291,8 +255,8 @@ local setup = function()
     end
   end
 
-  open_normal_menu = create_menu(commands.normal, conditions.normal)
-  open_visual_menu = create_menu(commands.visual, conditions.visual)
+  open_normal_menu = create_menu("n", commands.normal)
+  open_visual_menu = create_menu("v", commands.visual)
 end
 
 return lib.module.create({

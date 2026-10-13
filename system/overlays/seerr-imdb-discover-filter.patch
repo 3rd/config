@@ -1,0 +1,1711 @@
+diff --git a/server/api/ratings.ts b/server/api/ratings.ts
+--- a/server/api/ratings.ts
++++ b/server/api/ratings.ts
+@@ -1,7 +1,106 @@
+-import { type IMDBRating } from '@server/api/rating/imdbRadarrProxy';
++import IMDBSonarrProxy from '@server/api/rating/imdb-sonarr-proxy';
++import IMDBRadarrProxy, {
++  type IMDBRating,
++} from '@server/api/rating/imdbRadarrProxy';
+ import { type RTRating } from '@server/api/rating/rottentomatoes';
++import type TheMovieDb from '@server/api/themoviedb';
++import imdbRatingCache from '@server/lib/imdb-rating-cache';
+ 
+ export interface RatingResponse {
+   rt?: RTRating;
+   imdb?: IMDBRating;
+ }
++
++const fetchImdbRating = async (
++  tmdb: TheMovieDb,
++  mediaType: 'movie' | 'tv',
++  id: number
++) => {
++  if (mediaType === 'movie') {
++    const movie = await tmdb.getMovie({ movieId: id });
++    const imdbId = movie.imdb_id;
++    const hasRatingId = typeof imdbId === 'string' && /^tt\d+$/.test(imdbId);
++    if (!hasRatingId) return { rating: null };
++
++    return {
++      rating: await new IMDBRadarrProxy().getMovieRatings(imdbId, 'refresh'),
++      releaseDate: movie.release_date,
++    };
++  }
++
++  const tv = await tmdb.getTvShow({ tvId: id });
++  const { tvdb_id: tvdbId, imdb_id: imdbId } = tv.external_ids;
++  const hasRatingIds =
++    typeof tvdbId === 'number' &&
++    Number.isInteger(tvdbId) &&
++    tvdbId > 0 &&
++    typeof imdbId === 'string' &&
++    /^tt\d+$/.test(imdbId);
++  if (!hasRatingIds) return { rating: null };
++
++  return {
++    rating: await new IMDBSonarrProxy().getSeriesRatings(
++      tvdbId,
++      imdbId,
++      'refresh'
++    ),
++    releaseDate: tv.last_air_date || tv.first_air_date,
++    isContinuingSeries: tv.in_production,
++  };
++};
++
++export const getImdbRating = (
++  tmdb: TheMovieDb,
++  mediaType: 'movie' | 'tv',
++  id: number
++) =>
++  imdbRatingCache.getOrFetch({
++    mediaType,
++    tmdbId: id,
++    fetchRating: () => fetchImdbRating(tmdb, mediaType, id),
++  });
++
++type ImdbFilterOptions = {
++  tmdb: TheMovieDb;
++  mediaType: 'movie' | 'tv';
++  imdbRatingGte?: number;
++  imdbRatingLte?: number;
++};
++
++export const filterByImdbRating = async <T extends { id: number }>(
++  results: T[],
++  { tmdb, mediaType, imdbRatingGte, imdbRatingLte }: ImdbFilterOptions
++) => {
++  const hasImdbFilter =
++    imdbRatingGte !== undefined || imdbRatingLte !== undefined;
++  if (!hasImdbFilter) return results;
++
++  const matches: T[] = [];
++
++  for (let offset = 0; offset < results.length; offset += 5) {
++    const batch = results.slice(offset, offset + 5);
++    const ratings = await Promise.all(
++      batch.map((result) => getImdbRating(tmdb, mediaType, result.id))
++    );
++
++    batch.forEach((result, index) => {
++      const score = ratings[index]?.criticsScore;
++      if (
++        typeof score !== 'number' ||
++        !Number.isFinite(score) ||
++        score <= 0 ||
++        score > 10
++      ) {
++        return;
++      }
++
++      const isWithinRange =
++        score >= (imdbRatingGte ?? 0) && score <= (imdbRatingLte ?? 10);
++      if (isWithinRange) {
++        matches.push(result);
++      }
++    });
++  }
++
++  return matches;
++};
+diff --git a/server/api/themoviedb/constants.ts b/server/api/themoviedb/constants.ts
+--- a/server/api/themoviedb/constants.ts
++++ b/server/api/themoviedb/constants.ts
+@@ -1 +1,2 @@
+ export const ANIME_KEYWORD_ID = 210024;
++export const MAX_TMDB_DISCOVER_PAGES = 500;
+diff --git a/server/routes/discover.ts b/server/routes/discover.ts
+--- a/server/routes/discover.ts
++++ b/server/routes/discover.ts
+@@ -1,6 +1,8 @@
+ import PlexTvAPI from '@server/api/plextv';
++import { filterByImdbRating } from '@server/api/ratings';
+ import type { SortOptions } from '@server/api/themoviedb';
+ import TheMovieDb from '@server/api/themoviedb';
++import { MAX_TMDB_DISCOVER_PAGES } from '@server/api/themoviedb/constants';
+ import type { TmdbKeyword } from '@server/api/themoviedb/interfaces';
+ import { MediaType } from '@server/constants/media';
+ import { getRepository } from '@server/datasource';
+@@ -76,6 +78,8 @@
+   withRuntimeLte: z.coerce.string().optional(),
+   voteAverageGte: z.coerce.string().optional(),
+   voteAverageLte: z.coerce.string().optional(),
++  imdbRatingGte: z.coerce.number().min(0).max(10).optional(),
++  imdbRatingLte: z.coerce.number().min(0).max(10).optional(),
+   voteCountGte: z.coerce.string().optional(),
+   voteCountLte: z.coerce.string().optional(),
+   network: z.coerce.string().optional(),
+@@ -92,13 +96,18 @@
+ export type FilterOptions = z.infer<typeof QueryFilterOptions>;
+ const ApiQuerySchema = QueryFilterOptions.omit({
+   certificationMode: true,
+-});
++}).refine(
++  (query) => (query.imdbRatingGte ?? 0) <= (query.imdbRatingLte ?? 10),
++  { message: 'Invalid IMDb rating range.' }
++);
+ 
+ discoverRoutes.get('/movies', async (req, res, next) => {
+   const tmdb = createTmdbWithRegionLanguage(req.user);
+ 
+   try {
+     const query = ApiQuerySchema.parse(req.query);
++    const hasImdbFilter =
++      query.imdbRatingGte !== undefined || query.imdbRatingLte !== undefined;
+     const keywords = query.keywords;
+     const excludeKeywords = query.excludeKeywords;
+ 
+@@ -131,9 +140,16 @@
+       certificationCountry: query.certificationCountry,
+     });
+ 
++    const results = await filterByImdbRating(data.results, {
++      tmdb,
++      mediaType: 'movie',
++      imdbRatingGte: query.imdbRatingGte,
++      imdbRatingLte: query.imdbRatingLte,
++    });
++
+     const media = await Media.getRelatedMedia(
+       req.user,
+-      data.results.map((result) => ({
++      results.map((result) => ({
+         tmdbId: result.id,
+         mediaType: MediaType.MOVIE,
+       }))
+@@ -159,7 +175,10 @@
+       totalPages: data.total_pages,
+       totalResults: data.total_results,
+       keywords: keywordData,
+-      results: data.results.map((result) =>
++      hasMore: hasImdbFilter
++        ? data.page < Math.min(data.total_pages, MAX_TMDB_DISCOVER_PAGES)
++        : undefined,
++      results: results.map((result) =>
+         mapMovieResult(
+           result,
+           media.find(
+@@ -170,6 +189,10 @@
+       ),
+     });
+   } catch (e) {
++    if (e instanceof z.ZodError) {
++      return next({ status: 400, message: e.message });
++    }
++
+     logger.debug('Something went wrong retrieving popular movies', {
+       label: 'API',
+       errorMessage: e.message,
+@@ -407,6 +430,8 @@
+ 
+   try {
+     const query = ApiQuerySchema.parse(req.query);
++    const hasImdbFilter =
++      query.imdbRatingGte !== undefined || query.imdbRatingLte !== undefined;
+     const keywords = query.keywords;
+     const excludeKeywords = query.excludeKeywords;
+     const data = await tmdb.getDiscoverTv({
+@@ -439,9 +464,16 @@
+       certificationCountry: query.certificationCountry,
+     });
+ 
++    const results = await filterByImdbRating(data.results, {
++      tmdb,
++      mediaType: 'tv',
++      imdbRatingGte: query.imdbRatingGte,
++      imdbRatingLte: query.imdbRatingLte,
++    });
++
+     const media = await Media.getRelatedMedia(
+       req.user,
+-      data.results.map((result) => ({
++      results.map((result) => ({
+         tmdbId: result.id,
+         mediaType: MediaType.TV,
+       }))
+@@ -467,7 +499,10 @@
+       totalPages: data.total_pages,
+       totalResults: data.total_results,
+       keywords: keywordData,
+-      results: data.results.map((result) =>
++      hasMore: hasImdbFilter
++        ? data.page < Math.min(data.total_pages, MAX_TMDB_DISCOVER_PAGES)
++        : undefined,
++      results: results.map((result) =>
+         mapTvResult(
+           result,
+           media.find(
+@@ -477,6 +512,10 @@
+       ),
+     });
+   } catch (e) {
++    if (e instanceof z.ZodError) {
++      return next({ status: 400, message: e.message });
++    }
++
+     logger.debug('Something went wrong retrieving popular series', {
+       label: 'API',
+       errorMessage: e.message,
+diff --git a/server/routes/movie.ts b/server/routes/movie.ts
+--- a/server/routes/movie.ts
++++ b/server/routes/movie.ts
+@@ -1,6 +1,6 @@
+ import IMDBRadarrProxy from '@server/api/rating/imdbRadarrProxy';
+ import RottenTomatoes from '@server/api/rating/rottentomatoes';
+-import { type RatingResponse } from '@server/api/ratings';
++import { getImdbRating, type RatingResponse } from '@server/api/ratings';
+ import TheMovieDb from '@server/api/themoviedb';
+ import { MediaType } from '@server/constants/media';
+ import { getRepository } from '@server/datasource';
+@@ -186,18 +186,13 @@
+ 
+ movieRoutes.get('/:id/ratings/imdb', async (req, res, next) => {
+   const tmdb = new TheMovieDb();
+-  const imdbApi = new IMDBRadarrProxy();
+ 
+   try {
+-    const movie = await tmdb.getMovie({ movieId: Number(req.params.id) });
+-    const imdbId = movie.imdb_id;
+-    const hasRatingId = typeof imdbId === 'string' && /^tt\d+$/.test(imdbId);
+-    let imdbRatings = null;
+-
+-    if (hasRatingId) {
+-      imdbRatings = await imdbApi.getMovieRatings(imdbId);
+-    }
+-
++    const imdbRatings = await getImdbRating(
++      tmdb,
++      'movie',
++      Number(req.params.id)
++    );
+     if (!imdbRatings) {
+       return next({ status: 404, message: 'IMDb ratings not found.' });
+     }
+diff --git a/server/routes/tv.ts b/server/routes/tv.ts
+--- a/server/routes/tv.ts
++++ b/server/routes/tv.ts
+@@ -1,7 +1,6 @@
+ import { getMetadataProvider } from '@server/api/metadata';
+-import IMDBSonarrProxy from '@server/api/rating/imdb-sonarr-proxy';
+ import RottenTomatoes from '@server/api/rating/rottentomatoes';
+-import type { RatingResponse } from '@server/api/ratings';
++import { getImdbRating, type RatingResponse } from '@server/api/ratings';
+ import TheMovieDb from '@server/api/themoviedb';
+ import { ANIME_KEYWORD_ID } from '@server/api/themoviedb/constants';
+ import type { TmdbKeyword } from '@server/api/themoviedb/interfaces';
+@@ -226,23 +225,9 @@
+ 
+ tvRoutes.get('/:id/ratings/imdb', async (req, res, next) => {
+   const tmdb = new TheMovieDb();
+-  const imdbApi = new IMDBSonarrProxy();
+ 
+   try {
+-    const tv = await tmdb.getTvShow({ tvId: Number(req.params.id) });
+-    const { tvdb_id: tvdbId, imdb_id: imdbId } = tv.external_ids;
+-    const hasRatingIds =
+-      typeof tvdbId === 'number' &&
+-      Number.isInteger(tvdbId) &&
+-      tvdbId > 0 &&
+-      typeof imdbId === 'string' &&
+-      /^tt\d+$/.test(imdbId);
+-    let imdbRatings = null;
+-
+-    if (hasRatingIds) {
+-      imdbRatings = await imdbApi.getSeriesRatings(tvdbId, imdbId);
+-    }
+-
++    const imdbRatings = await getImdbRating(tmdb, 'tv', Number(req.params.id));
+     if (!imdbRatings) {
+       return next({
+         status: 404,
+diff --git a/server/routes/discover-imdb.test.ts b/server/routes/discover-imdb.test.ts
+new file mode 100644
+--- /dev/null
++++ b/server/routes/discover-imdb.test.ts
+@@ -0,0 +1,422 @@
++import IMDBSonarrProxy from '@server/api/rating/imdb-sonarr-proxy';
++import IMDBRadarrProxy, {
++  type IMDBRating,
++} from '@server/api/rating/imdbRadarrProxy';
++import type {
++  TmdbMovieDetails,
++  TmdbMovieResult,
++  TmdbTvDetails,
++  TmdbTvResult,
++} from '@server/api/themoviedb/interfaces';
++import Media from '@server/entity/Media';
++import cacheManager from '@server/lib/cache';
++import imdbRatingCache, {
++  ImdbRatingCache,
++} from '@server/lib/imdb-rating-cache';
++import axios, { type InternalAxiosRequestConfig } from 'axios';
++import express from 'express';
++import * as OpenApiValidator from 'express-openapi-validator';
++import assert from 'node:assert/strict';
++import { mkdtemp, rm } from 'node:fs/promises';
++import os from 'node:os';
++import path from 'node:path';
++import { afterEach, beforeEach, it, mock } from 'node:test';
++import request from 'supertest';
++import discoverRoutes from './discover';
++import settingsRoutes from './settings';
++
++const buildMovie = (id: number) =>
++  ({
++    id,
++    media_type: 'movie',
++    title: `Movie ${id}`,
++    original_title: `Movie ${id}`,
++    release_date: '2020-01-01',
++    adult: false,
++    video: false,
++    popularity: 10,
++    vote_count: 100,
++    vote_average: 4,
++    genre_ids: [],
++    overview: '',
++    original_language: 'en',
++  }) satisfies TmdbMovieResult;
++
++const buildMovieDetails = (id: number) =>
++  ({
++    ...buildMovie(id),
++    imdb_id: `tt${id}`,
++    budget: 0,
++    genres: [],
++    production_companies: [],
++    production_countries: [],
++    release_dates: { results: [] },
++    revenue: 0,
++    spoken_languages: [],
++    status: 'Released',
++    credits: { cast: [], crew: [] },
++    external_ids: { imdb_id: `tt${id}` },
++    videos: { results: [] },
++    keywords: { keywords: [] },
++  }) satisfies TmdbMovieDetails;
++
++const buildSeries = (id: number) =>
++  ({
++    id,
++    media_type: 'tv',
++    name: `Series ${id}`,
++    original_name: `Series ${id}`,
++    first_air_date: '2020-01-01',
++    origin_country: [],
++    popularity: 10,
++    vote_count: 100,
++    vote_average: 4,
++    genre_ids: [],
++    overview: '',
++    original_language: 'en',
++  }) satisfies TmdbTvResult;
++
++const buildSeriesDetails = (id: number) =>
++  ({
++    ...buildSeries(id),
++    content_ratings: { results: [] },
++    created_by: [],
++    episode_run_time: [],
++    genres: [],
++    homepage: '',
++    in_production: false,
++    languages: ['en'],
++    last_air_date: '2020-01-01',
++    networks: [],
++    number_of_episodes: 1,
++    number_of_seasons: 1,
++    production_companies: [],
++    production_countries: [],
++    spoken_languages: [],
++    seasons: [],
++    status: 'Ended',
++    type: 'Scripted',
++    aggregate_credits: { cast: [] },
++    credits: { crew: [] },
++    external_ids: { imdb_id: `tt${id}`, tvdb_id: id + 100 },
++    keywords: { results: [] },
++    videos: { results: [] },
++  }) satisfies TmdbTvDetails;
++
++const buildRating = (score: number) =>
++  ({
++    title: 'Rated title',
++    url: 'https://www.imdb.com/title/tt1',
++    criticsScore: score,
++    criticsScoreCount: 100,
++  }) satisfies IMDBRating;
++
++const app = express();
++app.use(
++  OpenApiValidator.middleware({
++    apiSpec: path.resolve('seerr-api.yml'),
++    validateRequests: true,
++    validateSecurity: false,
++  })
++);
++app.use('/api/v1/discover', discoverRoutes);
++app.use('/api/v1/settings', settingsRoutes);
++app.use(
++  (
++    error: { status?: number; message: string },
++    _req: express.Request,
++    res: express.Response,
++    next: express.NextFunction
++  ) => {
++    if (res.headersSent) return next(error);
++
++    res.status(error.status ?? 500).json({ message: error.message });
++  }
++);
++
++const responses = new Map<string, unknown>();
++const requests: InternalAxiosRequestConfig[] = [];
++const originalAdapter = axios.defaults.adapter;
++let cacheDirectory: string;
++
++beforeEach(async () => {
++  cacheDirectory = await mkdtemp(
++    path.join(os.tmpdir(), 'seerr-imdb-route-test-')
++  );
++  const isolatedCache = new ImdbRatingCache(cacheDirectory);
++  mock.method(
++    imdbRatingCache,
++    'getOrFetch',
++    isolatedCache.getOrFetch.bind(isolatedCache)
++  );
++  mock.method(
++    imdbRatingCache,
++    'clear',
++    isolatedCache.clear.bind(isolatedCache)
++  );
++
++  responses.clear();
++  requests.length = 0;
++  cacheManager.getCache('tmdb').flush();
++  cacheManager.getCache('imdb').flush();
++  cacheManager.getCache('sonarr').flush();
++  mock.method(Media, 'getRelatedMedia', async () => []);
++  axios.defaults.adapter = async (config) => {
++    requests.push(config);
++    const data = responses.get(config.url ?? '');
++    assert.notStrictEqual(data, undefined, `Unexpected request: ${config.url}`);
++
++    return { data, status: 200, statusText: 'OK', headers: {}, config };
++  };
++});
++
++afterEach(async () => {
++  axios.defaults.adapter = originalAdapter;
++  mock.restoreAll();
++  await rm(cacheDirectory, { recursive: true, force: true });
++});
++
++it('filters movie IMDb scores inclusively without changing TMDB order or filters', async () => {
++  responses.set('/discover/movie', {
++    page: 1,
++    total_pages: 10,
++    total_results: 200,
++    results: [1, 2, 3, 4, 5].map(buildMovie),
++  });
++
++  for (const id of [1, 2, 3, 4, 5]) {
++    responses.set(`/movie/${id}`, buildMovieDetails(id));
++  }
++
++  const ratings = new Map([
++    ['tt1', buildRating(8.5)],
++    ['tt2', buildRating(7.4)],
++    ['tt3', buildRating(7.5)],
++    ['tt4', buildRating(8.6)],
++  ]);
++  mock.method(
++    IMDBRadarrProxy.prototype,
++    'getMovieRatings',
++    async (id: string) => ratings.get(id) ?? null
++  );
++
++  const response = await request(app).get('/api/v1/discover/movies').query({
++    imdbRatingGte: 7.5,
++    imdbRatingLte: 8.5,
++    voteAverageGte: 4,
++    genre: '18',
++  });
++  assert.equal(response.status, 200);
++  assert.deepEqual(
++    response.body.results.map((result: { id: number }) => result.id),
++    [1, 3]
++  );
++  assert.equal(response.body.hasMore, true);
++  assert.equal(response.body.totalResults, 200);
++  assert.equal(requests[0].params['vote_average.gte'], '4');
++  assert.equal(requests[0].params.with_genres, '18');
++  assert.equal(requests[0].params.imdbRatingGte, undefined);
++});
++
++it('filters series through IMDb and excludes missing TVDB mappings', async () => {
++  responses.set('/discover/tv', {
++    page: 1,
++    total_pages: 1,
++    total_results: 3,
++    results: [1, 2, 3].map(buildSeries),
++  });
++  responses.set('/tv/1', buildSeriesDetails(1));
++  responses.set('/tv/2', buildSeriesDetails(2));
++  const missingMapping: TmdbTvDetails = buildSeriesDetails(3);
++  delete missingMapping.external_ids.tvdb_id;
++  responses.set('/tv/3', missingMapping);
++  mock.method(
++    IMDBSonarrProxy.prototype,
++    'getSeriesRatings',
++    async (tvdbId: number, imdbId: string) => {
++      assert.equal(imdbId, `tt${tvdbId - 100}`);
++
++      return buildRating(tvdbId === 101 ? 8 : 6);
++    }
++  );
++
++  const response = await request(app).get(
++    '/api/v1/discover/tv?imdbRatingGte=7.5'
++  );
++  assert.equal(response.status, 200);
++  assert.deepEqual(
++    response.body.results.map((result: { id: number }) => result.id),
++    [1]
++  );
++  assert.equal(response.body.hasMore, false);
++});
++
++it('keeps an empty filtered page open until the TMDB page limit', async () => {
++  responses.set('/discover/movie', {
++    page: 499,
++    total_pages: 700,
++    total_results: 14000,
++    results: [buildMovie(1)],
++  });
++  responses.set('/movie/1', buildMovieDetails(1));
++  mock.method(IMDBRadarrProxy.prototype, 'getMovieRatings', async () =>
++    buildRating(11)
++  );
++
++  const response = await request(app).get(
++    '/api/v1/discover/movies?page=499&imdbRatingLte=8'
++  );
++  assert.equal(response.status, 200);
++  assert.deepEqual(response.body.results, []);
++  assert.equal(response.body.hasMore, true);
++
++  responses.set('/discover/movie', {
++    page: 500,
++    total_pages: 700,
++    total_results: 14000,
++    results: [],
++  });
++  const lastResponse = await request(app).get(
++    '/api/v1/discover/movies?page=500&imdbRatingLte=8'
++  );
++  assert.equal(lastResponse.status, 200);
++  assert.equal(lastResponse.body.hasMore, false);
++});
++
++it('does not fetch IMDb ratings when the filter is absent', async () => {
++  responses.set('/discover/movie', {
++    page: 1,
++    total_pages: 1,
++    total_results: 1,
++    results: [buildMovie(1)],
++  });
++
++  const response = await request(app).get('/api/v1/discover/movies');
++  assert.equal(response.status, 200);
++  assert.equal(response.body.results.length, 1);
++  assert.equal(response.body.hasMore, undefined);
++  assert.equal(requests.length, 1);
++});
++
++it('rejects invalid IMDb bounds before requesting titles', async () => {
++  const invalidNumber = await request(app).get(
++    '/api/v1/discover/movies?imdbRatingGte=11'
++  );
++  assert.equal(invalidNumber.status, 400);
++
++  const reversedRange = await request(app).get(
++    '/api/v1/discover/tv?imdbRatingGte=8&imdbRatingLte=7'
++  );
++  assert.equal(reversedRange.status, 400);
++  assert.match(reversedRange.body.message, /Invalid IMDb rating range/);
++  assert.equal(requests.length, 0);
++});
++
++it('returns an error when a ratings provider fails instead of an empty match set', async () => {
++  responses.set('/discover/movie', {
++    page: 1,
++    total_pages: 1,
++    total_results: 1,
++    results: [buildMovie(1)],
++  });
++  responses.set('/movie/1', buildMovieDetails(1));
++  mock.method(IMDBRadarrProxy.prototype, 'getMovieRatings', async () => {
++    throw new Error('Ratings provider unavailable');
++  });
++
++  const response = await request(app).get(
++    '/api/v1/discover/movies?imdbRatingGte=7'
++  );
++  assert.equal(response.status, 500);
++  assert.equal(response.body.message, 'Unable to retrieve popular movies.');
++});
++
++const cachedMediaCases = [
++  {
++    name: 'movies',
++    discoveryPath: '/discover/movie',
++    detailsPath: '/movie/1',
++    result: buildMovie(1),
++    details: { ...buildMovieDetails(1), release_date: '2026-10-10' },
++    ratingPath: '/movie/imdb/tt1',
++    buildProviderResponse: (score: number) => [
++      {
++        ImdbId: 'tt1',
++        Title: 'Synthetic movie',
++        MovieRatings: { Imdb: { Value: score, Count: 100 } },
++      },
++    ],
++    primeProvider: () => new IMDBRadarrProxy().getMovieRatings('tt1'),
++  },
++  {
++    name: 'tv',
++    discoveryPath: '/discover/tv',
++    detailsPath: '/tv/1',
++    result: buildSeries(1),
++    details: { ...buildSeriesDetails(1), last_air_date: '2026-10-10' },
++    ratingPath: '/shows/en/101',
++    buildProviderResponse: (score: number) => ({
++      tvdbId: 101,
++      imdbId: 'tt1',
++      title: 'Synthetic series',
++      rating: { value: score, count: 100 },
++    }),
++    primeProvider: () => new IMDBSonarrProxy().getSeriesRatings(101, 'tt1'),
++  },
++];
++
++for (const media of cachedMediaCases) {
++  it(`refreshes ${media.name} scores after disk expiry and an administrator flush`, async () => {
++    let now = Date.UTC(2026, 9, 10);
++    mock.method(Date, 'now', () => now);
++    responses.set(media.discoveryPath, {
++      page: 1,
++      total_pages: 1,
++      total_results: 1,
++      results: [media.result],
++    });
++    responses.set(media.detailsPath, media.details);
++    responses.set(media.ratingPath, media.buildProviderResponse(8));
++    const url = `/api/v1/discover/${media.name}?imdbRatingGte=7`;
++    const first = await request(app).get(url);
++    assert.equal(first.status, 200);
++    assert.deepEqual(
++      first.body.results.map((result: { id: number }) => result.id),
++      [1]
++    );
++
++    responses.set(media.ratingPath, media.buildProviderResponse(6));
++    const warm = await request(app).get(url);
++    assert.equal(warm.status, 200);
++    assert.equal(warm.body.results.length, 1);
++    assert.equal(
++      requests.filter((entry) => entry.url === media.ratingPath).length,
++      1
++    );
++
++    now += 6 * 60 * 60 * 1000 - 1;
++    await media.primeProvider();
++    now += 1;
++    responses.set(media.ratingPath, media.buildProviderResponse(9));
++    const expired = await request(app).get(url);
++    assert.equal(expired.status, 200);
++    assert.equal(expired.body.results.length, 1);
++    const requestsBeforeFlush = requests.filter(
++      (entry) => entry.url === media.ratingPath
++    ).length;
++    assert.equal(requestsBeforeFlush, media.name === 'movies' ? 3 : 2);
++
++    responses.set(media.ratingPath, media.buildProviderResponse(5));
++    const flushed = await request(app).post(
++      '/api/v1/settings/cache/imdb/flush'
++    );
++    assert.equal(flushed.status, 204);
++    const refreshed = await request(app).get(url);
++    assert.equal(refreshed.status, 200);
++    assert.deepEqual(refreshed.body.results, []);
++    assert.equal(
++      requests.filter((entry) => entry.url === media.ratingPath).length,
++      requestsBeforeFlush + 1
++    );
++  });
++}
+diff --git a/src/components/Common/ListView/index.tsx b/src/components/Common/ListView/index.tsx
+--- a/src/components/Common/ListView/index.tsx
++++ b/src/components/Common/ListView/index.tsx
+@@ -1,9 +1,11 @@
++import Button from '@app/components/Common/Button';
+ import PersonCard from '@app/components/PersonCard';
+ import TitleCard from '@app/components/TitleCard';
+ import TmdbTitleCard from '@app/components/TitleCard/TmdbTitleCard';
+ import { Permission, useUser } from '@app/hooks/useUser';
+ import useVerticalScroll from '@app/hooks/useVerticalScroll';
+ import globalMessages from '@app/i18n/globalMessages';
++import defineMessages from '@app/utils/defineMessages';
+ import { MediaStatus } from '@server/constants/media';
+ import type { WatchlistItem } from '@server/interfaces/api/discoverInterfaces';
+ import type {
+@@ -14,12 +16,19 @@
+ } from '@server/models/Search';
+ import { useIntl } from 'react-intl';
+ 
++const messages = defineMessages('components.Common.ListView', {
++  loadMore: 'Load More',
++  loading: 'Loading…',
++  noMatchesYet: 'No matching titles so far. Load more to keep looking.',
++});
++
+ type ListViewProps = {
+   items?: (TvResult | MovieResult | PersonResult | CollectionResult)[];
+   plexItems?: WatchlistItem[];
+   isEmpty?: boolean;
+   isLoading?: boolean;
+   isReachingEnd?: boolean;
++  paginationMode?: 'scroll' | 'manual';
+   onScrollBottom: () => void;
+   mutateParent?: () => void;
+ };
+@@ -30,12 +39,18 @@
+   isLoading,
+   onScrollBottom,
+   isReachingEnd,
++  paginationMode = 'scroll',
+   plexItems,
+   mutateParent,
+ }: ListViewProps) => {
+   const intl = useIntl();
+   const { hasPermission } = useUser();
+-  useVerticalScroll(onScrollBottom, !isLoading && !isEmpty && !isReachingEnd);
++  useVerticalScroll(
++    onScrollBottom,
++    paginationMode === 'scroll' && !isLoading && !isEmpty && !isReachingEnd
++  );
++
++  const canLoadMore = paginationMode === 'manual' && !isReachingEnd;
+ 
+   const blocklistVisibility = hasPermission(
+     [Permission.MANAGE_BLOCKLIST, Permission.VIEW_BLOCKLIST],
+@@ -44,9 +59,11 @@
+ 
+   return (
+     <>
+-      {isEmpty && (
++      {isEmpty && !(paginationMode === 'manual' && isLoading) && (
+         <div className="mt-64 w-full text-center text-2xl text-gray-400">
+-          {intl.formatMessage(globalMessages.noresults)}
++          {intl.formatMessage(
++            canLoadMore ? messages.noMatchesYet : globalMessages.noresults
++          )}
+         </div>
+       )}
+       <ul className="cards-vertical">
+@@ -155,6 +172,15 @@
+             </li>
+           ))}
+       </ul>
++      {canLoadMore && (
++        <div className="my-6 flex justify-center">
++          <Button onClick={onScrollBottom} disabled={isLoading}>
++            {intl.formatMessage(
++              isLoading ? messages.loading : messages.loadMore
++            )}
++          </Button>
++        </div>
++      )}
+     </>
+   );
+ };
+diff --git a/src/components/Common/MultiRangeSlider/index.tsx b/src/components/Common/MultiRangeSlider/index.tsx
+--- a/src/components/Common/MultiRangeSlider/index.tsx
++++ b/src/components/Common/MultiRangeSlider/index.tsx
+@@ -5,6 +5,9 @@
+ type MultiRangeSliderProps = {
+   min: number;
+   max: number;
++  step?: number;
++  minLabel?: string;
++  maxLabel?: string;
+   defaultMinValue?: number;
+   defaultMaxValue?: number;
+   subText?: string;
+@@ -15,6 +18,9 @@
+ const MultiRangeSlider = ({
+   min,
+   max,
++  step = 1,
++  minLabel,
++  maxLabel,
+   defaultMinValue,
+   defaultMaxValue,
+   subText,
+@@ -62,6 +68,8 @@
+           type="range"
+           min={min}
+           max={max}
++          step={step}
++          aria-label={minLabel}
+           value={valueMin}
+           className={`pointer-events-none absolute h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 ${
+             valueMin >= valueMax && valueMin !== min ? 'z-30' : 'z-10'
+@@ -82,7 +90,8 @@
+           min={min}
+           max={max}
+           value={valueMax}
+-          step="1"
++          step={step}
++          aria-label={maxLabel}
+           className={`pointer-events-none absolute left-0 right-0 top-0 z-20 h-2 w-full cursor-pointer appearance-none rounded-lg bg-transparent`}
+           onChange={(e) => {
+             const value = Number(e.target.value);
+diff --git a/src/components/Discover/constants.ts b/src/components/Discover/constants.ts
+--- a/src/components/Discover/constants.ts
++++ b/src/components/Discover/constants.ts
+@@ -105,6 +105,8 @@
+   withRuntimeLte: z.string().optional(),
+   voteAverageGte: z.string().optional(),
+   voteAverageLte: z.string().optional(),
++  imdbRatingGte: z.string().optional(),
++  imdbRatingLte: z.string().optional(),
+   voteCountLte: z.string().optional(),
+   voteCountGte: z.string().optional(),
+   watchRegion: z.string().optional(),
+@@ -186,6 +188,14 @@
+     filterValues.voteAverageLte = values.voteAverageLte;
+   }
+ 
++  if (values.imdbRatingGte) {
++    filterValues.imdbRatingGte = values.imdbRatingGte;
++  }
++
++  if (values.imdbRatingLte) {
++    filterValues.imdbRatingLte = values.imdbRatingLte;
++  }
++
+   if (values.voteCountGte) {
+     filterValues.voteCountGte = values.voteCountGte;
+   }
+@@ -245,6 +255,12 @@
+     delete clonedFilters.voteCountLte;
+   }
+ 
++  if (clonedFilters.imdbRatingGte || clonedFilters.imdbRatingLte) {
++    totalCount += 1;
++    delete clonedFilters.imdbRatingGte;
++    delete clonedFilters.imdbRatingLte;
++  }
++
+   if (clonedFilters.withRuntimeGte || filterValues.withRuntimeLte) {
+     totalCount += 1;
+     delete clonedFilters.withRuntimeGte;
+diff --git a/src/components/Discover/FilterSlideover/index.tsx b/src/components/Discover/FilterSlideover/index.tsx
+--- a/src/components/Discover/FilterSlideover/index.tsx
++++ b/src/components/Discover/FilterSlideover/index.tsx
+@@ -39,6 +39,11 @@
+   ratingText: 'Ratings between {minValue} and {maxValue}',
+   clearfilters: 'Clear Active Filters',
+   tmdbuserscore: 'TMDB User Score',
++  imdbuserscore: 'IMDb User Score',
++  imdbMinimum: 'Minimum IMDb score',
++  imdbMaximum: 'Maximum IMDb score',
++  imdbMissing:
++    'Titles without an IMDb score are excluded when this filter is active.',
+   tmdbuservotecount: 'TMDB User Vote Count',
+   runtime: 'Runtime',
+   streamingservices: 'Streaming Services',
+@@ -334,6 +339,39 @@
+           />
+         </div>
+         <span className="text-lg font-semibold">
++          {intl.formatMessage(messages.imdbuserscore)}
++        </span>
++        <div className="relative z-0">
++          <MultiRangeSlider
++            min={0}
++            max={10}
++            step={0.1}
++            minLabel={intl.formatMessage(messages.imdbMinimum)}
++            maxLabel={intl.formatMessage(messages.imdbMaximum)}
++            defaultMinValue={Number(currentFilters.imdbRatingGte ?? 0)}
++            defaultMaxValue={Number(currentFilters.imdbRatingLte ?? 10)}
++            onUpdateMin={(min) => {
++              updateQueryParams(
++                'imdbRatingGte',
++                min > 0 ? min.toString() : undefined
++              );
++            }}
++            onUpdateMax={(max) => {
++              updateQueryParams(
++                'imdbRatingLte',
++                max < 10 ? max.toString() : undefined
++              );
++            }}
++            subText={intl.formatMessage(messages.ratingText, {
++              minValue: currentFilters.imdbRatingGte ?? 0,
++              maxValue: currentFilters.imdbRatingLte ?? 10,
++            })}
++          />
++        </div>
++        <p className="text-sm text-gray-400">
++          {intl.formatMessage(messages.imdbMissing)}
++        </p>
++        <span className="text-lg font-semibold">
+           {intl.formatMessage(messages.streamingservices)}
+         </span>
+         <WatchProviderSelector
+diff --git a/src/components/Discover/DiscoverMovies/index.tsx b/src/components/Discover/DiscoverMovies/index.tsx
+--- a/src/components/Discover/DiscoverMovies/index.tsx
++++ b/src/components/Discover/DiscoverMovies/index.tsx
+@@ -50,6 +50,9 @@
+   const updateQueryParams = useUpdateQueryParams({});
+ 
+   const preparedFilters = prepareFilterValues(router.query);
++  const hasImdbFilter = Boolean(
++    preparedFilters.imdbRatingGte || preparedFilters.imdbRatingLte
++  );
+ 
+   const {
+     isLoadingInitialData,
+@@ -136,8 +139,10 @@
+         items={titles}
+         isEmpty={isEmpty}
+         isLoading={
+-          isLoadingInitialData || (isLoadingMore && (titles?.length ?? 0) > 0)
++          isLoadingInitialData ||
++          (isLoadingMore && (hasImdbFilter || (titles?.length ?? 0) > 0))
+         }
++        paginationMode={hasImdbFilter ? 'manual' : 'scroll'}
+         isReachingEnd={isReachingEnd}
+         onScrollBottom={fetchMore}
+       />
+diff --git a/src/components/Discover/DiscoverTv/index.tsx b/src/components/Discover/DiscoverTv/index.tsx
+--- a/src/components/Discover/DiscoverTv/index.tsx
++++ b/src/components/Discover/DiscoverTv/index.tsx
+@@ -49,6 +49,9 @@
+   const router = useRouter();
+   const [showFilters, setShowFilters] = useState(false);
+   const preparedFilters = prepareFilterValues(router.query);
++  const hasImdbFilter = Boolean(
++    preparedFilters.imdbRatingGte || preparedFilters.imdbRatingLte
++  );
+   const updateQueryParams = useUpdateQueryParams({});
+ 
+   const {
+@@ -135,8 +138,10 @@
+         isEmpty={isEmpty}
+         isReachingEnd={isReachingEnd}
+         isLoading={
+-          isLoadingInitialData || (isLoadingMore && (titles?.length ?? 0) > 0)
++          isLoadingInitialData ||
++          (isLoadingMore && (hasImdbFilter || (titles?.length ?? 0) > 0))
+         }
++        paginationMode={hasImdbFilter ? 'manual' : 'scroll'}
+         onScrollBottom={fetchMore}
+       />
+     </>
+diff --git a/src/hooks/useDiscover.ts b/src/hooks/useDiscover.ts
+--- a/src/hooks/useDiscover.ts
++++ b/src/hooks/useDiscover.ts
+@@ -11,6 +11,7 @@
+   page: number;
+   totalResults: number;
+   totalPages: number;
++  hasMore?: boolean;
+   results: T[];
+ }
+ 
+@@ -68,6 +69,10 @@
+     BaseSearchResult<T> & S
+   >(
+     (pageIndex: number, previousPageData) => {
++      if (previousPageData?.hasMore === false) {
++        return null;
++      }
++
+       if (previousPageData && pageIndex + 1 > previousPageData.totalPages) {
+         return null;
+       }
+@@ -143,12 +148,17 @@
+   }
+ 
+   const isEmpty = !isLoadingInitialData && titles?.length === 0;
+-  const isReachingEnd =
++  const lastPage = data?.[data.length - 1];
++  let isReachingEnd =
+     isEmpty ||
+     (!!data && (data[data?.length - 1]?.results.length ?? 0) < 20) ||
+     (!!data && (data[data?.length - 1]?.totalResults ?? 0) <= size * 20) ||
+     (!!data && (data[data?.length - 1]?.totalResults ?? 0) < 41);
+ 
++  if (lastPage?.hasMore !== undefined) {
++    isReachingEnd = !lastPage.hasMore;
++  }
++
+   useEffect(() => {
+     if (error && titles.length) {
+       addToast(intl.formatMessage(globalMessages.error), {
+diff --git a/src/i18n/locale/en.json b/src/i18n/locale/en.json
+--- a/src/i18n/locale/en.json
++++ b/src/i18n/locale/en.json
+@@ -26,6 +26,9 @@
+   "components.Common.ImdbRating.imdbRating": "IMDb rating: {score}/10",
+   "components.Common.ImdbRating.imdbUnavailable": "IMDb rating unavailable",
+   "components.Common.ImdbRating.imdbVotes": "IMDb rating: {score}/10 – votes: {formattedCount}",
++  "components.Common.ListView.loadMore": "Load More",
++  "components.Common.ListView.loading": "Loading…",
++  "components.Common.ListView.noMatchesYet": "No matching titles so far. Load more to keep looking.",
+   "components.Common.QuickConnectModal.error": "Error",
+   "components.Common.QuickConnectModal.expired": "Code Expired",
+   "components.Common.QuickConnectModal.expiredMessage": "This Quick Connect code has expired. Please try again.",
+@@ -104,6 +107,10 @@
+   "components.Discover.FilterSlideover.streamingservices": "Streaming Services",
+   "components.Discover.FilterSlideover.studio": "Studio",
+   "components.Discover.FilterSlideover.tmdbuserscore": "TMDB User Score",
++  "components.Discover.FilterSlideover.imdbuserscore": "IMDb User Score",
++  "components.Discover.FilterSlideover.imdbMinimum": "Minimum IMDb score",
++  "components.Discover.FilterSlideover.imdbMaximum": "Maximum IMDb score",
++  "components.Discover.FilterSlideover.imdbMissing": "Titles without an IMDb score are excluded when this filter is active.",
+   "components.Discover.FilterSlideover.tmdbuservotecount": "TMDB User Vote Count",
+   "components.Discover.FilterSlideover.to": "To",
+   "components.Discover.FilterSlideover.voteCount": "Number of votes between {minValue} and {maxValue}",
+diff --git a/seerr-api.yml b/seerr-api.yml
+--- a/seerr-api.yml
++++ b/seerr-api.yml
+@@ -47,7 +47,25 @@
+         default: http://localhost:5055
+ 
+ components:
++  parameters:
++    ImdbRatingGte:
++      in: query
++      name: imdbRatingGte
++      description: Minimum IMDb score, inclusive. Titles without a score are excluded.
++      schema:
++        $ref: '#/components/schemas/ImdbScoreFilter'
++    ImdbRatingLte:
++      in: query
++      name: imdbRatingLte
++      description: Maximum IMDb score, inclusive. Must be at least imdbRatingGte.
++      schema:
++        $ref: '#/components/schemas/ImdbScoreFilter'
+   schemas:
++    ImdbScoreFilter:
++      type: number
++      minimum: 0
++      maximum: 10
++      example: 7.5
+     IMDBRating:
+       type: object
+       properties:
+@@ -5556,10 +5574,12 @@
+   /discover/movies:
+     get:
+       summary: Discover movies
+-      description: Returns a list of movies in a JSON object.
++      description: Returns a list of movies in a JSON object. IMDb bounds filter each TMDB page without changing its order. totalPages and totalResults describe the TMDB candidates before IMDb filtering; when hasMore is present, use it to continue past short or empty pages. Missing scores are excluded and rating-provider failures return an error.
+       tags:
+         - search
+       parameters:
++        - $ref: '#/components/parameters/ImdbRatingGte'
++        - $ref: '#/components/parameters/ImdbRatingLte'
+         - in: query
+           name: page
+           schema:
+@@ -5699,6 +5719,9 @@
+                     type: array
+                     items:
+                       $ref: '#/components/schemas/MovieResult'
++                  hasMore:
++                    type: boolean
++                    description: Present only with an IMDb filter. True while another TMDB candidate page is available, up to TMDB's 500-page limit.
+   /discover/movies/genre/{genreId}:
+     get:
+       summary: Discover movies by genre
+@@ -5882,10 +5905,12 @@
+   /discover/tv:
+     get:
+       summary: Discover TV shows
+-      description: Returns a list of TV shows in a JSON object.
++      description: Returns a list of TV shows in a JSON object. IMDb bounds filter each TMDB page without changing its order. totalPages and totalResults describe the TMDB candidates before IMDb filtering; when hasMore is present, use it to continue past short or empty pages. Missing scores are excluded and rating-provider failures return an error.
+       tags:
+         - search
+       parameters:
++        - $ref: '#/components/parameters/ImdbRatingGte'
++        - $ref: '#/components/parameters/ImdbRatingLte'
+         - in: query
+           name: page
+           schema:
+@@ -6030,6 +6055,9 @@
+                     type: array
+                     items:
+                       $ref: '#/components/schemas/TvResult'
++                  hasMore:
++                    type: boolean
++                    description: Present only with an IMDb filter. True while another TMDB candidate page is available, up to TMDB's 500-page limit.
+   /discover/tv/language/{language}:
+     get:
+       summary: Discover TV shows by original language
+diff --git a/server/api/rating/imdbRadarrProxy.ts b/server/api/rating/imdbRadarrProxy.ts
+--- a/server/api/rating/imdbRadarrProxy.ts
++++ b/server/api/rating/imdbRadarrProxy.ts
+@@ -1,5 +1,6 @@
+ import ExternalAPI from '@server/api/externalapi';
+ import cacheManager from '@server/lib/cache';
++import { z } from 'zod';
+ 
+ type IMDBRadarrProxyResponse = IMDBMovie[];
+ 
+@@ -141,12 +142,14 @@
+   TmdbId: number;
+ }
+ 
+-export interface IMDBRating {
+-  title: string;
+-  url: string;
+-  criticsScore: number;
+-  criticsScoreCount: number;
+-}
++export const imdbRatingSchema = z.object({
++  title: z.string(),
++  url: z.string().regex(/^https:\/\/www\.imdb\.com\/title\/tt\d+\/?$/),
++  criticsScore: z.number().min(0).max(10),
++  criticsScoreCount: z.number().int().nonnegative(),
++});
++
++export type IMDBRating = z.infer<typeof imdbRatingSchema>;
+ 
+ /**
+  * This is a best-effort API. The IMDB API is technically
+@@ -175,11 +178,17 @@
+    *
+    * @param IMDBid Id of IMDB movie
+    */
+-  public async getMovieRatings(IMDBid: string): Promise<IMDBRating | null> {
++  public async getMovieRatings(
++    IMDBid: string,
++    cacheMode: 'default' | 'refresh' = 'default'
++  ): Promise<IMDBRating | null> {
+     try {
+-      const data = await this.get<IMDBRadarrProxyResponse>(
+-        `/movie/imdb/${IMDBid}`
+-      );
++      const endpoint = `/movie/imdb/${IMDBid}`;
++      if (cacheMode === 'refresh') {
++        this.removeCache(endpoint, { headers: undefined });
++      }
++
++      const data = await this.get<IMDBRadarrProxyResponse>(endpoint);
+ 
+       if (
+         !data?.length ||
+diff --git a/server/api/rating/imdb-sonarr-proxy.ts b/server/api/rating/imdb-sonarr-proxy.ts
+--- a/server/api/rating/imdb-sonarr-proxy.ts
++++ b/server/api/rating/imdb-sonarr-proxy.ts
+@@ -16,12 +16,17 @@
+     );
+   }
+ 
+-  public async getSeriesRatings(tvdbId: number, imdbId: string) {
+-    const data = await this.get<unknown>(
+-      `/shows/en/${tvdbId}`,
+-      undefined,
+-      43200
+-    );
++  public async getSeriesRatings(
++    tvdbId: number,
++    imdbId: string,
++    cacheMode: 'default' | 'refresh' = 'default'
++  ) {
++    const endpoint = `/shows/en/${tvdbId}`;
++    if (cacheMode === 'refresh') {
++      this.removeCache(endpoint, { headers: undefined });
++    }
++
++    const data = await this.get<unknown>(endpoint, undefined, 43200);
+     if (
+       typeof data !== 'object' ||
+       data === null ||
+diff --git a/server/lib/imdb-rating-cache.ts b/server/lib/imdb-rating-cache.ts
+new file mode 100644
+--- /dev/null
++++ b/server/lib/imdb-rating-cache.ts
+@@ -0,0 +1,188 @@
++import {
++  imdbRatingSchema,
++  type IMDBRating,
++} from '@server/api/rating/imdbRadarrProxy';
++import logger from '@server/logger';
++import { appDataPath } from '@server/utils/appDataVolume';
++import { randomUUID } from 'node:crypto';
++import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
++import path from 'node:path';
++import { z } from 'zod';
++
++const HOUR = 60 * 60 * 1000;
++const DAY = 24 * HOUR;
++const MAX_CONCURRENT_LOOKUPS = 5;
++
++const cacheEntrySchema = z.object({
++  version: z.literal(1),
++  mediaType: z.enum(['movie', 'tv']),
++  tmdbId: z.number().int().positive(),
++  expiresAt: z.number().int().nonnegative(),
++  rating: imdbRatingSchema.nullable(),
++});
++
++type ImdbRatingLookup = {
++  rating: IMDBRating | null;
++  releaseDate?: string;
++  isContinuingSeries?: boolean;
++};
++
++type ImdbRatingRequest = {
++  mediaType: 'movie' | 'tv';
++  tmdbId: number;
++  fetchRating: () => Promise<ImdbRatingLookup>;
++};
++
++const getRatingLifetime = (
++  { rating, releaseDate, isContinuingSeries }: ImdbRatingLookup,
++  now: number
++) => {
++  const releasedAt = Date.parse(`${releaseDate}T00:00:00Z`);
++  const needsEarlyRefresh =
++    !rating || !Number.isFinite(releasedAt) || releasedAt > now;
++  if (needsEarlyRefresh) return HOUR;
++
++  const ageDays = Math.floor((now - releasedAt) / DAY);
++  if (ageDays <= 30) return 6 * HOUR;
++  if (ageDays <= 365 || isContinuingSeries) return DAY;
++
++  return 7 * DAY;
++};
++
++export class ImdbRatingCache {
++  private directory: string;
++  private pending = new Map<string, Promise<IMDBRating | null>>();
++  private activeLookups = 0;
++  private waitingLookups: (() => void)[] = [];
++  private clearing?: Promise<void>;
++
++  constructor(directory = path.join(appDataPath(), 'cache', 'imdb')) {
++    this.directory = directory;
++  }
++
++  public async getOrFetch(request: ImdbRatingRequest) {
++    if (this.clearing) {
++      await this.clearing;
++    }
++
++    const key = `${request.mediaType}-${request.tmdbId}`;
++    const pending = this.pending.get(key);
++    if (pending) return pending;
++
++    const lookup = this.loadRating(key, request);
++    this.pending.set(key, lookup);
++
++    try {
++      return await lookup;
++    } finally {
++      this.pending.delete(key);
++    }
++  }
++
++  public async clear() {
++    const clearing = this.clearing ?? this.clearStoredRatings();
++    this.clearing = clearing;
++
++    try {
++      await clearing;
++    } finally {
++      if (this.clearing === clearing) {
++        this.clearing = undefined;
++      }
++    }
++  }
++
++  private async clearStoredRatings() {
++    await Promise.allSettled(this.pending.values());
++    await rm(this.directory, { recursive: true, force: true });
++  }
++
++  private async loadRating(key: string, request: ImdbRatingRequest) {
++    const filePath = path.join(this.directory, `${key}.json`);
++    const cached = await this.readRating(filePath, request);
++    if (cached !== undefined) return cached;
++
++    const result = await this.fetchRating(request.fetchRating);
++    await this.storeRating(filePath, request, result);
++
++    return result.rating;
++  }
++
++  private async readRating(filePath: string, request: ImdbRatingRequest) {
++    try {
++      const input: unknown = JSON.parse(await readFile(filePath, 'utf8'));
++      const cached = cacheEntrySchema.parse(input);
++      const isFreshMatch =
++        cached.mediaType === request.mediaType &&
++        cached.tmdbId === request.tmdbId &&
++        cached.expiresAt > Date.now();
++      if (isFreshMatch) return cached.rating;
++    } catch (error) {
++      if (
++        !(error instanceof Error && 'code' in error && error.code === 'ENOENT')
++      ) {
++        logger.warn('Unable to read IMDb rating cache entry', {
++          label: 'IMDb Cache',
++          filePath,
++          errorMessage: error instanceof Error ? error.message : String(error),
++        });
++      }
++    }
++  }
++
++  private async storeRating(
++    filePath: string,
++    request: ImdbRatingRequest,
++    result: ImdbRatingLookup
++  ) {
++    const now = Date.now();
++
++    try {
++      const entry = cacheEntrySchema.parse({
++        version: 1,
++        mediaType: request.mediaType,
++        tmdbId: request.tmdbId,
++        expiresAt: now + getRatingLifetime(result, now),
++        rating: result.rating,
++      });
++      await mkdir(this.directory, { recursive: true });
++      const temporaryPath = `${filePath}.${randomUUID()}.tmp`;
++
++      try {
++        await writeFile(temporaryPath, JSON.stringify(entry), { flag: 'wx' });
++        await rename(temporaryPath, filePath);
++      } finally {
++        await rm(temporaryPath, { force: true });
++      }
++    } catch (error) {
++      logger.warn('Unable to persist IMDb rating cache entry', {
++        label: 'IMDb Cache',
++        filePath,
++        errorMessage: error instanceof Error ? error.message : String(error),
++      });
++    }
++  }
++
++  private async fetchRating(fetchRating: ImdbRatingRequest['fetchRating']) {
++    if (this.activeLookups >= MAX_CONCURRENT_LOOKUPS) {
++      await new Promise<void>((resolve) => this.waitingLookups.push(resolve));
++    } else {
++      this.activeLookups += 1;
++    }
++
++    try {
++      return await fetchRating();
++    } finally {
++      const next = this.waitingLookups.shift();
++      if (next) {
++        next();
++      } else {
++        this.activeLookups -= 1;
++      }
++    }
++  }
++}
++
++const imdbRatingCache = new ImdbRatingCache();
++
++export default imdbRatingCache;
+diff --git a/server/lib/imdb-rating-cache.test.ts b/server/lib/imdb-rating-cache.test.ts
+new file mode 100644
+--- /dev/null
++++ b/server/lib/imdb-rating-cache.test.ts
+@@ -0,0 +1,240 @@
++import type { IMDBRating } from '@server/api/rating/imdbRadarrProxy';
++import logger from '@server/logger';
++import assert from 'node:assert/strict';
++import { mkdtemp, rm, writeFile } from 'node:fs/promises';
++import os from 'node:os';
++import path from 'node:path';
++import { afterEach, beforeEach, it, mock } from 'node:test';
++import { ImdbRatingCache } from './imdb-rating-cache';
++
++const HOUR = 60 * 60 * 1000;
++const DAY = 24 * HOUR;
++const NOW = Date.UTC(2026, 9, 10);
++const rating = {
++  title: 'A synthetic movie',
++  url: 'https://www.imdb.com/title/tt123',
++  criticsScore: 8,
++  criticsScoreCount: 100,
++} satisfies IMDBRating;
++let directory: string;
++
++beforeEach(async () => {
++  directory = await mkdtemp(path.join(os.tmpdir(), 'seerr-imdb-cache-test-'));
++});
++
++afterEach(async () => {
++  mock.restoreAll();
++  await rm(directory, { recursive: true, force: true });
++});
++
++it('reuses ratings after a restart and keeps movie and TV IDs separate', async () => {
++  const firstCache = new ImdbRatingCache(directory);
++  const fetchRating = async () => ({ rating, releaseDate: '2020-01-01' });
++  await firstCache.getOrFetch({ mediaType: 'movie', tmdbId: 1, fetchRating });
++
++  const restartedCache = new ImdbRatingCache(directory);
++  const cached = await restartedCache.getOrFetch({
++    mediaType: 'movie',
++    tmdbId: 1,
++    fetchRating: async () =>
++      assert.fail('Fresh disk entry must avoid upstream'),
++  });
++  assert.deepEqual(cached, rating);
++
++  const seriesRating = { ...rating, criticsScore: 6 };
++  const series = await restartedCache.getOrFetch({
++    mediaType: 'tv',
++    tmdbId: 1,
++    fetchRating: async () => ({
++      rating: seriesRating,
++      releaseDate: '2020-01-01',
++    }),
++  });
++  assert.deepEqual(series, seriesRating);
++});
++
++const freshnessCases = [
++  { name: 'released 30 days ago', ageDays: 30, lifetime: 6 * HOUR },
++  { name: 'released 31 days ago', ageDays: 31, lifetime: DAY },
++  { name: 'released 365 days ago', ageDays: 365, lifetime: DAY },
++  { name: 'released 366 days ago', ageDays: 366, lifetime: 7 * DAY },
++  {
++    name: 'ongoing series',
++    ageDays: 1000,
++    isContinuingSeries: true,
++    lifetime: DAY,
++  },
++  { name: 'unknown release date', lifetime: HOUR },
++  { name: 'future release date', ageDays: -1, lifetime: HOUR },
++  { name: 'missing rating', ageDays: 1000, hasRating: false, lifetime: HOUR },
++];
++
++for (const testCase of freshnessCases) {
++  it(`refreshes ${testCase.name} at its expiry boundary`, async () => {
++    let now = NOW;
++    mock.method(Date, 'now', () => now);
++    const cache = new ImdbRatingCache(directory);
++    const lookup = {
++      rating: testCase.hasRating === false ? null : rating,
++      releaseDate:
++        testCase.ageDays === undefined
++          ? undefined
++          : new Date(NOW - testCase.ageDays * DAY).toISOString().slice(0, 10),
++      isContinuingSeries: testCase.isContinuingSeries,
++    };
++    const fetchRating = mock.fn(async () => lookup);
++    const request = { mediaType: 'movie', tmdbId: 1, fetchRating } as const;
++    assert.deepEqual(await cache.getOrFetch(request), lookup.rating);
++
++    now += testCase.lifetime - 1;
++    assert.deepEqual(await cache.getOrFetch(request), lookup.rating);
++    assert.equal(fetchRating.mock.callCount(), 1);
++
++    now += 1;
++    assert.deepEqual(await cache.getOrFetch(request), lookup.rating);
++    assert.equal(fetchRating.mock.callCount(), 2);
++  });
++}
++
++it('shares concurrent lookups and limits different titles to five upstream requests', async () => {
++  const cache = new ImdbRatingCache(directory);
++  const started = Promise.withResolvers<void>();
++  const release = Promise.withResolvers<void>();
++  let active = 0;
++  let peak = 0;
++  const fetchRating = mock.fn(async () => {
++    active += 1;
++    peak = Math.max(peak, active);
++    if (active === 5) {
++      started.resolve();
++    }
++
++    await release.promise;
++    active -= 1;
++
++    return { rating, releaseDate: '2020-01-01' };
++  });
++  const requests = Array.from(
++    { length: 10 },
++    (_, index) =>
++      ({
++        mediaType: 'movie',
++        tmdbId: index + 1,
++        fetchRating,
++      }) as const
++  );
++  const lookups = requests.flatMap((request) => [
++    cache.getOrFetch(request),
++    cache.getOrFetch(request),
++  ]);
++  await started.promise;
++  assert.equal(fetchRating.mock.callCount(), 5);
++
++  release.resolve();
++  const ratings = await Promise.all(lookups);
++  assert.deepEqual(
++    ratings,
++    Array.from({ length: 20 }, () => rating)
++  );
++  assert.equal(fetchRating.mock.callCount(), 10);
++  assert.equal(peak, 5);
++});
++
++it('preserves upstream errors without caching them or serving expired scores', async () => {
++  let now = NOW;
++  mock.method(Date, 'now', () => now);
++  const cache = new ImdbRatingCache(directory);
++  await cache.getOrFetch({
++    mediaType: 'movie',
++    tmdbId: 1,
++    fetchRating: async () => ({ rating, releaseDate: '2026-10-10' }),
++  });
++  now += 6 * HOUR;
++  const failure = new Error('Provider unavailable');
++  const fetchRating = mock.fn(async () => {
++    throw failure;
++  });
++  const request = { mediaType: 'movie', tmdbId: 1, fetchRating } as const;
++  await assert.rejects(cache.getOrFetch(request), (error) => error === failure);
++  await assert.rejects(cache.getOrFetch(request), (error) => error === failure);
++  assert.equal(fetchRating.mock.callCount(), 2);
++});
++
++it('replaces corrupt disk data with fresh ratings', async () => {
++  const warnings = mock.method(logger, 'warn', () => logger);
++  const filePath = path.join(directory, 'movie-1.json');
++  await writeFile(
++    filePath,
++    JSON.stringify({
++      version: 1,
++      mediaType: 'movie',
++      tmdbId: 1,
++      expiresAt: Date.now() + DAY,
++      rating: { ...rating, criticsScore: 11 },
++    })
++  );
++  const fetchRating = async () => ({ rating, releaseDate: '2020-01-01' });
++  const cache = new ImdbRatingCache(directory);
++  assert.deepEqual(
++    await cache.getOrFetch({ mediaType: 'movie', tmdbId: 1, fetchRating }),
++    rating
++  );
++  assert.equal(warnings.mock.callCount(), 1);
++});
++
++it('returns fresh scores when disk persistence fails', async () => {
++  const warnings = mock.method(logger, 'warn', () => logger);
++  const blockedDirectory = path.join(directory, 'blocked');
++  await writeFile(blockedDirectory, 'not a directory');
++  const blockedCache = new ImdbRatingCache(blockedDirectory);
++  const fetchRating = async () => ({ rating, releaseDate: '2020-01-01' });
++  assert.deepEqual(
++    await blockedCache.getOrFetch({
++      mediaType: 'movie',
++      tmdbId: 1,
++      fetchRating,
++    }),
++    rating
++  );
++  assert.equal(warnings.mock.callCount(), 2);
++});
++
++it('waits for pending writes before clearing and makes new lookups fetch again', async () => {
++  const cache = new ImdbRatingCache(directory);
++  const started = Promise.withResolvers<void>();
++  const release = Promise.withResolvers<void>();
++  const pending = cache.getOrFetch({
++    mediaType: 'movie',
++    tmdbId: 1,
++    fetchRating: async () => {
++      started.resolve();
++      await release.promise;
++
++      return { rating, releaseDate: '2020-01-01' };
++    },
++  });
++  await started.promise;
++
++  const clearing = cache.clear();
++  const newRating = { ...rating, criticsScore: 9 };
++  const afterClear = cache.getOrFetch({
++    mediaType: 'movie',
++    tmdbId: 1,
++    fetchRating: async () => ({ rating: newRating, releaseDate: '2020-01-01' }),
++  });
++  release.resolve();
++  await pending;
++  await clearing;
++
++  assert.deepEqual(await afterClear, newRating);
++  const restartedCache = new ImdbRatingCache(directory);
++  assert.deepEqual(
++    await restartedCache.getOrFetch({
++      mediaType: 'movie',
++      tmdbId: 1,
++      fetchRating: async () =>
++        assert.fail('Post-flush rating should be stored'),
++    }),
++    newRating
++  );
++});
+diff --git a/server/routes/settings/index.ts b/server/routes/settings/index.ts
+--- a/server/routes/settings/index.ts
++++ b/server/routes/settings/index.ts
+@@ -17,6 +17,7 @@
+ import type { AvailableCacheIds } from '@server/lib/cache';
+ import cacheManager from '@server/lib/cache';
+ import ImageProxy from '@server/lib/imageproxy';
++import imdbRatingCache from '@server/lib/imdb-rating-cache';
+ import { Permission } from '@server/lib/permissions';
+ import { jellyfinFullScanner } from '@server/lib/scanners/jellyfin';
+ import { plexFullScanner } from '@server/lib/scanners/plex';
+@@ -780,10 +781,18 @@
+ 
+ settingsRoutes.post<{ cacheId: AvailableCacheIds }>(
+   '/cache/:cacheId/flush',
+-  (req, res, next) => {
++  async (req, res, next) => {
+     const cache = cacheManager.getCache(req.params.cacheId);
+ 
+     if (cache) {
++      if (req.params.cacheId === 'imdb') {
++        try {
++          await imdbRatingCache.clear();
++        } catch (error) {
++          return next(error);
++        }
++      }
++
+       cache.flush();
+       return res.status(204).send();
+     }

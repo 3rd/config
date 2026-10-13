@@ -1,3 +1,21 @@
+---@return ToggleCommand
+local create_git_toggle = function(option)
+  return {
+    kind = "toggle",
+    id = "git." .. option.key,
+    name = option.name,
+    group = "Git",
+    plugin = "gitsigns.nvim",
+    persist = option.persist,
+    is_enabled = function()
+      return require("gitsigns.config").config[option.key]
+    end,
+    set_enabled = function(is_enabled)
+      require("gitsigns")[option.command](is_enabled)
+    end,
+  }
+end
+
 local setup_git_messenger = function()
   vim.g.git_messenger_no_default_mappings = true
   vim.g.git_messenger_always_into_popup = true
@@ -6,6 +24,8 @@ local setup_git_messenger = function()
   vim.g.git_messenger_popup_content_margins = false
   vim.g.git_messenger_include_diff = "current"
 
+  vim.cmd.runtime("after/autoload/gitmessenger/blame.vim")
+
   vim.api.nvim_create_autocmd("FileType", {
     group = vim.api.nvim_create_augroup("git-messenger", {}),
     pattern = "gitmessengerpopup",
@@ -13,6 +33,67 @@ local setup_git_messenger = function()
       lib.map.map("n", "<C-o>", ":normal o<cr>", { buffer = true, desc = "Navigate to the previous commit" })
       lib.map.map("n", "<C-i>", ":normal O<cr>", { buffer = true, desc = "Navigate to the next commit" })
     end,
+  })
+end
+
+local setup_git_mappings = function(bufnr)
+  local gitsigns = require("gitsigns")
+
+  for _, binding in ipairs({
+    { keys = "gh", action = "stage_hunk", description = "Stage/unstage hunks" },
+    { keys = "gH", action = "reset_hunk", description = "Reset unstaged hunks" },
+  }) do
+    local action = gitsigns[binding.action]
+    vim.keymap.set("n", binding.keys, function()
+      vim.go.operatorfunc = function()
+        local run_operator = vim.go.operatorfunc
+        action({ vim.fn.line("'["), vim.fn.line("']") })
+        vim.go.operatorfunc = run_operator
+      end
+
+      return "g@"
+    end, { buffer = bufnr, expr = true, desc = binding.description })
+    vim.keymap.set("x", binding.keys, ":Gitsigns " .. binding.action .. "<CR>", {
+      buffer = bufnr,
+      silent = true,
+      desc = binding.description,
+    })
+  end
+
+  vim.keymap.set("o", "gh", gitsigns.select_hunk, { buffer = bufnr, desc = "Select Git hunk" })
+
+  for _, binding in ipairs({
+    { keys = "[H", direction = "first" },
+    { keys = "[h", direction = "prev" },
+    { keys = "]h", direction = "next" },
+    { keys = "]H", direction = "last" },
+  }) do
+    vim.keymap.set("n", binding.keys, function()
+      gitsigns.nav_hunk(binding.direction, { target = "all", wrap = false })
+    end, { buffer = bufnr, desc = "Go to " .. binding.direction .. " Git hunk" })
+  end
+end
+
+local setup_git_signs = function()
+  require("lib/patches/gitsigns").setup({
+    signs = {
+      add = { text = "┃" },
+      change = { text = "┃" },
+      delete = { text = "╴" },
+      topdelete = { text = "╴" },
+    },
+    signs_staged = {
+      add = { text = "┆" },
+      change = { text = "┆" },
+      delete = { text = "┄" },
+      topdelete = { text = "┄" },
+      changedelete = { text = "┆" },
+    },
+    signs_staged_enable = true,
+    numhl = true,
+    sign_priority = 199,
+    diff_opts = { algorithm = "histogram", linematch = 60 },
+    on_attach = setup_git_mappings,
   })
 end
 
@@ -197,7 +278,19 @@ end
 return lib.module.create({
   name = "workflow/git",
   hosts = "*",
+  actions = {
+    create_git_toggle({ name = "gutter signs", key = "signcolumn", command = "toggle_signs", persist = true }),
+    create_git_toggle({ name = "line number highlighting", key = "numhl", command = "toggle_numhl", persist = true }),
+    create_git_toggle({ name = "whole-line highlighting", key = "linehl", command = "toggle_linehl", persist = true }),
+    create_git_toggle({ name = "word highlighting", key = "word_diff", command = "toggle_word_diff", persist = true }),
+  },
   plugins = {
+    {
+      "lewis6991/gitsigns.nvim",
+      event = { "BufReadPre", "BufNewFile" },
+      cmd = { "Gitsigns" },
+      config = setup_git_signs,
+    },
     {
       "rhysd/git-messenger.vim",
       config = setup_git_messenger,

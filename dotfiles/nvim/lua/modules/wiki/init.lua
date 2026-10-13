@@ -1,13 +1,7 @@
 local api = require("modules.wiki.api")
 local vv_root = lib.path.resolve(lib.env.dirs.home, ".local", "state", "vv")
 
-local handle_navigate_file = function()
-  local entries, list_error = api.list_nodes()
-  if not entries then
-    vim.notify("Could not list wiki nodes: " .. list_error, vim.log.levels.ERROR)
-    return
-  end
-
+local open_node_picker = function(entries)
   local fzf = require("fzf")
   coroutine.wrap(function()
     local win_options = {
@@ -40,6 +34,16 @@ local handle_navigate_file = function()
   end)()
 end
 
+local handle_navigate_file = function()
+  local entries, list_error = api.list_nodes()
+  if not entries then
+    vim.notify("Could not list wiki nodes: " .. list_error, vim.log.levels.ERROR)
+    return
+  end
+
+  open_node_picker(entries)
+end
+
 local handle_navigate_project = function()
   local entries, list_error = api.list_projects()
   if not entries then
@@ -47,33 +51,7 @@ local handle_navigate_project = function()
     return
   end
 
-  local fzf = require("fzf")
-  coroutine.wrap(function()
-    local win_options = { height = 10, relative = "win" }
-    vim.cmd([[20 new]])
-    local result =
-      fzf.provided_win_fzf(entries, "--print-query --nth 1 --print-query --expect=ctrl-s,ctrl-v,ctrl-x", win_options)
-    if not result then return end
-
-    local target = result[3]
-
-    local command = "e %s"
-    if result[2] == "ctrl-s" then
-      command = "sp %s"
-    elseif result[2] == "ctrl-v" then
-      command = "vs %s"
-    elseif result[2] == "ctrl-x" then
-      target = result[1]
-    end
-
-    local path, resolve_error = api.resolve_node(target)
-    if not path then
-      vim.notify("Could not resolve wiki node: " .. resolve_error, vim.log.levels.ERROR)
-      return
-    end
-    local vim_command = string.format(command, vim.fn.fnameescape(path))
-    vim.cmd(vim_command)
-  end)()
+  open_node_picker(entries)
 end
 
 local handle_navigate_vv = function()

@@ -48,27 +48,16 @@ for _, module in ipairs(modules) do
   if module.setup then module:setup() end
 end
 
+require("lib/commands").setup(modules)
+
 -- mappings
 local mappings = require("config/mappings")
 vim.g.mapleader = mappings.leader
 vim.g.maplocalleader = mappings.localleader
-for _, mapping in ipairs(mappings.default) do
-  local mode, lhs, rhs, opts_or_desc = mapping[1], mapping[2], mapping[3], mapping[4]
-  local opts =
-    table.merge(mappings.defaultOptions, lib.is.string(opts_or_desc) and { desc = opts_or_desc } or opts_or_desc or {})
-  lib.map.map(mode, lhs, rhs, opts)
-end
+lib.map.map_all(mappings.default, { defaults = mappings.defaultOptions })
+
 for _, module in ipairs(modules) do
-  if module.mappings then
-    for _, mapping in ipairs(module.mappings) do
-      local mode, lhs, rhs, opts_or_desc = mapping[1], mapping[2], mapping[3], mapping[4]
-      local opts = table.merge(
-        mappings.defaultOptions,
-        lib.is.string(opts_or_desc) and { desc = opts_or_desc } or opts_or_desc or {}
-      )
-      lib.map.map(mode, lhs, rhs, opts)
-    end
-  end
+  if module.mappings then lib.map.map_all(module.mappings, { defaults = mappings.defaultOptions }) end
 end
 
 -- plugins

@@ -32,28 +32,6 @@ return lib.module.create({
             }),
           },
         })
-
-        require("mini.diff").setup({
-          view = {
-            style = "sign",
-            signs = { add = "│", change = "│", delete = "╴" },
-            priority = 199,
-          },
-          mappings = {
-            -- visual/operator
-            apply = "gh",
-            reset = "gH",
-
-            -- hunk range textobject
-            textobject = "gh",
-
-            -- go to hunk range
-            goto_first = "[H",
-            goto_prev = "[h",
-            goto_next = "]h",
-            goto_last = "]H",
-          },
-        })
       end,
     },
   },

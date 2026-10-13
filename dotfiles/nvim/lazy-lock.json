@@ -12,6 +12,7 @@
   "fold-cycle.nvim": { "branch": "main", "commit": "6144567b3307bbcfed0e5b2dd23acb9576575d9e" },
   "fzf-lua": { "branch": "main", "commit": "532d463f5c83595192fe740572d8fd6902b2217a" },
   "git-messenger.vim": { "branch": "master", "commit": "fd124457378a295a5d1036af4954b35d6b807385" },
+  "gitsigns.nvim": { "branch": "main", "commit": "851a051e2bd2caba97e23314c68d69f1b1cf5d19" },
   "headlines.nvim": { "branch": "master", "commit": "bf17c96a836ea27c0a7a2650ba385a7783ed322e" },
   "hi-my-words.nvim": { "branch": "main", "commit": "d09212d54e16dd6064dac6a257a96aca5ed88b4b" },
   "hlchunk.nvim": { "branch": "main", "commit": "fb5a16ecc4ff15772189679ffdede6ee879288ec" },

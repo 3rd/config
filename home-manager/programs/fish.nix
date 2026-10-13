@@ -10,8 +10,13 @@
       # add bin to $PATH
       path_add $HOME/.config/bin
       for bin_dir in $HOME/.config/bin/*/
-        path_add $bin_dir
+        if not test -f "$bin_dir/src/index.ts"
+          path_add $bin_dir
+        end
       end
+
+      bash ${./fish/sync-bin-commands.sh} "$HOME/.config/bin"
+      path_add $HOME/.config/bin/.commands
 
       # fix NIX_PATH over ssh
       set -x NIX_PATH $HOME/.nix-defexpr/channels $NIX_PATH
