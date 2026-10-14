@@ -1,0 +1,23 @@
+{
+  "name": "bunmods",
+  "private": true,
+  "description": "Personal Neovim modules powered by Bunvim",
+  "type": "module",
+  "scripts": {
+    "test": "bun test src",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "bunvim": "file:../bunvim",
+    "chrono-node": "2.7.0"
+  },
+  "overrides": {
+    "dayjs": "1.11.10"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2",
+    "prettier": "3.6.2",
+    "typescript": "5.9.2"
+  }
+}

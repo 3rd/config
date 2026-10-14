@@ -755,68 +755,49 @@ local handle_toggle_task = function(force_clear)
   vim.api.nvim_win_set_cursor(0, position)
 end
 
-local handle_set_schedule = function()
-  vim.ui.input({ prompt = "Schedule: " }, function(input)
-    if not input or input == "" then return end
-    local date = lib.node.chrono.to_schedule(input)
-    if type(date) ~= "string" then return end
+local get_schedule_context = function()
+  local buffer = vim.api.nvim_get_current_buf()
+  local window = vim.api.nvim_get_current_win()
+  local position = vim.api.nvim_win_get_cursor(0)
+  local filetype = vim.bo.filetype
+  local node = filetype == "syslang" and get_cursor_node() or nil
+  local ancestors = {}
 
-    local position = vim.api.nvim_win_get_cursor(0)
-    local node = get_cursor_node()
-    if not node and #vim.fn.getline(position[1]) == 0 then return end
-
-    while node do
-      local node_line = node:range()
-      if node_line ~= position[1] - 1 then break end
-      local target = node
-
-      local schedule_text = "Schedule: " .. date .. "\n"
-
-      -- edit existing schedule
-      if node:type() == "task_schedule" then
-        -- set the text of the whole session node
-        local range = slib.node_to_lsp_range(node)
-        local edit = { range = range, newText = schedule_text }
-        local buf = vim.api.nvim_get_current_buf()
-        vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
+  while node do
+    local children = {}
+    local is_task = is_task_node(node)
+    if is_task then
+      for child in node:iter_children() do
+        local row = child:range()
+        table.insert(children, {
+          kind = child:type(),
+          range = slib.node_to_lsp_range(child),
+          indent = vim.fn.indent(row + 1),
+        })
       end
-
-      -- add new schedule after all the schedules and sessions and before anything else
-      if is_task_node(target) then
-        local last_pre_node = target:child(0)
-        local task_row = target:range()
-
-        for curr in target:iter_children() do
-          local curr_row = curr:range()
-          if curr_row == task_row then goto continue end
-
-          if curr:type() == "task_schedule" or curr:type() == "task_session" then
-            last_pre_node = curr
-          else
-            break
-          end
-
-          ::continue::
-        end
-
-        local row = last_pre_node:range()
-
-        local indent = vim.fn.indent(row + 1) + (last_pre_node == target:child(0) and vim.fn.shiftwidth() or 0)
-        schedule_text = string.rep(" ", indent) .. schedule_text
-
-        local range = {
-          start = { line = row + 1, character = 0 },
-          ["end"] = { line = row + 1, character = 0 },
-        }
-        local edit = { range = range, newText = schedule_text }
-        local buf = vim.api.nvim_get_current_buf()
-        vim.lsp.util.apply_text_edits({ edit }, buf, "utf-8")
-      end
-
-      node = node:parent()
     end
-  end)
+
+    table.insert(ancestors, {
+      kind = node:type(),
+      is_task = is_task,
+      range = slib.node_to_lsp_range(node),
+      children = children,
+    })
+    node = node:parent()
+  end
+
+  return {
+    buffer = buffer,
+    window = window,
+    position = position,
+    changedtick = vim.api.nvim_buf_get_changedtick(buffer),
+    filetype = filetype,
+    shiftwidth = vim.fn.shiftwidth(),
+    ancestors = ancestors,
+  }
 end
+
+-- local date = lib.node.chrono.to_schedule(input)
 
 local handle_cr = function()
   local root = slib.get_root()
@@ -887,11 +868,17 @@ local handle_cr = function()
 end
 
 local setup_mappings = function()
+  vim.keymap.set("n", "<leader>es", function()
+    require("bunvim").call("chrono", "setSchedule", {
+      on_complete = function(err)
+        if err and err ~= "Plugin unloaded" and err ~= "Bunvim stopped" then vim.notify(err, vim.log.levels.ERROR) end
+      end,
+    })
+  end, { buffer = true, noremap = true })
   vim.keymap.set("n", "<c-space>", handle_toggle_task, { buffer = true, noremap = true })
   vim.keymap.set("n", "<c-c>", function()
     handle_toggle_task(true)
   end, { buffer = true, noremap = true })
-  vim.keymap.set("n", "<leader>es", handle_set_schedule, { buffer = true, noremap = true })
   vim.keymap.set("n", "<cr>", handle_cr, { buffer = true, noremap = true })
   vim.keymap.set("n", "<a-k>", function()
     move_current_entry_or_noop("up")
@@ -1038,6 +1025,7 @@ local setup = function()
 end
 
 return {
+  get_schedule_context = get_schedule_context,
   render_statuscolumn = _G.SyslangStatuscolumn,
   setup = setup,
 }

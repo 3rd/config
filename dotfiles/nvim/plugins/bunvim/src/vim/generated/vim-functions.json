@@ -1,0 +1,5277 @@
+{
+  "constants": {
+    "diagnostic.severity.ERROR": 1,
+    "diagnostic.severity.HINT": 4,
+    "diagnostic.severity.INFO": 3,
+    "diagnostic.severity.WARN": 2,
+    "log.levels.DEBUG": 1,
+    "log.levels.ERROR": 4,
+    "log.levels.INFO": 2,
+    "log.levels.OFF": 5,
+    "log.levels.TRACE": 0,
+    "log.levels.WARN": 3,
+    "lsp.protocol.Methods.callHierarchy_incomingCalls": "callHierarchy/incomingCalls",
+    "lsp.protocol.Methods.callHierarchy_outgoingCalls": "callHierarchy/outgoingCalls",
+    "lsp.protocol.Methods.client_registerCapability": "client/registerCapability",
+    "lsp.protocol.Methods.client_unregisterCapability": "client/unregisterCapability",
+    "lsp.protocol.Methods.codeAction_resolve": "codeAction/resolve",
+    "lsp.protocol.Methods.codeLens_resolve": "codeLens/resolve",
+    "lsp.protocol.Methods.completionItem_resolve": "completionItem/resolve",
+    "lsp.protocol.Methods.documentLink_resolve": "documentLink/resolve",
+    "lsp.protocol.Methods.dollar_cancelRequest": "$/cancelRequest",
+    "lsp.protocol.Methods.dollar_logTrace": "$/logTrace",
+    "lsp.protocol.Methods.dollar_progress": "$/progress",
+    "lsp.protocol.Methods.dollar_setTrace": "$/setTrace",
+    "lsp.protocol.Methods.exit": "exit",
+    "lsp.protocol.Methods.initialize": "initialize",
+    "lsp.protocol.Methods.initialized": "initialized",
+    "lsp.protocol.Methods.inlayHint_resolve": "inlayHint/resolve",
+    "lsp.protocol.Methods.notebookDocument_didChange": "notebookDocument/didChange",
+    "lsp.protocol.Methods.notebookDocument_didClose": "notebookDocument/didClose",
+    "lsp.protocol.Methods.notebookDocument_didOpen": "notebookDocument/didOpen",
+    "lsp.protocol.Methods.notebookDocument_didSave": "notebookDocument/didSave",
+    "lsp.protocol.Methods.shutdown": "shutdown",
+    "lsp.protocol.Methods.telemetry_event": "telemetry/event",
+    "lsp.protocol.Methods.textDocument_codeAction": "textDocument/codeAction",
+    "lsp.protocol.Methods.textDocument_codeLens": "textDocument/codeLens",
+    "lsp.protocol.Methods.textDocument_colorPresentation": "textDocument/colorPresentation",
+    "lsp.protocol.Methods.textDocument_completion": "textDocument/completion",
+    "lsp.protocol.Methods.textDocument_declaration": "textDocument/declaration",
+    "lsp.protocol.Methods.textDocument_definition": "textDocument/definition",
+    "lsp.protocol.Methods.textDocument_diagnostic": "textDocument/diagnostic",
+    "lsp.protocol.Methods.textDocument_didChange": "textDocument/didChange",
+    "lsp.protocol.Methods.textDocument_didClose": "textDocument/didClose",
+    "lsp.protocol.Methods.textDocument_didOpen": "textDocument/didOpen",
+    "lsp.protocol.Methods.textDocument_didSave": "textDocument/didSave",
+    "lsp.protocol.Methods.textDocument_documentColor": "textDocument/documentColor",
+    "lsp.protocol.Methods.textDocument_documentHighlight": "textDocument/documentHighlight",
+    "lsp.protocol.Methods.textDocument_documentLink": "textDocument/documentLink",
+    "lsp.protocol.Methods.textDocument_documentSymbol": "textDocument/documentSymbol",
+    "lsp.protocol.Methods.textDocument_foldingRange": "textDocument/foldingRange",
+    "lsp.protocol.Methods.textDocument_formatting": "textDocument/formatting",
+    "lsp.protocol.Methods.textDocument_hover": "textDocument/hover",
+    "lsp.protocol.Methods.textDocument_implementation": "textDocument/implementation",
+    "lsp.protocol.Methods.textDocument_inlayHint": "textDocument/inlayHint",
+    "lsp.protocol.Methods.textDocument_inlineCompletion": "textDocument/inlineCompletion",
+    "lsp.protocol.Methods.textDocument_inlineValue": "textDocument/inlineValue",
+    "lsp.protocol.Methods.textDocument_linkedEditingRange": "textDocument/linkedEditingRange",
+    "lsp.protocol.Methods.textDocument_moniker": "textDocument/moniker",
+    "lsp.protocol.Methods.textDocument_onTypeFormatting": "textDocument/onTypeFormatting",
+    "lsp.protocol.Methods.textDocument_prepareCallHierarchy": "textDocument/prepareCallHierarchy",
+    "lsp.protocol.Methods.textDocument_prepareRename": "textDocument/prepareRename",
+    "lsp.protocol.Methods.textDocument_prepareTypeHierarchy": "textDocument/prepareTypeHierarchy",
+    "lsp.protocol.Methods.textDocument_publishDiagnostics": "textDocument/publishDiagnostics",
+    "lsp.protocol.Methods.textDocument_rangeFormatting": "textDocument/rangeFormatting",
+    "lsp.protocol.Methods.textDocument_rangesFormatting": "textDocument/rangesFormatting",
+    "lsp.protocol.Methods.textDocument_references": "textDocument/references",
+    "lsp.protocol.Methods.textDocument_rename": "textDocument/rename",
+    "lsp.protocol.Methods.textDocument_selectionRange": "textDocument/selectionRange",
+    "lsp.protocol.Methods.textDocument_semanticTokens_full": "textDocument/semanticTokens/full",
+    "lsp.protocol.Methods.textDocument_semanticTokens_full_delta": "textDocument/semanticTokens/full/delta",
+    "lsp.protocol.Methods.textDocument_semanticTokens_range": "textDocument/semanticTokens/range",
+    "lsp.protocol.Methods.textDocument_signatureHelp": "textDocument/signatureHelp",
+    "lsp.protocol.Methods.textDocument_typeDefinition": "textDocument/typeDefinition",
+    "lsp.protocol.Methods.textDocument_willSave": "textDocument/willSave",
+    "lsp.protocol.Methods.textDocument_willSaveWaitUntil": "textDocument/willSaveWaitUntil",
+    "lsp.protocol.Methods.typeHierarchy_subtypes": "typeHierarchy/subtypes",
+    "lsp.protocol.Methods.typeHierarchy_supertypes": "typeHierarchy/supertypes",
+    "lsp.protocol.Methods.window_logMessage": "window/logMessage",
+    "lsp.protocol.Methods.window_showDocument": "window/showDocument",
+    "lsp.protocol.Methods.window_showMessage": "window/showMessage",
+    "lsp.protocol.Methods.window_showMessageRequest": "window/showMessageRequest",
+    "lsp.protocol.Methods.window_workDoneProgress_cancel": "window/workDoneProgress/cancel",
+    "lsp.protocol.Methods.window_workDoneProgress_create": "window/workDoneProgress/create",
+    "lsp.protocol.Methods.workspace_applyEdit": "workspace/applyEdit",
+    "lsp.protocol.Methods.workspace_codeLens_refresh": "workspace/codeLens/refresh",
+    "lsp.protocol.Methods.workspace_configuration": "workspace/configuration",
+    "lsp.protocol.Methods.workspace_diagnostic": "workspace/diagnostic",
+    "lsp.protocol.Methods.workspace_diagnostic_refresh": "workspace/diagnostic/refresh",
+    "lsp.protocol.Methods.workspace_didChangeConfiguration": "workspace/didChangeConfiguration",
+    "lsp.protocol.Methods.workspace_didChangeWatchedFiles": "workspace/didChangeWatchedFiles",
+    "lsp.protocol.Methods.workspace_didChangeWorkspaceFolders": "workspace/didChangeWorkspaceFolders",
+    "lsp.protocol.Methods.workspace_didCreateFiles": "workspace/didCreateFiles",
+    "lsp.protocol.Methods.workspace_didDeleteFiles": "workspace/didDeleteFiles",
+    "lsp.protocol.Methods.workspace_didRenameFiles": "workspace/didRenameFiles",
+    "lsp.protocol.Methods.workspace_executeCommand": "workspace/executeCommand",
+    "lsp.protocol.Methods.workspace_foldingRange_refresh": "workspace/foldingRange/refresh",
+    "lsp.protocol.Methods.workspace_inlayHint_refresh": "workspace/inlayHint/refresh",
+    "lsp.protocol.Methods.workspace_inlineValue_refresh": "workspace/inlineValue/refresh",
+    "lsp.protocol.Methods.workspace_semanticTokens_refresh": "workspace/semanticTokens/refresh",
+    "lsp.protocol.Methods.workspace_symbol": "workspace/symbol",
+    "lsp.protocol.Methods.workspace_textDocumentContent": "workspace/textDocumentContent",
+    "lsp.protocol.Methods.workspace_textDocumentContent_refresh": "workspace/textDocumentContent/refresh",
+    "lsp.protocol.Methods.workspace_willCreateFiles": "workspace/willCreateFiles",
+    "lsp.protocol.Methods.workspace_willDeleteFiles": "workspace/willDeleteFiles",
+    "lsp.protocol.Methods.workspace_willRenameFiles": "workspace/willRenameFiles",
+    "lsp.protocol.Methods.workspace_workspaceFolders": "workspace/workspaceFolders",
+    "lsp.protocol.Methods.workspaceSymbol_resolve": "workspaceSymbol/resolve"
+  },
+  "functions": {
+    "api.nvim__buf_debug_extmarks": {
+      "returns": 1
+    },
+    "api.nvim__buf_stats": {
+      "returns": 1
+    },
+    "api.nvim__cmdwin_set": {
+      "returns": 0
+    },
+    "api.nvim__complete_set": {
+      "returns": 1
+    },
+    "api.nvim__get_lib_dir": {
+      "returns": 1
+    },
+    "api.nvim__get_runtime": {
+      "returns": 1
+    },
+    "api.nvim__id": {
+      "returns": 1
+    },
+    "api.nvim__id_array": {
+      "returns": 1
+    },
+    "api.nvim__id_dict": {
+      "returns": 1
+    },
+    "api.nvim__id_float": {
+      "returns": 1
+    },
+    "api.nvim__inspect_cell": {
+      "returns": 1
+    },
+    "api.nvim__invalidate_glyph_cache": {
+      "returns": 0
+    },
+    "api.nvim__mcursor_cascading": {
+      "returns": 1
+    },
+    "api.nvim__ns_get": {
+      "returns": 1
+    },
+    "api.nvim__ns_set": {
+      "returns": 0
+    },
+    "api.nvim__redraw": {
+      "returns": 0
+    },
+    "api.nvim__runtime_inspect": {
+      "returns": 1
+    },
+    "api.nvim__screenshot": {
+      "returns": 0
+    },
+    "api.nvim__set_restart_on_crash": {
+      "returns": 0
+    },
+    "api.nvim__stats": {
+      "returns": 1
+    },
+    "api.nvim__unpack": {
+      "returns": 1
+    },
+    "api.nvim_buf_add_highlight": {
+      "returns": 1
+    },
+    "api.nvim_buf_attach": {
+      "returns": 1
+    },
+    "api.nvim_buf_call": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: fn"
+    },
+    "api.nvim_buf_clear_highlight": {
+      "returns": 0
+    },
+    "api.nvim_buf_clear_namespace": {
+      "returns": 0
+    },
+    "api.nvim_buf_create_user_command": {
+      "returns": 0
+    },
+    "api.nvim_buf_del_extmark": {
+      "returns": 1
+    },
+    "api.nvim_buf_del_keymap": {
+      "returns": 0
+    },
+    "api.nvim_buf_del_mark": {
+      "returns": 1
+    },
+    "api.nvim_buf_del_user_command": {
+      "returns": 0
+    },
+    "api.nvim_buf_del_var": {
+      "returns": 0
+    },
+    "api.nvim_buf_delete": {
+      "returns": 0
+    },
+    "api.nvim_buf_get_changedtick": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_commands": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_extmark_by_id": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_extmarks": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_keymap": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_lines": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_mark": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_name": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_number": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_offset": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_option": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_text": {
+      "returns": 1
+    },
+    "api.nvim_buf_get_var": {
+      "returns": 1
+    },
+    "api.nvim_buf_is_loaded": {
+      "returns": 1
+    },
+    "api.nvim_buf_is_valid": {
+      "returns": 1
+    },
+    "api.nvim_buf_line_count": {
+      "returns": 1
+    },
+    "api.nvim_buf_set_extmark": {
+      "returns": 1
+    },
+    "api.nvim_buf_set_keymap": {
+      "returns": 0
+    },
+    "api.nvim_buf_set_lines": {
+      "returns": 0
+    },
+    "api.nvim_buf_set_mark": {
+      "returns": 1
+    },
+    "api.nvim_buf_set_name": {
+      "returns": 0
+    },
+    "api.nvim_buf_set_option": {
+      "returns": 0
+    },
+    "api.nvim_buf_set_text": {
+      "returns": 0
+    },
+    "api.nvim_buf_set_var": {
+      "returns": 0
+    },
+    "api.nvim_buf_set_virtual_text": {
+      "returns": 1
+    },
+    "api.nvim_call_dict_function": {
+      "returns": 1
+    },
+    "api.nvim_call_function": {
+      "returns": 1
+    },
+    "api.nvim_chan_send": {
+      "returns": 0
+    },
+    "api.nvim_clear_autocmds": {
+      "returns": 0
+    },
+    "api.nvim_cmd": {
+      "returns": 1
+    },
+    "api.nvim_command": {
+      "returns": 0
+    },
+    "api.nvim_command_output": {
+      "returns": 1
+    },
+    "api.nvim_create_augroup": {
+      "returns": 1
+    },
+    "api.nvim_create_autocmd": {
+      "returns": 1
+    },
+    "api.nvim_create_buf": {
+      "returns": 1
+    },
+    "api.nvim_create_namespace": {
+      "returns": 1
+    },
+    "api.nvim_create_user_command": {
+      "returns": 0
+    },
+    "api.nvim_del_augroup_by_id": {
+      "returns": 0
+    },
+    "api.nvim_del_augroup_by_name": {
+      "returns": 0
+    },
+    "api.nvim_del_autocmd": {
+      "returns": 0
+    },
+    "api.nvim_del_current_line": {
+      "returns": 0
+    },
+    "api.nvim_del_keymap": {
+      "returns": 0
+    },
+    "api.nvim_del_mark": {
+      "returns": 1
+    },
+    "api.nvim_del_user_command": {
+      "returns": 0
+    },
+    "api.nvim_del_var": {
+      "returns": 0
+    },
+    "api.nvim_echo": {
+      "returns": 1
+    },
+    "api.nvim_err_write": {
+      "returns": 0
+    },
+    "api.nvim_err_writeln": {
+      "returns": 0
+    },
+    "api.nvim_eval": {
+      "returns": 1
+    },
+    "api.nvim_eval_statusline": {
+      "returns": 1
+    },
+    "api.nvim_exec": {
+      "returns": 1
+    },
+    "api.nvim_exec_autocmds": {
+      "returns": 0
+    },
+    "api.nvim_exec2": {
+      "returns": 1
+    },
+    "api.nvim_feedkeys": {
+      "returns": 0
+    },
+    "api.nvim_get_all_options_info": {
+      "returns": 1
+    },
+    "api.nvim_get_autocmds": {
+      "returns": 1
+    },
+    "api.nvim_get_chan_info": {
+      "returns": 1
+    },
+    "api.nvim_get_color_by_name": {
+      "returns": 1
+    },
+    "api.nvim_get_color_map": {
+      "returns": 1
+    },
+    "api.nvim_get_commands": {
+      "returns": 1
+    },
+    "api.nvim_get_context": {
+      "returns": 1
+    },
+    "api.nvim_get_current_buf": {
+      "returns": 1
+    },
+    "api.nvim_get_current_line": {
+      "returns": 1
+    },
+    "api.nvim_get_current_tabpage": {
+      "returns": 1
+    },
+    "api.nvim_get_current_win": {
+      "returns": 1
+    },
+    "api.nvim_get_hl": {
+      "returns": 1
+    },
+    "api.nvim_get_hl_by_id": {
+      "returns": 1
+    },
+    "api.nvim_get_hl_by_name": {
+      "returns": 1
+    },
+    "api.nvim_get_hl_id_by_name": {
+      "returns": 1
+    },
+    "api.nvim_get_hl_ns": {
+      "returns": 1
+    },
+    "api.nvim_get_keymap": {
+      "returns": 1
+    },
+    "api.nvim_get_mark": {
+      "returns": 1
+    },
+    "api.nvim_get_mode": {
+      "returns": 1
+    },
+    "api.nvim_get_namespaces": {
+      "returns": 1
+    },
+    "api.nvim_get_option": {
+      "returns": 1
+    },
+    "api.nvim_get_option_info": {
+      "returns": 1
+    },
+    "api.nvim_get_option_info2": {
+      "returns": 1
+    },
+    "api.nvim_get_option_value": {
+      "returns": 1
+    },
+    "api.nvim_get_proc": {
+      "returns": 1
+    },
+    "api.nvim_get_proc_children": {
+      "returns": 1
+    },
+    "api.nvim_get_runtime_file": {
+      "returns": 1
+    },
+    "api.nvim_get_var": {
+      "returns": 1
+    },
+    "api.nvim_get_vvar": {
+      "returns": 1
+    },
+    "api.nvim_input": {
+      "returns": 1
+    },
+    "api.nvim_input_mouse": {
+      "returns": 0
+    },
+    "api.nvim_list_bufs": {
+      "returns": 1
+    },
+    "api.nvim_list_chans": {
+      "returns": 1
+    },
+    "api.nvim_list_runtime_paths": {
+      "returns": 1
+    },
+    "api.nvim_list_tabpages": {
+      "returns": 1
+    },
+    "api.nvim_list_uis": {
+      "returns": 1
+    },
+    "api.nvim_list_wins": {
+      "returns": 1
+    },
+    "api.nvim_load_context": {
+      "returns": 1
+    },
+    "api.nvim_notify": {
+      "returns": 1
+    },
+    "api.nvim_open_tabpage": {
+      "returns": 1
+    },
+    "api.nvim_open_term": {
+      "returns": 1
+    },
+    "api.nvim_open_win": {
+      "returns": 1
+    },
+    "api.nvim_out_write": {
+      "returns": 0
+    },
+    "api.nvim_parse_cmd": {
+      "returns": 1
+    },
+    "api.nvim_parse_expression": {
+      "returns": 1
+    },
+    "api.nvim_paste": {
+      "returns": 1
+    },
+    "api.nvim_put": {
+      "returns": 0
+    },
+    "api.nvim_replace_termcodes": {
+      "returns": 1
+    },
+    "api.nvim_select_popupmenu_item": {
+      "returns": 0
+    },
+    "api.nvim_set_current_buf": {
+      "returns": 0
+    },
+    "api.nvim_set_current_dir": {
+      "returns": 0
+    },
+    "api.nvim_set_current_line": {
+      "returns": 0
+    },
+    "api.nvim_set_current_tabpage": {
+      "returns": 0
+    },
+    "api.nvim_set_current_win": {
+      "returns": 0
+    },
+    "api.nvim_set_decoration_provider": {
+      "returns": 0
+    },
+    "api.nvim_set_hl": {
+      "returns": 0
+    },
+    "api.nvim_set_hl_ns": {
+      "returns": 0
+    },
+    "api.nvim_set_hl_ns_fast": {
+      "returns": 0
+    },
+    "api.nvim_set_keymap": {
+      "returns": 0
+    },
+    "api.nvim_set_option": {
+      "returns": 0
+    },
+    "api.nvim_set_option_value": {
+      "returns": 1
+    },
+    "api.nvim_set_var": {
+      "returns": 0
+    },
+    "api.nvim_set_vvar": {
+      "returns": 0
+    },
+    "api.nvim_strwidth": {
+      "returns": 1
+    },
+    "api.nvim_tabpage_del_var": {
+      "returns": 0
+    },
+    "api.nvim_tabpage_get_number": {
+      "returns": 1
+    },
+    "api.nvim_tabpage_get_var": {
+      "returns": 1
+    },
+    "api.nvim_tabpage_get_win": {
+      "returns": 1
+    },
+    "api.nvim_tabpage_is_valid": {
+      "returns": 1
+    },
+    "api.nvim_tabpage_list_wins": {
+      "returns": 1
+    },
+    "api.nvim_tabpage_set_var": {
+      "returns": 0
+    },
+    "api.nvim_tabpage_set_win": {
+      "returns": 0
+    },
+    "api.nvim_ui_send": {
+      "returns": 0
+    },
+    "api.nvim_win_call": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: fn"
+    },
+    "api.nvim_win_close": {
+      "returns": 0
+    },
+    "api.nvim_win_del_var": {
+      "returns": 0
+    },
+    "api.nvim_win_get_buf": {
+      "returns": 1
+    },
+    "api.nvim_win_get_config": {
+      "returns": 1
+    },
+    "api.nvim_win_get_cursor": {
+      "returns": 1
+    },
+    "api.nvim_win_get_height": {
+      "returns": 1
+    },
+    "api.nvim_win_get_number": {
+      "returns": 1
+    },
+    "api.nvim_win_get_option": {
+      "returns": 1
+    },
+    "api.nvim_win_get_position": {
+      "returns": 1
+    },
+    "api.nvim_win_get_tabpage": {
+      "returns": 1
+    },
+    "api.nvim_win_get_var": {
+      "returns": 1
+    },
+    "api.nvim_win_get_width": {
+      "returns": 1
+    },
+    "api.nvim_win_hide": {
+      "returns": 0
+    },
+    "api.nvim_win_is_valid": {
+      "returns": 1
+    },
+    "api.nvim_win_resize": {
+      "returns": 0
+    },
+    "api.nvim_win_set_buf": {
+      "returns": 0
+    },
+    "api.nvim_win_set_config": {
+      "returns": 0
+    },
+    "api.nvim_win_set_cursor": {
+      "returns": 0
+    },
+    "api.nvim_win_set_height": {
+      "returns": 0
+    },
+    "api.nvim_win_set_hl_ns": {
+      "returns": 0
+    },
+    "api.nvim_win_set_option": {
+      "returns": 0
+    },
+    "api.nvim_win_set_var": {
+      "returns": 0
+    },
+    "api.nvim_win_set_width": {
+      "returns": 0
+    },
+    "api.nvim_win_text_height": {
+      "returns": 1
+    },
+    "async.iter": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "async.semaphore": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.async.Semaphore retains native instance state"
+    },
+    "async.sleep": {
+      "returns": 0
+    },
+    "async.timeout": {
+      "returns": "all"
+    },
+    "async.wrap": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "base64.decode": {
+      "returns": 1
+    },
+    "base64.encode": {
+      "returns": 1
+    },
+    "call": {
+      "returns": 1
+    },
+    "deep_equal": {
+      "returns": 1
+    },
+    "deepcopy": {
+      "returns": 1
+    },
+    "defaulttable": {
+      "returns": 1
+    },
+    "defer_fn": {
+      "callback": {
+        "cancel": "close",
+        "index": 0,
+        "result": "values",
+        "returns": 0
+      },
+      "returns": 0
+    },
+    "deprecate": {
+      "returns": 1
+    },
+    "diagnostic.config": {
+      "returns": 1
+    },
+    "diagnostic.count": {
+      "returns": 1
+    },
+    "diagnostic.enable": {
+      "returns": 0
+    },
+    "diagnostic.fromqflist": {
+      "returns": 1
+    },
+    "diagnostic.get": {
+      "returns": 1
+    },
+    "diagnostic.get_namespace": {
+      "returns": 1
+    },
+    "diagnostic.get_namespaces": {
+      "returns": 1
+    },
+    "diagnostic.get_next": {
+      "returns": 1
+    },
+    "diagnostic.get_next_pos": {
+      "returns": 1
+    },
+    "diagnostic.get_prev": {
+      "returns": 1
+    },
+    "diagnostic.get_prev_pos": {
+      "returns": 1
+    },
+    "diagnostic.goto_next": {
+      "returns": 0
+    },
+    "diagnostic.goto_prev": {
+      "returns": 0
+    },
+    "diagnostic.hide": {
+      "returns": 0
+    },
+    "diagnostic.is_enabled": {
+      "returns": 1
+    },
+    "diagnostic.jump": {
+      "returns": 1
+    },
+    "diagnostic.match": {
+      "returns": 1
+    },
+    "diagnostic.open_float": {
+      "returns": 2
+    },
+    "diagnostic.reset": {
+      "returns": 0
+    },
+    "diagnostic.set": {
+      "returns": 0
+    },
+    "diagnostic.setloclist": {
+      "returns": 0
+    },
+    "diagnostic.setqflist": {
+      "returns": 0
+    },
+    "diagnostic.show": {
+      "returns": 0
+    },
+    "diagnostic.status": {
+      "returns": 1
+    },
+    "diagnostic.toqflist": {
+      "returns": 1
+    },
+    "diff": {
+      "returns": 1
+    },
+    "empty_dict": {
+      "returns": 1
+    },
+    "endswith": {
+      "returns": 1
+    },
+    "F.if_nil": {
+      "returns": 1
+    },
+    "F.nil_wrap": {
+      "returns": "all",
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "F.npcall": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: fn"
+    },
+    "F.ok_or_nil": {
+      "returns": "all"
+    },
+    "F.pack_len": {
+      "returns": 1
+    },
+    "F.unpack_len": {
+      "returns": "all"
+    },
+    "filetype.add": {
+      "returns": 0
+    },
+    "filetype.get_option": {
+      "returns": 1
+    },
+    "filetype.inspect": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.filetype.mapping: vim.filetype.mapping.value: vim.filetype.mapfn: Lua function"
+    },
+    "filetype.match": {
+      "returns": 3
+    },
+    "fn.abs": {
+      "returns": 1
+    },
+    "fn.acos": {
+      "returns": 1
+    },
+    "fn.add": {
+      "returns": 1
+    },
+    "fn.and": {
+      "returns": 1
+    },
+    "fn.api_info": {
+      "returns": 1
+    },
+    "fn.append": {
+      "returns": 1
+    },
+    "fn.appendbufline": {
+      "returns": 1
+    },
+    "fn.argc": {
+      "returns": 1
+    },
+    "fn.argidx": {
+      "returns": 1
+    },
+    "fn.arglistid": {
+      "returns": 1
+    },
+    "fn.argv": {
+      "returns": 1
+    },
+    "fn.asin": {
+      "returns": 1
+    },
+    "fn.assert_beeps": {
+      "returns": 1
+    },
+    "fn.assert_equal": {
+      "returns": 1
+    },
+    "fn.assert_equalfile": {
+      "returns": 1
+    },
+    "fn.assert_exception": {
+      "returns": 1
+    },
+    "fn.assert_fails": {
+      "returns": 1
+    },
+    "fn.assert_false": {
+      "returns": 1
+    },
+    "fn.assert_inrange": {
+      "returns": 1
+    },
+    "fn.assert_match": {
+      "returns": 1
+    },
+    "fn.assert_nobeep": {
+      "returns": 1
+    },
+    "fn.assert_notequal": {
+      "returns": 1
+    },
+    "fn.assert_notmatch": {
+      "returns": 1
+    },
+    "fn.assert_report": {
+      "returns": 1
+    },
+    "fn.assert_true": {
+      "returns": 1
+    },
+    "fn.atan": {
+      "returns": 1
+    },
+    "fn.atan2": {
+      "returns": 1
+    },
+    "fn.blob2list": {
+      "returns": 1
+    },
+    "fn.browse": {
+      "returns": 1
+    },
+    "fn.browsedir": {
+      "returns": 1
+    },
+    "fn.bufadd": {
+      "returns": 1
+    },
+    "fn.bufexists": {
+      "returns": 1
+    },
+    "fn.buffer_exists": {
+      "returns": 1
+    },
+    "fn.buffer_name": {
+      "returns": 1
+    },
+    "fn.buffer_number": {
+      "returns": 1
+    },
+    "fn.buflisted": {
+      "returns": 1
+    },
+    "fn.bufload": {
+      "returns": 0
+    },
+    "fn.bufloaded": {
+      "returns": 1
+    },
+    "fn.bufname": {
+      "returns": 1
+    },
+    "fn.bufnr": {
+      "returns": 1
+    },
+    "fn.bufwinid": {
+      "returns": 1
+    },
+    "fn.bufwinnr": {
+      "returns": 1
+    },
+    "fn.byte2line": {
+      "returns": 1
+    },
+    "fn.byteidx": {
+      "returns": 1
+    },
+    "fn.byteidxcomp": {
+      "returns": 1
+    },
+    "fn.call": {
+      "returns": 1
+    },
+    "fn.ceil": {
+      "returns": 1
+    },
+    "fn.chanclose": {
+      "returns": 1
+    },
+    "fn.changenr": {
+      "returns": 1
+    },
+    "fn.chansend": {
+      "returns": 1
+    },
+    "fn.char2nr": {
+      "returns": 1
+    },
+    "fn.charclass": {
+      "returns": 1
+    },
+    "fn.charcol": {
+      "returns": 1
+    },
+    "fn.charidx": {
+      "returns": 1
+    },
+    "fn.chdir": {
+      "returns": 1
+    },
+    "fn.cindent": {
+      "returns": 1
+    },
+    "fn.clearmatches": {
+      "returns": 0
+    },
+    "fn.cmdcomplete_info": {
+      "returns": 1
+    },
+    "fn.col": {
+      "returns": 1
+    },
+    "fn.complete": {
+      "returns": 0
+    },
+    "fn.complete_add": {
+      "returns": 1
+    },
+    "fn.complete_check": {
+      "returns": 1
+    },
+    "fn.complete_info": {
+      "returns": 1
+    },
+    "fn.confirm": {
+      "returns": 1
+    },
+    "fn.copy": {
+      "returns": 1
+    },
+    "fn.cos": {
+      "returns": 1
+    },
+    "fn.cosh": {
+      "returns": 1
+    },
+    "fn.count": {
+      "returns": 1
+    },
+    "fn.cursor": {
+      "returns": 1
+    },
+    "fn.debugbreak": {
+      "returns": 1
+    },
+    "fn.deepcopy": {
+      "returns": 1
+    },
+    "fn.delete": {
+      "returns": 1
+    },
+    "fn.deletebufline": {
+      "returns": 1
+    },
+    "fn.dictwatcheradd": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: callback"
+    },
+    "fn.dictwatcherdel": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: callback"
+    },
+    "fn.did_filetype": {
+      "returns": 1
+    },
+    "fn.diff_filler": {
+      "returns": 1
+    },
+    "fn.diff_hlID": {
+      "returns": 1
+    },
+    "fn.digraph_get": {
+      "returns": 1
+    },
+    "fn.digraph_getlist": {
+      "returns": 1
+    },
+    "fn.digraph_set": {
+      "returns": 1
+    },
+    "fn.digraph_setlist": {
+      "returns": 1
+    },
+    "fn.empty": {
+      "returns": 1
+    },
+    "fn.environ": {
+      "returns": 1
+    },
+    "fn.escape": {
+      "returns": 1
+    },
+    "fn.eval": {
+      "returns": 1
+    },
+    "fn.eventhandler": {
+      "returns": 1
+    },
+    "fn.executable": {
+      "returns": 1
+    },
+    "fn.execute": {
+      "returns": 1
+    },
+    "fn.exepath": {
+      "returns": 1
+    },
+    "fn.exists": {
+      "returns": 1
+    },
+    "fn.exp": {
+      "returns": 1
+    },
+    "fn.expand": {
+      "returns": 1
+    },
+    "fn.expandcmd": {
+      "returns": 1
+    },
+    "fn.extend": {
+      "returns": 1
+    },
+    "fn.extendnew": {
+      "returns": 1
+    },
+    "fn.feedkeys": {
+      "returns": 1
+    },
+    "fn.file_readable": {
+      "returns": 1
+    },
+    "fn.filecopy": {
+      "returns": 1
+    },
+    "fn.filereadable": {
+      "returns": 1
+    },
+    "fn.filewritable": {
+      "returns": 1
+    },
+    "fn.filter": {
+      "returns": 1
+    },
+    "fn.finddir": {
+      "returns": 1
+    },
+    "fn.findfile": {
+      "returns": 1
+    },
+    "fn.flatten": {
+      "returns": 1
+    },
+    "fn.flattennew": {
+      "returns": 1
+    },
+    "fn.float2nr": {
+      "returns": 1
+    },
+    "fn.floor": {
+      "returns": 1
+    },
+    "fn.fmod": {
+      "returns": 1
+    },
+    "fn.fnameescape": {
+      "returns": 1
+    },
+    "fn.fnamemodify": {
+      "returns": 1
+    },
+    "fn.foldclosed": {
+      "returns": 1
+    },
+    "fn.foldclosedend": {
+      "returns": 1
+    },
+    "fn.foldlevel": {
+      "returns": 1
+    },
+    "fn.foldtext": {
+      "returns": 1
+    },
+    "fn.foldtextresult": {
+      "returns": 1
+    },
+    "fn.foreach": {
+      "returns": 1
+    },
+    "fn.fullcommand": {
+      "returns": 1
+    },
+    "fn.funcref": {
+      "returns": 1
+    },
+    "fn.function": {
+      "returns": 1
+    },
+    "fn.garbagecollect": {
+      "returns": 1
+    },
+    "fn.get": {
+      "returns": 1
+    },
+    "fn.getbufinfo": {
+      "returns": 1
+    },
+    "fn.getbufline": {
+      "returns": 1
+    },
+    "fn.getbufoneline": {
+      "returns": 1
+    },
+    "fn.getbufvar": {
+      "returns": 1
+    },
+    "fn.getcellwidths": {
+      "returns": 1
+    },
+    "fn.getchangelist": {
+      "returns": 1
+    },
+    "fn.getchar": {
+      "returns": 1
+    },
+    "fn.getcharmod": {
+      "returns": 1
+    },
+    "fn.getcharpos": {
+      "returns": 1
+    },
+    "fn.getcharsearch": {
+      "returns": 1
+    },
+    "fn.getcharstr": {
+      "returns": 1
+    },
+    "fn.getcmdcomplpat": {
+      "returns": 1
+    },
+    "fn.getcmdcompltype": {
+      "returns": 1
+    },
+    "fn.getcmdline": {
+      "returns": 1
+    },
+    "fn.getcmdpos": {
+      "returns": 1
+    },
+    "fn.getcmdprompt": {
+      "returns": 1
+    },
+    "fn.getcmdscreenpos": {
+      "returns": 1
+    },
+    "fn.getcmdtype": {
+      "returns": 1
+    },
+    "fn.getcmdwintype": {
+      "returns": 1
+    },
+    "fn.getcompletion": {
+      "returns": 1
+    },
+    "fn.getcompletiontype": {
+      "returns": 1
+    },
+    "fn.getcurpos": {
+      "returns": 1
+    },
+    "fn.getcursorcharpos": {
+      "returns": 1
+    },
+    "fn.getcwd": {
+      "returns": 1
+    },
+    "fn.getenv": {
+      "returns": 1
+    },
+    "fn.getfontname": {
+      "returns": 1
+    },
+    "fn.getfperm": {
+      "returns": 1
+    },
+    "fn.getfsize": {
+      "returns": 1
+    },
+    "fn.getftime": {
+      "returns": 1
+    },
+    "fn.getftype": {
+      "returns": 1
+    },
+    "fn.getjumplist": {
+      "returns": 1
+    },
+    "fn.getline": {
+      "returns": 1
+    },
+    "fn.getloclist": {
+      "returns": 1
+    },
+    "fn.getmarklist": {
+      "returns": 1
+    },
+    "fn.getmatches": {
+      "returns": 1
+    },
+    "fn.getmousepos": {
+      "returns": 1
+    },
+    "fn.getpid": {
+      "returns": 1
+    },
+    "fn.getpos": {
+      "returns": 1
+    },
+    "fn.getqflist": {
+      "returns": 1
+    },
+    "fn.getreg": {
+      "returns": 1
+    },
+    "fn.getreginfo": {
+      "returns": 1
+    },
+    "fn.getregion": {
+      "returns": 1
+    },
+    "fn.getregionpos": {
+      "returns": 1
+    },
+    "fn.getregtype": {
+      "returns": 1
+    },
+    "fn.getscriptinfo": {
+      "returns": 1
+    },
+    "fn.getstacktrace": {
+      "returns": 1
+    },
+    "fn.gettabinfo": {
+      "returns": 1
+    },
+    "fn.gettabvar": {
+      "returns": 1
+    },
+    "fn.gettabwinvar": {
+      "returns": 1
+    },
+    "fn.gettagstack": {
+      "returns": 1
+    },
+    "fn.gettext": {
+      "returns": 1
+    },
+    "fn.getwininfo": {
+      "returns": 1
+    },
+    "fn.getwinpos": {
+      "returns": 1
+    },
+    "fn.getwinposx": {
+      "returns": 1
+    },
+    "fn.getwinposy": {
+      "returns": 1
+    },
+    "fn.getwinvar": {
+      "returns": 1
+    },
+    "fn.glob": {
+      "returns": 1
+    },
+    "fn.glob2regpat": {
+      "returns": 1
+    },
+    "fn.globpath": {
+      "returns": 1
+    },
+    "fn.has": {
+      "returns": 1
+    },
+    "fn.has_key": {
+      "returns": 1
+    },
+    "fn.haslocaldir": {
+      "returns": 1
+    },
+    "fn.hasmapto": {
+      "returns": 1
+    },
+    "fn.highlight_exists": {
+      "returns": 1
+    },
+    "fn.highlightID": {
+      "returns": 1
+    },
+    "fn.histadd": {
+      "returns": 1
+    },
+    "fn.histdel": {
+      "returns": 1
+    },
+    "fn.histget": {
+      "returns": 1
+    },
+    "fn.histnr": {
+      "returns": 1
+    },
+    "fn.hlexists": {
+      "returns": 1
+    },
+    "fn.hlID": {
+      "returns": 1
+    },
+    "fn.hostname": {
+      "returns": 1
+    },
+    "fn.iconv": {
+      "returns": 1
+    },
+    "fn.id": {
+      "returns": 1
+    },
+    "fn.indent": {
+      "returns": 1
+    },
+    "fn.index": {
+      "returns": 1
+    },
+    "fn.indexof": {
+      "returns": 1
+    },
+    "fn.input": {
+      "returns": 1
+    },
+    "fn.inputdialog": {
+      "returns": 1
+    },
+    "fn.inputlist": {
+      "returns": 1
+    },
+    "fn.inputrestore": {
+      "returns": 1
+    },
+    "fn.inputsave": {
+      "returns": 1
+    },
+    "fn.inputsecret": {
+      "returns": 1
+    },
+    "fn.insert": {
+      "returns": 1
+    },
+    "fn.interrupt": {
+      "returns": 1
+    },
+    "fn.invert": {
+      "returns": 1
+    },
+    "fn.isabsolutepath": {
+      "returns": 1
+    },
+    "fn.isdirectory": {
+      "returns": 1
+    },
+    "fn.isinf": {
+      "returns": 1
+    },
+    "fn.islocked": {
+      "returns": 1
+    },
+    "fn.isnan": {
+      "returns": 1
+    },
+    "fn.items": {
+      "returns": 1
+    },
+    "fn.jobclose": {
+      "returns": 1
+    },
+    "fn.jobpid": {
+      "returns": 1
+    },
+    "fn.jobresize": {
+      "returns": 1
+    },
+    "fn.jobsend": {
+      "returns": 1
+    },
+    "fn.jobstart": {
+      "returns": 1
+    },
+    "fn.jobstop": {
+      "returns": 1
+    },
+    "fn.jobwait": {
+      "returns": 1
+    },
+    "fn.join": {
+      "returns": 1
+    },
+    "fn.json_decode": {
+      "returns": 1
+    },
+    "fn.json_encode": {
+      "returns": 1
+    },
+    "fn.keys": {
+      "returns": 1
+    },
+    "fn.keytrans": {
+      "returns": 1
+    },
+    "fn.last_buffer_nr": {
+      "returns": 1
+    },
+    "fn.len": {
+      "returns": 1
+    },
+    "fn.libcall": {
+      "returns": 1
+    },
+    "fn.libcallnr": {
+      "returns": 1
+    },
+    "fn.line": {
+      "returns": 1
+    },
+    "fn.line2byte": {
+      "returns": 1
+    },
+    "fn.lispindent": {
+      "returns": 1
+    },
+    "fn.list2blob": {
+      "returns": 1
+    },
+    "fn.list2str": {
+      "returns": 1
+    },
+    "fn.localtime": {
+      "returns": 1
+    },
+    "fn.log": {
+      "returns": 1
+    },
+    "fn.log10": {
+      "returns": 1
+    },
+    "fn.map": {
+      "returns": 1
+    },
+    "fn.maparg": {
+      "returns": 1
+    },
+    "fn.mapcheck": {
+      "returns": 1
+    },
+    "fn.maplist": {
+      "returns": 1
+    },
+    "fn.mapnew": {
+      "returns": 1
+    },
+    "fn.mapset": {
+      "returns": 1
+    },
+    "fn.match": {
+      "returns": 1
+    },
+    "fn.matchadd": {
+      "returns": 1
+    },
+    "fn.matchaddpos": {
+      "returns": 1
+    },
+    "fn.matcharg": {
+      "returns": 1
+    },
+    "fn.matchbufline": {
+      "returns": 1
+    },
+    "fn.matchdelete": {
+      "returns": 1
+    },
+    "fn.matchend": {
+      "returns": 1
+    },
+    "fn.matchfuzzy": {
+      "returns": 1
+    },
+    "fn.matchfuzzypos": {
+      "returns": 1
+    },
+    "fn.matchlist": {
+      "returns": 1
+    },
+    "fn.matchstr": {
+      "returns": 1
+    },
+    "fn.matchstrlist": {
+      "returns": 1
+    },
+    "fn.matchstrpos": {
+      "returns": 1
+    },
+    "fn.max": {
+      "returns": 1
+    },
+    "fn.menu_get": {
+      "returns": 1
+    },
+    "fn.menu_info": {
+      "returns": 1
+    },
+    "fn.min": {
+      "returns": 1
+    },
+    "fn.mkdir": {
+      "returns": 1
+    },
+    "fn.mode": {
+      "returns": 1
+    },
+    "fn.msgpackdump": {
+      "returns": 1
+    },
+    "fn.msgpackparse": {
+      "returns": 1
+    },
+    "fn.nextnonblank": {
+      "returns": 1
+    },
+    "fn.nr2char": {
+      "returns": 1
+    },
+    "fn.or": {
+      "returns": 1
+    },
+    "fn.pathshorten": {
+      "returns": 1
+    },
+    "fn.perleval": {
+      "returns": 1
+    },
+    "fn.pow": {
+      "returns": 1
+    },
+    "fn.preinserted": {
+      "returns": 1
+    },
+    "fn.prevnonblank": {
+      "returns": 1
+    },
+    "fn.printf": {
+      "returns": 1
+    },
+    "fn.prompt_appendbuf": {
+      "returns": 1
+    },
+    "fn.prompt_getinput": {
+      "returns": 1
+    },
+    "fn.prompt_getprompt": {
+      "returns": 1
+    },
+    "fn.prompt_setcallback": {
+      "returns": 1
+    },
+    "fn.prompt_setinterrupt": {
+      "returns": 1
+    },
+    "fn.prompt_setprompt": {
+      "returns": 1
+    },
+    "fn.pum_getpos": {
+      "returns": 1
+    },
+    "fn.pumvisible": {
+      "returns": 1
+    },
+    "fn.py3eval": {
+      "returns": 1
+    },
+    "fn.pyeval": {
+      "returns": 1
+    },
+    "fn.pyxeval": {
+      "returns": 1
+    },
+    "fn.rand": {
+      "returns": 1
+    },
+    "fn.range": {
+      "returns": 1
+    },
+    "fn.readblob": {
+      "returns": 1
+    },
+    "fn.readdir": {
+      "returns": 1
+    },
+    "fn.readfile": {
+      "returns": 1
+    },
+    "fn.reduce": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: func"
+    },
+    "fn.reg_executing": {
+      "returns": 1
+    },
+    "fn.reg_recorded": {
+      "returns": 1
+    },
+    "fn.reg_recording": {
+      "returns": 1
+    },
+    "fn.reltime": {
+      "returns": 1
+    },
+    "fn.reltimefloat": {
+      "returns": 1
+    },
+    "fn.reltimestr": {
+      "returns": 1
+    },
+    "fn.remove": {
+      "returns": 1
+    },
+    "fn.rename": {
+      "returns": 1
+    },
+    "fn.repeat": {
+      "returns": 1
+    },
+    "fn.resolve": {
+      "returns": 1
+    },
+    "fn.reverse": {
+      "returns": 1
+    },
+    "fn.round": {
+      "returns": 1
+    },
+    "fn.rpcnotify": {
+      "returns": 1
+    },
+    "fn.rpcrequest": {
+      "returns": 1
+    },
+    "fn.rpcstart": {
+      "returns": 1
+    },
+    "fn.rpcstop": {
+      "returns": 1
+    },
+    "fn.rubyeval": {
+      "returns": 1
+    },
+    "fn.screenattr": {
+      "returns": 1
+    },
+    "fn.screenchar": {
+      "returns": 1
+    },
+    "fn.screenchars": {
+      "returns": 1
+    },
+    "fn.screencol": {
+      "returns": 1
+    },
+    "fn.screenpos": {
+      "returns": 1
+    },
+    "fn.screenrow": {
+      "returns": 1
+    },
+    "fn.screenstring": {
+      "returns": 1
+    },
+    "fn.search": {
+      "returns": 1
+    },
+    "fn.searchcount": {
+      "returns": 1
+    },
+    "fn.searchdecl": {
+      "returns": 1
+    },
+    "fn.searchpair": {
+      "returns": 1
+    },
+    "fn.searchpairpos": {
+      "returns": 1
+    },
+    "fn.searchpos": {
+      "returns": 1
+    },
+    "fn.serverlist": {
+      "returns": 1
+    },
+    "fn.serverstart": {
+      "returns": 1
+    },
+    "fn.serverstop": {
+      "returns": 1
+    },
+    "fn.setbufline": {
+      "returns": 1
+    },
+    "fn.setbufvar": {
+      "returns": 1
+    },
+    "fn.setcellwidths": {
+      "returns": 1
+    },
+    "fn.setcharpos": {
+      "returns": 1
+    },
+    "fn.setcharsearch": {
+      "returns": 1
+    },
+    "fn.setcmdline": {
+      "returns": 1
+    },
+    "fn.setcmdpos": {
+      "returns": 1
+    },
+    "fn.setcursorcharpos": {
+      "returns": 1
+    },
+    "fn.setenv": {
+      "returns": 1
+    },
+    "fn.setfperm": {
+      "returns": 1
+    },
+    "fn.setline": {
+      "returns": 1
+    },
+    "fn.setloclist": {
+      "returns": 1
+    },
+    "fn.setmatches": {
+      "returns": 1
+    },
+    "fn.setpos": {
+      "returns": 1
+    },
+    "fn.setqflist": {
+      "returns": 1
+    },
+    "fn.setreg": {
+      "returns": 1
+    },
+    "fn.settabvar": {
+      "returns": 1
+    },
+    "fn.settabwinvar": {
+      "returns": 1
+    },
+    "fn.settagstack": {
+      "returns": 1
+    },
+    "fn.setwinvar": {
+      "returns": 1
+    },
+    "fn.sha256": {
+      "returns": 1
+    },
+    "fn.shada#get_binstrings": {
+      "returns": 0
+    },
+    "fn.shada#get_strings": {
+      "returns": 0
+    },
+    "fn.shellescape": {
+      "returns": 1
+    },
+    "fn.shiftwidth": {
+      "returns": 1
+    },
+    "fn.sign_define": {
+      "returns": 1
+    },
+    "fn.sign_getdefined": {
+      "returns": 1
+    },
+    "fn.sign_getplaced": {
+      "returns": 1
+    },
+    "fn.sign_jump": {
+      "returns": 1
+    },
+    "fn.sign_place": {
+      "returns": 1
+    },
+    "fn.sign_placelist": {
+      "returns": 1
+    },
+    "fn.sign_undefine": {
+      "returns": 1
+    },
+    "fn.sign_unplace": {
+      "returns": 1
+    },
+    "fn.sign_unplacelist": {
+      "returns": 1
+    },
+    "fn.simplify": {
+      "returns": 1
+    },
+    "fn.sin": {
+      "returns": 1
+    },
+    "fn.sinh": {
+      "returns": 1
+    },
+    "fn.slice": {
+      "returns": 1
+    },
+    "fn.sockconnect": {
+      "returns": 1
+    },
+    "fn.sort": {
+      "returns": 1
+    },
+    "fn.soundfold": {
+      "returns": 1
+    },
+    "fn.spellbadword": {
+      "returns": 1
+    },
+    "fn.spellsuggest": {
+      "returns": 1
+    },
+    "fn.split": {
+      "returns": 1
+    },
+    "fn.sqrt": {
+      "returns": 1
+    },
+    "fn.srand": {
+      "returns": 1
+    },
+    "fn.state": {
+      "returns": 1
+    },
+    "fn.stdioopen": {
+      "returns": 1
+    },
+    "fn.stdpath": {
+      "returns": 1
+    },
+    "fn.str2float": {
+      "returns": 1
+    },
+    "fn.str2list": {
+      "returns": 1
+    },
+    "fn.str2nr": {
+      "returns": 1
+    },
+    "fn.strcharlen": {
+      "returns": 1
+    },
+    "fn.strcharpart": {
+      "returns": 1
+    },
+    "fn.strchars": {
+      "returns": 1
+    },
+    "fn.strdisplaywidth": {
+      "returns": 1
+    },
+    "fn.strftime": {
+      "returns": 1
+    },
+    "fn.strgetchar": {
+      "returns": 1
+    },
+    "fn.stridx": {
+      "returns": 1
+    },
+    "fn.string": {
+      "returns": 1
+    },
+    "fn.strlen": {
+      "returns": 1
+    },
+    "fn.strpart": {
+      "returns": 1
+    },
+    "fn.strptime": {
+      "returns": 1
+    },
+    "fn.strridx": {
+      "returns": 1
+    },
+    "fn.strtrans": {
+      "returns": 1
+    },
+    "fn.strutf16len": {
+      "returns": 1
+    },
+    "fn.strwidth": {
+      "returns": 1
+    },
+    "fn.submatch": {
+      "returns": 1
+    },
+    "fn.substitute": {
+      "returns": 1
+    },
+    "fn.swapfilelist": {
+      "returns": 1
+    },
+    "fn.swapinfo": {
+      "returns": 1
+    },
+    "fn.swapname": {
+      "returns": 1
+    },
+    "fn.synconcealed": {
+      "returns": 1
+    },
+    "fn.synID": {
+      "returns": 1
+    },
+    "fn.synIDattr": {
+      "returns": 1
+    },
+    "fn.synIDtrans": {
+      "returns": 1
+    },
+    "fn.synstack": {
+      "returns": 1
+    },
+    "fn.system": {
+      "returns": 1
+    },
+    "fn.systemlist": {
+      "returns": 1
+    },
+    "fn.tabpagebuflist": {
+      "returns": 1
+    },
+    "fn.tabpagenr": {
+      "returns": 1
+    },
+    "fn.tabpagewinnr": {
+      "returns": 1
+    },
+    "fn.tagfiles": {
+      "returns": 1
+    },
+    "fn.taglist": {
+      "returns": 1
+    },
+    "fn.tan": {
+      "returns": 1
+    },
+    "fn.tanh": {
+      "returns": 1
+    },
+    "fn.tempname": {
+      "returns": 1
+    },
+    "fn.termopen": {
+      "returns": 1
+    },
+    "fn.timer_info": {
+      "returns": 1
+    },
+    "fn.timer_pause": {
+      "returns": 1
+    },
+    "fn.timer_start": {
+      "returns": 1
+    },
+    "fn.timer_stop": {
+      "returns": 1
+    },
+    "fn.timer_stopall": {
+      "returns": 1
+    },
+    "fn.tolower": {
+      "returns": 1
+    },
+    "fn.toupper": {
+      "returns": 1
+    },
+    "fn.tr": {
+      "returns": 1
+    },
+    "fn.trim": {
+      "returns": 1
+    },
+    "fn.trunc": {
+      "returns": 1
+    },
+    "fn.type": {
+      "returns": 1
+    },
+    "fn.undofile": {
+      "returns": 1
+    },
+    "fn.undotree": {
+      "returns": 1
+    },
+    "fn.uniq": {
+      "returns": 1
+    },
+    "fn.utf16idx": {
+      "returns": 1
+    },
+    "fn.values": {
+      "returns": 1
+    },
+    "fn.virtcol": {
+      "returns": 1
+    },
+    "fn.virtcol2col": {
+      "returns": 1
+    },
+    "fn.visualmode": {
+      "returns": 1
+    },
+    "fn.wait": {
+      "returns": 1
+    },
+    "fn.wildmenumode": {
+      "returns": 1
+    },
+    "fn.wildtrigger": {
+      "returns": 1
+    },
+    "fn.win_execute": {
+      "returns": 1
+    },
+    "fn.win_findbuf": {
+      "returns": 1
+    },
+    "fn.win_getid": {
+      "returns": 1
+    },
+    "fn.win_gettype": {
+      "returns": 1
+    },
+    "fn.win_gotoid": {
+      "returns": 1
+    },
+    "fn.win_id2tabwin": {
+      "returns": 1
+    },
+    "fn.win_id2win": {
+      "returns": 1
+    },
+    "fn.win_move_separator": {
+      "returns": 1
+    },
+    "fn.win_move_statusline": {
+      "returns": 1
+    },
+    "fn.win_screenpos": {
+      "returns": 1
+    },
+    "fn.win_splitmove": {
+      "returns": 1
+    },
+    "fn.winbufnr": {
+      "returns": 1
+    },
+    "fn.wincol": {
+      "returns": 1
+    },
+    "fn.windowsversion": {
+      "returns": 1
+    },
+    "fn.winheight": {
+      "returns": 1
+    },
+    "fn.winlayout": {
+      "returns": 1
+    },
+    "fn.winline": {
+      "returns": 1
+    },
+    "fn.winnr": {
+      "returns": 1
+    },
+    "fn.winrestcmd": {
+      "returns": 1
+    },
+    "fn.winrestview": {
+      "returns": 1
+    },
+    "fn.winsaveview": {
+      "returns": 1
+    },
+    "fn.winwidth": {
+      "returns": 1
+    },
+    "fn.wordcount": {
+      "returns": 1
+    },
+    "fn.writefile": {
+      "returns": 1
+    },
+    "fn.xor": {
+      "returns": 1
+    },
+    "fs.abspath": {
+      "returns": 1
+    },
+    "fs.basename": {
+      "returns": 1
+    },
+    "fs.dir": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "fs.dirname": {
+      "returns": 1
+    },
+    "fs.ext": {
+      "returns": 1
+    },
+    "fs.find": {
+      "returns": 2
+    },
+    "fs.joinpath": {
+      "returns": 1
+    },
+    "fs.mkdir": {
+      "returns": 0
+    },
+    "fs.normalize": {
+      "returns": 1
+    },
+    "fs.parents": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "fs.relpath": {
+      "returns": 1
+    },
+    "fs.rm": {
+      "returns": 0
+    },
+    "fs.root": {
+      "returns": 1
+    },
+    "fs.slug": {
+      "returns": 1
+    },
+    "funcref": {
+      "returns": 1,
+      "unsupported": "Function is private to its native Lua module"
+    },
+    "glob.to_lpeg": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Pattern requires native object methods"
+    },
+    "gsplit": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "health.error": {
+      "returns": 0
+    },
+    "health.info": {
+      "returns": 0
+    },
+    "health.ok": {
+      "returns": 0
+    },
+    "health.start": {
+      "returns": 0
+    },
+    "health.warn": {
+      "returns": 0
+    },
+    "highlight": {
+      "returns": 0
+    },
+    "hl.hl_op": {
+      "returns": 0
+    },
+    "hl.on_yank": {
+      "returns": 0
+    },
+    "hl.range": {
+      "returns": 2,
+      "unsupported": "Return value requires native Lua: uv.uv_timer_t: uv.uv_handle_t: userdata"
+    },
+    "iconv": {
+      "returns": 1
+    },
+    "in_fast_event": {
+      "returns": 0
+    },
+    "inspect": {
+      "returns": 1
+    },
+    "inspect_pos": {
+      "returns": 1
+    },
+    "inspect.inspect": {
+      "returns": 1
+    },
+    "is_callable": {
+      "returns": 1
+    },
+    "is_thread": {
+      "returns": 0,
+      "unsupported": "Native function has no exported LuaCATS signature"
+    },
+    "isarray": {
+      "returns": 1
+    },
+    "islist": {
+      "returns": 1
+    },
+    "isnil": {
+      "returns": 1
+    },
+    "iter": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "json.decode": {
+      "returns": 1
+    },
+    "json.encode": {
+      "returns": 1
+    },
+    "json.new": {
+      "returns": 0,
+      "unsupported": "Native function has no exported LuaCATS signature"
+    },
+    "keycode": {
+      "returns": 2
+    },
+    "keymap.del": {
+      "returns": 0
+    },
+    "keymap.set": {
+      "returns": 0
+    },
+    "list_contains": {
+      "returns": 1
+    },
+    "list_extend": {
+      "returns": 1
+    },
+    "list_slice": {
+      "returns": 1
+    },
+    "list.bisect": {
+      "returns": 1
+    },
+    "list.unique": {
+      "returns": 1
+    },
+    "loader.enable": {
+      "returns": 0
+    },
+    "loader.find": {
+      "returns": 1
+    },
+    "loader.reset": {
+      "returns": 0
+    },
+    "log.create_writer": {
+      "returns": 1,
+      "unsupported": "Function is private to its native Lua module"
+    },
+    "log.get_level": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: log"
+    },
+    "log.new": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Log retains native instance state"
+    },
+    "log.open_file": {
+      "returns": 1,
+      "unsupported": "Function is private to its native Lua module"
+    },
+    "log.set_format_func": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: log"
+    },
+    "log.set_level": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: log"
+    },
+    "lpeg.B": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.C": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Carg": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Cb": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Cc": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Cf": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Cg": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Cmt": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Cp": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Cs": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.Ct": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.locale": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Locale: userdata"
+    },
+    "lpeg.match": {
+      "returns": "all"
+    },
+    "lpeg.P": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.pcode": {
+      "returns": 0,
+      "unsupported": "Native function has no exported LuaCATS signature"
+    },
+    "lpeg.ptree": {
+      "returns": 0,
+      "unsupported": "Native function has no exported LuaCATS signature"
+    },
+    "lpeg.R": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.S": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Pattern requires native object methods"
+    },
+    "lpeg.setmaxstack": {
+      "returns": 0
+    },
+    "lpeg.type": {
+      "returns": 1
+    },
+    "lpeg.utfR": {
+      "returns": 0,
+      "unsupported": "Native function has no exported LuaCATS signature"
+    },
+    "lpeg.V": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Pattern requires native object methods"
+    },
+    "lsp.buf_attach_client": {
+      "returns": 1
+    },
+    "lsp.buf_detach_client": {
+      "returns": 0
+    },
+    "lsp.buf_is_attached": {
+      "returns": 0
+    },
+    "lsp.buf_notify": {
+      "returns": 1
+    },
+    "lsp.buf_request": {
+      "returns": 2,
+      "unsupported": "Return value requires native Lua: function"
+    },
+    "lsp.buf_request_all": {
+      "callback": {
+        "cancel": "function",
+        "dictionaries": [
+          0
+        ],
+        "index": 3,
+        "prerequisite": {
+          "message": "No LSP clients support this request",
+          "options": {
+            "bufnr": 0,
+            "method": 1
+          },
+          "path": [
+            "lsp",
+            "get_clients"
+          ]
+        },
+        "result": "values",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "lsp.buf_request_sync": {
+      "returns": 2
+    },
+    "lsp.buf.add_workspace_folder": {
+      "returns": 0
+    },
+    "lsp.buf.clear_references": {
+      "returns": 0
+    },
+    "lsp.buf.code_action": {
+      "returns": 0
+    },
+    "lsp.buf.declaration": {
+      "returns": 0
+    },
+    "lsp.buf.definition": {
+      "returns": 0
+    },
+    "lsp.buf.document_highlight": {
+      "returns": 0
+    },
+    "lsp.buf.document_symbol": {
+      "returns": 0
+    },
+    "lsp.buf.format": {
+      "returns": 0
+    },
+    "lsp.buf.hover": {
+      "returns": 0
+    },
+    "lsp.buf.implementation": {
+      "returns": 0
+    },
+    "lsp.buf.incoming_calls": {
+      "returns": 0
+    },
+    "lsp.buf.list_workspace_folders": {
+      "returns": 0
+    },
+    "lsp.buf.outgoing_calls": {
+      "returns": 0
+    },
+    "lsp.buf.references": {
+      "returns": 0
+    },
+    "lsp.buf.remove_workspace_folder": {
+      "returns": 0
+    },
+    "lsp.buf.rename": {
+      "returns": 0
+    },
+    "lsp.buf.selection_range": {
+      "returns": 0
+    },
+    "lsp.buf.signature_help": {
+      "returns": 0
+    },
+    "lsp.buf.type_definition": {
+      "returns": 0
+    },
+    "lsp.buf.typehierarchy": {
+      "returns": 0
+    },
+    "lsp.buf.workspace_diagnostics": {
+      "returns": 0
+    },
+    "lsp.buf.workspace_symbol": {
+      "returns": 0
+    },
+    "lsp.client_is_stopped": {
+      "returns": 1
+    },
+    "lsp.codelens.clear": {
+      "returns": 0
+    },
+    "lsp.codelens.display": {
+      "returns": 0
+    },
+    "lsp.codelens.enable": {
+      "returns": 0
+    },
+    "lsp.codelens.get": {
+      "returns": 1
+    },
+    "lsp.codelens.is_enabled": {
+      "returns": 1
+    },
+    "lsp.codelens.on_codelens": {
+      "returns": 0
+    },
+    "lsp.codelens.on_refresh": {
+      "returns": "all"
+    },
+    "lsp.codelens.refresh": {
+      "returns": 0
+    },
+    "lsp.codelens.run": {
+      "returns": 0
+    },
+    "lsp.codelens.save": {
+      "returns": 0
+    },
+    "lsp.completion.enable": {
+      "returns": 0
+    },
+    "lsp.completion.get": {
+      "returns": 0
+    },
+    "lsp.config": {
+      "returns": 0
+    },
+    "lsp.diagnostic.from": {
+      "returns": 1
+    },
+    "lsp.diagnostic.get_namespace": {
+      "returns": 0
+    },
+    "lsp.diagnostic.on_diagnostic": {
+      "returns": 0
+    },
+    "lsp.diagnostic.on_publish_diagnostics": {
+      "returns": 0
+    },
+    "lsp.diagnostic.on_refresh": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.document_color.color_presentation": {
+      "returns": 0
+    },
+    "lsp.document_color.enable": {
+      "returns": 0
+    },
+    "lsp.document_color.is_enabled": {
+      "returns": 1
+    },
+    "lsp.enable": {
+      "returns": 0
+    },
+    "lsp.foldclose": {
+      "returns": 0
+    },
+    "lsp.foldexpr": {
+      "returns": 0
+    },
+    "lsp.foldtext": {
+      "returns": 0
+    },
+    "lsp.formatexpr": {
+      "returns": 0
+    },
+    "lsp.get_buffers_by_client_id": {
+      "returns": 1
+    },
+    "lsp.get_client_by_id": {
+      "resultTypes": [
+        {
+          "native": "vim.lsp.Client"
+        }
+      ],
+      "returns": 1
+    },
+    "lsp.get_clients": {
+      "resultTypes": [
+        {
+          "array": {
+            "native": "vim.lsp.Client"
+          }
+        }
+      ],
+      "returns": 1
+    },
+    "lsp.get_configs": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lsp.Config: vim.lsp.ClientConfig: Lua function"
+    },
+    "lsp.get_log_path": {
+      "returns": 1
+    },
+    "lsp.handlers.$/progress": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.callHierarchy/incomingCalls": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.callHierarchy/outgoingCalls": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.client/registerCapability": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.client/unregisterCapability": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.hover": {
+      "returns": 0
+    },
+    "lsp.handlers.signature_help": {
+      "returns": 0
+    },
+    "lsp.handlers.textDocument/completion": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/diagnostic": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/documentHighlight": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/documentSymbol": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/formatting": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/hover": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/inlayHint": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/publishDiagnostics": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/rangeFormatting": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/rename": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.textDocument/signatureHelp": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.typeHierarchy/subtypes": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.typeHierarchy/supertypes": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.window/logMessage": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.window/showDocument": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.window/showMessage": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.window/showMessageRequest": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.window/workDoneProgress/create": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/applyEdit": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/codeLens/refresh": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/configuration": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/diagnostic/refresh": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/executeCommand": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/foldingRange/refresh": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/inlayHint/refresh": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/semanticTokens/refresh": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/symbol": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.handlers.workspace/workspaceFolders": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.inlay_hint.enable": {
+      "returns": 0
+    },
+    "lsp.inlay_hint.get": {
+      "returns": 1
+    },
+    "lsp.inlay_hint.is_enabled": {
+      "returns": 1
+    },
+    "lsp.inlay_hint.on_inlayhint": {
+      "returns": 0
+    },
+    "lsp.inlay_hint.on_refresh": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "lsp.inline_completion.enable": {
+      "returns": 0
+    },
+    "lsp.inline_completion.get": {
+      "returns": 1
+    },
+    "lsp.inline_completion.is_enabled": {
+      "returns": 0
+    },
+    "lsp.inline_completion.select": {
+      "returns": 0
+    },
+    "lsp.is_enabled": {
+      "returns": 1
+    },
+    "lsp.linked_editing_range.enable": {
+      "returns": 0
+    },
+    "lsp.log.debug": {
+      "returns": 1
+    },
+    "lsp.log.error": {
+      "returns": 1
+    },
+    "lsp.log.get_filename": {
+      "returns": 1
+    },
+    "lsp.log.get_level": {
+      "returns": 1
+    },
+    "lsp.log.info": {
+      "returns": 1
+    },
+    "lsp.log.set_format_func": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "lsp.log.set_level": {
+      "returns": 0
+    },
+    "lsp.log.should_log": {
+      "returns": 1
+    },
+    "lsp.log.trace": {
+      "returns": 1
+    },
+    "lsp.log.warn": {
+      "returns": 1
+    },
+    "lsp.omnifunc": {
+      "returns": 1
+    },
+    "lsp.on_type_formatting.enable": {
+      "returns": 0
+    },
+    "lsp.protocol.make_client_capabilities": {
+      "returns": 1
+    },
+    "lsp.protocol.resolve_capabilities": {
+      "returns": 1
+    },
+    "lsp.rpc_response_error": {
+      "returns": 1
+    },
+    "lsp.rpc.connect": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "lsp.rpc.create_read_loop": {
+      "returns": 0,
+      "unsupported": "Function is private to its native Lua module"
+    },
+    "lsp.rpc.format_rpc_error": {
+      "returns": 1
+    },
+    "lsp.rpc.rpc_response_error": {
+      "returns": 1
+    },
+    "lsp.rpc.start": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lsp.rpc.Client retains native instance state"
+    },
+    "lsp.semantic_tokens.enable": {
+      "returns": 0
+    },
+    "lsp.semantic_tokens.force_refresh": {
+      "returns": 0
+    },
+    "lsp.semantic_tokens.get_at_pos": {
+      "returns": 1
+    },
+    "lsp.semantic_tokens.highlight_token": {
+      "returns": 0
+    },
+    "lsp.semantic_tokens.is_enabled": {
+      "returns": 0
+    },
+    "lsp.semantic_tokens.start": {
+      "returns": 0
+    },
+    "lsp.semantic_tokens.stop": {
+      "returns": 0
+    },
+    "lsp.set_log_level": {
+      "returns": 0
+    },
+    "lsp.start": {
+      "returns": 1
+    },
+    "lsp.start_client": {
+      "returns": 2
+    },
+    "lsp.status": {
+      "returns": 1
+    },
+    "lsp.stop_client": {
+      "returns": 0
+    },
+    "lsp.util.apply_text_document_edit": {
+      "returns": 0
+    },
+    "lsp.util.apply_text_edits": {
+      "returns": 0
+    },
+    "lsp.util.apply_workspace_edit": {
+      "returns": 0
+    },
+    "lsp.util.buf_clear_references": {
+      "returns": 0
+    },
+    "lsp.util.buf_highlight_references": {
+      "returns": 0
+    },
+    "lsp.util.character_offset": {
+      "returns": 1
+    },
+    "lsp.util.convert_input_to_markdown_lines": {
+      "returns": 1
+    },
+    "lsp.util.convert_signature_help_to_markdown_lines": {
+      "returns": 2
+    },
+    "lsp.util.get_effective_tabstop": {
+      "returns": 1
+    },
+    "lsp.util.locations_to_items": {
+      "returns": 1
+    },
+    "lsp.util.make_floating_popup_options": {
+      "returns": 1
+    },
+    "lsp.util.make_formatting_params": {
+      "returns": 1
+    },
+    "lsp.util.make_given_range_params": {
+      "returns": 1
+    },
+    "lsp.util.make_position_params": {
+      "returns": 1
+    },
+    "lsp.util.make_range_params": {
+      "returns": 1
+    },
+    "lsp.util.make_text_document_params": {
+      "returns": 1
+    },
+    "lsp.util.make_workspace_params": {
+      "returns": 1
+    },
+    "lsp.util.open_floating_preview": {
+      "returns": 2
+    },
+    "lsp.util.preview_location": {
+      "returns": 2
+    },
+    "lsp.util.rename": {
+      "returns": 0
+    },
+    "lsp.util.show_document": {
+      "returns": 1
+    },
+    "lsp.util.stylize_markdown": {
+      "returns": 1
+    },
+    "lsp.util.symbols_to_items": {
+      "returns": 1
+    },
+    "lua_omnifunc": {
+      "returns": 0
+    },
+    "mpack.decode": {
+      "returns": 1
+    },
+    "mpack.encode": {
+      "returns": 1
+    },
+    "mpack.Packer": {
+      "returns": 0,
+      "unsupported": "Native function has no exported LuaCATS signature"
+    },
+    "mpack.Session": {
+      "returns": 0,
+      "unsupported": "Native function has no exported LuaCATS signature"
+    },
+    "mpack.Unpacker": {
+      "returns": 0,
+      "unsupported": "Native function has no exported LuaCATS signature"
+    },
+    "net.request": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "nonnil": {
+      "returns": 1
+    },
+    "notify": {
+      "returns": 0
+    },
+    "notify_once": {
+      "returns": 1
+    },
+    "npcall": {
+      "returns": "all",
+      "unsupported": "Required argument requires native Lua: fn"
+    },
+    "on_key": {
+      "returns": 1
+    },
+    "pack.add": {
+      "returns": 0
+    },
+    "pack.del": {
+      "returns": 0
+    },
+    "pack.get": {
+      "returns": 1
+    },
+    "pack.update": {
+      "returns": 0
+    },
+    "paste": {
+      "returns": 1
+    },
+    "pesc": {
+      "returns": 1
+    },
+    "pos": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "pos.cursor": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Pos retains native instance state"
+    },
+    "pos.extmark": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Pos retains native instance state"
+    },
+    "pos.lsp": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Pos retains native instance state"
+    },
+    "pos.mark": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Pos retains native instance state"
+    },
+    "pos.new": {
+      "returns": 0,
+      "unsupported": "Function is private to its native Lua module"
+    },
+    "pos.offset": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Pos retains native instance state"
+    },
+    "pos.to_cursor": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: pos"
+    },
+    "pos.to_extmark": {
+      "returns": 2,
+      "unsupported": "Required argument requires native Lua: pos"
+    },
+    "pos.to_lsp": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: pos"
+    },
+    "pos.to_mark": {
+      "returns": 2,
+      "unsupported": "Required argument requires native Lua: pos"
+    },
+    "pos.to_offset": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: pos"
+    },
+    "print": {
+      "returns": 1
+    },
+    "provider.perl.call": {
+      "returns": 0
+    },
+    "provider.perl.detect": {
+      "returns": 2
+    },
+    "provider.perl.require": {
+      "returns": 1
+    },
+    "provider.perl.start": {
+      "returns": 0
+    },
+    "provider.python.call": {
+      "returns": 0
+    },
+    "provider.python.detect_by_module": {
+      "returns": 2
+    },
+    "provider.python.require": {
+      "returns": 1
+    },
+    "provider.python.start": {
+      "returns": 0
+    },
+    "provider.ruby.call": {
+      "returns": 0
+    },
+    "provider.ruby.detect": {
+      "returns": 0
+    },
+    "provider.ruby.require": {
+      "returns": 1
+    },
+    "provider.ruby.start": {
+      "returns": 0
+    },
+    "range": {
+      "returns": 0,
+      "unsupported": "Function has no complete exported LuaCATS signature"
+    },
+    "range.extmark": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Range retains native instance state"
+    },
+    "range.has": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: outer"
+    },
+    "range.intersect": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Range retains native instance state"
+    },
+    "range.is_empty": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: range"
+    },
+    "range.lsp": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Range retains native instance state"
+    },
+    "range.mark": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Range retains native instance state"
+    },
+    "range.new": {
+      "returns": 0,
+      "unsupported": "Function is private to its native Lua module"
+    },
+    "range.to_extmark": {
+      "returns": 4,
+      "unsupported": "Required argument requires native Lua: range"
+    },
+    "range.to_lsp": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: range"
+    },
+    "range.to_mark": {
+      "returns": 4,
+      "unsupported": "Required argument requires native Lua: range"
+    },
+    "re.compile": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Pattern requires native object methods"
+    },
+    "re.find": {
+      "returns": 2
+    },
+    "re.gsub": {
+      "returns": 1
+    },
+    "re.match": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.lpeg.Capture: vim.lpeg.Pattern requires native object methods"
+    },
+    "re.updatelocale": {
+      "returns": 0
+    },
+    "regex": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.regex requires native object methods"
+    },
+    "region": {
+      "returns": 1
+    },
+    "ringbuf": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.Ringbuf retains native instance state"
+    },
+    "rpcnotify": {
+      "returns": 0
+    },
+    "rpcrequest": {
+      "returns": 0
+    },
+    "schedule": {
+      "callback": {
+        "hasErrorReturn": true,
+        "index": 0,
+        "result": "values",
+        "returns": 0
+      },
+      "returns": 0
+    },
+    "schedule_wrap": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: function"
+    },
+    "secure.read": {
+      "returns": 1
+    },
+    "secure.trust": {
+      "returns": 2
+    },
+    "show_pos": {
+      "returns": 0
+    },
+    "snippet.active": {
+      "returns": 1
+    },
+    "snippet.expand": {
+      "returns": 0
+    },
+    "snippet.jump": {
+      "returns": 0
+    },
+    "snippet.stop": {
+      "returns": 0
+    },
+    "spairs": {
+      "returns": 2,
+      "unsupported": "Return value requires native Lua: Lua function"
+    },
+    "spell.check": {
+      "returns": 1
+    },
+    "split": {
+      "returns": 1
+    },
+    "startswith": {
+      "returns": 1
+    },
+    "str_byteindex": {
+      "returns": 1
+    },
+    "str_utf_end": {
+      "returns": 1
+    },
+    "str_utf_pos": {
+      "returns": 1
+    },
+    "str_utf_start": {
+      "returns": 1
+    },
+    "str_utfindex": {
+      "returns": 1
+    },
+    "stricmp": {
+      "returns": 1
+    },
+    "system": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: vim.SystemObj retains native instance state"
+    },
+    "tbl_contains": {
+      "returns": 1
+    },
+    "tbl_count": {
+      "returns": 1
+    },
+    "tbl_deep_extend": {
+      "returns": 1
+    },
+    "tbl_extend": {
+      "returns": 1
+    },
+    "tbl_filter": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: fn"
+    },
+    "tbl_flatten": {
+      "returns": 1
+    },
+    "tbl_get": {
+      "returns": 1
+    },
+    "tbl_isempty": {
+      "returns": 1
+    },
+    "tbl_keys": {
+      "returns": 1
+    },
+    "tbl_map": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: fn"
+    },
+    "tbl_values": {
+      "returns": 1
+    },
+    "text.diff": {
+      "returns": 1
+    },
+    "text.hexdecode": {
+      "returns": 2
+    },
+    "text.hexencode": {
+      "returns": 1
+    },
+    "text.indent": {
+      "returns": 2
+    },
+    "treesitter.dev.edit_query": {
+      "returns": 2
+    },
+    "treesitter.dev.inspect_tree": {
+      "returns": 0
+    },
+    "treesitter.foldexpr": {
+      "returns": 1
+    },
+    "treesitter.get_captures": {
+      "returns": 1
+    },
+    "treesitter.get_captures_at_cursor": {
+      "returns": 1
+    },
+    "treesitter.get_captures_at_pos": {
+      "returns": 1
+    },
+    "treesitter.get_node": {
+      "resultTypes": [
+        {
+          "native": "TSNode"
+        }
+      ],
+      "returns": 1
+    },
+    "treesitter.get_node_range": {
+      "returns": 4
+    },
+    "treesitter.get_node_text": {
+      "returns": 1
+    },
+    "treesitter.get_parser": {
+      "resultTypes": [
+        {
+          "native": "vim.treesitter.LanguageTree"
+        },
+        null
+      ],
+      "returns": 2
+    },
+    "treesitter.get_range": {
+      "returns": 1
+    },
+    "treesitter.get_string_parser": {
+      "resultTypes": [
+        {
+          "native": "vim.treesitter.LanguageTree"
+        }
+      ],
+      "returns": 1
+    },
+    "treesitter.inspect_tree": {
+      "returns": 0
+    },
+    "treesitter.is_ancestor": {
+      "returns": 1
+    },
+    "treesitter.is_in_node_range": {
+      "returns": 1
+    },
+    "treesitter.language.add": {
+      "returns": 2
+    },
+    "treesitter.language.get_filetypes": {
+      "returns": 1
+    },
+    "treesitter.language.get_lang": {
+      "returns": 1
+    },
+    "treesitter.language.inspect": {
+      "returns": 1
+    },
+    "treesitter.language.register": {
+      "returns": 0
+    },
+    "treesitter.language.require_language": {
+      "returns": 0
+    },
+    "treesitter.node_contains": {
+      "returns": 1
+    },
+    "treesitter.query.add_directive": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: handler"
+    },
+    "treesitter.query.add_predicate": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: handler"
+    },
+    "treesitter.query.edit": {
+      "returns": 0
+    },
+    "treesitter.query.get": {
+      "resultTypes": [
+        {
+          "native": "vim.treesitter.Query"
+        }
+      ],
+      "returns": 1
+    },
+    "treesitter.query.get_files": {
+      "returns": 1
+    },
+    "treesitter.query.get.clear": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: self"
+    },
+    "treesitter.query.lint": {
+      "returns": 0
+    },
+    "treesitter.query.list_directives": {
+      "returns": 1
+    },
+    "treesitter.query.list_predicates": {
+      "returns": 1
+    },
+    "treesitter.query.omnifunc": {
+      "returns": 0
+    },
+    "treesitter.query.parse": {
+      "resultTypes": [
+        {
+          "native": "vim.treesitter.Query"
+        }
+      ],
+      "returns": 1
+    },
+    "treesitter.query.parse.clear": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: self"
+    },
+    "treesitter.query.set": {
+      "returns": 0
+    },
+    "treesitter.select": {
+      "returns": 0
+    },
+    "treesitter.start": {
+      "returns": 0
+    },
+    "treesitter.stop": {
+      "returns": 0
+    },
+    "trim": {
+      "returns": 1
+    },
+    "tty.query": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: on_response"
+    },
+    "tty.query_apc": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: on_response"
+    },
+    "tty.request": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: on_response"
+    },
+    "ui_attach": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: callback"
+    },
+    "ui_detach": {
+      "returns": 0
+    },
+    "ui.img.del": {
+      "returns": 1
+    },
+    "ui.img.get": {
+      "returns": 1
+    },
+    "ui.img.set": {
+      "returns": 1
+    },
+    "ui.input": {
+      "callback": {
+        "index": 1,
+        "result": "values",
+        "returns": 1
+      },
+      "returns": 1
+    },
+    "ui.open": {
+      "returns": 2,
+      "unsupported": "Return value requires native Lua: vim.SystemObj retains native instance state"
+    },
+    "ui.progress_status": {
+      "returns": 1
+    },
+    "ui.select": {
+      "callback": {
+        "index": 2,
+        "result": "values",
+        "returns": 2
+      },
+      "returns": 2
+    },
+    "uri_encode": {
+      "returns": 1
+    },
+    "uri_from_bufnr": {
+      "returns": 1
+    },
+    "uri_from_fname": {
+      "returns": 1
+    },
+    "uri_to_bufnr": {
+      "returns": 1
+    },
+    "uri_to_fname": {
+      "returns": 1
+    },
+    "uv.accept": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.async_send": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: async"
+    },
+    "uv.available_parallelism": {
+      "returns": 1
+    },
+    "uv.backend_fd": {
+      "returns": 1
+    },
+    "uv.backend_timeout": {
+      "returns": 1
+    },
+    "uv.cancel": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: req"
+    },
+    "uv.chdir": {
+      "returns": 3
+    },
+    "uv.check_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: check"
+    },
+    "uv.check_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: check"
+    },
+    "uv.clock_gettime": {
+      "returns": 3
+    },
+    "uv.close": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.cpu_info": {
+      "returns": 3
+    },
+    "uv.cpumask_size": {
+      "returns": 3
+    },
+    "uv.cwd": {
+      "returns": 3
+    },
+    "uv.disable_stdio_inheritance": {
+      "returns": 0
+    },
+    "uv.exepath": {
+      "returns": 3
+    },
+    "uv.fileno": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.fs_access": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_chmod": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_chown": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_close": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_closedir": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: dir"
+    },
+    "uv.fs_copyfile": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_event_getpath": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: fs_event"
+    },
+    "uv.fs_event_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: fs_event"
+    },
+    "uv.fs_event_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: fs_event"
+    },
+    "uv.fs_fchmod": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_fchown": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_fdatasync": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_fstat": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_fsync": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_ftruncate": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_futime": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_lchown": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_link": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_lstat": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_lutime": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_mkdir": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_mkdtemp": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_mkstemp": {
+      "callback": {
+        "cancel": "request",
+        "discard": "close-fd",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_open": {
+      "callback": {
+        "cancel": "request",
+        "discard": "close-fd",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_opendir": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.luv_dir_t: userdata"
+    },
+    "uv.fs_poll_getpath": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: fs_poll"
+    },
+    "uv.fs_poll_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: fs_poll"
+    },
+    "uv.fs_poll_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: fs_poll"
+    },
+    "uv.fs_read": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "resultTypes": [
+        "bytes",
+        null,
+        null
+      ],
+      "returns": 3
+    },
+    "uv.fs_readdir": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: dir"
+    },
+    "uv.fs_readlink": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_realpath": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_rename": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_rmdir": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_scandir": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_fs_t: uv.uv_req_t: userdata"
+    },
+    "uv.fs_scandir_next": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: fs"
+    },
+    "uv.fs_sendfile": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 4,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_stat": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_statfs": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_symlink": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_unlink": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_utime": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.fs_write": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.get_available_memory": {
+      "returns": 1
+    },
+    "uv.get_constrained_memory": {
+      "returns": 1
+    },
+    "uv.get_free_memory": {
+      "returns": 1
+    },
+    "uv.get_process_title": {
+      "returns": 3
+    },
+    "uv.get_total_memory": {
+      "returns": 1
+    },
+    "uv.getaddrinfo": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 3,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.getgid": {
+      "returns": 1
+    },
+    "uv.getnameinfo": {
+      "callback": {
+        "cancel": "request",
+        "hasErrorReturn": true,
+        "index": 1,
+        "result": "uv",
+        "returns": 3
+      },
+      "returns": 3
+    },
+    "uv.getpid": {
+      "returns": 1
+    },
+    "uv.getrusage": {
+      "returns": 3
+    },
+    "uv.getrusage_thread": {
+      "returns": 3
+    },
+    "uv.gettimeofday": {
+      "returns": 3
+    },
+    "uv.getuid": {
+      "returns": 1
+    },
+    "uv.guess_handle": {
+      "returns": 1
+    },
+    "uv.handle_get_type": {
+      "returns": 2,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.has_ref": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.hrtime": {
+      "returns": 1
+    },
+    "uv.idle_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: idle"
+    },
+    "uv.idle_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: idle"
+    },
+    "uv.if_indextoiid": {
+      "returns": 3
+    },
+    "uv.if_indextoname": {
+      "returns": 3
+    },
+    "uv.interface_addresses": {
+      "resultTypes": [
+        {
+          "dictionary": {
+            "array": {
+              "fields": {
+                "mac": "bytes"
+              }
+            }
+          }
+        },
+        null,
+        null
+      ],
+      "returns": 3
+    },
+    "uv.is_active": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.is_closing": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.is_readable": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.is_writable": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.kill": {
+      "returns": 3
+    },
+    "uv.listen": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.loadavg": {
+      "returns": 3
+    },
+    "uv.loop_alive": {
+      "returns": 3
+    },
+    "uv.loop_close": {
+      "returns": 3
+    },
+    "uv.loop_configure": {
+      "returns": 3
+    },
+    "uv.loop_mode": {
+      "returns": 1
+    },
+    "uv.metrics_idle_time": {
+      "returns": 1
+    },
+    "uv.metrics_info": {
+      "returns": 1
+    },
+    "uv.new_async": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_async_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_check": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: uv.uv_check_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_fs_event": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_fs_event_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_fs_poll": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_fs_poll_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_idle": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: uv.uv_idle_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_pipe": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_pipe_t: uv.uv_stream_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_poll": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_poll_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_prepare": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: uv.uv_prepare_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_sem": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.luv_sem_t: userdata"
+    },
+    "uv.new_signal": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_signal_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_socket_poll": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_poll_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_tcp": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_tcp_t: uv.uv_stream_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_thread": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.luv_thread_t: userdata"
+    },
+    "uv.new_timer": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_timer_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_tty": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_tty_t: uv.uv_stream_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_udp": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_udp_t: uv.uv_handle_t: userdata"
+    },
+    "uv.new_work": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: uv.luv_work_ctx_t: userdata"
+    },
+    "uv.now": {
+      "returns": 1
+    },
+    "uv.os_environ": {
+      "returns": 1
+    },
+    "uv.os_get_passwd": {
+      "returns": 3
+    },
+    "uv.os_getenv": {
+      "returns": 3
+    },
+    "uv.os_gethostname": {
+      "returns": 1
+    },
+    "uv.os_getpid": {
+      "returns": 1
+    },
+    "uv.os_getppid": {
+      "returns": 1
+    },
+    "uv.os_getpriority": {
+      "returns": 3
+    },
+    "uv.os_homedir": {
+      "returns": 3
+    },
+    "uv.os_setenv": {
+      "returns": 3
+    },
+    "uv.os_setpriority": {
+      "returns": 3
+    },
+    "uv.os_tmpdir": {
+      "returns": 3
+    },
+    "uv.os_uname": {
+      "returns": 1
+    },
+    "uv.os_unsetenv": {
+      "returns": 3
+    },
+    "uv.pipe": {
+      "returns": 3
+    },
+    "uv.pipe_bind": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.pipe_bind2": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.pipe_chmod": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.pipe_connect": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_connect_t: uv.uv_req_t: userdata"
+    },
+    "uv.pipe_connect2": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_connect_t: uv.uv_req_t: userdata"
+    },
+    "uv.pipe_getpeername": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.pipe_getsockname": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.pipe_open": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.pipe_pending_count": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.pipe_pending_instances": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.pipe_pending_type": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: pipe"
+    },
+    "uv.poll_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: poll"
+    },
+    "uv.poll_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: poll"
+    },
+    "uv.prepare_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: prepare"
+    },
+    "uv.prepare_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: prepare"
+    },
+    "uv.print_active_handles": {
+      "returns": 0
+    },
+    "uv.print_all_handles": {
+      "returns": 0
+    },
+    "uv.process_get_pid": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: process"
+    },
+    "uv.process_kill": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: process"
+    },
+    "uv.queue_work": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: work_ctx"
+    },
+    "uv.random": {
+      "callback": {
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "uv",
+        "returns": 3
+      },
+      "resultTypes": [
+        "bytes",
+        null,
+        null
+      ],
+      "returns": 3
+    },
+    "uv.read_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.read_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.recv_buffer_size": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.ref": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.req_get_type": {
+      "returns": 2,
+      "unsupported": "Required argument requires native Lua: req"
+    },
+    "uv.resident_set_memory": {
+      "returns": 3
+    },
+    "uv.run": {
+      "returns": 3
+    },
+    "uv.sem_post": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: sem"
+    },
+    "uv.sem_trywait": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: sem"
+    },
+    "uv.sem_wait": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: sem"
+    },
+    "uv.send_buffer_size": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.set_process_title": {
+      "returns": 3
+    },
+    "uv.setgid": {
+      "returns": 0
+    },
+    "uv.setuid": {
+      "returns": 0
+    },
+    "uv.shutdown": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_shutdown_t: uv.uv_req_t: userdata"
+    },
+    "uv.signal_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: signal"
+    },
+    "uv.signal_start_oneshot": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: signal"
+    },
+    "uv.signal_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: signal"
+    },
+    "uv.sleep": {
+      "returns": 0
+    },
+    "uv.socketpair": {
+      "returns": 3
+    },
+    "uv.spawn": {
+      "callback": {
+        "cancel": "process",
+        "hasErrorReturn": true,
+        "index": 2,
+        "result": "values",
+        "returns": 2
+      },
+      "returns": 2
+    },
+    "uv.stop": {
+      "returns": 0
+    },
+    "uv.stream_get_write_queue_size": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.stream_set_blocking": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.tcp_bind": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.tcp_close_reset": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.tcp_connect": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_connect_t: uv.uv_req_t: userdata"
+    },
+    "uv.tcp_getpeername": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.tcp_getsockname": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.tcp_keepalive": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.tcp_nodelay": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.tcp_open": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.tcp_simultaneous_accepts": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.tcp_write_queue_size": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: tcp"
+    },
+    "uv.thread_detach": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: thread"
+    },
+    "uv.thread_equal": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: thread"
+    },
+    "uv.thread_getaffinity": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: thread"
+    },
+    "uv.thread_getcpu": {
+      "returns": 3
+    },
+    "uv.thread_getname": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: thread"
+    },
+    "uv.thread_getpriority": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: thread"
+    },
+    "uv.thread_join": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: thread"
+    },
+    "uv.thread_self": {
+      "returns": 1,
+      "unsupported": "Return value requires native Lua: uv.luv_thread_t: userdata"
+    },
+    "uv.thread_setaffinity": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: thread"
+    },
+    "uv.thread_setname": {
+      "returns": 3
+    },
+    "uv.thread_setpriority": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: thread"
+    },
+    "uv.timer_again": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: timer"
+    },
+    "uv.timer_get_due_in": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: timer"
+    },
+    "uv.timer_get_repeat": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: timer"
+    },
+    "uv.timer_set_repeat": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: timer"
+    },
+    "uv.timer_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: timer"
+    },
+    "uv.timer_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: timer"
+    },
+    "uv.translate_sys_error": {
+      "returns": 2
+    },
+    "uv.try_write": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.try_write2": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: stream"
+    },
+    "uv.tty_get_vterm_state": {
+      "returns": 3
+    },
+    "uv.tty_get_winsize": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tty"
+    },
+    "uv.tty_reset_mode": {
+      "returns": 3
+    },
+    "uv.tty_set_mode": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: tty"
+    },
+    "uv.tty_set_vterm_state": {
+      "returns": 0
+    },
+    "uv.udp_bind": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_connect": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_get_send_queue_count": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_get_send_queue_size": {
+      "returns": 1,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_getpeername": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_getsockname": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_open": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_recv_start": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_recv_stop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_send": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_udp_send_t: uv.uv_req_t: userdata"
+    },
+    "uv.udp_set_broadcast": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_set_membership": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_set_multicast_interface": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_set_multicast_loop": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_set_multicast_ttl": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_set_source_membership": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_set_ttl": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_try_send": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.udp_try_send2": {
+      "returns": 3,
+      "unsupported": "Required argument requires native Lua: udp"
+    },
+    "uv.unref": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: handle"
+    },
+    "uv.update_time": {
+      "returns": 0
+    },
+    "uv.uptime": {
+      "returns": 3
+    },
+    "uv.utf16_length_as_wtf8": {
+      "returns": 1
+    },
+    "uv.utf16_to_wtf8": {
+      "resultTypes": [
+        "bytes"
+      ],
+      "returns": 1
+    },
+    "uv.version": {
+      "returns": 1
+    },
+    "uv.version_string": {
+      "returns": 1
+    },
+    "uv.walk": {
+      "returns": 0,
+      "unsupported": "Required argument requires native Lua: callback"
+    },
+    "uv.write": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_write_t: uv.uv_req_t: userdata"
+    },
+    "uv.write2": {
+      "returns": 3,
+      "unsupported": "Return value requires native Lua: uv.uv_write_t: uv.uv_req_t: userdata"
+    },
+    "uv.wtf8_length_as_utf16": {
+      "returns": 1
+    },
+    "uv.wtf8_to_utf16": {
+      "resultTypes": [
+        "bytes"
+      ],
+      "returns": 1
+    },
+    "validate": {
+      "returns": 0
+    },
+    "version": {
+      "returns": 1
+    },
+    "version.cmp": {
+      "returns": 1
+    },
+    "version.eq": {
+      "returns": 1
+    },
+    "version.ge": {
+      "returns": 1
+    },
+    "version.gt": {
+      "returns": 1
+    },
+    "version.intersect": {
+      "returns": 1
+    },
+    "version.last": {
+      "returns": 1
+    },
+    "version.le": {
+      "returns": 1
+    },
+    "version.lt": {
+      "returns": 1
+    },
+    "version.parse": {
+      "returns": 1
+    },
+    "version.range": {
+      "returns": 1
+    },
+    "wait": {
+      "returns": "all"
+    }
+  },
+  "nativeClasses": {
+    "TSNode": {
+      "fields": {},
+      "methods": {
+        "byte_length": {
+          "returns": 1
+        },
+        "child": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "child_count": {
+          "returns": 1
+        },
+        "child_with_descendant": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "descendant_for_range": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "end_": {
+          "returns": 3
+        },
+        "equal": {
+          "returns": 1
+        },
+        "extra": {
+          "returns": 1
+        },
+        "field": {
+          "resultTypes": [
+            {
+              "array": {
+                "native": "TSNode"
+              }
+            }
+          ],
+          "returns": 1
+        },
+        "has_changes": {
+          "returns": 1
+        },
+        "has_error": {
+          "returns": 1
+        },
+        "id": {
+          "resultTypes": [
+            "bytes"
+          ],
+          "returns": 1
+        },
+        "iter_children": {
+          "resultTypes": [
+            {
+              "iterator": {
+                "resultTypes": [
+                  {
+                    "native": "TSNode"
+                  },
+                  null
+                ],
+                "returns": 2
+              }
+            }
+          ],
+          "returns": 1
+        },
+        "missing": {
+          "returns": 1
+        },
+        "named": {
+          "returns": 1
+        },
+        "named_child": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "named_child_count": {
+          "returns": 1
+        },
+        "named_children": {
+          "resultTypes": [
+            {
+              "array": {
+                "native": "TSNode"
+              }
+            }
+          ],
+          "returns": 1
+        },
+        "named_descendant_for_range": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "next_named_sibling": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "next_sibling": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "parent": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "prev_named_sibling": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "prev_sibling": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "range": {
+          "returns": "all"
+        },
+        "sexpr": {
+          "returns": 1
+        },
+        "start": {
+          "returns": 3
+        },
+        "symbol": {
+          "returns": 1
+        },
+        "tree": {
+          "resultTypes": [
+            {
+              "native": "TSTree"
+            }
+          ],
+          "returns": 1
+        },
+        "type": {
+          "returns": 1
+        }
+      }
+    },
+    "TSQuery": {
+      "fields": {},
+      "methods": {
+        "disable_capture": {
+          "returns": 0
+        },
+        "disable_pattern": {
+          "returns": 0
+        },
+        "inspect": {
+          "resultTypes": [
+            {
+              "fields": {
+                "patterns": {
+                  "dictionary": null
+                }
+              }
+            }
+          ],
+          "returns": 1
+        }
+      }
+    },
+    "TSQueryMatch": {
+      "fields": {},
+      "methods": {
+        "captures": {
+          "resultTypes": [
+            {
+              "dictionary": {
+                "array": {
+                  "native": "TSNode"
+                }
+              }
+            }
+          ],
+          "returns": 1
+        },
+        "info": {
+          "returns": 2
+        }
+      }
+    },
+    "TSTree": {
+      "fields": {},
+      "methods": {
+        "copy": {
+          "resultTypes": [
+            {
+              "native": "TSTree"
+            }
+          ],
+          "returns": 1
+        },
+        "edit": {
+          "resultTypes": [
+            {
+              "native": "TSTree"
+            }
+          ],
+          "returns": 1
+        },
+        "included_ranges": {
+          "returns": 1
+        },
+        "root": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        }
+      }
+    },
+    "vim.lsp.Client": {
+      "fields": {
+        "attached_buffers": {
+          "dictionary": null
+        },
+        "capabilities": null,
+        "exit_timeout": null,
+        "flags": null,
+        "id": null,
+        "initialized": null,
+        "name": null,
+        "offset_encoding": null,
+        "requests": {
+          "dictionary": null
+        },
+        "root_dir": null,
+        "server_capabilities": null,
+        "server_info": null,
+        "settings": {
+          "dictionary": null
+        },
+        "workspace_folders": null
+      },
+      "methods": {
+        "cancel_request": {
+          "returns": 1
+        },
+        "exec_cmd": {
+          "returns": 0
+        },
+        "initialize": {
+          "returns": 0
+        },
+        "is_stopped": {
+          "returns": 1
+        },
+        "notify": {
+          "returns": 1
+        },
+        "on_attach": {
+          "returns": 0
+        },
+        "request": {
+          "callback": {
+            "cancel": "client-request",
+            "index": 2,
+            "rejectOnFalse": "LSP client rejected this request",
+            "resourceIndex": 1,
+            "result": "values",
+            "returns": 4
+          },
+          "returns": 4
+        },
+        "request_sync": {
+          "returns": 2
+        },
+        "stop": {
+          "returns": 0
+        },
+        "supports_method": {
+          "returns": 1
+        }
+      }
+    },
+    "vim.treesitter.LanguageTree": {
+      "fields": {},
+      "methods": {
+        "children": {
+          "resultTypes": [
+            {
+              "dictionary": {
+                "native": "vim.treesitter.LanguageTree"
+              }
+            }
+          ],
+          "returns": 1
+        },
+        "contains": {
+          "returns": 1
+        },
+        "destroy": {
+          "returns": 0
+        },
+        "for_each_tree": {
+          "returns": 0,
+          "unsupported": "Required argument requires native Lua: fn"
+        },
+        "included_regions": {
+          "resultTypes": [
+            {
+              "dictionary": null
+            }
+          ],
+          "returns": 1
+        },
+        "invalidate": {
+          "returns": 0
+        },
+        "is_valid": {
+          "returns": 1
+        },
+        "lang": {
+          "returns": 1
+        },
+        "language_for_range": {
+          "resultTypes": [
+            {
+              "native": "vim.treesitter.LanguageTree"
+            }
+          ],
+          "returns": 1
+        },
+        "named_node_for_range": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "node_for_range": {
+          "resultTypes": [
+            {
+              "native": "TSNode"
+            }
+          ],
+          "returns": 1
+        },
+        "parent": {
+          "resultTypes": [
+            {
+              "native": "vim.treesitter.LanguageTree"
+            }
+          ],
+          "returns": 1
+        },
+        "parse": {
+          "callback": {
+            "immediateResult": 0,
+            "index": 1,
+            "result": "error-first",
+            "returns": 1
+          },
+          "resultTypes": [
+            {
+              "dictionary": {
+                "native": "TSTree"
+              }
+            }
+          ],
+          "returns": 1
+        },
+        "register_cbs": {
+          "returns": 0,
+          "unsupported": "Required argument requires native Lua: cbs"
+        },
+        "source": {
+          "returns": 1
+        },
+        "tree_for_range": {
+          "resultTypes": [
+            {
+              "native": "TSTree"
+            }
+          ],
+          "returns": 1
+        },
+        "trees": {
+          "resultTypes": [
+            {
+              "dictionary": {
+                "native": "TSTree"
+              }
+            }
+          ],
+          "returns": 1
+        }
+      }
+    },
+    "vim.treesitter.Query": {
+      "fields": {
+        "captures": null,
+        "has_combined_injections": null,
+        "has_conceal_line": null,
+        "info": {
+          "fields": {
+            "patterns": {
+              "dictionary": null
+            }
+          }
+        },
+        "lang": null,
+        "query": {
+          "native": "TSQuery"
+        }
+      },
+      "methods": {
+        "iter_captures": {
+          "resultTypes": [
+            {
+              "iterator": {
+                "resultTypes": [
+                  null,
+                  {
+                    "native": "TSNode"
+                  },
+                  {
+                    "dictionary": null
+                  },
+                  {
+                    "native": "TSQueryMatch"
+                  },
+                  {
+                    "native": "TSTree"
+                  }
+                ],
+                "returns": 5
+              }
+            }
+          ],
+          "returns": 1
+        },
+        "iter_matches": {
+          "resultTypes": [
+            {
+              "iterator": {
+                "resultTypes": [
+                  null,
+                  {
+                    "dictionary": {
+                      "array": {
+                        "native": "TSNode"
+                      }
+                    }
+                  },
+                  {
+                    "dictionary": null
+                  },
+                  {
+                    "native": "TSTree"
+                  }
+                ],
+                "returns": 4
+              }
+            }
+          ],
+          "returns": 1
+        }
+      }
+    }
+  },
+  "version": {
+    "api_compatible": 0,
+    "api_level": 15,
+    "api_prerelease": true,
+    "build": null,
+    "major": 0,
+    "minor": 13,
+    "patch": 0,
+    "prerelease": "dev"
+  }
+}

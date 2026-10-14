@@ -126,7 +126,7 @@ local modules = lib.module.get_enabled_modules()
 local plugins = sanitize_plugin_specs(table.join(
   lib.module.get_module_plugins(modules),
   table.map({
-    { dir = "tslib", lazy = false },
+    -- { dir = "tslib", lazy = false },
     { dir = "testing.nvim" },
     { dir = "sqlite.nvim" },
     { dir = "bunvim", lazy = false },

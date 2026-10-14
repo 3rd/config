@@ -122,37 +122,6 @@ parse(cancelled_buffer)
 mapping_callback("<C-C>")()
 assert(vim.api.nvim_get_current_line() == "[ ] cancelled task", "cancelled task did not return to default")
 
-local schedule_buffer = create_syslang_buffer({ "[ ] scheduled task" })
-vim.bo[schedule_buffer].shiftwidth = 4
-local original_input = vim.ui.input
-local original_to_schedule = lib.node.chrono.to_schedule
-vim.ui.input = function(_, callback)
-  callback("tomorrow")
-end
-lib.node.chrono.to_schedule = function(input)
-  assert(input == "tomorrow", "schedule input changed before parsing")
-  return "2026.08.10"
-end
-
-parse(schedule_buffer)
-mapping_callback("<leader>es")()
-local schedule_lines = vim.api.nvim_buf_get_lines(schedule_buffer, 0, -1, false)
-assert(
-  vim.deep_equal(schedule_lines, { "[ ] scheduled task", "    Schedule: 2026.08.10" }),
-  "task scheduling did not add a child schedule"
-)
-
-lib.node.chrono.to_schedule = function()
-  return "2026.08.11"
-end
-parse(schedule_buffer)
-vim.api.nvim_win_set_cursor(0, { 2, 4 })
-mapping_callback("<leader>es")()
-schedule_lines = vim.api.nvim_buf_get_lines(schedule_buffer, 0, -1, false)
-assert(schedule_lines[2] == "    Schedule: 2026.08.11", "task scheduling did not update an existing schedule")
-vim.ui.input = original_input
-lib.node.chrono.to_schedule = original_to_schedule
-
 local winbar_buffer = create_syslang_buffer({ "@meta", "  title: Old title", "@end", "body" })
 parse(winbar_buffer)
 local initial_winbar = vim.wo.winbar
@@ -236,4 +205,4 @@ end
 assert(fold_buffers[task_buffer], "opening later Syslang buffers removed the first buffer's fold autocmds")
 assert(fold_buffers[link_buffer], "the latest Syslang buffer has no fold autocmds")
 
-print("ok: Syslang filetype, task, schedule, movement, winbar, link, and fold behavior")
+print("ok: Syslang filetype, task, movement, winbar, link, and fold behavior")

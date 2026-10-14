@@ -14,7 +14,7 @@ for _, dir in ipairs(directories) do
   end
 end
 
-require("config/node-provider").setup()
+-- require("config/node-provider").setup()
 
 -- disable crap
 vim.g.loaded_perl_provider = 0
@@ -64,10 +64,19 @@ end
 local plugins = table.join(
   lib.module.get_module_plugins(modules),
   table.map({
-    { dir = "tslib", lazy = false },
+    -- { dir = "tslib", lazy = false },
     { dir = "testing.nvim" },
     { dir = "sqlite.nvim" },
-    { dir = "bunvim", lazy = false },
+    {
+      dir = "bunvim",
+      lazy = false,
+    },
+    {
+      dir = "bunmods",
+      lazy = false,
+      dependencies = { "bunvim" },
+      config = true,
+    },
   }, function(item)
     item.dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", item.dir)
     return item

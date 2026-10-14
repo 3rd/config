@@ -14,6 +14,5 @@ plugins/hlchunk.nvim
 plugins/nvim-ufo
 plugins/diagram.nvim
 plugins/blink.cmp
-plugins/bunvim
 plugins/tiny-code-action.nvim
 plugins/cursor

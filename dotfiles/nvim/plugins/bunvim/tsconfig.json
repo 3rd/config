@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "types": ["bun"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    "examples/**/*.ts",
+    "tests/**/*.ts",
+    "benchmarks/**/*.ts"
+  ],
+  "exclude": ["node_modules", "old_bunvim"]
+}

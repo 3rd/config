@@ -31,7 +31,6 @@ end
 
 _G.lib = {
   buffer = require("lib/buffer"),
-  bun = require("lib/bun"),
   env = require("lib/env"),
   fs = require("lib/fs"),
   installer = require("lib/installer"),
@@ -41,7 +40,7 @@ _G.lib = {
   map = require("lib/map"),
   metatable = require("lib/metatable"),
   module = require("lib/module"),
-  node = require("lib/node"),
+  -- node = require("lib/node"),
   path = require("lib/path"),
   random = require("lib/random"),
   shell = require("lib/shell"),

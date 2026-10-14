@@ -1,0 +1,34 @@
+{
+  "name": "bunvim",
+  "version": "0.0.1",
+  "description": "Persistent Bun host for TypeScript Neovim plugins",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test src examples tests scripts",
+    "typecheck": "tsc --noEmit",
+    "generate:vim-types": "bun run scripts/vim-types/update-vim-types.ts",
+    "check:vim-types": "bun run scripts/vim-types/update-vim-types.ts --check",
+    "benchmark": "bun run benchmarks/run.ts",
+    "format": "prettier --write 'src/**/*.ts' 'examples/**/*.ts' 'tests/**/*.ts' 'benchmarks/**/*.ts'"
+  },
+  "dependencies": {
+    "neovim": "4.10.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "neovim",
+    "plugin",
+    "typescript",
+    "bun",
+    "vim"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "template-bin-ts",
+  "version": "0.0.0",
+  "description": "Bun TypeScript template for local bin utilities.",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "verify": "bun run test && bun run typecheck"
+  },
+  "dependencies": {
+    "gunsmith": "^0.6.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^6.0.3"
+  }
+}

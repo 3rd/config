@@ -1,6 +1,6 @@
 -- base colors
 local colors = {
-  background = "#202022",
+  background = "#222225",
   blue = "#31BBF8",
   common = {
     boolean = "#FF8170",
@@ -70,24 +70,24 @@ local colors = {
         fg = "#DFDFEC"
       },
       four = {
-        bg = "#404345",
+        bg = "#424548",
         fg = "#DFDFEC"
       },
       marker = "#A8A8C7",
       one = {
-        bg = "#2B2B31",
+        bg = "#2D2E34",
         fg = "#DFDFEC"
       },
       six = {
-        bg = "#4C5252",
+        bg = "#4E5455",
         fg = "#DFDFEC"
       },
       three = {
-        bg = "#333942",
+        bg = "#353C45",
         fg = "#DFDFEC"
       },
       two = {
-        bg = "#30333B",
+        bg = "#32353E",
         fg = "#DFDFEC"
       }
     },
@@ -129,7 +129,7 @@ local colors = {
       cancelled = "#fa4040",
       completion = "#7378a5",
       default = "#DFDFEC",
-      done = "#616165",
+      done = "#646468",
       recurrence = "#7378a5",
       schedule = "#7378a5",
       session = "#7378a5"
@@ -185,7 +185,7 @@ local colors = {
         gui = "bold"
       },
       fill = {
-        bg = "#202022",
+        bg = "#222225",
         fg = "#7D7D97"
       },
       inactive = {
