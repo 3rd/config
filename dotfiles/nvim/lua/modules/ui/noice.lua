@@ -49,6 +49,9 @@ local setup_noice = function()
           padding = { 0, 1 },
         },
         position = { row = 2, col = 2 },
+        win_options = {
+          winhighlight = { Normal = "Normal" },
+        },
       },
     },
   })

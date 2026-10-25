@@ -12,9 +12,7 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   read -r -p "Record audio? [y/N] " audio
   case $audio in
     [Yy]*)
-      source=$(pactl list sources short | grep bluez | rg -v input | awk '{print $1}')
-      audio=(-f pulse -ac 2 -i "$source")
-      audio_conv=(-c:a aac)
+      audio=(-f pulse -ac 2 -i @DEFAULT_MONITOR@)
       ;;
     *)
       audio=()
@@ -26,7 +24,6 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
     case $mic in
       [Yy]*)
         audio=(-f pulse -ac 2 -i default)
-        audio_conv=(-c:a aac)
         ;;
       *) ;;
     esac
@@ -37,20 +34,19 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
   W=$((W + W % 2))
   H=$((H + H % 2))
 
+  capture_status=0
   trap '' INT
   echo "Recording..."
 
-  if [ ${#audio[@]} -gt 0 ]; then
-    ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" "${audio[@]}" -preset ultrafast -pix_fmt yuv420p "$OUTPUT".mkv
-  else
-    ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" -preset ultrafast -pix_fmt yuv420p "$OUTPUT".mkv
-  fi
+  ffmpeg -loglevel "16" -f "x11grab" -framerate "60" -s "${W}x$H" -i ":0.0+$X,$Y" "${audio[@]}" -c:v libx264 -preset ultrafast -crf 0 -pix_fmt yuv420p -c:a flac "$OUTPUT".mkv || capture_status=$?
   trap - INT
-  if [ ${#audio_conv[@]} -gt 0 ]; then
-    ffmpeg -i "$OUTPUT".mkv -c copy "${audio_conv[@]}" -movflags +faststart "$OUTPUT"
-  else
-    ffmpeg -i "$OUTPUT".mkv -c copy -movflags +faststart "$OUTPUT"
+
+  if [ "$capture_status" -ne 0 ] && [ "$capture_status" -ne 255 ]; then
+    exit "$capture_status"
   fi
+
+  echo "Compressing..."
+  ffmpeg -i "$OUTPUT".mkv -c:v libx264 -preset slow -crf 18 -c:a aac -movflags +faststart "$OUTPUT" || exit $?
   rm "$OUTPUT".mkv
   while true; do
     read -r -p "Preview? [y/N] " preview

@@ -991,6 +991,7 @@ local setup = function()
   if vim.b.slang_loaded then return end
   vim.b.slang_loaded = true
 
+  lib.ts.register_prose_queries()
   setup_options()
   pcall(vim.treesitter.start, 0, "syslang")
   setup_mappings()

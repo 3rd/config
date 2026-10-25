@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+print_usage() {
+  printf '%s\n' \
+    'Usage: btshare [--list | HEADPHONE_ID HEADPHONE_ID]' \
+    '' \
+    'Connect both headphones using Blueman first (High Fidelity Playback / A2DP).' \
+    'With exactly two connected headphones, run btshare without arguments.' \
+    'Then choose "Shared Bluetooth Headphones" for your movie in pavucontrol.' \
+    'Keep this terminal open. Stop the movie, then press Ctrl+C to stop sharing.' \
+    'Use --list and pass two IDs if more than two Bluetooth outputs are connected.'
+}
+
+if [[ "${1:-}" == --help || "${1:-}" == -h ]]; then
+  print_usage
+  exit 0
+fi
+
+if [[ $# -ne 0 && $# -ne 2 && ! ( $# -eq 1 && "$1" == --list ) ]]; then
+  print_usage >&2
+  exit 2
+fi
+
+for command_name in pw-cli pw-dump jq; do
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    printf 'btshare: missing command: %s\n' "$command_name" >&2
+    exit 127
+  fi
+done
+
+snapshot=$(pw-dump)
+headphones=$(jq '[.[]
+  | select(.type == "PipeWire:Interface:Node")
+  | select(.info.props["media.class"] == "Audio/Sink")
+  | select(.info.props["device.api"] == "bluez5"
+      or ((.info.props["node.name"] // "") | startswith("bluez_output.")))
+  | {id, name: .info.props["node.name"], description: .info.props["node.description"]}
+]' <<< "$snapshot")
+
+if [[ "${1:-}" == --list ]]; then
+  jq -r '.[] | "\(.id)\t\(.description)"' <<< "$headphones"
+  exit 0
+fi
+
+if jq -e 'any(.[]; .info.props["node.name"] == "bt_share")' <<< "$snapshot" >/dev/null; then
+  printf 'btshare: sharing is already running; use its terminal to stop it.\n' >&2
+  exit 1
+fi
+
+if [[ $# -eq 2 ]]; then
+  if [[ ! "$1" =~ ^[0-9]+$ || ! "$2" =~ ^[0-9]+$ || "$1" == "$2" ]]; then
+    printf 'btshare: pass two different headphone IDs from btshare --list.\n' >&2
+    exit 2
+  fi
+
+  headphones=$(jq --arg first "$1" --arg second "$2" \
+    '[.[] | select((.id | tostring) == $first or (.id | tostring) == $second)]' <<< "$headphones")
+fi
+
+headphone_count=$(jq 'length' <<< "$headphones")
+if [[ "$headphone_count" -ne 2 ]]; then
+  printf 'btshare: need two connected Bluetooth outputs; found %s.\n' "$headphone_count" >&2
+  printf 'Connect both in Blueman with A2DP, or use --list and pass two IDs.\n' >&2
+  exit 1
+fi
+
+module_arguments=$(jq -c '{
+  "combine.mode": "sink",
+  "node.name": "bt_share",
+  "node.description": "Shared Bluetooth Headphones",
+  "combine.latency-compensate": true,
+  "combine.props": {"audio.position": ["FL", "FR"], "priority.session": 0},
+  "stream.props": {"node.dont-fallback": true},
+  "stream.rules": [{
+    matches: [.[] | {"media.class": "Audio/Sink", "node.name": .name}],
+    actions: {"create-stream": {}}
+  }]
+}' <<< "$headphones")
+
+printf 'Sharing to:\n'
+jq -r '.[] | "  \(.description)"' <<< "$headphones"
+printf '\nChoose "Shared Bluetooth Headphones" for the movie in pavucontrol.\n'
+printf 'Keep this terminal open. Stop the movie, then press Ctrl+C when finished.\n'
+exec pw-cli -m load-module libpipewire-module-combine-stream "$module_arguments"

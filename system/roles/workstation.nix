@@ -154,6 +154,7 @@ in
       docker.sliceConfig = dockerSliceResourcePolicy;
     };
     services = {
+      "user@".serviceConfig.Delegate = "pids memory cpu cpuset io";
       fstrim.serviceConfig = {
         IOSchedulingClass = "idle";
         IOSchedulingPriority = 7;

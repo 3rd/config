@@ -23,15 +23,16 @@ require("modules/ui/headlines").plugins[1].config()
 vim.treesitter.get_node_text = get_node_text
 
 local config = require("headlines").config
-for _, filetype in ipairs({ "markdown", "rmd", "norg", "org" }) do
+for _, filetype in ipairs({ "rmd", "norg", "org" }) do
   assert(config[filetype].query == false, filetype .. " headlines query is still active")
 end
+assert(config.markdown.codeblock_highlight == false, "headlines.nvim still owns Markdown code blocks")
 assert(config.syslang.codeblock_highlight == false, "headlines.nvim still owns Syslang code blocks")
 
 assert(vim.tbl_isempty(vim.b[bufnr].syslang_headline_gutter_rows), "empty headline capture produced gutter rows")
 assert(_G.SyslangHeadlineGutterRows == nil, "Syslang headline rows leaked into global state")
 
-local namespace = vim.api.nvim_get_namespaces().syslang_render
+local namespace = vim.api.nvim_get_namespaces().prose_render
 local get_syslang_render = function()
   local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
   local codeblock_background = nil
@@ -72,14 +73,14 @@ end
 
 local initial_changedtick = vim.api.nvim_buf_get_changedtick(bufnr)
 assert(
-  vim.b[bufnr].syslang_headline_render_changedtick == initial_changedtick,
+  vim.b[bufnr].prose_render_changedtick == initial_changedtick,
   "initial Syslang render did not cache its changedtick"
 )
 
 vim.api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
 vim.api.nvim_exec_autocmds("TextChanged", { buffer = bufnr })
 vim.api.nvim_exec_autocmds("TextChangedI", { buffer = bufnr })
-assert(vim.b[bufnr].syslang_headline_render_scheduled == nil, "unchanged text events scheduled a redundant render")
+assert(vim.b[bufnr].is_prose_render_scheduled == nil, "unchanged text events scheduled a redundant render")
 assert(#get_syslang_render() == 0, "unchanged text events rendered an unchanged changedtick")
 
 vim.api.nvim_exec_autocmds("BufEnter", { buffer = bufnr })
@@ -91,7 +92,7 @@ assert(
   "forced BufEnter changed the body-only code-block range"
 )
 assert(
-  vim.b[bufnr].syslang_headline_render_changedtick == initial_changedtick,
+  vim.b[bufnr].prose_render_changedtick == initial_changedtick,
   "forced BufEnter did not preserve the rendered changedtick"
 )
 
@@ -107,28 +108,25 @@ end
 
 vim.api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
 vim.api.nvim_exec_autocmds("TextChanged", { buffer = bufnr })
-assert(vim.b[bufnr].syslang_headline_render_scheduled == true, "changed text did not schedule rendering")
+assert(vim.b[bufnr].is_prose_render_scheduled == true, "changed text did not schedule rendering")
 vim.api.nvim_exec_autocmds("TextChangedI", { buffer = bufnr })
-assert(vim.b[bufnr].syslang_headline_render_scheduled == true, "insert text did not schedule rendering")
+assert(vim.b[bufnr].is_prose_render_scheduled == true, "insert text did not schedule rendering")
 assert(#deferred == 2, "text events did not schedule their render transitions")
 assert(deferred[1].timeout == 0, "normal text rendering was unexpectedly delayed")
 assert(deferred[2].timeout > 0, "insert text rendering was not debounced")
 assert(
-  vim.b[bufnr].syslang_headline_render_changedtick == initial_changedtick,
+  vim.b[bufnr].prose_render_changedtick == initial_changedtick,
   "scheduled rendering ran before the event-loop transition"
 )
 
 deferred[1].callback()
-assert(vim.b[bufnr].syslang_headline_render_scheduled == true, "stale rendering cleared the latest request")
-assert(
-  vim.b[bufnr].syslang_headline_render_changedtick == initial_changedtick,
-  "stale rendering reached the edited changedtick"
-)
+assert(vim.b[bufnr].is_prose_render_scheduled == true, "stale rendering cleared the latest request")
+assert(vim.b[bufnr].prose_render_changedtick == initial_changedtick, "stale rendering reached the edited changedtick")
 
 deferred[2].callback()
-assert(vim.b[bufnr].syslang_headline_render_scheduled == nil, "debounced rendering remained scheduled")
+assert(vim.b[bufnr].is_prose_render_scheduled == nil, "debounced rendering remained scheduled")
 assert(
-  vim.b[bufnr].syslang_headline_render_changedtick == changedtick,
+  vim.b[bufnr].prose_render_changedtick == changedtick,
   "debounced Syslang rendering did not reach the edited changedtick"
 )
 
@@ -145,12 +143,12 @@ local insert_changedtick = vim.api.nvim_buf_get_changedtick(bufnr)
 deferred = {}
 vim.api.nvim_exec_autocmds("TextChangedI", { buffer = bufnr })
 assert(#deferred == 1 and deferred[1].timeout > 0, "insert edit did not create one debounced render")
-assert(vim.b[bufnr].syslang_headline_render_scheduled == true, "insert edit was not pending")
+assert(vim.b[bufnr].is_prose_render_scheduled == true, "insert edit was not pending")
 
 vim.api.nvim_exec_autocmds("InsertLeave", { buffer = bufnr })
-assert(vim.b[bufnr].syslang_headline_render_scheduled == nil, "InsertLeave did not clear the pending render")
+assert(vim.b[bufnr].is_prose_render_scheduled == nil, "InsertLeave did not clear the pending render")
 assert(
-  vim.b[bufnr].syslang_headline_render_changedtick == insert_changedtick,
+  vim.b[bufnr].prose_render_changedtick == insert_changedtick,
   "InsertLeave did not render the latest changedtick"
 )
 
@@ -159,4 +157,38 @@ deferred[1].callback()
 assert(#get_syslang_render() == 0, "canceled insert rendering ran after InsertLeave")
 vim.defer_fn = defer_fn
 
-print("ok: Syslang headline and wrapped code-block rendering")
+local reload_path = vim.fn.tempname() .. ".md"
+local reload_lines = {}
+
+for index = 1, 40 do
+  vim.list_extend(reload_lines, { "## Heading " .. index, "" })
+end
+
+vim.fn.writefile(reload_lines, reload_path)
+vim.cmd.edit(reload_path)
+local reload_bufnr = vim.api.nvim_get_current_buf()
+vim.bo[reload_bufnr].autoread = true
+assert(vim.bo[reload_bufnr].filetype == "markdown", "reload fixture was not detected as Markdown")
+
+vim.fn.writefile({ "## Reloaded", "", "Body" }, reload_path)
+local is_reloaded, reload_error = pcall(vim.cmd.checktime, reload_bufnr)
+assert(is_reloaded, "reloading rendered Markdown failed: " .. tostring(reload_error))
+assert(
+  vim.wait(1000, function()
+    return vim.b[reload_bufnr].prose_render_changedtick == vim.api.nvim_buf_get_changedtick(reload_bufnr)
+  end),
+  "reloaded Markdown did not render"
+)
+
+local reload_heading_rows = {}
+
+for _, extmark in ipairs(vim.api.nvim_buf_get_extmarks(reload_bufnr, namespace, 0, -1, { details = true })) do
+  if extmark[4].hl_group == "SyslangHeadline2" then reload_heading_rows[#reload_heading_rows + 1] = extmark[2] end
+end
+
+assert(
+  #reload_heading_rows == 1 and reload_heading_rows[1] == 0,
+  "reloaded Markdown kept heading bands from the previous file contents"
+)
+
+print("ok: Syslang headline, wrapped code-block, and Markdown reload rendering")

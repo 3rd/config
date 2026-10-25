@@ -122,15 +122,16 @@
       w = {
         description = "Work manager";
         body = ''
-          begin
-            set -l IFS
-            set output (/home/rabbit/brain/projects/git-work/work $argv);
+          set -l lines (/home/rabbit/brain/projects/cli/git-work/work $argv)
+          set -l work_status $status
+          for line in $lines
+            if string match -q -- '-> *' $line
+              cd (string sub --start 4 -- $line)
+            else
+              echo $line
+            end
           end
-          switch $output
-            case "*-> *"
-              cd (echo $output | rg "\->" | sed "s/-> //g")
-          end
-          echo $output | rg -v "\->"
+          return $work_status
         '';
 
       };

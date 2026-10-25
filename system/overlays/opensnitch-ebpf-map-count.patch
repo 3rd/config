@@ -1,0 +1,12 @@
+diff --git a/daemon/procmon/ebpf/utils.go b/daemon/procmon/ebpf/utils.go
+--- a/daemon/procmon/ebpf/utils.go
++++ b/daemon/procmon/ebpf/utils.go
+@@ -83,7 +83,7 @@ func getItems(proto string, isIPv6 bool) (items uint) {
+ 		log.Trace("[eBPF] getItems: %s", proto)
+ 		return
+ 	}
+-	for err := prot.bpfMap.NextKey(nil, &lookupKey); ; err = prot.bpfMap.NextKey(&lookupKey, &nextKey) {
++	for err := prot.bpfMap.NextKey(nil, &nextKey); ; err = prot.bpfMap.NextKey(&lookupKey, &nextKey) {
+ 		if err != nil {
+ 			break
+ 		}

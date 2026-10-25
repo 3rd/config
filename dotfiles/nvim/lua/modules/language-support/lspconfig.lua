@@ -1,3 +1,25 @@
+-- ts-error-translator only translates pushed diagnostics, and tsc delivers them by pull only. This wraps the pull
+-- handler at startup because tsc answers before the lazily loaded plugin would be set up.
+local translate_pull_diagnostics = function()
+  local on_pull_diagnostics = vim.lsp.handlers["textDocument/diagnostic"]
+
+  vim.lsp.handlers["textDocument/diagnostic"] = function(err, result, ctx, ...)
+    local client = vim.lsp.get_client_by_id(ctx.client_id)
+    if not (result and result.items and client) then return on_pull_diagnostics(err, result, ctx, ...) end
+
+    local has_translator, translator = pcall(require, "ts-error-translator")
+    if has_translator and vim.tbl_contains(translator.config.servers, client.name) then
+      for _, item in ipairs(result.items) do
+        local prefix = item.code and ("TS%s: "):format(item.code) or ""
+        local parsed = translator.parse_errors(prefix .. item.message)
+        if parsed[1] and parsed[1].improvedError then item.message = parsed[1].improvedError.body end
+      end
+    end
+
+    return on_pull_diagnostics(err, result, ctx, ...)
+  end
+end
+
 return lib.module.create({
   name = "language-support/lsp",
   hosts = "*",
@@ -5,6 +27,7 @@ return lib.module.create({
     vim.api.nvim_create_user_command("LspLog", function()
       vim.cmd("tabnew " .. vim.lsp.log.get_filename())
     end, { desc = "Open LSP log file in a new tab" })
+    translate_pull_diagnostics()
   end,
   plugins = {
     {
@@ -37,6 +60,7 @@ return lib.module.create({
         servers = {
           "astro",
           "svelte",
+          "tsc",
           "tsgo",
           "ts_ls",
           "tsserver",

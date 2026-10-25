@@ -140,15 +140,14 @@ return lib.module.create({
       "nvim-tree/nvim-tree.lua",
       dependencies = {
         "nvim-tree/nvim-web-devicons",
-        {
-          "antosha417/nvim-lsp-file-operations",
-          opts = {},
-          config = function(_, opts)
-            require("lib.patches.lsp-file-operations").setup(opts)
-          end,
-        },
       },
       config = setup_tree,
+    },
+    {
+      "antosha417/nvim-lsp-file-operations",
+      dependencies = { "nvim-tree/nvim-tree.lua" },
+      ft = "NvimTree",
+      opts = {},
     },
     {
       "tpope/vim-eunuch",

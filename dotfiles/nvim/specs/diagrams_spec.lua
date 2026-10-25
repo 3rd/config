@@ -1,0 +1,6 @@
+require("lib")
+local module = require("modules.misc.diagrams")
+assert(module.plugins[1].enabled == false and module.plugins[2].enabled == false)
+assert(#module.actions == 0, "disabled diagram plugins must not appear in the action palette")
+assert(#module.mappings == 0, "disabled diagram plugins must not register shortcuts")
+print("ok: disabled diagram controls")

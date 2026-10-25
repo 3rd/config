@@ -45,8 +45,8 @@ local colors = {
   red = "#FF5967",
   slang = {
     banner = {
-      bg = "#38425B",
-      fg = "#A9B9E5"
+      bg = "#2D2E34",
+      fg = "#EDAF5E"
     },
     code = {
       block = {
@@ -98,8 +98,8 @@ local colors = {
       internal = "#5BC0CD"
     },
     list_item = {
-      label = "#A294EB",
-      label_marker = "#82829B",
+      label = "#D184DB",
+      label_marker = "#DFDFEC",
       marker = "#848490"
     },
     number = "#FF8170",

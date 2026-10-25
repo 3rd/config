@@ -183,6 +183,14 @@ local setup = function()
     },
     extensions = { "nvim-tree" },
   })
+
+  -- lualine's own first refresh is queued until after VeryLazy loading, so the first frame would show an empty bar
+  vim.api.nvim_create_autocmd("VimEnter", {
+    once = true,
+    callback = function()
+      lualine.refresh({ scope = "window", place = { "statusline" }, force = true })
+    end,
+  })
 end
 
 return lib.module.create({

@@ -5,7 +5,7 @@ return lib.module.create({
     {
       "nvim-telescope/telescope.nvim",
       dependencies = { "nvim-lua/plenary.nvim" },
-      event = "VeryLazy",
+      cmd = "Telescope",
       config = function()
         local actions = require("telescope.actions")
 

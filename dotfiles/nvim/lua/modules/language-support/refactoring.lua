@@ -1,13 +1,21 @@
+local format_print_var = function(opts)
+  return string.format("console.log('🐞 %s', %s)", opts.identifier:gsub("'", "\\'"), opts.identifier)
+end
+
 local setup = function()
   local refactoring = require("refactoring")
+  local debug = require("refactoring.debug")
 
   refactoring.setup({
-    print_var_statements = {
-      typescript = {
-        "console.log('🐞 %s', %s)",
-      },
-      javascript = {
-        "console.log('🐞 %s', %s)",
+    debug = {
+      print_var = {
+        code_generation = {
+          print_var = {
+            javascript = format_print_var,
+            typescript = format_print_var,
+            tsx = format_print_var,
+          },
+        },
       },
     },
   })
@@ -31,27 +39,25 @@ local setup = function()
   --   { noremap = true, silent = true, expr = false, desc = "Extract variable" }
   -- )
 
-  vim.keymap.set({ "n", "v" }, "<leader>if", function()
-    refactoring.refactor("Inline Function")
-  end, { noremap = true, silent = true, expr = false, desc = "Inline function" })
   vim.keymap.set(
-    { "n", "v" },
+    { "n", "x" },
     "<leader>iv",
-    ":Refactor inline_var",
-    { noremap = true, silent = true, expr = false, desc = "Inline function" }
+    refactoring.inline_var,
+    { noremap = true, silent = true, expr = true, desc = "Inline variable" }
   )
 
+  vim.keymap.set("n", "<leader>p", function()
+    return debug.print_var() .. "iw"
+  end, { noremap = true, silent = true, expr = true, desc = "Print var" })
+  vim.keymap.set("x", "<leader>p", debug.print_var, { noremap = true, silent = true, expr = true, desc = "Print var" })
+  vim.keymap.set("n", "<leader>P", function()
+    return "gg" .. debug.cleanup() .. "G"
+  end, { noremap = true, silent = true, expr = true, desc = "Clear var prints" })
   vim.keymap.set(
-    { "n", "v" },
-    "<leader>p",
-    ":lua require('refactoring').debug.print_var()<cr>",
-    { noremap = true, silent = true, expr = false, desc = "Print var" }
-  )
-  vim.keymap.set(
-    { "n", "v" },
+    "x",
     "<leader>P",
-    ":lua require('refactoring').debug.cleanup({})<cr>",
-    { noremap = true, silent = true, expr = false, desc = "Clear var prints" }
+    debug.cleanup,
+    { noremap = true, silent = true, expr = true, desc = "Clear var prints" }
   )
 end
 

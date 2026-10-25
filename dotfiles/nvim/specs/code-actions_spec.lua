@@ -39,7 +39,7 @@ assert(not action_options.filter({ title = "Extract function", kind = "refactor.
 local bufnr = vim.api.nvim_get_current_buf()
 vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { "alpha", "beta", "gamma" })
 vim.api.nvim_win_set_cursor(0, { 2, 1 })
-local client = { id = 7 }
+local client = { id = 7, offset_encoding = "utf-16" }
 local clients = { client }
 local action = { title = "Use const", kind = "refactor.rewrite" }
 local next_action = { title = "Add import", kind = "quickfix" }
@@ -49,6 +49,7 @@ local should_throw = false
 local sent_request
 local notifications = {}
 local get_clients = vim.lsp.get_clients
+local buf_request_sync = vim.lsp.buf_request_sync
 vim.notify = function(message, level)
   table.insert(notifications, { message, level })
 end
@@ -60,8 +61,11 @@ vim.lsp.get_client_by_id = function(id)
   return id == 7 and client or nil
 end
 vim.lsp.buf_request_sync = function(buffer, method, params, timeout)
+  params = params(client, buffer)
   sent_request = { buffer = buffer, method = method, params = params, timeout = timeout }
   if should_throw then error("request failed", 0) end
+
+  responses[7].context = { params = params }
   return responses, request_error
 end
 
@@ -107,7 +111,7 @@ vim.fn.mode = function()
 end
 vim.fn.setpos("'<", { bufnr, 1, 1, 0 })
 vim.fn.setpos("'>", { bufnr, 2, 2, 0 })
-local visual_range = vim.lsp.util.make_given_range_params({ 1, 1 }, { 2, 2 }, 0, "utf-8").range
+local visual_range = vim.lsp.util.make_given_range_params({ 1, 0 }, { 2, 1 }, 0, "utf-8").range
 request_actions({ bufnr = bufnr })
 assert(vim.deep_equal(sent_request.params.range, visual_range))
 
@@ -139,6 +143,58 @@ responses = { [8] = { result = { { title = "Stale" } } }, [7] = { error = { mess
 request_actions({ bufnr = bufnr })
 assert(returned_actions == nil)
 assert(vim.deep_equal(notifications[#notifications], { "No code actions found.", vim.log.levels.INFO }))
+
+vim.lsp.buf_request_sync = buf_request_sync
+local requests = {}
+clients = {}
+for id, encoding in ipairs({ "utf-8", "utf-16" }) do
+  table.insert(clients, {
+    id = id,
+    offset_encoding = encoding,
+    supports_method = function()
+      return true
+    end,
+    request = function(_, method, params, handler, buffer)
+      requests[id] = params
+      vim.schedule(function()
+        handler(nil, { action }, { client_id = id, bufnr = buffer, method = method, params = params })
+      end)
+      return true, 1
+    end,
+  })
+end
+
+vim.lsp.get_clients = function()
+  return clients
+end
+vim.lsp.get_client_by_id = function(id)
+  return clients[id]
+end
+vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { "é😀x" })
+vim.api.nvim_win_set_cursor(0, { 1, 6 })
+vim.fn.mode = function()
+  return "n"
+end
+request_actions({ bufnr = bufnr })
+assert(#returned_actions == 2)
+assert(requests[1].range.start.character == 6 and requests[2].range.start.character == 3)
+assert(requests[1].range["end"].character == 6 and requests[2].range["end"].character == 3)
+for _, result in ipairs(returned_actions) do
+  assert(result.context == requests[result.client.id].context)
+end
+
+request_actions({ bufnr = bufnr, range = { start = { 1, 2 }, ["end"] = { 1, 6 } } })
+assert(requests[1].range.start.character == 2 and requests[2].range.start.character == 1)
+assert(requests[1].range["end"].character == 6 and requests[2].range["end"].character == 3)
+
+vim.fn.mode = function()
+  return "v"
+end
+vim.fn.setpos("'<", { bufnr, 1, 3, 0 })
+vim.fn.setpos("'>", { bufnr, 1, 7, 0 })
+request_actions({ bufnr = bufnr })
+assert(requests[1].range.start.character == 2 and requests[2].range.start.character == 1)
+assert(requests[1].range["end"].character == 7 and requests[2].range["end"].character == 4)
 vim.lsp.get_clients = get_clients
 
 package.loaded["tiny-code-action"].setup = function() end

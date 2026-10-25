@@ -23,17 +23,22 @@ local get_line_diagnostics = function(bufnr)
   return vim.lsp.diagnostic.get_line_diagnostics(bufnr)[current_line] or {}
 end
 
-local build_code_action_params = function(request_opts)
-  local position_encoding = vim.api.nvim_get_option_value("encoding", { scope = "local" })
+local build_code_action_params = function(request_opts, position_encoding)
   local params
 
   if request_opts.range then
+    local range = {}
+    for key, position in pairs(request_opts.range) do
+      local line = vim.api.nvim_buf_get_lines(request_opts.bufnr, position[1] - 1, position[1], true)[1]
+      range[key] = {
+        line = position[1] - 1,
+        character = vim.str_utfindex(line, position_encoding, position[2], false),
+      }
+    end
+
     params = {
       textDocument = { uri = vim.uri_from_bufnr(request_opts.bufnr) },
-      range = {
-        start = { line = request_opts.range.start[1] - 1, character = request_opts.range.start[2] },
-        ["end"] = { line = request_opts.range["end"][1] - 1, character = request_opts.range["end"][2] },
-      },
+      range = range,
     }
   elseif vim.fn.mode() == "n" then
     params = {
@@ -44,9 +49,9 @@ local build_code_action_params = function(request_opts)
     params = {
       textDocument = { uri = vim.uri_from_bufnr(request_opts.bufnr) },
       range = vim.lsp.util.make_given_range_params(
-        { vim.fn.getpos("'<")[2], vim.fn.getpos("'<")[3] },
-        { vim.fn.getpos("'>")[2], vim.fn.getpos("'>")[3] },
-        0,
+        vim.api.nvim_buf_get_mark(request_opts.bufnr, "<"),
+        vim.api.nvim_buf_get_mark(request_opts.bufnr, ">"),
+        request_opts.bufnr,
         position_encoding
       ).range,
     }
@@ -69,7 +74,7 @@ local build_code_action_params = function(request_opts)
 
   params.context = context
 
-  return params, context
+  return params
 end
 
 local configure_code_action_finder = function(config)
@@ -88,12 +93,13 @@ local configure_code_action_finder = function(config)
     local clients = vim.lsp.get_clients({ bufnr = request_opts.bufnr, method = "textDocument/codeAction" })
     if not clients or #clients == 0 then return nil end
 
-    local params, context = build_code_action_params(request_opts)
     local ok, responses, err = pcall(
       vim.lsp.buf_request_sync,
       request_opts.bufnr,
       "textDocument/codeAction",
-      params,
+      function(client)
+        return build_code_action_params(request_opts, client.offset_encoding)
+      end,
       config.code_action_request_timeout_ms
     )
 
@@ -114,7 +120,7 @@ local configure_code_action_finder = function(config)
             table.insert(results, {
               client = client,
               action = action,
-              context = context,
+              context = response.context.params.context,
             })
           end
         end

@@ -18,7 +18,7 @@ return {
   linebreak = true,
   updatetime = 200,
   laststatus = 3,
-  scrolloff = 12,
+  scrolloff = 0,
   sidescrolloff = 16,
   timeout = true,
   timeoutlen = 1000,

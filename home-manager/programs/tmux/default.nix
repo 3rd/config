@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   pkgs-stable,
   ...
@@ -48,7 +49,7 @@ in
     set -g @agent-attention-badge '#{?#{E:@agent-attention-count},#[bg=#955DB7#,fg=${selection-foreground}#,#{?window_active,bold,nobold}] #{E:@agent-attention-count} #[default],}'
     set -g window-status-format "#{?#{E:@agent-attention-count},#[bg=#4B455D#,fg=${foreground}] #I:#W #[default], #[fg=${gray-medium}]#I#[fg=${gray-darkish}]:#[fg=${gray-medium}]#W#{?window_zoomed_flag,#[fg=${gray-lighter}],}}#{E:@agent-attention-badge} "
 
-    set -g window-status-activity-style "fg=${yellow-light}"
+    set -g window-status-activity-style "fg=${lib.toLower yellow-light}"
 
     set -g window-status-current-style "fg=${gray-lightest}"
     set -g window-status-current-format "#{?#{E:@agent-attention-count},#[bg=#5C526C#,fg=${foreground}#,bold] #I:#W #[default], #[fg=${gray-lighter}#,bold]#I#[fg=${gray-light}]:#[fg=${gray-lightest}]#W#{?window_zoomed_flag,#[fg=${gray-lightest}],}}#{E:@agent-attention-badge} "

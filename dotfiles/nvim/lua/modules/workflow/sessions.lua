@@ -119,6 +119,9 @@ local setup_auto_session = function()
     auto_session_root_dir = lib.env.dirs.vim.sessions .. "/",
     auto_session_suppress_dirs = { "~/", "~/Downloads", "~/Desktop" },
     silent_restore = true,
+    session_lens = {
+      load_on_setup = false,
+    },
     cwd_change_handling = {
       restore_upcoming_session = false,
     },

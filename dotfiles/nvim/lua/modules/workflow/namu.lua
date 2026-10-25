@@ -4,7 +4,7 @@ return lib.module.create({
   plugins = {
     {
       "bassamsdata/namu.nvim",
-      event = "VeryLazy",
+      cmd = "Namu",
       config = function()
         require("namu").setup({
           namu_symbols = {
@@ -240,15 +240,11 @@ return lib.module.create({
             },
           },
         })
-        vim.keymap.set("n", "<leader>r", ":Namu symbols<cr>", {
-          desc = "Jump to LSP symbol",
-          silent = true,
-        })
-        -- vim.keymap.set("n", "<leader>R", ":Namu workspace<cr>", {
-        --   desc = "Jump to LSP symbol",
-        --   silent = true,
-        -- })
       end,
+      keys = {
+        { "<leader>r", ":Namu symbols<cr>", desc = "Jump to LSP symbol", silent = true },
+        -- { "<leader>R", ":Namu workspace<cr>", desc = "Jump to LSP symbol", silent = true },
+      },
     },
   },
 })

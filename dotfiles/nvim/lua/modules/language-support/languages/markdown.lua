@@ -1,3 +1,5 @@
+local prose = require("config/prose")
+
 local handle_toggle_task = function()
   local line = vim.fn.getline(".")
   local col = vim.fn.col(".")
@@ -23,47 +25,64 @@ local disable_fenced_code_conceal = function()
   local highlights = vim.treesitter.query.get("markdown", "highlights")
   if not highlights or not highlights.query.disable_pattern then return end
 
-  for _, pattern_id in ipairs({ 17, 18 }) do
-    for _, directive in ipairs(highlights.info.patterns[pattern_id] or {}) do
+  local has_conceal_lines = false
+
+  for pattern_id, directives in pairs(highlights.info.patterns) do
+    for _, directive in ipairs(directives) do
       if directive[1] == "set!" and directive[2] == "conceal_lines" then
-        highlights.query:disable_pattern(pattern_id)
+        if pattern_id == 17 or pattern_id == 18 then
+          highlights.query:disable_pattern(pattern_id)
+        else
+          has_conceal_lines = true
+        end
+
         break
       end
     end
   end
+
+  highlights.has_conceal_line = has_conceal_lines
 end
 
 local setup_touchup = function(_, opts)
-  local codeblocks = require("touchup.codeblocks")
-  local block_query = vim.treesitter.query.parse("markdown", "(fenced_code_block) @block")
-  local fence_query = vim.treesitter.query.parse("markdown", "(fenced_code_block_delimiter) @fence")
+  local list_query = vim.treesitter.query.parse(
+    "markdown",
+    [[
+    (list_item [
+      (list_marker_minus) (list_marker_plus) (list_marker_star)
+      (list_marker_dot) (list_marker_parenthesis)
+    ] @marker)
+  ]]
+  )
 
-  codeblocks.render = function(namespace, bufnr, start_row, end_row, root)
-    local fence_rows = {}
+  require("touchup.checkboxes").render = function(namespace, bufnr, icons, start_row, end_row, root)
+    local lines = vim.api.nvim_buf_get_lines(bufnr, start_row, end_row, false)
 
-    for _, node in fence_query:iter_captures(root, bufnr, start_row, end_row) do
-      local row = node:range()
-      fence_rows[row] = true
-      vim.api.nvim_buf_set_extmark(bufnr, namespace, row, 0, {
-        end_row = row + 1,
-        hl_group = "TouchupCodeFence",
-        hl_eol = true,
-        ephemeral = true,
-      })
-    end
-
-    for _, node in block_query:iter_captures(root, bufnr, start_row, end_row) do
-      local block_start, _, block_end = node:range()
-      local body_start = block_start + 1
-      local body_end = fence_rows[block_end - 1] and block_end - 1 or block_end
-
-      if body_start < body_end then
-        vim.api.nvim_buf_set_extmark(bufnr, namespace, body_start, 0, {
-          end_row = body_end,
-          hl_group = "TouchupCodeBlock",
-          hl_eol = true,
+    for _, marker in list_query:iter_captures(root, bufnr, start_row, end_row) do
+      local row, column, _, marker_end = marker:range()
+      local line = lines[row - start_row + 1]
+      local _, task_end, state = line:sub(marker_end + 1):find("^%s*%[(.)%]")
+      local icon = icons[state]
+      if icon then
+        local marker_text = vim.treesitter.get_node_text(marker, bufnr)
+        local first_column = column + #marker_text:match("^%s*")
+        local last_column = marker_end + task_end
+        vim.api.nvim_buf_set_extmark(bufnr, namespace, row, first_column, {
+          end_col = last_column,
+          conceal = icon.text,
+          hl_group = icon.hl,
+          priority = 150,
           ephemeral = true,
         })
+
+        if state ~= " " then
+          vim.api.nvim_buf_set_extmark(bufnr, namespace, row, last_column, {
+            end_col = #line,
+            hl_group = icon.hl,
+            priority = 150,
+            ephemeral = true,
+          })
+        end
       end
     end
   end
@@ -72,6 +91,7 @@ local setup_touchup = function(_, opts)
 end
 
 local setup = function()
+  lib.ts.register_prose_queries()
   disable_fenced_code_conceal()
 
   vim.g.markdown_fenced_languages = {
@@ -247,20 +267,24 @@ return lib.module.create({
         filetypes = { "markdown" },
         bullets = {
           enabled = true,
-          icons = { "", "", "⬥", "⬦" },
+          icons = { prose.bullet },
         },
         code_blocks = {
-          enabled = true,
+          enabled = false,
+        },
+        comment_blocks = {
+          enabled = false,
         },
         checkboxes = {
           enabled = true,
           icons = {
-            ["x"] = { text = "󰗠", hl = "TouchupCheckboxChecked" },
-            ["X"] = { text = "󰗠", hl = "TouchupCheckboxChecked" },
-            ["/"] = { text = "󱎖", hl = "TouchupCheckboxPending" },
+            [" "] = { text = prose.task_default, hl = "@slang.task_marker_default" },
+            ["x"] = { text = prose.task_done, hl = "TouchupCheckboxChecked" },
+            ["X"] = { text = prose.task_done, hl = "TouchupCheckboxChecked" },
+            ["/"] = { text = prose.task_active, hl = "TouchupCheckboxPending" },
             [">"] = { text = "", hl = "TouchupCheckboxCancelled" },
             ["<"] = { text = "󰃖", hl = "TouchupCheckboxCancelled" },
-            ["-"] = { text = "󰍶", hl = "TouchupCheckboxCancelled" },
+            ["-"] = { text = prose.task_cancelled, hl = "TouchupCheckboxCancelled" },
             ["?"] = { text = "󰋗", hl = "TouchupCheckboxPending" },
             ["!"] = { text = "󰀦", hl = "TouchupCheckboxImportant" },
             ["*"] = { text = "󰓎", hl = "TouchupCheckboxPending" },

@@ -19,7 +19,7 @@
         style = "full";
       };
       defaultFonts = {
-        monospace = [ "Berkeley Mono" "FiraCode Nerd Font Mono" ];
+        monospace = [ "JetBrains Mono" "Berkeley Mono" "FiraCode Nerd Font Mono" ];
         sansSerif = [ "Noto Sans" "DejaVu Sans" "FiraCode Nerd Font Mono" ];
         serif = [
           "Linux Libertine"
@@ -79,6 +79,7 @@
       font-awesome
       inconsolata
       inter
+      jetbrains-mono
 
       # joypixels
       noto-fonts

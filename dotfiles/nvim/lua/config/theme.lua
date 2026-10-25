@@ -51,6 +51,7 @@ colors.plugins = {
   },
 }
 
+local bold_color = "#D184DB"
 local variable = colors.foreground
 local keyword = colors.foreground.darken(24).desaturate(70)
 local delimiter = colors.foreground.darken(39).desaturate(80)
@@ -191,8 +192,8 @@ colors.slang = {
   section = "#8797C2",
   banner = {
     -- bg = "#262C3",
-    bg = "#38425B",
-    fg = "#A9B9E5", -- #8797C2
+    bg = colors.background.rotate(-5).saturate(3).lighten(6),
+    fg = colors.yellow,
   },
   task = {
     default = colors.foreground,
@@ -215,27 +216,36 @@ colors.slang = {
   list_item = {
     -- item = colors.foreground.desaturate(20).darken(10),
     marker = colors.foreground.desaturate(80).darken(40),
-    label = colors.indigo.lighten(15).saturate(20), -- "#c881de",
-    label_marker = colors.common.comment,
+    label = bold_color,
+    label_marker = colors.foreground,
   },
   label = colors.pink.darken(5).desaturate(10),
   label_line = colors.cyan.desaturate(10),
 }
 
-local create_slang_heading_colors = function(accent)
+local heading_accents = {
+  one = colors.orange,
+  two = colors.indigo.lighten(45).saturate(100),
+  three = colors.magenta.desaturate(11).lighten(8),
+  four = colors.cyan,
+  five = colors.yellow,
+  six = colors.magenta,
+}
+
+local create_heading_colors = function(accent)
   return {
     marker = accent.darken(18).desaturate(20),
-    text = accent.lighten(6).desaturate(8),
+    text = accent,
   }
 end
 
 local slang_heading_colors = {
-  one = create_slang_heading_colors(colors.slang.outline.one),
-  two = create_slang_heading_colors(colors.slang.outline.two),
-  three = create_slang_heading_colors(colors.slang.outline.three),
-  four = create_slang_heading_colors(colors.slang.outline.four),
-  five = create_slang_heading_colors(colors.slang.outline.five),
-  six = create_slang_heading_colors(colors.slang.outline.six),
+  one = create_heading_colors(heading_accents.one),
+  two = create_heading_colors(heading_accents.two),
+  three = create_heading_colors(heading_accents.three),
+  four = create_heading_colors(heading_accents.four),
+  five = create_heading_colors(heading_accents.five),
+  six = create_heading_colors(heading_accents.six),
 }
 
 local create_slang_headline_background = function(accent)
@@ -243,12 +253,12 @@ local create_slang_headline_background = function(accent)
 end
 
 local slang_headline_backgrounds = {
-  one = create_slang_headline_background(colors.slang.outline.one),
-  two = create_slang_headline_background(colors.slang.outline.two),
-  three = create_slang_headline_background(colors.slang.outline.three),
-  four = create_slang_headline_background(colors.slang.outline.four),
-  five = create_slang_headline_background(colors.slang.outline.five),
-  six = create_slang_headline_background(colors.slang.outline.six),
+  one = create_slang_headline_background(heading_accents.one),
+  two = create_slang_headline_background(heading_accents.two),
+  three = create_slang_headline_background(heading_accents.three),
+  four = create_slang_headline_background(heading_accents.four),
+  five = create_slang_headline_background(heading_accents.five),
+  six = create_slang_headline_background(heading_accents.six),
 }
 
 local create_slang_margin_highlight = function(bg)
@@ -276,7 +286,7 @@ local slang_section_highlight = {
 }
 
 local slang_label_line_highlight = {
-  fg = colors.orange.saturate(6).lighten(4),
+  fg = bold_color,
   gui = "bold",
 }
 
@@ -682,10 +692,10 @@ local theme = lush(function(injected)
     sym("@slang.document.meta")({ fg = colors.slang.document.meta }),
     sym("@slang.document.meta.field")({ fg = colors.slang.document.meta_field }),
     sym("@slang.document.meta.field.key")({ fg = colors.slang.document.meta_field_key }),
-    sym("@slang.bold")({ gui = "bold" }),
+    sym("@slang.bold")({ fg = bold_color, gui = "bold" }),
     sym("@slang.italic")({ gui = "italic" }),
     sym("@slang.underline")({ gui = "underline" }),
-    sym("@slang.comment")({ fg = colors.common.comment }),
+    sym("@slang.comment")({ fg = colors.common.comment, gui = "italic" }),
     sym("@slang.string")({ fg = colors.slang.string }),
     sym("@slang.number")({ fg = colors.slang.number }),
     sym("@slang.ticket")({ fg = colors.slang.ticket }),
@@ -736,6 +746,7 @@ local theme = lush(function(injected)
     sym("@slang.banner")({
       bg = colors.slang.banner.bg,
       fg = colors.slang.banner.fg,
+      gui = "italic",
     }),
 
     sym("@slang.task_default")({}),
@@ -766,9 +777,9 @@ local theme = lush(function(injected)
     sym("@slang.label_line.syslang")(slang_label_line_highlight),
     sym("@slang.list_item")({ fg = colors.slang.list_item.item }),
     sym("@slang.list_item_marker")({ fg = colors.slang.list_item.marker }),
-    sym("@slang.list_item_label")({ fg = colors.slang.list_item.label }),
+    sym("@slang.list_item_label")({ fg = colors.slang.list_item.label, gui = "bold" }),
     sym("@slang.list_item_label_marker")({ fg = colors.slang.list_item.label_marker }),
-    sym("@slang.image")({ fg = colors.slang.label }),
+    sym("@slang.image")({ fg = colors.slang.link.internal }),
     sym("@text.literal.syslang")({ fg = colors.foreground }),
 
     -- headlines
@@ -791,7 +802,7 @@ local theme = lush(function(injected)
     sym("SyslangHeadlineMargin4")(slang_headline_margins.four),
     sym("SyslangHeadlineMargin5")(slang_headline_margins.five),
     sym("SyslangHeadlineMargin6")(slang_headline_margins.six),
-    sym("Quote")({ fg = colors.slang.banner.bg, gui = "bold" }),
+    sym("Quote")({ fg = colors.common.delimiter }),
     sym("CodeBlock")({ bg = colors.slang.code.block.background }),
 
     -- local-highlight
@@ -804,6 +815,17 @@ local theme = lush(function(injected)
     LeapLabelPrimary({ bg = colors.orange.darken(50), fg = colors.orange.lighten(20) }),
 
     -- markdown
+    markdownBold({ fg = bold_color, gui = "bold" }),
+    markdownBoldItalic({ fg = markdownBold.fg, gui = "bold,italic" }),
+    sym("@markup.strong.markdown_inline")({ markdownBold }),
+    MarkdownTitle({ fg = colors.slang.document.title, gui = "bold" }),
+    MarkdownMetadata({ fg = colors.slang.document.meta }),
+    MarkdownMetadataKey({ fg = colors.slang.document.meta_field_key }),
+    MarkdownMetadataValue({ fg = colors.slang.document.meta_field }),
+    MarkdownExternalLink({ fg = colors.slang.link.external, gui = "italic" }),
+    MarkdownImage({ fg = colors.slang.link.internal }),
+    MarkdownCodeFence({ fg = colors.slang.code.block.marker, gui = "italic" }),
+    MarkdownCodeLanguage({ fg = colors.slang.code.block.language, gui = "italic" }),
     RenderMarkdownH1Bg({ bg = colors.slang.headline.one.bg }),
     RenderMarkdownH2Bg({ bg = colors.slang.headline.two.bg }),
     RenderMarkdownH3Bg({ bg = colors.slang.headline.three.bg }),
@@ -824,10 +846,10 @@ local theme = lush(function(injected)
     RenderMarkdownCode({ bg = colors.slang.code.block.background }),
     RenderMarkdownCodeInline({ fg = colors.slang.code.inline }),
     RenderMarkdownCodeBorder({ bg = palette["gray-dark"] }),
-    TouchupBulletDash({ Special }),
-    TouchupBulletPlus({ Special }),
-    TouchupBulletStar({ Special }),
-    TouchupCodeBlock({ bg = hsl(colors.slang.code.block.background).lighten(3) }),
+    TouchupBulletDash({ fg = colors.slang.list_item.marker }),
+    TouchupBulletPlus({ TouchupBulletDash }),
+    TouchupBulletStar({ TouchupBulletDash }),
+    TouchupCodeBlock({ bg = colors.slang.code.block.background }),
     TouchupCodeFence({ bg = colors.background }),
     TouchupQuote({ bg = colors.slang.headline.one.bg }),
     TouchupCheckboxUnchecked({ fg = colors.slang.list_item.marker }),
@@ -849,12 +871,27 @@ local theme = lush(function(injected)
     TouchupLinkLabelStrikethrough({ fg = colors.slang.link.internal, gui = "strikethrough,underline" }),
     TouchupLinkLabelCode({ fg = colors.slang.code.inline, gui = "underline" }),
     sym("@markup.quote")({ fg = colors.slang.tag.context, gui = "italic" }),
-    sym("@markup.heading.1.markdown")({ fg = colors.orange, gui = "bold" }),
-    sym("@markup.heading.2.markdown")({ fg = colors.indigo.lighten(45).saturate(100), gui = "bold" }),
-    sym("@markup.heading.3.markdown")({ fg = colors.magenta.desaturate(11).lighten(8) }),
-    sym("@markup.heading.4.markdown")({ fg = colors.cyan }),
-    sym("@markup.heading.5.markdown")({ fg = colors.yellow }),
-    sym("@markup.heading.6.markdown")({ fg = colors.magenta, gui = "bold" }),
+    sym("@markup.heading.1.markdown")({ fg = slang_heading_colors.one.text, gui = "bold" }),
+    sym("@markup.heading.2.markdown")({ fg = slang_heading_colors.two.text, gui = "bold" }),
+    sym("@markup.heading.3.markdown")({ fg = slang_heading_colors.three.text, gui = "bold" }),
+    sym("@markup.heading.4.markdown")({ fg = slang_heading_colors.four.text, gui = "bold" }),
+    sym("@markup.heading.5.markdown")({ fg = slang_heading_colors.five.text, gui = "bold" }),
+    sym("@markup.heading.6.markdown")({ fg = slang_heading_colors.six.text, gui = "bold" }),
+    sym("@markup.heading.1.marker.markdown")({ fg = slang_heading_colors.one.marker }),
+    sym("@markup.heading.2.marker.markdown")({ fg = slang_heading_colors.two.marker }),
+    sym("@markup.heading.3.marker.markdown")({ fg = slang_heading_colors.three.marker }),
+    sym("@markup.heading.4.marker.markdown")({ fg = slang_heading_colors.four.marker }),
+    sym("@markup.heading.5.marker.markdown")({ fg = slang_heading_colors.five.marker }),
+    sym("@markup.heading.6.marker.markdown")({ fg = slang_heading_colors.six.marker }),
+    sym("@markup.list.markdown")({ fg = colors.foreground }),
+    sym("@markup.list.numbered.markdown")({ fg = colors.slang.number }),
+    sym("@markup.raw.block.markdown")({ fg = colors.slang.code.block.content }),
+    sym("@markup.link.external.markdown")({ MarkdownExternalLink }),
+    sym("@markup.link.url.markdown_inline")({ MarkdownExternalLink }),
+    sym("@markup.link.external.markdown_inline")({ MarkdownExternalLink }),
+    sym("@markup.image.markdown_inline")({ MarkdownImage }),
+    sym("@markup.raw.delimiter.markdown")({ MarkdownCodeFence }),
+    sym("@label.markdown")({ MarkdownCodeLanguage }),
 
     -- snacks profiler
     SnacksProfilerHot20({ bg = colors.red.darken(10) }),

@@ -12,7 +12,6 @@ in
     dockerfile-language-server
     pkgs-stable.quick-lint-js
     tailwindcss-language-server
-    typescript-language-server
     vscode-js-debug
     vscode-langservers-extracted
     yaml-language-server

@@ -1,3 +1,6 @@
+local is_venn_enabled = false
+local is_ascii_blocks_enabled = false
+
 local toggle_venn = function()
   local venn_enabled = vim.inspect(vim.b.venn_enabled)
   if venn_enabled == "nil" then
@@ -28,24 +31,34 @@ local toggle_venn = function()
   end
 end
 
+local actions = {}
+local mappings = {}
+
+if is_ascii_blocks_enabled then table.insert(actions, { "n", "Diagrams: ASCII Blockify", "AsciiBlockify" }) end
+
+if is_venn_enabled then
+  table.insert(actions, { "n", "Diagrams: venn", toggle_venn })
+  table.insert(mappings, { "n", "<leader>v", toggle_venn, { desc = "Toggle venn", noremap = true } })
+end
+
 return lib.module.create({
   name = "misc/diagrams",
   -- enabled = false,
   hosts = { "spaceship", "death" },
   plugins = {
     {
-      enabled = false,
+      enabled = is_venn_enabled,
       "jbyuki/venn.nvim",
       cmd = { "VBox" },
     },
     {
-      enabled = false,
+      enabled = is_ascii_blocks_enabled,
       "superhawk610/ascii-blocks.nvim",
       cmd = { "AsciiBlockify" },
     },
     {
       "3rd/diagram.nvim",
-      -- enabled = false,
+      enabled = false,
       ft = { "markdown", "syslang" },
       dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "diagram.nvim"),
       opts = {
@@ -63,11 +76,6 @@ return lib.module.create({
       },
     },
   },
-  actions = {
-    { "n", "Diagrams: ASCII Blockify", "AsciiBlockify" },
-    { "n", "Diagrams: venn", toggle_venn },
-  },
-  mappings = {
-    { "n", "<leader>v", toggle_venn, { desc = "Toggle venn", noremap = true } },
-  },
+  actions = actions,
+  mappings = mappings,
 })

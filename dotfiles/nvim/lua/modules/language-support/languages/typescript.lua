@@ -27,19 +27,24 @@ return lib.module.create({
   hooks = {
     lsp = {
       on_attach = function(client, bufnr)
-        vim.api.nvim_buf_create_user_command(bufnr, "LspTypescriptSourceAction", function()
-          local source_actions = vim.tbl_filter(function(action)
-            return vim.startswith(action, "source.")
-          end, client.server_capabilities.codeActionProvider.codeActionKinds)
+        local code_action_kinds = vim.tbl_get(client.server_capabilities, "codeActionProvider", "codeActionKinds")
+          or {}
+        local source_actions = vim.tbl_filter(function(action)
+          return vim.startswith(action, "source.")
+        end, code_action_kinds)
 
-          vim.lsp.buf.code_action({
-            context = {
-              only = source_actions,
-            },
-          })
-        end, {})
+        if #source_actions > 0 then
+          vim.api.nvim_buf_create_user_command(bufnr, "LspTypescriptSourceAction", function()
+            vim.lsp.buf.code_action({
+              context = {
+                only = source_actions,
+              },
+            })
+          end, {})
+        end
 
         local twoslash_clients = {
+          "tsc",
           "tsgo",
           "vtsls",
           "ts_ls",

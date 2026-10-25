@@ -17,6 +17,7 @@ local is_current_line_in_open_fold_and_is_not_first = function()
 end
 
 local setup_ufo = function()
+  local prose = require("config/prose")
   local config = {
     -- folded_info_prefix = " ",
     folded_info_prefix = "... ",
@@ -26,11 +27,11 @@ local setup_ufo = function()
       outline = "◉",
       section_collapsed = "▶",
       section_expanded = "▼",
-      list_item = "•",
-      task_default = "",
-      task_active = "➡",
-      task_done = "",
-      task_cancelled = "",
+      list_item = prose.bullet,
+      task_default = prose.task_default,
+      task_active = prose.task_active,
+      task_done = prose.task_done,
+      task_cancelled = prose.task_cancelled,
       task_info = "",
     },
   }

@@ -31,6 +31,23 @@ local parse = function(bufnr)
   return trees[1]:root()
 end
 
+vim.cmd.colorscheme("static")
+local bold_buffer = create_syslang_buffer({ "Plain *bold text*" })
+parse(bold_buffer)
+local bold_capture = nil
+
+for _, capture in ipairs(vim.treesitter.get_captures_at_pos(bold_buffer, 0, 8)) do
+  if capture.capture == "slang.bold" then bold_capture = capture end
+end
+
+assert(bold_capture, "Syslang bold text must receive its emphasis capture")
+local bold_highlight = vim.api.nvim_get_hl(0, { name = "@" .. bold_capture.capture, link = false })
+assert(bold_highlight.fg == 0xD184DB and bold_highlight.bold, "Syslang bold must use the coding-agent purple")
+assert(
+  bold_highlight.fg == vim.api.nvim_get_hl(0, { name = "markdownBold", link = false }).fg,
+  "Syslang and Markdown bold must use the same color"
+)
+
 local task_buffer = create_syslang_buffer({ "  write tests" })
 vim.api.nvim_win_set_cursor(0, { 1, 2 })
 mapping_callback("<C-Space>")()

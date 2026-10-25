@@ -674,31 +674,6 @@ local setup_fzf_lua = function()
     keymap = { builtin = {} },
   }
   fzf.setup(config)
-
-  lib.map.map("n", "<c-p>", function()
-    find_files()
-  end, "Find file in project")
-
-  lib.map.map("n", ";", function()
-    buffers()
-  end, "Find buffer")
-
-  lib.map.map("n", "<c-f>", function()
-    live_grep()
-  end, "Find text in project")
-
-  lib.map.map("n", "<leader>l", function()
-    buffer_lines()
-  end, "Find line in buffer")
-  lib.map.map("n", "<leader>L", function()
-    lines()
-  end, "Find line in open buffers")
-  lib.map.map("n", "<leader>;", resume_last_picker, "Resume last picker")
-
-  -- visual
-  lib.map.map("v", "<c-f>", function()
-    live_grep_selection()
-  end, "Find selected text in project")
 end
 
 find_files = function(opts)
@@ -773,11 +748,11 @@ return lib.module.create({
       -- commit = "a1a2d0f42eaec400cc6918a8e898fc1f9c4dbc5f", -- issues introduced by https://github.com/ibhagwan/fzf-lua/commit/b3b05f9d438736bb1f88aa373476753ddf83f481
       -- commit = "60428a8dc931639ee5e88756b2d7bc896cdc20c7",
       -- dir = lib.path.resolve(lib.env.dirs.vim.config, "plugins", "fzf"),
-      event = "VeryLazy",
+      cmd = "FzfLua",
       dependencies = { "nvim-tree/nvim-web-devicons" },
       config = setup_fzf_lua,
     },
-    { "vijaymarupudi/nvim-fzf", event = "VeryLazy" },
+    { "vijaymarupudi/nvim-fzf" },
     {
       "dmtrKovalenko/fff.nvim",
       commit = "bb6f32a2ada380711f08bb11ba49e6fab23f191b",
@@ -799,6 +774,16 @@ return lib.module.create({
       },
       lazy = true,
     },
+  },
+  mappings = {
+    { "n", "<c-p>", find_files, "Find file in project" },
+    { "n", ";", buffers, "Find buffer" },
+    { "n", "<c-f>", live_grep, "Find text in project" },
+    { "n", "<leader>l", buffer_lines, "Find line in buffer" },
+    { "n", "<leader>L", lines, "Find line in open buffers" },
+    { "n", "<leader>;", resume_last_picker, "Resume last picker" },
+    -- visual
+    { "v", "<c-f>", live_grep_selection, "Find selected text in project" },
   },
   exports = {
     find_files = find_files,

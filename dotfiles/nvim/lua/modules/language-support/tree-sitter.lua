@@ -205,7 +205,7 @@ local preview_location = function(location, context_range)
 end
 
 local make_preview_location_callback = function(query_string, query_group)
-  return vim.schedule_wrap(function(err, result)
+  return vim.schedule_wrap(function(err, result, context)
     if err then
       vim.notify(tostring(err), vim.log.levels.ERROR)
       return
@@ -225,11 +225,16 @@ local make_preview_location_callback = function(query_string, query_group)
     local bufnr = vim.uri_to_bufnr(uri)
     vim.fn.bufload(bufnr)
 
+    local client = vim.lsp.get_client_by_id(context.client_id)
+    if not client then return end
+
+    local line = vim.api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + 1, true)[1]
+    local column = vim.str_byteindex(line, client.offset_encoding, range.start.character, false)
     local context_range = require("nvim-treesitter-textobjects.shared").textobject_at_point(
       query_string,
       query_group,
       bufnr,
-      { range.start.line + 1, range.start.character }
+      { range.start.line + 1, column }
     )
 
     preview_location(result, context_range)
@@ -245,12 +250,9 @@ local peek_definition_code = function(query_string, query_group, lsp_request)
     return
   end
 
-  return vim.lsp.buf_request(
-    0,
-    lsp_request,
-    vim.lsp.util.make_position_params(),
-    make_preview_location_callback(query_string, query_group)
-  )
+  return vim.lsp.buf_request(0, lsp_request, function(client)
+    return vim.lsp.util.make_position_params(0, client.offset_encoding)
+  end, make_preview_location_callback(query_string, query_group))
 end
 
 local map_textobject_select = function()
@@ -382,12 +384,14 @@ local disable_unwanted_fold_queries = function()
 end
 
 local setup_treesitter = function()
+  require("lib/patches/treesitter-highlighter").setup()
   require("nvim-treesitter").setup({
     install_dir = install_dir,
   })
 
   register_language_aliases()
   register_syslang_parser()
+  lib.ts.register_prose_queries()
 
   vim.treesitter.query.set("nix", "injections", "")
 

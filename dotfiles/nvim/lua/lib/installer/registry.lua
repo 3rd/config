@@ -18,6 +18,20 @@ local tools = {
     bin = "vscode-json-language-server",
     lspconfig = "jsonls",
   },
+  typescript = {
+    kind = "npm",
+    package = "typescript",
+    version = "7.0.2",
+    bin = "tsc",
+    lspconfig = "tsc",
+  },
+  tsserver = {
+    kind = "npm",
+    package = "typescript",
+    version = "6.0.3",
+    bin = "tsserver",
+    lspconfig = "ts_ls_refactor",
+  },
   fixjson = {
     kind = "npm",
     package = "fixjson",

@@ -81,4 +81,45 @@ M.get_node_text = function(node, source)
   return vim.treesitter.get_node_text(node, source or 0)
 end
 
+M.for_each_tree_in_range = function(parser, start_row, end_row, callback)
+  local regions = parser:included_regions()
+
+  for index, tree in pairs(parser:trees()) do
+    local ranges = regions[index]
+    local is_visible = #ranges == 0
+
+    for _, range in ipairs(ranges) do
+      if range[1] <= end_row and range[4] >= start_row then
+        is_visible = true
+        break
+      end
+    end
+
+    if is_visible then
+      local root = tree:root()
+      local root_start, _, root_end = root:range()
+      if root_start <= end_row and root_end >= start_row then callback(tree, parser, root) end
+    end
+  end
+
+  for _, child in pairs(parser:children()) do
+    M.for_each_tree_in_range(child, start_row, end_row, callback)
+  end
+end
+
+M.register_prose_queries = function()
+  local prose = require("config/prose")
+  vim.treesitter.query.add_directive("prose-icon!", function(_, _, _, predicate, metadata)
+    local capture = predicate[2]
+    local symbol = assert(prose[predicate[3]], "Unknown prose symbol: " .. predicate[3])
+    metadata[capture] = metadata[capture] or {}
+    metadata[capture].conceal = symbol
+  end, { force = true })
+
+  vim.treesitter.query.add_predicate("prose-external-link?", function(match, _, source, predicate)
+    local node = match[predicate[2]][1]
+    return vim.treesitter.get_node_text(node, source):match(prose.external_link_pattern) ~= nil
+  end, { force = true })
+end
+
 return M

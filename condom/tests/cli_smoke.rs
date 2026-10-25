@@ -74,7 +74,7 @@ fn nixos_module_declares_tproxy_host_routing() {
     assert!(module.contains("helperBinaryPath"));
     assert!(!module.contains("tproxy.enable"));
     assert!(!module.contains("installRuntimeWrapper"));
-    assert!(module.contains("source = condomBinary;"));
+    assert!(module.contains("source = runtimeWrapperBinary;"));
     assert!(module.contains("ExecStart = \"${helperBinary} socket-request\";"));
     assert!(module.contains("UMask = \"0007\";"));
     assert!(module.contains("programs.condom.installPackage requires programs.condom.package."));

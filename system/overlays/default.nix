@@ -2,6 +2,9 @@
 {
   additions = final: _prev: import ../pkgs { inherit inputs; pkgs = final; };
   modifications = final: prev: {
+    opensnitch = prev.opensnitch.overrideAttrs (oldAttrs: {
+      patches = (oldAttrs.patches or [ ]) ++ [ ./opensnitch-ebpf-map-count.patch ];
+    });
     opensnitch-ui = prev.opensnitch-ui.overrideAttrs (oldAttrs: {
       patches = (oldAttrs.patches or [ ]) ++ [
         ./opensnitch-context-menu-screen.patch

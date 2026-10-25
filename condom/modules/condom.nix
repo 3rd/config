@@ -13,6 +13,21 @@ let
     if cfg.package != null then lib.getExe' cfg.package "condom-helper" else cfg.helperBinaryPath;
   hasCondomBinary = condomBinary != null;
   hasHelperBinary = helperBinary != null;
+  runtimeWrapperBinary =
+    if cfg.package != null then
+      condomBinary
+    else
+      lib.getExe (
+        pkgs.pkgsStatic.runCommandCC "condom-runtime-wrapper"
+          { meta.mainProgram = "condom-runtime-wrapper"; }
+          ''
+            ${pkgs.runtimeShell} ${./condom-runtime-wrapper.test.sh} ${./condom-runtime-wrapper.c}
+            mkdir -p "$out/bin"
+            $CC -std=c11 -Wall -Wextra -Werror \
+              -DCONDOM_BINARY=${lib.escapeShellArg (builtins.toJSON condomBinary)} \
+              ${./condom-runtime-wrapper.c} -o "$out/bin/condom-runtime-wrapper"
+          ''
+      );
   tcpPorts = lib.concatMapStringsSep ", " toString tproxy.tcpPorts;
   tcpPortsEnv = lib.concatMapStringsSep "," toString tproxy.tcpPorts;
   helperRuntimeCapabilities = [
@@ -182,7 +197,7 @@ in
       owner = "root";
       group = cfg.helperGroup;
       capabilities = "cap_net_admin+ep";
-      source = condomBinary;
+      source = runtimeWrapperBinary;
     };
 
     networking.nftables.enable = true;

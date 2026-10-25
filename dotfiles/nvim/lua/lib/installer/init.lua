@@ -14,6 +14,14 @@ local path_update_prepend = function(dir)
   vim.env.PATH = dir .. PATH_SEPARATOR .. (vim.env.PATH or "")
 end
 
+local path_move_to_front = function(dir)
+  local paths = vim.tbl_filter(function(path)
+    return path ~= dir
+  end, vim.split(vim.env.PATH or "", PATH_SEPARATOR, { plain = true, trimempty = true }))
+  table.insert(paths, 1, dir)
+  vim.env.PATH = table.concat(paths, PATH_SEPARATOR)
+end
+
 local resolve_from_path = function(bin)
   local path = vim.fn.exepath(bin)
   if path == "" then return nil end
@@ -48,6 +56,14 @@ end
 local prepend_installed_bins = function()
   for _, name in ipairs(registry.names()) do
     if registry.is_installed(name) then path_update_prepend(registry.get_bin_dir(name)) end
+  end
+
+  -- one tool's dependencies can expose another tool's bin name, such as an older tsc, so each tool's own bin wins
+  for _, name in ipairs(registry.names()) do
+    local own_bin = registry.get_executable_path(name)
+    if registry.is_installed(name) and vim.fn.exepath(registry.get(name).bin) ~= own_bin then
+      path_move_to_front(registry.get_bin_dir(name))
+    end
   end
 end
 
@@ -95,7 +111,7 @@ local install_npm = function(name, tool)
   local output = vim.fn.system(install_args)
   if vim.v.shell_error ~= 0 then error(output) end
   if not registry.is_installed(name) then error("install completed but executable is missing: " .. tool.bin) end
-  path_update_prepend(registry.get_bin_dir(name))
+  prepend_installed_bins()
 end
 
 local install = function(name)
