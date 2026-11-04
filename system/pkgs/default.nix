@@ -8,6 +8,7 @@ in
   claudeDesktop = pkgs.callPackage (claudeDesktopSource + "/nix/fhs.nix") {
     claude-desktop = claudeDesktop;
   };
+  omnidiff = pkgs.callPackage ./omnidiff { };
   qimgv = pkgs.callPackage ./qimgv { };
   strata = pkgs.callPackage ./strata { };
 }

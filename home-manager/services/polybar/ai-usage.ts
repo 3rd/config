@@ -21,9 +21,7 @@ import { Database } from "bun:sqlite";
 
 const CACHE_PATH = "/tmp/polybar-ai-usage.json";
 const LOCK_PATH = "/tmp/polybar-ai-usage.lock";
-const CLAUDE_STATUSLINE_CACHE_PATH = "/tmp/polybar-ai-usage-claude-statusline.json";
-const CLAUDE_STATUSLINE_CACHE_PATH_2 = "/tmp/polybar-ai-usage-claude-statusline-2.json";
-const CLAUDE_STATUSLINE_CACHE_PATH_3 = "/tmp/polybar-ai-usage-claude-statusline-3.json";
+const CLAUDE_STATUSLINE_CACHE_PATH_PREFIX = "/tmp/polybar-ai-usage-claude-statusline";
 const REFRESH_FLAG = "--refresh";
 
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
@@ -67,6 +65,7 @@ const PROVIDER_COLORS = {
 } as const;
 
 type ProviderName = "claude" | "codex" | "cursor";
+type FetchedProviderName = Exclude<ProviderName, "claude">;
 type ProviderSource = "api" | "statusline";
 type ProviderErrorCode = "unavailable";
 type ProviderQuotaKind = "session" | "weekly" | "billingTotal" | "billingApi";
@@ -107,8 +106,13 @@ const PROVIDER_COMMANDS = {
 
 const CODEX_AUTH_PATHS = ["~/.codex/auth.json", "~/.config/codex/auth.json"] as const;
 
-const CODEX_ACCOUNTS_DIR_DEFAULT = "~/brain/config/workflow/agents/config/custom/codex/accounts";
+const AGENTS_CONFIG_DIR = "~/brain/config/workflow/agents/config";
+const CODEX_ACCOUNTS_DIR_DEFAULT = `${AGENTS_CONFIG_DIR}/custom/codex/accounts`;
 const CODEX_ACCOUNTS_STATE_FILE = "state.json";
+const CODEX_ACCOUNTS_PATH = `${AGENTS_CONFIG_DIR}/custom/codex/accounts.jsonc`;
+
+const CCC_ACCOUNTS_PATH = `${AGENTS_CONFIG_DIR}/custom/ccc/accounts.jsonc`;
+const CCC_DEFAULT_PROFILE = "1";
 
 const CURSOR_STATE_DB_PATHS = [
   "~/.config/Cursor/User/globalStorage/state.vscdb",
@@ -162,6 +166,11 @@ interface CodexAccountEntry {
   entry: ProviderEntry;
 }
 
+interface ClaudeAccountEntry {
+  profile: string;
+  entry: ProviderEntry | undefined;
+}
+
 interface ProviderSegment {
   label: string | null;
   labelColor: string | null;
@@ -169,9 +178,7 @@ interface ProviderSegment {
 }
 
 interface CacheData {
-  claude?: ProviderEntry;
-  claude2?: ProviderEntry;
-  claude3?: ProviderEntry;
+  claudeAccounts?: ClaudeAccountEntry[];
   codexAccounts?: CodexAccountEntry[];
   cursor?: ProviderEntry;
   updatedAt?: number;
@@ -183,7 +190,6 @@ interface ClaudeStatuslineWindowCache {
 }
 
 interface ClaudeStatuslineCache {
-  fiveHour?: ClaudeStatuslineWindowCache;
   sevenDay?: ClaudeStatuslineWindowCache;
   updatedAt: number;
 }
@@ -492,7 +498,6 @@ const normalizeClaudeStatuslineCache = (value: unknown): ClaudeStatuslineCache |
 
   return {
     updatedAt,
-    fiveHour: normalizeClaudeStatuslineWindowCache(value.fiveHour ?? value.five_hour),
     sevenDay: normalizeClaudeStatuslineWindowCache(value.sevenDay ?? value.seven_day),
   };
 };
@@ -510,7 +515,7 @@ const claudeWindowUsed = (window: ClaudeStatuslineWindowCache | undefined): numb
   return window.usedPercentage;
 };
 
-const readClaudeStatuslineEntry = (cachePath: string): ProviderEntry | undefined => {
+export const readClaudeStatuslineEntry = (cachePath: string): ProviderEntry | undefined => {
   const cache = normalizeClaudeStatuslineCache(parseJsonFile(cachePath));
   if (!cache) {
     return undefined;
@@ -524,11 +529,6 @@ const readClaudeStatuslineEntry = (cachePath: string): ProviderEntry | undefined
     provider: "claude",
     source: "statusline",
     quotas: [
-      {
-        kind: "session",
-        used: claudeWindowUsed(cache.fiveHour),
-        resetAt: cache.fiveHour?.resetsAt ?? null,
-      },
       {
         kind: "weekly",
         used: claudeWindowUsed(cache.sevenDay),
@@ -581,13 +581,56 @@ export const normalizeCacheData = (value: unknown): CacheData => {
   };
 };
 
+const claudeStatuslineCachePath = (profile: string) =>
+  profile === CCC_DEFAULT_PROFILE
+    ? `${CLAUDE_STATUSLINE_CACHE_PATH_PREFIX}.json`
+    : `${CLAUDE_STATUSLINE_CACHE_PATH_PREFIX}-${profile}.json`;
+
+const readAccountsConfig = (path: string) => {
+  let accounts: unknown;
+
+  try {
+    accounts = Bun.JSONC.parse(readFileSync(expandHomePath(path), "utf8"));
+  } catch {
+    return [];
+  }
+
+  if (!isJsonObject(accounts)) {
+    return [];
+  }
+
+  return Object.entries(accounts).flatMap(([name, account]) => (isJsonObject(account) ? [{ name, account }] : []));
+};
+
+const isShownInTray = (account: JsonObject) => account.showInTray !== false;
+
+const readCccProfiles = () => {
+  const accounts = readAccountsConfig(CCC_ACCOUNTS_PATH);
+  if (accounts.length === 0) {
+    return [CCC_DEFAULT_PROFILE];
+  }
+
+  return accounts
+    .filter(({ account }) => isShownInTray(account))
+    .map(({ name }) => name)
+    .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+};
+
+const readHiddenCodexAccounts = () =>
+  new Set(
+    readAccountsConfig(CODEX_ACCOUNTS_PATH)
+      .filter(({ account }) => !isShownInTray(account))
+      .map(({ name }) => name),
+  );
+
 const readCache = (): CacheData => {
   const cache = normalizeCacheData(parseJsonFile(CACHE_PATH));
   return {
     ...cache,
-    claude: readClaudeStatuslineEntry(CLAUDE_STATUSLINE_CACHE_PATH),
-    claude2: readClaudeStatuslineEntry(CLAUDE_STATUSLINE_CACHE_PATH_2),
-    claude3: readClaudeStatuslineEntry(CLAUDE_STATUSLINE_CACHE_PATH_3),
+    claudeAccounts: readCccProfiles().map((profile) => ({
+      profile,
+      entry: readClaudeStatuslineEntry(claudeStatuslineCachePath(profile)),
+    })),
   };
 };
 
@@ -604,7 +647,7 @@ const entryIsFresh = (entry: ProviderEntry, provider: ProviderName): boolean => 
   return Date.now() - entry.fetchedAt * 1000 < ttlSeconds * 1000;
 };
 
-const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
+const cacheIsFresh = (cache: CacheData, provider: FetchedProviderName): boolean => {
   if (provider === "codex") {
     const accounts = cache.codexAccounts ?? [];
     return accounts.length > 0 && accounts.every((account) => entryIsFresh(account.entry, provider));
@@ -617,7 +660,7 @@ const cacheIsFresh = (cache: CacheData, provider: ProviderName): boolean => {
 const cacheNeedsRefresh = (cache: CacheData): boolean =>
   availableProviders().some((provider) => provider !== "claude" && !cacheIsFresh(cache, provider));
 
-const shouldRefreshProvider = (cache: CacheData, provider: ProviderName, forceRefresh: boolean): boolean =>
+const shouldRefreshProvider = (cache: CacheData, provider: FetchedProviderName, forceRefresh: boolean): boolean =>
   forceRefresh || !cacheIsFresh(cache, provider);
 
 const colorForRemaining = (value: number | null): string => {
@@ -680,13 +723,16 @@ const formatRemainingTime = (remainingSeconds: number | null): string | null => 
   return `${Math.max(1, Math.ceil(remainingSeconds / MINUTE_SECONDS))}m`;
 };
 
-const UNKNOWN_PAIR = `%{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}/%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
+const UNKNOWN_VALUE = `%{F${PROVIDER_COLORS.unknown}}--${RESET_COLOR}`;
+const UNKNOWN_PAIR = `%{F${PROVIDER_COLORS.unknown}}--%{F${PROVIDER_COLORS.separator}}/${UNKNOWN_VALUE}`;
 
-export const formatEntryValues = (entry?: ProviderEntry): string => {
-  if (!entry) return UNKNOWN_PAIR;
+export const formatEntryValues = (entry?: ProviderEntry, provider = entry?.provider): string => {
+  const unknownValues = provider === "claude" ? UNKNOWN_VALUE : UNKNOWN_PAIR;
+
+  if (!entry) return unknownValues;
 
   const availableValues = entry.quotas.map((quota) => quota.remaining).filter(isNumber);
-  if (availableValues.length === 0) return UNKNOWN_PAIR;
+  if (availableValues.length === 0) return unknownValues;
 
   const remainingPart = entry.quotas
     .map((quota) => `%{F${colorForRemaining(quota.remaining)}}${displayPercent(quota.remaining)}`)
@@ -707,11 +753,16 @@ export const formatEntryValues = (entry?: ProviderEntry): string => {
 
   const showTime = (time: string | null): string => time ?? "--";
   const timePart = resetTimes
-    .map(
-      (resetTime, index) =>
-        `%{F${index === 0 ? PROVIDER_COLORS.separator : colorForReset(resetTime.quota, resetTime.remainingSeconds)}}${showTime(resetTime.text)}`,
-    )
+    .map((resetTime, index) => {
+      const shouldUseSeparatorColor = index === 0 && entry.provider !== "claude";
+      const color = shouldUseSeparatorColor
+        ? PROVIDER_COLORS.separator
+        : colorForReset(resetTime.quota, resetTime.remainingSeconds);
+
+      return `%{F${color}}${showTime(resetTime.text)}`;
+    })
     .join(`%{F${PROVIDER_COLORS.separator}}/`);
+
   return `${remainingPart}${VALUE_DIVIDER}${timePart}${RESET_COLOR}`;
 };
 
@@ -722,38 +773,42 @@ const formatProviderLabel = (provider: ProviderName, label: string | null, label
 
 const formatProviderOutput = (provider: ProviderName, segments: readonly ProviderSegment[]): string =>
   segments
-    .map((segment) => `${formatProviderLabel(provider, segment.label, segment.labelColor)} ${formatEntryValues(segment.entry)}`)
+    .map((segment) => `${formatProviderLabel(provider, segment.label, segment.labelColor)} ${formatEntryValues(segment.entry, provider)}`)
     .join(SEGMENT_GAP);
 
-const claudeSegments = (cache: CacheData): ProviderSegment[] => {
-  const entries = [cache.claude, cache.claude2, cache.claude3];
-  const showEntryNumbers = entries.filter(hasProviderEntry).length > 1;
-  return entries.map((entry, index) => ({
-    label: showEntryNumbers ? String(index + 1) : null,
-    labelColor: null,
-    entry,
-  }));
-};
-
-export const codexSegments = (accounts: readonly CodexAccountEntry[]): ProviderSegment[] => {
-  if (accounts.length === 0) {
-    return [{ label: null, labelColor: null, entry: undefined }];
-  }
-
+const claudeSegments = (accounts: readonly ClaudeAccountEntry[]): ProviderSegment[] => {
+  const shouldLabelProfiles = accounts.some((account) => account.profile !== CCC_DEFAULT_PROFILE);
   return accounts.map((account) => ({
-    label: account.name,
-    labelColor: account.active ? PROVIDER_ICON_COLORS.codex : PROVIDER_COLORS.icon,
+    label: shouldLabelProfiles ? account.profile : null,
+    labelColor: null,
     entry: account.entry,
   }));
 };
 
+export const codexSegments = (
+  accounts: readonly CodexAccountEntry[],
+  hiddenNames: ReadonlySet<string | null>,
+): ProviderSegment[] => {
+  if (accounts.length === 0) {
+    return [{ label: null, labelColor: null, entry: undefined }];
+  }
+
+  return accounts
+    .filter((account) => !hiddenNames.has(account.name))
+    .map((account) => ({
+      label: account.name,
+      labelColor: account.active ? PROVIDER_ICON_COLORS.codex : PROVIDER_COLORS.icon,
+      entry: account.entry,
+    }));
+};
+
 const providerSegments = (cache: CacheData, provider: ProviderName): ProviderSegment[] => {
   if (provider === "claude") {
-    return claudeSegments(cache);
+    return claudeSegments(cache.claudeAccounts ?? []);
   }
 
   if (provider === "codex") {
-    return codexSegments(cache.codexAccounts ?? []);
+    return codexSegments(cache.codexAccounts ?? [], readHiddenCodexAccounts());
   }
 
   return [{ label: null, labelColor: null, entry: cache[provider] }];
@@ -761,7 +816,11 @@ const providerSegments = (cache: CacheData, provider: ProviderName): ProviderSeg
 
 const formatOutput = (cache: CacheData): string =>
   availableProviders()
-    .map((provider) => formatProviderOutput(provider, providerSegments(cache, provider)))
+    .flatMap((provider) => {
+      const segments = providerSegments(cache, provider);
+
+      return segments.length === 0 ? [] : [formatProviderOutput(provider, segments)];
+    })
     .join(SEGMENT_GAP);
 
 const unavailableEntry = (provider: ProviderName): ProviderEntry =>
@@ -1150,9 +1209,7 @@ const refreshCache = async (
   ]);
 
   const nextCache: CacheData = {
-    claude: previousCache.claude,
-    claude2: previousCache.claude2,
-    claude3: previousCache.claude3,
+    claudeAccounts: previousCache.claudeAccounts,
     codexAccounts,
     cursor,
     updatedAt: nowEpoch(),

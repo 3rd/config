@@ -425,6 +425,51 @@ mod tests {
     }
 
     #[test]
+    fn fence_proxy_ports_come_from_the_sandbox_proxy_variables() {
+        let environment = BTreeMap::from([
+            ("FENCE_SANDBOX".to_string(), "1".to_string()),
+            (
+                "HTTP_PROXY".to_string(),
+                "http://127.0.0.1:3128".to_string(),
+            ),
+            (
+                "https_proxy".to_string(),
+                "http://127.0.0.1:3128".to_string(),
+            ),
+            (
+                "ALL_PROXY".to_string(),
+                "socks5h://127.0.0.1:1080".to_string(),
+            ),
+        ]);
+
+        assert_eq!(fence_proxy_ports_from(&environment), vec![1080, 3128]);
+    }
+
+    #[test]
+    fn fence_proxy_ports_are_empty_outside_fence() {
+        let environment = BTreeMap::from([(
+            "HTTP_PROXY".to_string(),
+            "http://127.0.0.1:3128".to_string(),
+        )]);
+
+        assert!(fence_proxy_ports_from(&environment).is_empty());
+    }
+
+    #[test]
+    fn fence_proxy_ports_skip_proxies_outside_loopback() {
+        let environment = BTreeMap::from([
+            ("FENCE_SANDBOX".to_string(), "1".to_string()),
+            (
+                "HTTP_PROXY".to_string(),
+                "http://proxy.example.test:8080".to_string(),
+            ),
+            ("ALL_PROXY".to_string(), "socks5h://[::1]:1080".to_string()),
+        ]);
+
+        assert_eq!(fence_proxy_ports_from(&environment), vec![1080]);
+    }
+
+    #[test]
     fn filesystem_authorizer_uses_policy_snapshot_project_id_for_state() {
         let temp = tempfile::tempdir().unwrap();
         let project = ProjectContext {

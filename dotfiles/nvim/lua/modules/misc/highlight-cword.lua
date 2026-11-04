@@ -155,9 +155,9 @@ local refresh_window = function(winid, filetype_excludes)
     clear_window_matches_in_context(state)
     if #other_positions == 0 and not current_position then return end
 
-    if #other_positions > 0 then state.other_match_id = vim.fn.matchaddpos("CursorWord", other_positions, 10) end
+    if #other_positions > 0 then state.other_match_id = vim.fn.matchaddpos("CursorWord", other_positions, -2) end
     if current_position then
-      state.current_match_id = vim.fn.matchaddpos("CursorWordCurrent", { current_position }, 11)
+      state.current_match_id = vim.fn.matchaddpos("CursorWordCurrent", { current_position }, -1)
     end
     state.key = state_key
   end)

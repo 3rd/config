@@ -3,33 +3,33 @@ local colors = {
   background = "#222225",
   blue = "#31BBF8",
   common = {
-    boolean = "#FF8170",
-    builtin = "#EB806B",
-    comment = "#82829B",
-    conditional = "#F288E0",
-    constant = "#FF8170",
-    constructor = "#17CFCF",
+    boolean = "#EEAF5D",
+    builtin = "#E67A7F",
+    comment = "#7B7B8A",
+    conditional = "#F79065",
+    constant = "#EEAF5D",
+    constructor = "#5BD5E0",
     cword = "#3B3945",
     cword_current = "#403F43",
-    delimiter = "#878792",
-    field = "#BBBBCE",
-    ["function"] = "#7EBDFC",
-    identifier = "#DFDFEC",
-    keyword = "#A7A7B4",
-    macro = "#ACACF1",
-    number = "#FF8170",
-    operator = "#A7A7B4",
-    parameter = "#E3AC63",
-    property = "#BBBBCE",
-    ["repeat"] = "#F288E0",
-    ret = "#EB806B",
-    special = "#FF80AA",
-    special_keyword = "#FF80AA",
+    delimiter = "#7E7E86",
+    field = "#A9A9C1",
+    ["function"] = "#67BBFF",
+    identifier = "#CDCDD9",
+    keyword = "#757589",
+    macro = "#7B7BEA",
+    number = "#EEAF5D",
+    operator = "#757589",
+    parameter = "#63E3C7",
+    property = "#A9A9C1",
+    ["repeat"] = "#F79065",
+    ret = "#E67A7F",
+    special = "#DE94D0",
+    special_keyword = "#DE94D0",
     string = "#ACD35F",
-    type = "#17CFCF"
+    type = "#5BD5E0"
   },
   cyan = "#25DDD2",
-  foreground = "#DEDEEC",
+  foreground = "#CDCDD9",
   green = "#6CDB4D",
   indigo = "#9B9AF9",
   magenta = "#CE70FF",
@@ -46,63 +46,63 @@ local colors = {
   slang = {
     banner = {
       bg = "#2D2E34",
-      fg = "#EDAF5E"
+      fg = "#5EE1ED"
     },
     code = {
       block = {
         background = "#2C2A33",
-        content = "#DFDFEC",
+        content = "#CDCDD9",
         language = "#6C687D",
         marker = "#3B3945"
       },
-      inline = "#ED9145"
+      inline = "#FDC85E"
     },
     datetime = "#FC824A",
     document = {
-      meta = "#82829B",
+      meta = "#7B7B8A",
       meta_field = "#F075D1",
       meta_field_key = "#EC93D6",
-      title = "#C0E774"
+      title = "#1BDF83"
     },
     headline = {
       five = {
         bg = "#474B4D",
-        fg = "#DFDFEC"
+        fg = "#CDCDD9"
       },
       four = {
         bg = "#424548",
-        fg = "#DFDFEC"
+        fg = "#CDCDD9"
       },
-      marker = "#A8A8C7",
+      marker = "#9F9FB2",
       one = {
         bg = "#2D2E34",
-        fg = "#DFDFEC"
+        fg = "#CDCDD9"
       },
       six = {
         bg = "#4E5455",
-        fg = "#DFDFEC"
+        fg = "#CDCDD9"
       },
       three = {
         bg = "#353C45",
-        fg = "#DFDFEC"
+        fg = "#CDCDD9"
       },
       two = {
         bg = "#32353E",
-        fg = "#DFDFEC"
+        fg = "#CDCDD9"
       }
     },
     label = "#E486CC",
-    label_line = "#20C5C5",
+    label_line = "#63CFD9",
     link = {
-      external = "#6BABEB",
+      external = "#55A8EC",
       internal = "#5BC0CD"
     },
     list_item = {
-      label = "#D184DB",
-      label_marker = "#DFDFEC",
-      marker = "#848490"
+      label = "#7DD6FC",
+      label_marker = "#CDCDD9",
+      marker = "#7C7C83"
     },
-    number = "#FF8170",
+    number = "#EEAF5D",
     outline = {
       five = "#04D2CE",
       four = "#FFC78F",
@@ -114,7 +114,7 @@ local colors = {
     section = "#8797C2",
     string = "#ACD35F",
     tag = {
-      context = "#EDAF5E",
+      context = "#5EE1ED",
       danger = {
         bg = "#C3423F",
         fg = "#ffffff"
@@ -125,10 +125,10 @@ local colors = {
       positive = "#9BC53D"
     },
     task = {
-      active = "#17CFCF",
+      active = "#5BD5E0",
       cancelled = "#fa4040",
       completion = "#7378a5",
-      default = "#DFDFEC",
+      default = "#CDCDD9",
       done = "#646468",
       recurrence = "#7378a5",
       schedule = "#7378a5",
@@ -141,7 +141,7 @@ local colors = {
     breadcrumbs = {
       normal = {
         bg = "#323039",
-        fg = "#AAAAC5"
+        fg = "#A0A0B1"
       },
       separator = {
         fg = "#928F9F"
@@ -157,7 +157,7 @@ local colors = {
       },
       current_line_sign = {
         bg = "#3B3945",
-        fg = "#EB9147"
+        fg = "#FBAD4E"
       },
       line_nr = {
         fg = "#3B3945"
@@ -176,6 +176,17 @@ local colors = {
       c = {
         bg = "#2C2A33",
         fg = "#AAAAC5"
+      }
+    },
+    status_diagnostics = {
+      hint = {
+        fg = "#17CFCF"
+      },
+      info = {
+        fg = "#7EBDFC"
+      },
+      warn = {
+        fg = "#EB9147"
       }
     },
     tabs = {

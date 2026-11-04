@@ -10,6 +10,7 @@ import {
   fetchCodexAccounts,
   formatEntryValues,
   normalizeCacheData,
+  readClaudeStatuslineEntry,
 } from "./ai-usage";
 
 const codexEntry = (usedPercent: number) => {
@@ -39,15 +40,25 @@ test("labels codex segments with profile names and highlights the active account
   const segments = codexSegments([
     { name: "personal", active: false, entry: personalEntry },
     { name: "work", active: true, entry: workEntry },
-  ]);
+  ], new Set());
 
   expect(segments.map((segment) => segment.label)).toEqual(["personal", "work"]);
   expect(segments[1].labelColor).not.toBe(segments[0].labelColor);
   expect(segments.map((segment) => segment.entry)).toEqual([personalEntry, workEntry]);
 });
 
+test("omits codex accounts hidden from the tray, leaving no segments when all are hidden", () => {
+  const accounts = [
+    { name: "personal", active: false, entry: codexEntry(10) },
+    { name: "work", active: true, entry: codexEntry(20) },
+  ];
+
+  expect(codexSegments(accounts, new Set(["work"])).map((segment) => segment.label)).toEqual(["personal"]);
+  expect(codexSegments(accounts, new Set(["personal", "work"]))).toEqual([]);
+});
+
 test("renders a single unnamed codex account without a label", () => {
-  const segments = codexSegments([{ name: null, active: true, entry: codexEntry(10) }]);
+  const segments = codexSegments([{ name: null, active: true, entry: codexEntry(10) }], new Set());
 
   expect(segments).toHaveLength(1);
   expect(segments[0].label).toBeNull();
@@ -198,6 +209,47 @@ test("renders Cursor usage once", () => {
 
   const rendered = formatEntryValues(entry).replaceAll(/%\{[^}]+\}/g, "");
   expect(rendered).toBe("100 27d");
+});
+
+describe("Claude weekly usage", () => {
+  let cacheDirectory: string;
+  let cachePath: string;
+
+  beforeEach(() => {
+    cacheDirectory = mkdtempSync(join(tmpdir(), "polybar-claude-test-"));
+    cachePath = join(cacheDirectory, "statusline.json");
+  });
+
+  afterEach(() => {
+    rmSync(cacheDirectory, { recursive: true, force: true });
+  });
+
+  test.each([
+    [5, "#4C495E"],
+    [3, "#c2940a"],
+    [1, "#c2290a"],
+  ])("renders weekly remaining usage with a %i-day reset", (resetDays, resetColor) => {
+    const now = Math.floor(Date.now() / 1000);
+    writeFileSync(cachePath, JSON.stringify({
+      updatedAt: now,
+      sevenDay: { usedPercentage: 48, resetsAt: now + resetDays * 24 * 60 * 60 },
+    }));
+
+    const rendered = formatEntryValues(readClaudeStatuslineEntry(cachePath), "claude");
+    expect(rendered).toBe(`%{F#66b814}52 %{F${resetColor}}${resetDays}d%{F-}`);
+  });
+
+  test("shows unavailable when the statusline cache is missing", () => {
+    const rendered = formatEntryValues(readClaudeStatuslineEntry(cachePath), "claude");
+    expect(rendered).toBe("%{F#848095}--%{F-}");
+  });
+
+  test("shows unavailable when weekly usage is unknown", () => {
+    writeFileSync(cachePath, JSON.stringify({ updatedAt: Math.floor(Date.now() / 1000) }));
+
+    const rendered = formatEntryValues(readClaudeStatuslineEntry(cachePath), "claude");
+    expect(rendered).toBe("%{F#848095}--%{F-}");
+  });
 });
 
 describe("read-only Codex usage", () => {

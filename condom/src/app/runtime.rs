@@ -13,8 +13,6 @@ use crate::sandbox::capture;
 use crate::sandbox::fence;
 use crate::sandbox::review;
 
-const FENCE_INTERNAL_PROXY_PORTS: &[u16] = &[3128, 1080];
-
 pub fn run_guarded(
     project: &ProjectContext,
     state: &StatePaths,
@@ -42,8 +40,7 @@ pub fn run_guarded(
         proxy_guard.addr(),
         &config.proxy,
     )?);
-    let mut proxy_ports = proxy_guard.allowed_network_ports();
-    add_fence_internal_proxy_ports(&mut proxy_ports);
+    let proxy_ports = proxy_guard.allowed_network_ports();
     let policy_snapshot = policy::write_snapshot_with_network(
         project,
         state,
@@ -161,9 +158,8 @@ fn review_guarded_with_session(
             proxy_guard.addr(),
             &config.proxy,
         )?);
-        let mut proxy_ports = proxy_guard.allowed_network_ports();
+        let proxy_ports = proxy_guard.allowed_network_ports();
         let proxy_listen_port = Some(proxy_guard.port());
-        add_fence_internal_proxy_ports(&mut proxy_ports);
         forward_review_shell_env(&mut extra_env);
         let transparent_proxy = proxy_guard.transparent_proxy_snapshot();
         let policy_snapshot = policy::write_snapshot_with_network(
@@ -206,12 +202,6 @@ fn ensure_command(command: &[String]) -> Result<()> {
         bail!("missing command after --");
     }
     Ok(())
-}
-
-fn add_fence_internal_proxy_ports(ports: &mut Vec<u16>) {
-    ports.extend(FENCE_INTERNAL_PROXY_PORTS);
-    ports.sort_unstable();
-    ports.dedup();
 }
 
 fn forward_review_shell_env(extra_env: &mut BTreeMap<String, String>) {

@@ -22,7 +22,7 @@ for _, colorscheme in ipairs({ "static", "dynamic" }) do
     name = "@" .. strong_capture.capture .. "." .. strong_capture.lang,
     link = false,
   })
-  assert(highlight.fg == 0xD184DB, colorscheme .. " Markdown bold must match the coding-agent purple")
+  assert(highlight.fg == 0x7DD6FC, colorscheme .. " Markdown bold must use the shared blue emphasis color")
   assert(highlight.bold, colorscheme .. " Markdown bold must retain its weight")
   assert(vim.api.nvim_get_hl(0, { name = "@markup.strong", link = false }).fg == nil)
 end
@@ -34,14 +34,14 @@ vim.bo[bufnr].syntax = "markdown"
 local bold_group = vim.fn.synIDattr(vim.fn.synID(2, 4, 1), "name")
 assert(bold_group == "markdownBold", "Markdown syntax must recognize bold text without Tree-sitter")
 local bold = vim.api.nvim_get_hl(0, { name = bold_group, link = false })
-assert(bold.fg == 0xD184DB and bold.bold, "Markdown syntax bold must use purple and retain its weight")
+assert(bold.fg == 0x7DD6FC and bold.bold, "Markdown syntax bold must use blue and retain its weight")
 
 local bold_italic_group = vim.fn.synIDattr(vim.fn.synID(3, 5, 1), "name")
 assert(bold_italic_group == "markdownBoldItalic", "Markdown syntax must recognize combined emphasis")
 local bold_italic = vim.api.nvim_get_hl(0, { name = bold_italic_group, link = false })
 assert(
-  bold_italic.fg == 0xD184DB and bold_italic.bold and bold_italic.italic,
-  "Markdown combined emphasis must use purple and retain both styles"
+  bold_italic.fg == 0x7DD6FC and bold_italic.bold and bold_italic.italic,
+  "Markdown combined emphasis must use blue and retain both styles"
 )
 
-print("ok: Markdown bold matches the coding-agent color in both themes and syntax highlighters")
+print("ok: Markdown bold uses shared blue emphasis in both themes and syntax highlighters")

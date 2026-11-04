@@ -26,16 +26,36 @@ local get_highlight = function(name)
   return vim.api.nvim_get_hl(0, { name = name, link = false })
 end
 
+local heading_colors = {
+  { text = 0xFBAD4E, marker = 0x9B6254, background = 0x4A352F },
+  { text = 0xFF905C, marker = 0x895C48, background = 0x3E312B },
+  { text = 0xFF9041, marker = 0x7B5941, background = 0x342D28 },
+  { text = 0x5BD5E0, marker = 0x3FBAC6, background = 0x253232 },
+  { text = 0x5EE1ED, marker = 0x45596A, background = 0x2A333B },
+  { text = 0xF075D1, marker = 0xD84BB4, background = 0x3D2F39 },
+}
+
 for _, colorscheme in ipairs({ "static", "dynamic" }) do
   vim.cmd.colorscheme(colorscheme)
 
-  for level = 1, 6 do
+  for level, expected in ipairs(heading_colors) do
     local syslang = get_highlight("@slang.heading_" .. level .. ".text")
     local markdown = get_highlight("@markup.heading." .. level .. ".markdown")
     assert(vim.deep_equal(syslang, markdown), colorscheme .. " heading styles differ at level " .. level)
     assert(syslang.bold, "headings must retain Syslang's bold weight")
+    assert(syslang.fg == expected.text, colorscheme .. " heading text has the wrong color at level " .. level)
+    assert(get_highlight("@slang.heading_" .. level .. ".marker").fg == expected.marker)
+    assert(get_highlight("@markup.heading." .. level .. ".marker.markdown").fg == expected.marker)
+    assert(get_highlight("SyslangHeadline" .. level).bg == expected.background)
+    assert(get_highlight("SyslangHeadlineMargin" .. level).bg == expected.background)
   end
 
+  assert(get_highlight("Normal").fg == 0xCDCDD9, colorscheme .. " must preserve the exact shared foreground")
+  assert(get_highlight("DiagnosticWarn").fg == 0xFBAD4E, colorscheme .. " warnings must use the shared orange")
+  assert(get_highlight("IncSearch").bg == 0x5EE1ED, colorscheme .. " search must use the shared cyan")
+  assert(get_highlight("MarkdownTitle").fg == 0x1BDF83, colorscheme .. " document titles must use the shared green")
+  assert(get_highlight("@markup.raw.markdown_inline").fg == 0xFDC85E)
+  assert(vim.deep_equal(get_highlight("@markup.raw.markdown_inline"), get_highlight("@slang.inline_code")))
   assert(vim.deep_equal(get_highlight("MarkdownTitle"), get_highlight("@slang.document.title")))
   assert(vim.deep_equal(get_highlight("MarkdownExternalLink"), get_highlight("@slang.external_link")))
   assert(vim.deep_equal(get_highlight("MarkdownImage"), get_highlight("@slang.image")))

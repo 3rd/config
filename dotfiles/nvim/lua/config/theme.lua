@@ -14,16 +14,16 @@ local colors = {
   none = "NONE",
   -- background = hsl(palette.background).lighten(1),
   background = hsl(palette.background),
-  foreground = hsl(palette.foreground),
-  blue = hsl(210, 95, 74),
-  cyan = hsl(180, 80, 45),
+  foreground = palette.foreground,
+  blue = "#67BBFF",
+  cyan = "#5BD5E0",
   green = hsl(80, 57, 60),
   indigo = hsl(250, 60, 70),
   magenta = hsl(315, 80, 70),
-  orange = hsl(27, 80, 60),
+  orange = "#FBAD4E",
   pink = hsl(315, 70, 75),
   red = hsl(10, 95, 45),
-  yellow = hsl(34, 80, 65),
+  yellow = "#5EE1ED",
   visual = palette["selection-background"],
   terminal = {
     palette.color0,
@@ -51,21 +51,26 @@ colors.plugins = {
   },
 }
 
-local bold_color = "#D184DB"
+local foreground_hsl = hsl(colors.foreground)
+local blue_hsl = hsl(colors.blue)
+local cyan_hsl = hsl(colors.cyan)
+local orange_hsl = hsl(colors.orange)
+local yellow_hsl = hsl(colors.yellow)
+local bold_color = "#7DD6FC"
 local variable = colors.foreground
-local keyword = colors.foreground.darken(24).desaturate(70)
-local delimiter = colors.foreground.darken(39).desaturate(80)
-local control = keyword.rotate(70).lighten(20).saturation(80)
+local keyword = "#757589"
+local delimiter = foreground_hsl.darken(39).desaturate(80)
+local control = "#F79065"
 local operator = keyword
 
-local parameter = colors.yellow.saturation(70).lightness(64)
-local property = colors.foreground.darken(15).saturation(16)
+local parameter = "#63E3C7"
+local property = foreground_hsl.darken(15).saturation(16)
 local field = property
-local constant = colors.orange.rotate(-20).lighten(30).saturation(100)
-local comment = colors.foreground.darken(38).desaturate(60)
-local dimmedComment = colors.foreground.darken(50).desaturate(20)
-local builtin = colors.red.lighten(40).desaturate(20)
-local special = colors.indigo.rotate(90).saturation(100).lighten(15)
+local constant = "#EEAF5D"
+local comment = foreground_hsl.darken(38).desaturate(60)
+local dimmedComment = foreground_hsl.darken(50).desaturate(20)
+local builtin = "#E67A7F"
+local special = "#DE94D0"
 
 colors.common = {
   -- lab
@@ -91,7 +96,7 @@ colors.common = {
   special_keyword = special,
   -- extra
   builtin = builtin,
-  macro = keyword.lighten(40).saturate(70),
+  macro = hsl(keyword).lighten(40).saturate(70),
   ret = builtin,
   constructor = colors.cyan,
   cword = palette["gray-darkish"],
@@ -116,23 +121,28 @@ colors.ui = {
   },
   split = palette["gray-darkish"],
   status = {
-    a = { bg = palette["gray-darkish"], fg = colors.foreground.darken(10).desaturate(20) },
-    b = { bg = palette["gray-dark"], fg = colors.foreground.darken(15).desaturate(20) },
-    c = { bg = palette["gray-darker"], fg = colors.foreground.darken(20).desaturate(30) },
+    a = { bg = palette["gray-darkish"], fg = "#C4C4D9" },
+    b = { bg = palette["gray-dark"], fg = "#B7B7D1" },
+    c = { bg = palette["gray-darker"], fg = "#AAAAC5" },
+  },
+  status_diagnostics = {
+    warn = { fg = "#EB9147" },
+    info = { fg = "#7EBDFC" },
+    hint = { fg = "#17CFCF" },
   },
   tabs = {
-    fill = { bg = colors.background, fg = colors.foreground.darken(40).desaturate(60) },
-    inactive = { bg = palette["panel-background"], fg = colors.foreground.darken(30).desaturate(40) },
-    active = { bg = palette["gray-dark"], fg = colors.foreground, gui = "bold" },
+    fill = { bg = colors.background, fg = "#7D7D97" },
+    inactive = { bg = palette["panel-background"], fg = "#9292B0" },
+    active = { bg = palette["gray-dark"], fg = "#DFDFEC", gui = "bold" },
   },
   breadcrumbs = {
-    normal = { bg = palette["gray-dark"], fg = colors.foreground.darken(20).desaturate(30) },
+    normal = { bg = palette["gray-dark"], fg = foreground_hsl.darken(20).desaturate(30) },
     separator = { fg = palette["gray-lighter"] },
   },
 }
 colors.slang = {
   document = {
-    title = colors.green.lighten(20).saturation(70),
+    title = "#1BDF83",
     meta = colors.common.comment,
     meta_field = colors.magenta,
     meta_field_key = colors.pink,
@@ -142,7 +152,7 @@ colors.slang = {
   ticket = "#fa89f6",
   datetime = "#FC824A",
   code = {
-    inline = colors.orange.saturate(10),
+    inline = "#FDC85E",
     block = {
       background = palette["gray-darker"],
       marker = palette["gray-darkish"],
@@ -152,7 +162,7 @@ colors.slang = {
   },
   link = {
     internal = "#5BC0CD",
-    external = colors.blue.darken(10).desaturate(20),
+    external = blue_hsl.darken(10).desaturate(20),
   },
   outline = {
     one = hsl("#9999FF"),
@@ -163,7 +173,7 @@ colors.slang = {
     six = hsl("#f0969f"),
   },
   headline = {
-    marker = colors.foreground.darken(20).desaturate(20),
+    marker = foreground_hsl.darken(20).desaturate(20),
     one = {
       bg = colors.background.rotate(-5).saturate(3).lighten(6),
       fg = colors.foreground,
@@ -214,51 +224,39 @@ colors.slang = {
     identifier = "#e38fff",
   },
   list_item = {
-    -- item = colors.foreground.desaturate(20).darken(10),
-    marker = colors.foreground.desaturate(80).darken(40),
+    -- item = foreground_hsl.desaturate(20).darken(10),
+    marker = foreground_hsl.desaturate(80).darken(40),
     label = bold_color,
     label_marker = colors.foreground,
   },
   label = colors.pink.darken(5).desaturate(10),
-  label_line = colors.cyan.desaturate(10),
-}
-
-local heading_accents = {
-  one = colors.orange,
-  two = colors.indigo.lighten(45).saturate(100),
-  three = colors.magenta.desaturate(11).lighten(8),
-  four = colors.cyan,
-  five = colors.yellow,
-  six = colors.magenta,
+  label_line = cyan_hsl.desaturate(10),
 }
 
 local create_heading_colors = function(accent)
+  local accent_hsl = hsl(tostring(accent))
   return {
-    marker = accent.darken(18).desaturate(20),
+    marker = accent_hsl.darken(18).desaturate(20),
     text = accent,
   }
 end
 
 local slang_heading_colors = {
-  one = create_heading_colors(heading_accents.one),
-  two = create_heading_colors(heading_accents.two),
-  three = create_heading_colors(heading_accents.three),
-  four = create_heading_colors(heading_accents.four),
-  five = create_heading_colors(heading_accents.five),
-  six = create_heading_colors(heading_accents.six),
+  one = { text = colors.orange, marker = "#9B6254" },
+  two = { text = "#FF905C", marker = "#895C48" },
+  three = { text = "#FF9041", marker = "#7B5941" },
+  four = create_heading_colors(colors.cyan),
+  five = { text = colors.yellow, marker = "#45596A" },
+  six = create_heading_colors(colors.magenta),
 }
 
-local create_slang_headline_background = function(accent)
-  return accent.darken(70).desaturate(84)
-end
-
 local slang_headline_backgrounds = {
-  one = create_slang_headline_background(heading_accents.one),
-  two = create_slang_headline_background(heading_accents.two),
-  three = create_slang_headline_background(heading_accents.three),
-  four = create_slang_headline_background(heading_accents.four),
-  five = create_slang_headline_background(heading_accents.five),
-  six = create_slang_headline_background(heading_accents.six),
+  one = "#4A352F",
+  two = "#3E312B",
+  three = "#342D28",
+  four = "#253232",
+  five = "#2A333B",
+  six = colors.magenta.darken(70).desaturate(84),
 }
 
 local create_slang_margin_highlight = function(bg)
@@ -282,7 +280,7 @@ local slang_headline_margins = {
 }
 
 local slang_section_highlight = {
-  fg = colors.yellow.desaturate(14).darken(6),
+  fg = yellow_hsl.desaturate(14).darken(6),
 }
 
 local slang_label_line_highlight = {
@@ -301,12 +299,12 @@ local theme = lush(function(injected)
     }),
     NormalFloat({ bg = palette["overlay-background"] }),
     NormalNC({}),
-    NonText({ fg = colors.foreground.darken(20) }),
+    NonText({ fg = foreground_hsl.darken(20) }),
     EndOfBuffer({ fg = colors.background }),
     Visual({ bg = colors.visual }),
-    Conceal({ fg = colors.foreground.darken(10) }),
+    Conceal({ fg = foreground_hsl.darken(10) }),
     Folded({}),
-    Whitespace({ fg = colors.foreground.darken(40).desaturate(80) }),
+    Whitespace({ fg = foreground_hsl.darken(40).desaturate(80) }),
     SpecialKey({ Whitespace }),
     Directory({ fg = colors.blue }),
     ErrorMsg({ fg = colors.red.saturate(20) }),
@@ -360,7 +358,7 @@ local theme = lush(function(injected)
 
     -- search
     IncSearch({ bg = colors.yellow, fg = colors.background }),
-    Search({ bg = colors.yellow.darken(20), fg = colors.background }),
+    Search({ bg = yellow_hsl.darken(20), fg = colors.background }),
     Substitute({ Search }),
 
     -- common
@@ -408,12 +406,12 @@ local theme = lush(function(injected)
 
     -- LSP
     LspReferenceText({ bg = palette["overlay-selected-background"] }),
-    LspReferenceRead({ bg = colors.yellow.darken(20) }),
+    LspReferenceRead({ bg = yellow_hsl.darken(20) }),
     LspReferenceWrite({ bg = colors.red.darken(20) }),
-    LspCodeLens({ fg = colors.foreground.darken(20) }),
-    LspCodeLensSeparator({ fg = colors.foreground.darken(40) }),
+    LspCodeLens({ fg = foreground_hsl.darken(20) }),
+    LspCodeLensSeparator({ fg = foreground_hsl.darken(40) }),
     LspSignatureActiveParameter({ fg = colors.blue }),
-    LspInlayHint({ fg = colors.foreground.darken(50).saturation(10) }),
+    LspInlayHint({ fg = foreground_hsl.darken(50).saturation(10) }),
 
     -- diagnostics
     DiagnosticError({ fg = colors.red }),
@@ -673,7 +671,7 @@ local theme = lush(function(injected)
     NvimTreeIndentMarker({ fg = colors.common.comment.darken(10) }),
     NvimTreeImageFile({}),
     NvimTreeSymlink({ fg = colors.purple }),
-    NvimTreeFolderIcon({ fg = colors.blue.darken(10) }),
+    NvimTreeFolderIcon({ fg = blue_hsl.darken(10) }),
     NvimTreeFolderName({ fg = colors.foreground }),
     -- NvimTreeFileIcon({ fg = colors.orange }),
 
@@ -809,10 +807,10 @@ local theme = lush(function(injected)
     CWordHighlight({ bg = colors.common.cword }),
 
     -- highlight-undo
-    HighlightUndo({ bg = colors.orange.darken(50), fg = colors.orange }),
+    HighlightUndo({ bg = orange_hsl.darken(50), fg = colors.orange }),
 
     -- leap
-    LeapLabelPrimary({ bg = colors.orange.darken(50), fg = colors.orange.lighten(20) }),
+    LeapLabelPrimary({ bg = orange_hsl.darken(50), fg = orange_hsl.lighten(20) }),
 
     -- markdown
     markdownBold({ fg = bold_color, gui = "bold" }),
@@ -900,13 +898,13 @@ local theme = lush(function(injected)
     SnacksProfilerHot17({ bg = colors.red.darken(22) }),
     SnacksProfilerHot16({ bg = colors.red.darken(26) }),
     SnacksProfilerHot15({ bg = colors.red.darken(30) }),
-    SnacksProfilerHot14({ bg = colors.orange.darken(34) }),
-    SnacksProfilerHot13({ bg = colors.orange.darken(38) }),
-    SnacksProfilerHot12({ bg = colors.orange.darken(42) }),
-    SnacksProfilerHot11({ bg = colors.orange.darken(46) }),
-    SnacksProfilerHot10({ bg = colors.orange.darken(50) }),
-    SnacksProfilerHot09({ bg = colors.orange.darken(54) }),
-    SnacksProfilerHot08({ bg = colors.orange.darken(58) }),
+    SnacksProfilerHot14({ bg = orange_hsl.darken(34) }),
+    SnacksProfilerHot13({ bg = orange_hsl.darken(38) }),
+    SnacksProfilerHot12({ bg = orange_hsl.darken(42) }),
+    SnacksProfilerHot11({ bg = orange_hsl.darken(46) }),
+    SnacksProfilerHot10({ bg = orange_hsl.darken(50) }),
+    SnacksProfilerHot09({ bg = orange_hsl.darken(54) }),
+    SnacksProfilerHot08({ bg = orange_hsl.darken(58) }),
     SnacksProfilerHot07({ bg = colors.indigo.darken(62) }),
     SnacksProfilerHot06({ bg = colors.indigo.darken(66) }),
     SnacksProfilerHot05({ bg = colors.indigo.darken(70) }),

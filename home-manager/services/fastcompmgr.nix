@@ -19,6 +19,7 @@ in
     };
     Install.WantedBy = [ "graphical-session.target" ];
     Service = {
+      Slice = "session.slice";
       ExecStart = "${fastcompmgr}/bin/fastcompmgr -c -C -o 0.4 -r 12";
       Restart = "on-failure";
       RestartSec = 2;

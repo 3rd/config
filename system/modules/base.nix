@@ -61,6 +61,8 @@
 
   boot.loader.systemd-boot.configurationLimit = 10;
 
+  boot.kernelParams = lib.optionals (!config.networking.enableIPv6) [ "ipv6.disable=1" ];
+
   boot.tmp = {
     useTmpfs = lib.mkDefault true;
     cleanOnBoot = lib.mkDefault (!config.boot.tmp.useTmpfs);

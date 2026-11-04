@@ -216,12 +216,13 @@ fn render_settings_from_snapshot(
     allow_execute.extend(landlock::fence_support_execute_paths());
     allow_execute.push("/".into());
     let deny_read = policy_snapshot.filesystem.deny_read.clone();
+    let local_outbound_ports: Vec<u16> = policy_snapshot.proxy_listen_port.into_iter().collect();
     // Parent-side ptrace mediation conflicts with Fence runtime exec monitors.
     let mut network = json!({
         "allowedDomains": allowed_domains,
         "allowLocalBinding": allow_loopback,
         "allowLocalOutbound": allow_loopback,
-        "allowLocalOutboundPorts": policy_snapshot.allowed_loopback_ports.clone()
+        "allowLocalOutboundPorts": local_outbound_ports
     });
     if let Some(port) = policy_snapshot.proxy_listen_port {
         network["defaultAction"] = json!("proxy");
@@ -403,7 +404,7 @@ mod tests {
     }
 
     #[test]
-    fn rendered_settings_include_proxy_loopback_ports() {
+    fn rendered_settings_list_only_the_proxy_as_a_host_loopback_port() {
         let project = project();
         let state = state();
         let config = CondomConfig::default();
@@ -412,21 +413,26 @@ mod tests {
             &state,
             &config,
             ExecutionMode::Run,
-            vec![1080, 3128, 32123],
+            vec![80, 443, 15080],
         );
-        policy_snapshot.proxy_listen_port = Some(32123);
+        policy_snapshot.proxy_listen_port = Some(15080);
+        policy_snapshot.transparent_proxy = TransparentProxySnapshot {
+            enabled: true,
+            tcp_ports: vec![80, 443],
+            allowed_hosts: Vec::new(),
+        };
         let settings = render_settings(&policy_snapshot);
 
         assert_eq!(settings["network"]["allowLocalOutbound"], json!(true));
         assert_eq!(
             settings["network"]["allowLocalOutboundPorts"],
-            json!([1080, 3128, 32123])
+            json!([15080])
         );
         assert_eq!(settings["network"]["allowedDomains"], json!([]));
         assert_eq!(settings["network"]["defaultAction"], json!("proxy"));
         assert_eq!(
             settings["network"]["upstreamProxy"],
-            json!("http://127.0.0.1:32123")
+            json!("http://127.0.0.1:15080")
         );
     }
 
@@ -444,7 +450,7 @@ mod tests {
             &state,
             &config,
             ExecutionMode::Run,
-            vec![1080, 3128, 15080],
+            vec![80, 443, 15080],
         );
         policy_snapshot.proxy_listen_port = Some(15080);
         policy_snapshot.transparent_proxy = TransparentProxySnapshot {
@@ -477,7 +483,7 @@ mod tests {
             &state,
             &config,
             ExecutionMode::Run,
-            vec![1080, 3128, 15080],
+            vec![80, 443, 15080],
         );
         policy_snapshot.proxy_listen_port = Some(15080);
         policy_snapshot.transparent_proxy = TransparentProxySnapshot {

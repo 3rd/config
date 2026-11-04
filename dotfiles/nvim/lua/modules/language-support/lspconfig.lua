@@ -20,6 +20,13 @@ local translate_pull_diagnostics = function()
   end
 end
 
+local configure_file_watchers = function()
+  local watchfiles = require("vim.lsp._watchfiles")
+  -- inotifywait does not apply these exclusions during traversal and reports disappearing directories as errors.
+  watchfiles._watchfunc = vim._watch.watchdirs
+  table.insert(watchfiles._poll_exclude_pattern, "**/target{,/**}")
+end
+
 return lib.module.create({
   name = "language-support/lsp",
   hosts = "*",
@@ -27,6 +34,7 @@ return lib.module.create({
     vim.api.nvim_create_user_command("LspLog", function()
       vim.cmd("tabnew " .. vim.lsp.log.get_filename())
     end, { desc = "Open LSP log file in a new tab" })
+    configure_file_watchers()
     translate_pull_diagnostics()
   end,
   plugins = {

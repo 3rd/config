@@ -45,6 +45,7 @@ in
     pkgs-stable.gource
     lazygit
     meld
+    omnidiff
     sublime-merge-with-layout
     pkgs-master.smartgit
     # custom
@@ -119,6 +120,7 @@ in
       };
       diff = {
         algorithm = "histogram";
+        external = "${lib.getExe pkgs.omnidiff} --headless";
         renameLimit = 2048;
         renames = "copy";
       };
@@ -211,11 +213,12 @@ in
       };
     };
     shellAliases = {
+      diff = lib.getExe pkgs.omnidiff;
       g = "git";
       ga = "git add";
       gc = "git commit";
       gs = "git status -sb";
-      gd = "git -c diff.external='${pkgs.difftastic}/bin/difft --background=dark' diff";
+      gd = "git diff";
       gaa = "git add --all";
       gac = "git add . && git commit";
       clone = "git clone";

@@ -64,6 +64,7 @@ local setup = function()
     diagnostics = {
       "diagnostics",
       sources = { "nvim_diagnostic" },
+      diagnostics_color = colors.ui.status_diagnostics,
       symbols = { error = " ", warn = " ", info = " ", hint = "󰌶 " },
     },
     tabs = {

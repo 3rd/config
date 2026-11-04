@@ -548,7 +548,8 @@ registry=https://registry.example.test/
         let proxy = ProxyConfig::default();
         let npmrc =
             materialize_npm_adapter_config(&project, &state, "http://127.0.0.1:32123", &proxy)
-                .unwrap();
+                .unwrap()
+                .user_config;
         let content = std::fs::read_to_string(&npmrc).unwrap();
 
         assert!(npmrc.starts_with(state.runtime_dir.join("xdg/config/npm")));
@@ -775,6 +776,15 @@ registry=https://registry.example.test/
             Some(userconfig.as_str())
         );
         assert!(std::path::Path::new(userconfig).is_file());
+        let globalconfig = env
+            .get("NPM_CONFIG_GLOBALCONFIG")
+            .expect("npm globalconfig should be set");
+        assert_eq!(
+            env.get("npm_config_globalconfig").map(String::as_str),
+            Some(globalconfig.as_str())
+        );
+        assert_ne!(globalconfig, userconfig);
+        assert_eq!(std::fs::read_to_string(globalconfig).unwrap(), "");
         assert!(!env.contains_key("NPM_CONFIG_IGNORE_SCRIPTS"));
         assert!(!env.contains_key("NPM_CONFIG_REGISTRY"));
         assert_eq!(

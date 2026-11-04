@@ -51,7 +51,7 @@
 }:
 
 let
-  buildId = "33103062f95061ccf9c81c5b365d37ab152c3b66";
+  buildId = "72e130b4e6be3fdc47b97e809b6b420908ce2dd8";
   runtimeLibs = [
     libdrm
     libGL
@@ -68,11 +68,11 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "grok-bot";
-  version = "0.68.1";
+  version = "0.78.1";
 
   src = fetchurl {
     url = "https://downloads.cursor.com/grokbot/stable/${buildId}/linux/x64/grok-bot_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-sr6BBtKz6uB9mD1fHKd7ZXrM3mZtxEDbKkCUIez/M1k=";
+    hash = "sha256-VdKjTP/3YjQiUf+psTIacPCLYD8if4huGLLBxec97R0=";
   };
 
   nativeBuildInputs = [
@@ -142,7 +142,7 @@ stdenv.mkDerivation (finalAttrs: {
     cp -r usr/share/icons "$out/share/"
     install -Dm644 usr/share/applications/grok-bot.desktop "$out/share/applications/grok-bot.desktop"
     substituteInPlace "$out/share/applications/grok-bot.desktop" \
-      --replace-fail 'Exec=grok-bot %U' "Exec=$out/bin/grok-bot %U"
+      --replace-fail 'Exec=grok-bot -- %U' "Exec=$out/bin/grok-bot -- %U"
 
     runHook postInstall
   '';

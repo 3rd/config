@@ -7,6 +7,7 @@
 }:
 
 let
+  barForeground = "#DEDEEC";
   scripts = {
     tmux-workspace = pkgs.writeShellScriptBin "tmux-workspace" (builtins.readFile ./tmux-workspace.sh);
     tmux-duplicate-window = pkgs.writeShellScriptBin "tmux-duplicate-window" (
@@ -47,16 +48,16 @@ in
     set -g window-status-style "fg=${gray-medium}"
     set -g @agent-attention-count '#{n:#{P:#{?@agent-attention,1,}}}'
     set -g @agent-attention-badge '#{?#{E:@agent-attention-count},#[bg=#955DB7#,fg=${selection-foreground}#,#{?window_active,bold,nobold}] #{E:@agent-attention-count} #[default],}'
-    set -g window-status-format "#{?#{E:@agent-attention-count},#[bg=#4B455D#,fg=${foreground}] #I:#W #[default], #[fg=${gray-medium}]#I#[fg=${gray-darkish}]:#[fg=${gray-medium}]#W#{?window_zoomed_flag,#[fg=${gray-lighter}],}}#{E:@agent-attention-badge} "
+    set -g window-status-format "#{?#{E:@agent-attention-count},#[bg=#4B455D#,fg=${barForeground}] #I:#W #[default], #[fg=${gray-medium}]#I#[fg=${gray-darkish}]:#[fg=${gray-medium}]#W#{?window_zoomed_flag,#[fg=${gray-lighter}],}}#{E:@agent-attention-badge} "
 
     set -g window-status-activity-style "fg=${lib.toLower yellow-light}"
 
     set -g window-status-current-style "fg=${gray-lightest}"
-    set -g window-status-current-format "#{?#{E:@agent-attention-count},#[bg=#5C526C#,fg=${foreground}#,bold] #I:#W #[default], #[fg=${gray-lighter}#,bold]#I#[fg=${gray-light}]:#[fg=${gray-lightest}]#W#{?window_zoomed_flag,#[fg=${gray-lightest}],}}#{E:@agent-attention-badge} "
+    set -g window-status-current-format "#{?#{E:@agent-attention-count},#[bg=#5C526C#,fg=${barForeground}#,bold] #I:#W #[default], #[fg=${gray-lighter}#,bold]#I#[fg=${gray-light}]:#[fg=${gray-lightest}]#W#{?window_zoomed_flag,#[fg=${gray-lightest}],}}#{E:@agent-attention-badge} "
 
     set -g pane-active-border-style "bg=default,fg=#{?@agent-attention,${magenta-light},${gray-darkish}}"
     set -g pane-border-style "bg=default,fg=#{?@agent-attention,${magenta-dark},${gray-darker}}"
-    set -g pane-border-format " #{?@agent-attention,#[fg=${magenta-lighter}]#{pane_current_command} · #{E:@pane-short-current-path},#{?pane_active,#[fg=${gray-lighter}],#[fg=${gray-darkish}]}#{pane_current_command} #[fg=${gray-medium}]· #{?pane_active,#[fg=${gray-light}],#[fg=${gray-darkish}]}#{E:@pane-short-current-path}} "
+    set -g pane-border-format " #{?@agent-attention,#[fg=${magenta-lighter}],#{?pane_active,#[fg=${gray-lighter}],#[fg=${gray-darkish}]}}#{?#{!=:#{@pane-title},},#{@pane-title},#{pane_current_command} #{?@agent-attention,,#[fg=${gray-medium}]}· #{?@agent-attention,,#{?pane_active,#[fg=${gray-light}],#[fg=${gray-darkish}]}}#{E:@pane-short-current-path}} "
   '';
 
   home.packages = with pkgs; [

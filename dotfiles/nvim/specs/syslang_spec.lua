@@ -42,7 +42,7 @@ end
 
 assert(bold_capture, "Syslang bold text must receive its emphasis capture")
 local bold_highlight = vim.api.nvim_get_hl(0, { name = "@" .. bold_capture.capture, link = false })
-assert(bold_highlight.fg == 0xD184DB and bold_highlight.bold, "Syslang bold must use the coding-agent purple")
+assert(bold_highlight.fg == 0x7DD6FC and bold_highlight.bold, "Syslang bold must use the shared blue emphasis color")
 assert(
   bold_highlight.fg == vim.api.nvim_get_hl(0, { name = "markdownBold", link = false }).fg,
   "Syslang and Markdown bold must use the same color"

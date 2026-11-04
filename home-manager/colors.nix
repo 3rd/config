@@ -135,7 +135,7 @@ with lib;
       overlay-background = "#373639";
       overlay-active-background = "#403F43";
       overlay-selected-background = "#46434F";
-      foreground = "#DEDEEC";
+      foreground = "#CDCDD9";
       cursor = color11;
       selection-background = "#323039";
       selection-foreground = "#F3F2F5";

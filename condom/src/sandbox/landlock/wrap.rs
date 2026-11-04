@@ -122,6 +122,9 @@ pub fn exec_with_snapshot(
     let mut policy_snapshot: PolicySnapshot = serde_json::from_str(&content)
         .with_context(|| format!("failed to parse {}", policy_snapshot_path.display()))?;
     policy_snapshot.path = policy_snapshot_path.to_path_buf();
+    policy_snapshot
+        .allowed_loopback_ports
+        .extend(fence_proxy_ports());
     let filesystem_notifications = filesystem_notification_runtime_supported();
     crate::debug_log!(
         "landlock runner interactive_pty={interactive_pty} filesystem_notifications={filesystem_notifications}",
@@ -289,6 +292,60 @@ pub(super) fn network_rules(
             allowed_access: LANDLOCK_ACCESS_NET_CONNECT_TCP,
         })
         .collect()
+}
+
+const FENCE_SANDBOX_ENV: &str = "FENCE_SANDBOX";
+const FENCE_PROXY_ENV_KEYS: &[&str] = &[
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "all_proxy",
+];
+
+fn fence_proxy_ports() -> Vec<u16> {
+    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    fence_proxy_ports_from(&environment)
+}
+
+pub(super) fn fence_proxy_ports_from(environment: &BTreeMap<String, String>) -> Vec<u16> {
+    if !environment.contains_key(FENCE_SANDBOX_ENV) {
+        return Vec::new();
+    }
+    let mut ports: Vec<u16> = FENCE_PROXY_ENV_KEYS
+        .iter()
+        .filter_map(|key| environment.get(*key))
+        .filter_map(|proxy_url| loopback_proxy_port(proxy_url))
+        .collect();
+    ports.sort_unstable();
+    ports.dedup();
+    ports
+}
+
+fn loopback_proxy_port(proxy_url: &str) -> Option<u16> {
+    let authority = proxy_url
+        .split_once("://")
+        .map_or(proxy_url, |(_, rest)| rest);
+    let authority = authority
+        .split_once('/')
+        .map_or(authority, |(authority, _)| authority);
+    let authority = authority
+        .rsplit_once('@')
+        .map_or(authority, |(_, host)| host);
+    let (host, port) = match authority.strip_prefix('[') {
+        Some(bracketed) => {
+            let (host, suffix) = bracketed.split_once(']')?;
+            (host, suffix.strip_prefix(':')?)
+        }
+        None => authority.rsplit_once(':')?,
+    };
+    let is_loopback_host = matches!(host, "127.0.0.1" | "localhost" | "::1");
+    if !is_loopback_host {
+        return None;
+    }
+
+    port.parse().ok()
 }
 
 fn runner_path() -> io::Result<PathBuf> {

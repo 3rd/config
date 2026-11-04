@@ -235,7 +235,7 @@ pub fn child_environment(
         );
     }
     if adapter_enabled(configured_adapters, &["npm", "npm-compatible"]) {
-        let npmrc = materialize_npm_adapter_config(project, state, &proxy_url, proxy)?;
+        let npm_config = materialize_npm_adapter_config(project, state, &proxy_url, proxy)?;
         let cache_dir = state.runtime_dir.join("xdg/cache/npm");
         fs::create_dir_all(&cache_dir)
             .with_context(|| format!("failed to create {}", cache_dir.display()))?;
@@ -249,8 +249,16 @@ pub fn child_environment(
                 "npm_config_https_proxy",
             ],
         );
-        insert_npm_config_vars(&mut env, "USERCONFIG", &npmrc.display().to_string());
-        insert_npm_config_vars(&mut env, "GLOBALCONFIG", &npmrc.display().to_string());
+        insert_npm_config_vars(
+            &mut env,
+            "USERCONFIG",
+            &npm_config.user_config.display().to_string(),
+        );
+        insert_npm_config_vars(
+            &mut env,
+            "GLOBALCONFIG",
+            &npm_config.global_config.display().to_string(),
+        );
         insert_npm_config_vars(&mut env, "CACHE", &cache_dir.display().to_string());
         if let Some(registry) = &proxy.npm_registry {
             insert_npm_config_vars(&mut env, "REGISTRY", registry);
@@ -331,12 +339,17 @@ fn adapter_enabled(configured_adapters: &[String], aliases: &[&str]) -> bool {
     })
 }
 
+pub(super) struct NpmAdapterConfig {
+    pub(super) user_config: PathBuf,
+    pub(super) global_config: PathBuf,
+}
+
 pub(super) fn materialize_npm_adapter_config(
     project: &ProjectContext,
     state: &StatePaths,
     proxy_url: &str,
     proxy: &ProxyConfig,
-) -> Result<PathBuf> {
+) -> Result<NpmAdapterConfig> {
     let project_npmrc = project.root.join(".npmrc");
     let source = match fs::read_to_string(&project_npmrc) {
         Ok(content) => content,
@@ -349,9 +362,9 @@ pub(super) fn materialize_npm_adapter_config(
     let npm_dir = state.runtime_dir.join("xdg/config/npm");
     fs::create_dir_all(&npm_dir)
         .with_context(|| format!("failed to create {}", npm_dir.display()))?;
-    let npmrc = npm_dir.join("npmrc");
+    let user_config = npm_dir.join("npmrc");
     fs::write(
-        &npmrc,
+        &user_config,
         sanitize_npmrc(
             &source,
             proxy_url,
@@ -359,8 +372,15 @@ pub(super) fn materialize_npm_adapter_config(
             proxy.npm_ignore_scripts,
         ),
     )
-    .with_context(|| format!("failed to write {}", npmrc.display()))?;
-    Ok(npmrc)
+    .with_context(|| format!("failed to write {}", user_config.display()))?;
+    let global_config = npm_dir.join("global-npmrc");
+    fs::write(&global_config, "")
+        .with_context(|| format!("failed to write {}", global_config.display()))?;
+
+    Ok(NpmAdapterConfig {
+        user_config,
+        global_config,
+    })
 }
 
 pub(super) fn materialize_pip_adapter_config(
