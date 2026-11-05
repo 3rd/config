@@ -160,6 +160,14 @@ pub struct ReviewConfig {
     pub artifact_mode: ReviewArtifactMode,
     pub conflict_policy: ConflictPolicy,
     pub file_rules: Vec<ReviewFileRule>,
+    pub agents: Vec<ReviewAgent>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ReviewAgent {
+    Ccodex,
+    Ccc,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -283,6 +291,7 @@ struct PartialReviewConfig {
     artifact_mode: Option<ReviewArtifactMode>,
     conflict_policy: Option<ConflictPolicy>,
     file_rules: Option<Vec<ReviewFileRule>>,
+    agents: Option<Vec<ReviewAgent>>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -457,6 +466,9 @@ impl CondomConfig {
             if let Some(value) = review.file_rules {
                 self.review.file_rules = value;
             }
+            if let Some(value) = review.agents {
+                self.review.agents = value;
+            }
         }
         if let Some(events) = partial.events {
             if let Some(value) = events.require_logging {
@@ -559,12 +571,18 @@ impl Default for ReviewConfig {
             artifact_mode: ReviewArtifactMode::JournalAndDiff,
             conflict_policy: ConflictPolicy::DetectRefuseThenAskOverride,
             file_rules: Vec::new(),
+            agents: Vec::new(),
         }
     }
 }
 
 impl ReviewConfig {
     pub fn validate(&self) -> Result<()> {
+        for (index, agent) in self.agents.iter().enumerate() {
+            if self.agents[..index].contains(agent) {
+                anyhow::bail!("review agents must not contain duplicates");
+            }
+        }
         for rule in &self.file_rules {
             if rule.pattern.is_empty() {
                 anyhow::bail!("review file rule match pattern cannot be empty");
@@ -814,13 +832,16 @@ deny = ["SSH_AUTH_SOCK"]
     }
 
     #[test]
-    fn project_config_accepts_review_file_rules() {
+    fn project_config_accepts_review_agents_and_file_rules() {
         let temp = tempfile::tempdir().unwrap();
         let project_config = temp.path().join(".condom/config.toml");
         fs::create_dir_all(project_config.parent().unwrap()).unwrap();
         fs::write(
             &project_config,
             r#"
+[review]
+agents = ["ccodex", "ccc"]
+
 [[review.fileRules]]
 match = "**/.git/index"
 visibility = "hidden"
@@ -832,6 +853,10 @@ defaultSelected = true
         let config = CondomConfig::load(temp.path(), None).unwrap();
 
         assert_eq!(
+            config.review.agents,
+            vec![ReviewAgent::Ccodex, ReviewAgent::Ccc]
+        );
+        assert_eq!(
             config.review.file_rules,
             vec![ReviewFileRule {
                 pattern: "**/.git/index".into(),
@@ -839,6 +864,22 @@ defaultSelected = true
                 default_selected: Some(true),
             }]
         );
+    }
+
+    #[test]
+    fn project_config_rejects_duplicate_review_agents() {
+        let temp = tempfile::tempdir().unwrap();
+        let project_config = temp.path().join(".condom/config.toml");
+        fs::create_dir_all(project_config.parent().unwrap()).unwrap();
+        fs::write(
+            &project_config,
+            "[review]\nagents = [\"ccodex\", \"ccodex\"]\n",
+        )
+        .unwrap();
+
+        let error = CondomConfig::load(temp.path(), None).unwrap_err();
+
+        assert!(error.to_string().contains("duplicates"));
     }
 
     #[test]

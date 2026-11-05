@@ -61,6 +61,8 @@ pub struct BindCaptureRun<'a> {
     pub ephemeral_overlays: &'a [EphemeralOverlay],
     pub mediate_filesystem: bool,
     pub review_inspection: bool,
+    pub review_files: &'a [(PathBuf, PathBuf)],
+    pub review_directories: &'a [(PathBuf, PathBuf)],
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -194,6 +196,8 @@ pub fn run_with_bind_capture(run: BindCaptureRun<'_>) -> Result<i32> {
         state_xdg_dir: &run.state.xdg_state_dir,
         ephemeral_overlays: run.ephemeral_overlays,
         review_inspection: run.review_inspection,
+        review_files: run.review_files,
+        review_directories: run.review_directories,
         command: &sandboxed_command,
     })?;
 
@@ -490,6 +494,8 @@ struct BindCaptureArgs<'a> {
     state_xdg_dir: &'a Path,
     ephemeral_overlays: &'a [EphemeralOverlay],
     review_inspection: bool,
+    review_files: &'a [(PathBuf, PathBuf)],
+    review_directories: &'a [(PathBuf, PathBuf)],
     command: &'a [String],
 }
 
@@ -505,6 +511,8 @@ fn bind_capture_args(input: BindCaptureArgs<'_>) -> Result<Vec<String>> {
         state_xdg_dir,
         ephemeral_overlays,
         review_inspection,
+        review_files,
+        review_directories,
         command,
     } = input;
     let mut args = vec![
@@ -585,6 +593,27 @@ fn bind_capture_args(input: BindCaptureArgs<'_>) -> Result<Vec<String>> {
 
     if review_inspection {
         add_review_inspection_binds(project, session_dir, ephemeral_overlays, &mut args)?;
+        for (source, destination) in review_directories {
+            args.extend([
+                "--bind".into(),
+                source.display().to_string(),
+                destination.display().to_string(),
+            ]);
+        }
+        for (source, destination) in review_files {
+            bind_file_readonly_at(source, destination, &mut args);
+        }
+        if !review_files.is_empty() {
+            let shell = Path::new("/bin/sh");
+            if shell.exists() {
+                bind_file_readonly_at(shell, shell, &mut args);
+            }
+            for path in [Path::new("/lib"), Path::new("/lib64")] {
+                if path.exists() {
+                    bind_readonly_at(path, path, &mut args);
+                }
+            }
+        }
     }
 
     if allow_loopback {
@@ -885,20 +914,30 @@ mod tests {
         )
         .unwrap();
         let command = vec!["pwd".into()];
-        let args = bind_capture_args(BindCaptureArgs {
-            project: &project,
-            session_dir: Path::new("/tmp/session"),
-            workspace_dir: Path::new("/tmp/session/workspace"),
-            allow_loopback: snapshot.network.allow_loopback,
-            policy_snapshot: &snapshot,
-            runner_path: None,
-            runtime_project_dir: Path::new("/tmp/session/runtime/.condom"),
-            state_xdg_dir: &state.xdg_state_dir,
-            ephemeral_overlays: &[],
-            review_inspection: false,
-            command: &command,
-        })
-        .unwrap();
+        let review_files = vec![(PathBuf::from("/opt/codex"), PathBuf::from("/review/codex"))];
+        let review_directories = vec![(
+            PathBuf::from("/tmp/session/agent-runtime"),
+            PathBuf::from("/review/home"),
+        )];
+        let build_args = |review_inspection| {
+            bind_capture_args(BindCaptureArgs {
+                project: &project,
+                session_dir: Path::new("/tmp/session"),
+                workspace_dir: Path::new("/tmp/session/workspace"),
+                allow_loopback: snapshot.network.allow_loopback,
+                policy_snapshot: &snapshot,
+                runner_path: None,
+                runtime_project_dir: Path::new("/tmp/session/runtime/.condom"),
+                state_xdg_dir: &state.xdg_state_dir,
+                ephemeral_overlays: &[],
+                review_inspection,
+                review_files: &review_files,
+                review_directories: &review_directories,
+                command: &command,
+            })
+            .unwrap()
+        };
+        let args = build_args(false);
         let project_root = project.root.display().to_string();
         let project_state_dir = project.root.join(".condom").display().to_string();
 
@@ -933,6 +972,15 @@ mod tests {
         assert!(args.windows(3).any(|window| {
             window[0] == "--ro-bind" && window[1] == runner && window[2] == runner
         }));
+
+        let review_args = build_args(true);
+        for binding in [
+            ["--ro-bind", "/opt/codex", "/review/codex"],
+            ["--bind", "/tmp/session/agent-runtime", "/review/home"],
+        ] {
+            assert!(!args.windows(3).any(|window| window == binding));
+            assert!(review_args.windows(3).any(|window| window == binding));
+        }
     }
 
     #[test]
@@ -973,6 +1021,8 @@ mod tests {
             state_xdg_dir: &state.xdg_state_dir,
             ephemeral_overlays: &overlays,
             review_inspection: false,
+            review_files: &[],
+            review_directories: &[],
             command: &command,
         })
         .unwrap();

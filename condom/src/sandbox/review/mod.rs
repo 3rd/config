@@ -34,6 +34,7 @@ use crate::model::project::ProjectContext;
 use crate::model::state::StatePaths;
 use crate::sandbox::capture;
 
+mod agents;
 mod diff;
 mod journal;
 mod tui;

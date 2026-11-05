@@ -296,6 +296,12 @@ fn run_mounted_review_session(run: &ReviewRun<'_>, session: &ReviewSession) -> R
 }
 
 fn run_review_session_inner(run: &ReviewRun<'_>, session: &ReviewSession) -> Result<i32> {
+    let reviewers = super::agents::prepare_review_agents(
+        &run.config.review.agents,
+        &session.session_dir,
+        &run.project.root,
+    )?;
+
     let live_excludes = live_excludes(run.project, run.state);
     let baseline = collect_entries(&run.project.root, &live_excludes)?;
 
@@ -315,10 +321,12 @@ fn run_review_session_inner(run: &ReviewRun<'_>, session: &ReviewSession) -> Res
         ephemeral_overlays: run.ephemeral_overlays,
         mediate_filesystem: true,
         review_inspection: false,
+        review_files: &[],
+        review_directories: &[],
     })?;
 
     write_review_ui_session(run, session, Some(code))?;
-    run_review_shell(run, session)?;
+    run_review_shell(run, session, &reviewers)?;
 
     let targets = build_review_targets(run, session, &baseline)?;
     if review_targets_are_empty(&targets) {
@@ -423,8 +431,22 @@ fn ensure_review_session_base(base: &Path) -> bool {
     fs::create_dir_all(base).is_ok() && base.is_dir()
 }
 
-fn run_review_shell(run: &ReviewRun<'_>, session: &ReviewSession) -> Result<()> {
+fn run_review_shell(
+    run: &ReviewRun<'_>,
+    session: &ReviewSession,
+    reviewers: &[super::agents::PreparedReviewer],
+) -> Result<()> {
     let helpers = prepare_review_shell_helpers(run, session)?;
+    super::agents::install_review_agent_commands(reviewers, &session.session_dir)?;
+    let review_files: Vec<_> = reviewers
+        .iter()
+        .flat_map(|reviewer| reviewer.files.iter())
+        .map(|file| (file.source.clone(), file.destination.clone()))
+        .collect();
+    let review_directories: Vec<_> = reviewers
+        .iter()
+        .map(|reviewer| (reviewer.runtime_dir.clone(), reviewer.sandbox_dir.clone()))
+        .collect();
     let mut shell_env = run.extra_env.clone();
     prepend_path(&mut shell_env, &helpers.sandbox_bin_dir);
     shell_env.insert(
@@ -433,7 +455,10 @@ fn run_review_shell(run: &ReviewRun<'_>, session: &ReviewSession) -> Result<()> 
     );
     let shell = vec![helpers.sandbox_shell_path.display().to_string()];
     print_review_shell_entry(run.ephemeral_overlays.len());
-    let code = capture::run_with_bind_capture(capture::BindCaptureRun {
+    for reviewer in reviewers {
+        println!("- {} (isolated reviewer, no MCP tools)", reviewer.name);
+    }
+    let result = capture::run_with_bind_capture(capture::BindCaptureRun {
         project: run.project,
         state: run.state,
         session_dir: &session.session_dir,
@@ -449,7 +474,17 @@ fn run_review_shell(run: &ReviewRun<'_>, session: &ReviewSession) -> Result<()> 
         ephemeral_overlays: run.ephemeral_overlays,
         mediate_filesystem: false,
         review_inspection: true,
-    })?;
+        review_files: &review_files,
+        review_directories: &review_directories,
+    });
+    let login_result = super::agents::finish_review_agents(reviewers);
+    let code = match (result, login_result) {
+        (Ok(code), Ok(())) => code,
+        (Err(error), Ok(())) | (Ok(_), Err(error)) => return Err(error),
+        (Err(shell_error), Err(login_error)) => {
+            bail!("{shell_error:#}; {login_error:#}");
+        }
+    };
     if code != 0 {
         println!("review shell exited with status {code}");
     }

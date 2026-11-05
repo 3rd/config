@@ -1155,6 +1155,8 @@ fn review_capture_mediates_write_and_preserves_captured_content() {
         ephemeral_overlays: &[],
         mediate_filesystem: true,
         review_inspection: false,
+        review_files: &[],
+        review_directories: &[],
     })
     .unwrap();
 
