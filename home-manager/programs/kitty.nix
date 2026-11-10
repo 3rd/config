@@ -6,23 +6,13 @@
   ...
 }:
 
-{
-  imports = [ ../colors.nix ];
-
-  home.sessionVariables.TERMINAL = "${pkgs.kitty}/bin/kitty";
-
-  xdg.configFile."kitty/shaders/theme-stars.pipeline".text = ''
+let
+  starShaderVariables = ''
     var uint STAR_COLOR 0x${lib.removePrefix "#" config.colors.gray-lightest}
     var uint WARM_STAR_COLOR 0x${lib.removePrefix "#" config.colors.yellow-lightest}
     var uint COOL_STAR_COLOR 0x${lib.removePrefix "#" config.colors.blue-lightest}
-
-    startgroup
-        animation_stop never
-        animation_step 33
-        shaders theme-stars
-    endgroup
   '';
-  xdg.configFile."kitty/shaders/theme-stars.slang".text = ''
+  starShaderPrelude = ''
     #language slang 2026
 
     import kitty_custom_shader_types;
@@ -30,8 +20,6 @@
     static const uint STAR_COLOR = 0;
     static const uint WARM_STAR_COLOR = 0;
     static const uint COOL_STAR_COLOR = 0;
-    static const uint DRIFT_PERIOD_SECONDS = 4096;
-    static const float STAR_CELL_SIZE_PIXELS = 64.0;
     static const float2 STAR_VELOCITY_PIXELS_PER_SECOND = float2(2.0, 1.0);
 
     // PCG hash adapted from kitty's northern-lights shader, Copyright (C) 2026 Sami Farin, GPLv3.
@@ -64,6 +52,49 @@
         return all(toSrgbBytes(color) == toSrgbBytes(background));
     }
 
+    float3
+    pickStarColor(float variation) {
+        float3 starColor = toLinearRgb(STAR_COLOR);
+        if (variation < 0.15) {
+            starColor = lerp(starColor, toLinearRgb(WARM_STAR_COLOR), 0.45);
+        } else if (variation > 0.85) {
+            starColor = lerp(starColor, toLinearRgb(COOL_STAR_COLOR), 0.4);
+        }
+
+        return starColor;
+    }
+
+    bool
+    hasClearStarBackground(KittyTextures t, KittyCustomShaderData d) {
+        // Keep stars clear of antialiased glyph edges, which already contain the flat background color.
+        float2 pixelSize = 1.0 / float2(d.viewport_size_pixels);
+        for (int y = -2; y <= 2; y++) {
+            for (int x = -2; x <= 2; x++) {
+                float3 neighbor = t.backbuffer.Sample(t.pos + float2(x, y) * pixelSize).rgb;
+                if (!hasBackgroundColor(neighbor, d.background.rgb)) return false;
+            }
+        }
+
+        return true;
+    }
+  '';
+in
+{
+  imports = [ ../colors.nix ];
+
+  home.sessionVariables.TERMINAL = "${pkgs.kitty}/bin/kitty";
+
+  xdg.configFile."kitty/shaders/theme-stars.pipeline".text = starShaderVariables + ''
+    startgroup
+        animation_stop never
+        animation_step 33
+        shaders theme-stars
+    endgroup
+  '';
+  xdg.configFile."kitty/shaders/theme-stars.slang".text = starShaderPrelude + ''
+    static const uint DRIFT_PERIOD_SECONDS = 4096;
+    static const float STAR_CELL_SIZE_PIXELS = 64.0;
+
     float4
     sampleStarLayer(float2 pixelPosition, float elapsedSeconds, uint layer) {
         float depth = float(layer + 1u);
@@ -84,17 +115,11 @@
         float starAmount = 1.0 - smoothstep(radius - 0.6, radius + 0.6, length(localPosition - starPosition));
         if (starAmount <= 0.0) return float4(0.0);
 
-        float3 starColor = toLinearRgb(STAR_COLOR);
-        if (appearance.x < 0.15) {
-            starColor = lerp(starColor, toLinearRgb(WARM_STAR_COLOR), 0.45);
-        } else if (appearance.x > 0.85) {
-            starColor = lerp(starColor, toLinearRgb(COOL_STAR_COLOR), 0.4);
-        }
-
+        float3 starColor = pickStarColor(appearance.x);
         float phase = frac(elapsedSeconds / 8.0) * 6.2831853;
         float twinkle = 0.65 + 0.2 * sin(phase * (1.0 + floor(appearance.y * 3.0)) + seed.x * 6.2831853)
                              + 0.15 * sin(phase * 4.0 + seed.y * 6.2831853);
-        float alpha = 0.55 * starAmount * twinkle * (0.65 + 0.3 * float(layer));
+        float alpha = 0.45 * starAmount * twinkle * (0.65 + 0.3 * float(layer));
 
         return float4(starColor * alpha, alpha);
     }
@@ -111,16 +136,179 @@
         float4 stars = nearbyStars + distantStars * (1.0 - nearbyStars.a);
         if (stars.a <= 0.0) return terminalColor;
 
-        // Keep stars clear of antialiased glyph edges, which already contain the flat background color.
-        float2 pixelSize = 1.0 / float2(d.viewport_size_pixels);
-        for (int y = -2; y <= 2; y++) {
-            for (int x = -2; x <= 2; x++) {
-                float3 neighbor = t.backbuffer.Sample(t.pos + float2(x, y) * pixelSize).rgb;
-                if (!hasBackgroundColor(neighbor, d.background.rgb)) return terminalColor;
-            }
-        }
+        if (!hasClearStarBackground(t, d)) return terminalColor;
 
         return float4(terminalColor.rgb * (1.0 - stars.a) + stars.rgb, terminalColor.a);
+    }
+  '';
+  xdg.configFile."kitty/shaders/theme-cursor-stars.pipeline".text = starShaderVariables + ''
+    var uint COMET_HEAD_COLOR 0x${lib.removePrefix "#" config.colors.orange-light}
+    var uint COMET_TAIL_COLOR 0x${lib.removePrefix "#" config.colors.magenta-light}
+
+    startgroup
+        animation_start cursor-trail-move
+        animation_stop 850
+        animation_step 16
+        shaders theme-cursor-stars
+    endgroup
+  '';
+  xdg.configFile."kitty/shaders/theme-cursor-stars.slang".text = starShaderPrelude + ''
+    static const uint COMET_HEAD_COLOR = 0;
+    static const uint COMET_TAIL_COLOR = 0;
+
+    // animation_stop must exceed travel, burst emission and star lifetime combined, or the burst disappears mid-fade.
+    static const float CURSOR_STAR_LIFETIME_SECONDS = 0.6;
+    static const float CURSOR_STAR_MAX_TRAVEL_SECONDS = 0.15;
+    static const float CURSOR_STAR_EMISSION_SECONDS = 0.045;
+    static const int CURSOR_BURST_STAR_COUNT = 18;
+
+    struct CursorStarMove {
+        float2 fromPixels;
+        float2 toPixels;
+        float2 direction;
+        float distancePixels;
+        float cursorSizePixels;
+        float ageSeconds;
+        float travelSeconds;
+        uint2 seed;
+    }
+
+    float2
+    toCursorCenterPixels(float4 edges, float2 viewportSize) {
+        return float2(edges.x + edges.y, edges.z + edges.w) * 0.5 * viewportSize;
+    }
+
+    float4
+    sampleCursorComet(float2 pixelPosition, CursorStarMove move) {
+        float fade = 1.0 - smoothstep(move.travelSeconds, move.travelSeconds + 0.1, move.ageSeconds);
+        if (fade <= 0.0) return float4(0.0);
+
+        float progress = saturate(move.ageSeconds / move.travelSeconds);
+        float easedProgress = 1.0 - (1.0 - progress) * (1.0 - progress);
+        float2 headPosition = lerp(move.fromPixels, move.toPixels, easedProgress);
+        float radiusPixels = max(2.5, move.cursorSizePixels * 0.17);
+        float tailLengthPixels = min(move.distancePixels * easedProgress, move.cursorSizePixels * 4.0);
+        float2 offset = pixelPosition - headPosition;
+        float distanceBehindPixels = -dot(offset, move.direction);
+        float distanceAcrossPixels = abs(dot(offset, float2(-move.direction.y, move.direction.x)));
+        if (distanceBehindPixels < -radiusPixels * 4.0 || distanceBehindPixels > tailLengthPixels + radiusPixels * 4.0) return float4(0.0);
+        if (distanceAcrossPixels > radiusPixels * 4.0) return float4(0.0);
+
+        float headDistancePixels = length(offset);
+        float core = 1.0 - smoothstep(radiusPixels * 0.5, radiusPixels + 0.75, headDistancePixels);
+        float glow = exp(-dot(offset, offset) / (radiusPixels * radiusPixels * 6.0));
+        glow *= 1.0 - smoothstep(radiusPixels * 3.0, radiusPixels * 4.0, headDistancePixels);
+        float headAlpha = saturate(core + 0.35 * glow);
+        float3 headColor = lerp(toLinearRgb(COMET_HEAD_COLOR), float3(1.0), core * 0.45);
+        float4 comet = float4(headColor * headAlpha, headAlpha);
+        if (tailLengthPixels > 0.0 && distanceBehindPixels >= 0.0 && distanceBehindPixels < tailLengthPixels) {
+            float taper = 1.0 - distanceBehindPixels / tailLengthPixels;
+            float widthPixels = 0.6 + radiusPixels * 0.7 * taper;
+            float crossSection = distanceAcrossPixels / widthPixels;
+            float tail = exp(-crossSection * crossSection) + 0.3 * exp(-crossSection * crossSection / 6.0);
+            float tailAlpha = saturate(tail * taper * taper * 0.8);
+            float3 tailColor = lerp(toLinearRgb(COMET_TAIL_COLOR), toLinearRgb(COOL_STAR_COLOR), taper);
+            comet += float4(tailColor * tailAlpha, tailAlpha) * (1.0 - comet.a);
+        }
+
+        return comet * fade * smoothstep(0.0, 0.01, move.ageSeconds);
+    }
+
+    float3
+    pickCursorStarColor(float variation) {
+        if (variation < 0.33) return toLinearRgb(COMET_HEAD_COLOR);
+        if (variation < 0.66) return toLinearRgb(COOL_STAR_COLOR);
+
+        return toLinearRgb(COMET_TAIL_COLOR);
+    }
+
+    float4
+    sampleCursorBurst(float2 pixelPosition, CursorStarMove move) {
+        float burstAgeSeconds = move.ageSeconds - move.travelSeconds * 0.5;
+        if (burstAgeSeconds < 0.0 || burstAgeSeconds >= CURSOR_STAR_LIFETIME_SECONDS + CURSOR_STAR_EMISSION_SECONDS) return float4(0.0);
+
+        float reachPixels = move.cursorSizePixels * 3.0 + 12.0;
+        if (any(abs(pixelPosition - move.toPixels) > reachPixels)) return float4(0.0);
+
+        float4 stars = float4(0.0);
+        for (int index = 0; index < CURSOR_BURST_STAR_COUNT; index++) {
+            float3 seed = hashStarCell(move.seed + uint2(uint(index), 0u));
+            float3 appearance = hashStarCell(move.seed + uint2(uint(index), 173u));
+            float elapsedSeconds = burstAgeSeconds - seed.x * CURSOR_STAR_EMISSION_SECONDS;
+            float lifetimeSeconds = CURSOR_STAR_LIFETIME_SECONDS * lerp(0.75, 1.0, seed.y);
+            if (elapsedSeconds < 0.0 || elapsedSeconds >= lifetimeSeconds) continue;
+
+            float angle = (float(index) + seed.x) * 6.2831853 / float(CURSOR_BURST_STAR_COUNT);
+            float2 direction = normalize(float2(cos(angle), sin(angle)) - move.direction * 0.3);
+            float spreadPixels = move.cursorSizePixels * (0.2 + lerp(0.9, 2.6, seed.z) * (1.0 - exp(-7.0 * elapsedSeconds)));
+            float2 position = move.toPixels + direction * spreadPixels;
+            float2 offset = pixelPosition - position;
+            float radiusPixels = lerp(1.6, 2.8, appearance.z);
+            float distancePixels = length(offset);
+            if (distancePixels > radiusPixels * 2.8) continue;
+
+            float core = 1.0 - smoothstep(radiusPixels - 0.6, radiusPixels + 0.6, distancePixels);
+            float glow = 0.22 * exp(-dot(offset, offset) / (radiusPixels * radiusPixels * 2.0));
+            glow *= 1.0 - smoothstep(radiusPixels * 2.0, radiusPixels * 2.8, distancePixels);
+            float sparkle = 0.0;
+            if (appearance.z > 0.75) {
+                float2 axes = abs(offset);
+                float horizontal = (1.0 - smoothstep(0.0, 0.8, axes.y)) * (1.0 - smoothstep(radiusPixels, radiusPixels * 2.8, axes.x));
+                float vertical = (1.0 - smoothstep(0.0, 0.8, axes.x)) * (1.0 - smoothstep(radiusPixels, radiusPixels * 2.8, axes.y));
+                sparkle = max(horizontal, vertical) * 0.65;
+            }
+
+            float fade = smoothstep(0.0, 0.015, elapsedSeconds) * (1.0 - smoothstep(lifetimeSeconds * 0.35, lifetimeSeconds, elapsedSeconds));
+            float shimmer = 0.9 + 0.1 * sin(elapsedSeconds * 12.5663706 + appearance.y * 6.2831853);
+            float alpha = saturate(core + glow + sparkle) * fade * shimmer;
+            float3 starColor = pickCursorStarColor(appearance.x);
+            stars += float4(starColor * alpha, alpha) * (1.0 - stars.a);
+        }
+
+        return stars;
+    }
+
+    float4
+    sampleCursorStars(float2 pixelPosition, KittyCustomShaderData d) {
+        float2 viewportSize = float2(d.viewport_size_pixels);
+        float4 stars = float4(0.0);
+        for (int index = 0; index < 8; index++) {
+            float ageSeconds = d.cursor_trail_history_age[index / 4][index % 4];
+            if (ageSeconds < 0.0 || ageSeconds >= CURSOR_STAR_LIFETIME_SECONDS + CURSOR_STAR_MAX_TRAVEL_SECONDS + CURSOR_STAR_EMISSION_SECONDS) break;
+
+            float4 fromEdges = d.cursor_trail_history_from[index];
+            float4 toEdges = d.cursor_trail_history_to[index];
+            float2 from = toCursorCenterPixels(fromEdges, viewportSize);
+            float2 to = toCursorCenterPixels(toEdges, viewportSize);
+            float2 path = to - from;
+            float pathLengthPixels = length(path);
+            if (pathLengthPixels < 1.0) continue;
+
+            CursorStarMove move;
+            move.fromPixels = from;
+            move.toPixels = to;
+            move.direction = path / pathLengthPixels;
+            move.distancePixels = pathLengthPixels;
+            move.cursorSizePixels = max((toEdges.y - toEdges.x) * viewportSize.x, (toEdges.z - toEdges.w) * viewportSize.y);
+            move.ageSeconds = ageSeconds;
+            move.travelSeconds = clamp(pathLengthPixels / 4000.0, 0.04, CURSOR_STAR_MAX_TRAVEL_SECONDS);
+            move.seed = uint2(from) + uint2(to) * uint2(173u, 97u);
+            float4 comet = sampleCursorComet(pixelPosition, move);
+            float4 burst = sampleCursorBurst(pixelPosition, move);
+            float4 effect = comet + burst * (1.0 - comet.a);
+            stars += effect * (1.0 - stars.a);
+        }
+
+        return stars;
+    }
+
+    public float4
+    fragment_main(float4 color, KittyTextures t, KittyCustomShaderData d) {
+        float4 stars = sampleCursorStars(t.pos * float2(d.viewport_size_pixels), d);
+        if (stars.a <= 0.0) return color;
+
+        // Screen blending keeps the glow continuous across glyph edges without darkening text.
+        return float4(color.rgb + stars.rgb * (1.0 - color.rgb), color.a);
     }
   '';
 
@@ -136,7 +324,7 @@
       close_on_child_death = "yes";
       cursor_blink_interval = "0";
       cursor_shape = "beam";
-      custom_shaders = "theme-stars cursor-trail-pixiedust";
+      custom_shaders = "theme-cursor-stars theme-stars";
       draw_minimal_borders = "yes";
       enable_audio_bell = "no";
       hide_window_decorations = "no";

@@ -61,8 +61,6 @@
 
   boot.loader.systemd-boot.configurationLimit = 10;
 
-  boot.kernelParams = lib.optionals (!config.networking.enableIPv6) [ "ipv6.disable=1" ];
-
   boot.tmp = {
     useTmpfs = lib.mkDefault true;
     cleanOnBoot = lib.mkDefault (!config.boot.tmp.useTmpfs);
@@ -86,7 +84,7 @@
 
   assertions = lib.mapAttrsToList (mountPoint: fileSystem: {
     assertion =
-      (config.boot.initrd.enable && config.boot.initrd.systemd.enable && utils.fsNeededForBoot fileSystem)
+      (config.boot.initrd.enable && utils.fsNeededForBoot fileSystem)
       -> lib.elem "x-initrd.mount" fileSystem.options;
     message = ''
       fileSystems."${mountPoint}".options must include "x-initrd.mount" when using the systemd initrd because this filesystem is needed for boot. Remove overrides such as lib.mkForce that discard required filesystem options.

@@ -47,18 +47,13 @@ let
       null
     else
       let
-        value = raw.successExitStatus;
-        statuses =
-          if builtins.isList value then
-            map (
-              status:
-              if builtins.isInt status || builtins.isString status then
-                builtins.toString status
-              else
-                throw "${fileName}: field `successExitStatus` entries must be strings or integers"
-            ) value
+        statuses = map (
+          status:
+          if builtins.isInt status || builtins.isString status then
+            builtins.toString status
           else
-            throw "${fileName}: field `successExitStatus` must be a list";
+            throw "${fileName}: field `successExitStatus` must be a string, an integer, or a list of them"
+        ) (lib.toList raw.successExitStatus);
       in
       if statuses == [ ] then null else lib.concatStringsSep " " statuses;
 
@@ -90,6 +85,7 @@ let
     in
     {
       inherit name onCalendar;
+      enabled = optionalBool fileName "enabled" true raw;
       description = optionalString fileName "description" "${name}: scheduled user job" raw;
       timerDescription = optionalString fileName "timerDescription" "Run ${name}" raw;
       persistent = optionalBool fileName "persistent" true raw;
@@ -98,8 +94,8 @@ let
       source = fileName;
     };
 
-  jobs = map loadJob cronSpecNames;
-  jobNames = map (job: job.name) jobs;
+  enabledJobs = builtins.filter (job: job.enabled) (map loadJob cronSpecNames);
+  jobNames = map (job: job.name) enabledJobs;
   duplicateJobNames = lib.unique (
     builtins.filter (
       name: builtins.length (builtins.filter (candidate: candidate == name) jobNames) > 1
@@ -110,7 +106,7 @@ let
     if duplicateJobNames != [ ] then
       throw "duplicate cron job names: ${lib.concatStringsSep ", " duplicateJobNames}"
     else
-      jobs;
+      enabledJobs;
 
   checkedScript =
     job:

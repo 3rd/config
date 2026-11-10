@@ -7,12 +7,13 @@ M.setup = function()
 
   highlighter.prepare_highlight_states = function(self, start_row, end_row)
     self._highlight_states = {}
-    treesitter.for_each_tree_in_range(self.tree, start_row, end_row, function(tree, language_tree)
+    treesitter.for_each_tree_in_range(self.tree, start_row, end_row, function(tree, language_tree, root)
       local query = self:get_query(language_tree:lang())
       if not query:query() then return end
 
       table.insert(self._highlight_states, {
         tstree = tree,
+        root_range = { root:range() },
         next_row = 0,
         next_col = 0,
         highlighter_query = query,

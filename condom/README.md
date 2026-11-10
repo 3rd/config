@@ -1,6 +1,6 @@
 # Condom
 
-**Condom** is a Linux-first developer safety wrapper. It runs risky tools inside a policy boundary, keeps credentials on the host, and records what happened.
+**Condom** is a Linux-first developer safety wrapper. It runs risky tools inside a policy boundary, keeps registry credentials on the host, and records what happened.
 
 Use it in two modes:
 
@@ -126,6 +126,15 @@ defaultSelected = true
 `run` keeps generated runtime files under the project runtime area and state directory. `review` uses a temporary runtime directory and mounts only the minimal `.condom` surface needed by registry proxies and helpers.
 
 Condom's persisted approvals and events use `CONDOM_STATE_HOME` when set, or `$HOME/.local/state` by default; runtime `XDG_STATE_HOME` values are treated as application environment, not Condom state.
+
+### Review with agents
+
+Enable reviewers in the project's `.condom/config.toml`:
+
+```toml
+[review]
+agents = ["ccodex", "ccc"]
+```
 
 ## Proxy and Credentials
 

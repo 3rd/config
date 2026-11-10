@@ -1,4 +1,5 @@
 name = "name"
+enabled = true
 description = "dessc"
 timerDescription = "timer desc"
 script = "./filename.fish"

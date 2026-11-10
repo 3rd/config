@@ -3,7 +3,10 @@
 {
   home.packages = with pkgs; [
     alloy6
-    inputs.buildprof.packages.${pkgs.stdenv.hostPlatform.system}.default
+    (inputs.buildprof.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (oldAttrs: {
+      nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.pkg-config ];
+      buildInputs = oldAttrs.buildInputs ++ [ pkgs.zstd ];
+    }))
     hyperfine # https://github.com/sharkdp/hyperfine
     k6 # https://github.com/grafana/k6
     scc # https://github.com/boyter/scc

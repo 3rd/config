@@ -31,6 +31,8 @@ local captures, languages = get_highlights(vim.treesitter.highlighter.active[buf
 assert(vim.deep_equal(languages, { "json" }), "a plain file lost its root syntax tree")
 assert(captures.json.property and captures.json.number and captures.json.boolean, "plain JSON lost highlighting")
 
+vim.treesitter.highlighter._on_spell_nav("spell_nav", vim.api.nvim_get_current_win(), bufnr, 0, 0, 1, 0)
+
 vim.treesitter.stop(bufnr)
 vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {
   "<html>",

@@ -16,7 +16,7 @@ return lib.module.create({
       -- commit = "7ceff61595aae682b421a68e208719b1523c7b44", -- new config
       -- commit = "e3b7cb4a1094377c3093a021300de123d9fc60d3",
       build = function()
-        require("blink.cmp").build():wait(60000)
+        require("blink.cmp").build():wait(300000)
       end,
       dependencies = {
         "saghen/blink.lib",

@@ -2,6 +2,77 @@
 {
   additions = final: _prev: import ../pkgs { inherit inputs; pkgs = final; };
   modifications = final: prev: {
+    aggregateModules = modules: (prev.aggregateModules modules).overrideAttrs (oldAttrs: {
+      # A replacement removes the stock modules.dep entry but leaves modules.order unchanged.
+      postBuild = final.lib.replaceStrings
+        [ ''sed "1,$(wc -l < modules.order)d; s/\.ko.*/.ko.cer/" modules.dep'' ]
+        [ ''comm -23 <(sed 's/\.ko.*/.ko/' modules.dep | sort) <(sort modules.order) | sed "s/$/.cer/"'' ]
+        oldAttrs.postBuild;
+    });
+
+    kernelPackagesExtensions = prev.kernelPackagesExtensions ++ [
+      (kernel-final: kernel-prev:
+        let
+          inherit (kernel-final) kernel;
+          kernelBuild = "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build";
+        in
+        {
+          it87 = kernel-prev.it87.overrideAttrs (oldAttrs: {
+            makeFlags = oldAttrs.makeFlags ++ [
+              "INSTALL_MOD_PATH=${placeholder "out"}"
+            ];
+            installFlags = [ "-C" kernelBuild "M=$(PWD)" ];
+            installTargets = [ "modules_install" ];
+            dontStrip = true;
+          });
+
+          sysdig = kernel-prev.sysdig.overrideAttrs (oldAttrs: {
+            nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ final.buildPackages.removeReferencesTo ];
+            stripExclude = (oldAttrs.stripExclude or [ ]) ++ [ "lib/modules/*" ];
+            postInstall = ''
+              installShellCompletion --bash "$out/etc/bash_completion.d/sysdig"
+              rm "$out/etc/bash_completion.d/sysdig"
+              rmdir "$out/etc/bash_completion.d" "$out/etc"
+
+              # Reference cleanup must precede modules_install, which signs the module bytes.
+              remove-references-to -t ${kernel.dev} driver/src/scap.ko
+              make -C ${kernelBuild} \
+                ${final.lib.escapeShellArgs kernel-final.kernelModuleMakeFlags} \
+                M="$PWD/driver/src" INSTALL_MOD_PATH="$out" modules_install
+            '';
+          });
+        }
+      )
+    ];
+
+    pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+      (_python-final: python-prev: {
+        primp = python-prev.primp.overridePythonAttrs (oldAttrs: {
+          nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ final.pkg-config ];
+          buildInputs = oldAttrs.buildInputs ++ [
+            final.aws-lc
+            final.zstd
+          ];
+        });
+
+        chromadb = (python-prev.chromadb.override { protobuf = final.protobuf; }).overridePythonAttrs (oldAttrs: {
+          buildInputs = oldAttrs.buildInputs ++ [
+            final.rust-jemalloc-sys
+            final.sqlite
+          ];
+        });
+      })
+    ];
+
+    below = prev.below.overrideAttrs (oldAttrs: {
+      buildInputs = oldAttrs.buildInputs ++ [ final.zstd ];
+    });
+
+    scooter = prev.scooter.overrideAttrs (oldAttrs: {
+      nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ final.pkg-config ];
+      buildInputs = oldAttrs.buildInputs ++ [ final.oniguruma ];
+    });
+
     kitty = prev.kitty.overrideAttrs (finalAttrs: oldAttrs: {
       version = "0.50.0";
       src = final.fetchFromGitHub {
@@ -43,7 +114,7 @@
         });
       in
       {
-        makeWrapperArgs = [ "--set FRONTEND_BUILD_DIR ${frontend}/share/open-webui" ];
+        makeWrapperArgs = [ "--set" "FRONTEND_BUILD_DIR" "${frontend}/share/open-webui" ];
         passthru = oldAttrs.passthru // { inherit frontend; };
       }
     );
