@@ -6,6 +6,22 @@ local function should_skip_double_quote_pair(ctx)
     or (char_after_cursor ~= "" and not char_after_cursor:match("%s"))
 end
 
+local function can_create_pair(ctx)
+  if ctx.mode == "c" then return true end
+
+  local char_after_cursor = ctx:text_after_cursor(1)
+  return char_after_cursor == "" or char_after_cursor:match("%s") ~= nil
+end
+
+local function restrict_pair_creation(condition, closing)
+  return function(ctx)
+    local is_closing_pair = closing ~= nil and ctx:is_after_cursor(closing)
+    if not can_create_pair(ctx) and not is_closing_pair then return false end
+    if type(condition) == "function" then return condition(ctx) end
+    return condition ~= false
+  end
+end
+
 return lib.module.create({
   name = "workflow/text-editing",
   hosts = "*",
@@ -60,7 +76,8 @@ return lib.module.create({
       opts = function(_, opts)
         opts = opts or {}
 
-        local default_quote_pairs = vim.deepcopy(require("blink.pairs.config.mappings").pairs[1]['"'])
+        local default_pairs = require("blink.pairs.config.mappings").pairs[1]
+        local default_quote_pairs = vim.deepcopy(default_pairs['"'])
         for _, quote_pair in ipairs(default_quote_pairs) do
           local default_when = quote_pair.when
           quote_pair.when = function(ctx)
@@ -70,14 +87,32 @@ return lib.module.create({
           end
         end
 
+        local configured_pairs =
+          vim.tbl_deep_extend("force", default_pairs, opts.mappings and opts.mappings.pairs or {}, {
+            ["$"] = {},
+            ['"'] = default_quote_pairs,
+          })
+        local pairs_by_key = {}
+        for key, definitions in pairs(configured_pairs) do
+          if type(definitions) == "string" then definitions = { { definitions } } end
+
+          local guarded_pairs = {}
+          for _, definition in ipairs(definitions) do
+            local guarded_pair = vim.deepcopy(definition)
+            guarded_pair.open = restrict_pair_creation(definition.open)
+            guarded_pair.open_or_close =
+              restrict_pair_creation(definition.open_or_close, definition[2] or definition[1])
+            table.insert(guarded_pairs, guarded_pair)
+          end
+
+          pairs_by_key[key] = guarded_pairs
+        end
+
         return vim.tbl_deep_extend("force", opts, {
           mappings = {
             enabled = true,
             cmdline = true,
-            pairs = {
-              ["$"] = {},
-              ['"'] = default_quote_pairs,
-            },
+            pairs = pairs_by_key,
           },
           highlights = {
             enabled = true,

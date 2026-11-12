@@ -98,6 +98,33 @@ captures = get_highlights(highlighter, 6, 7)
 assert(not captures.html, "a combined injection was materialized inside a gap between its regions")
 assert(captures.markdown_inline["markup.strong"], "the gap between injected regions lost its own highlighting")
 
+vim.treesitter.stop(bufnr)
+vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {
+  "```json",
+  '{ "item": 1 }',
+  "```",
+  "",
+  "```json",
+  '{ "item": 2 }',
+  "```",
+  "",
+  "```json",
+  '{ "item": 3 }',
+  "```",
+  "",
+})
+vim.treesitter.start(bufnr, "markdown")
+parser = vim.treesitter.get_parser(bufnr, "markdown")
+parser:parse({ 0, 3 })
+parser:parse({ 8, 11 })
+vim.api.nvim_buf_set_lines(bufnr, 4, -1, false, {})
+parser:parse({ 0, 3 })
+captures = get_highlights(vim.treesitter.highlighter.active[bufnr], 0, 3)
+assert(
+  vim.deep_equal(captures.json.number, { "1" }),
+  "partially parsed Markdown lost highlighting after deleting blocks"
+)
+
 local offscreen_tree = {
   root = function()
     error("offscreen syntax tree was materialized during redraw")

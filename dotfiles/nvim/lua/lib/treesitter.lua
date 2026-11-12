@@ -85,7 +85,8 @@ M.for_each_tree_in_range = function(parser, start_row, end_row, callback)
   local regions = parser:included_regions()
 
   for index, tree in pairs(parser:trees()) do
-    local ranges = regions[index]
+    -- Partial parses can retain trees after their entries disappear from included_regions().
+    local ranges = regions[index] or tree:included_ranges(true)
     local is_visible = #ranges == 0
 
     for _, range in ipairs(ranges) do

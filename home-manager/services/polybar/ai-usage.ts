@@ -21,7 +21,8 @@ import { Database } from "bun:sqlite";
 
 const CACHE_PATH = "/tmp/polybar-ai-usage.json";
 const LOCK_PATH = "/tmp/polybar-ai-usage.lock";
-const CLAUDE_STATUSLINE_CACHE_PATH_PREFIX = "/tmp/polybar-ai-usage-claude-statusline";
+
+const CLAUDE_STATUSLINE_CACHE_PATH_PREFIX = "~/.local/state/polybar-ai-usage/claude-statusline";
 const REFRESH_FLAG = "--refresh";
 
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
@@ -43,7 +44,6 @@ const HOUR_SECONDS = 60 * MINUTE_SECONDS;
 const DAY_SECONDS = 24 * HOUR_SECONDS;
 const WEEKLY_RESET_WARNING_SECONDS = 4 * DAY_SECONDS;
 const WEEKLY_RESET_CRITICAL_SECONDS = 2 * DAY_SECONDS;
-const CLAUDE_STATUSLINE_MAX_AGE_SECONDS = 8 * DAY_SECONDS;
 const CODEX_WINDOW_DURATION_SECONDS = {
   session: 5 * HOUR_SECONDS,
   weekly: 7 * DAY_SECONDS,
@@ -521,10 +521,6 @@ export const readClaudeStatuslineEntry = (cachePath: string): ProviderEntry | un
     return undefined;
   }
 
-  if (Date.now() - cache.updatedAt * 1000 > CLAUDE_STATUSLINE_MAX_AGE_SECONDS * 1000) {
-    return undefined;
-  }
-
   return buildProviderEntry({
     provider: "claude",
     source: "statusline",
@@ -581,10 +577,11 @@ export const normalizeCacheData = (value: unknown): CacheData => {
   };
 };
 
-const claudeStatuslineCachePath = (profile: string) =>
-  profile === CCC_DEFAULT_PROFILE
-    ? `${CLAUDE_STATUSLINE_CACHE_PATH_PREFIX}.json`
-    : `${CLAUDE_STATUSLINE_CACHE_PATH_PREFIX}-${profile}.json`;
+const claudeStatuslineCachePath = (profile: string) => {
+  const profileSuffix = profile === CCC_DEFAULT_PROFILE ? "" : `-${profile}`;
+
+  return expandHomePath(`${CLAUDE_STATUSLINE_CACHE_PATH_PREFIX}${profileSuffix}.json`);
+};
 
 const readAccountsConfig = (path: string) => {
   let accounts: unknown;

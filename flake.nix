@@ -16,10 +16,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hister.url = "github:asciimoo/hister?rev=ac9498e63d443897ffd4992310d3f8254e609859";
-    # saqol = {
-    #   url = "github:mTvare6/saqol/2cc5aec3c3ca68e91275f1bd49dfb6590fe63042";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
 
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";

@@ -501,29 +501,7 @@
         "nixpkgs-chromium": "nixpkgs-chromium",
         "nixpkgs-keyring": "nixpkgs-keyring",
         "nixpkgs-master": "nixpkgs-master",
-        "nixpkgs-stable": "nixpkgs-stable",
-        "saqol": "saqol"
-      }
-    },
-    "saqol": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1791590582,
-        "narHash": "sha256-qeB6R6GwDUd9kAfQX2et2HpCn7D030KDHJwDsO2Koy4=",
-        "owner": "mTvare6",
-        "repo": "saqol",
-        "rev": "2cc5aec3c3ca68e91275f1bd49dfb6590fe63042",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mTvare6",
-        "repo": "saqol",
-        "rev": "2cc5aec3c3ca68e91275f1bd49dfb6590fe63042",
-        "type": "github"
+        "nixpkgs-stable": "nixpkgs-stable"
       }
     },
     "systems": {
