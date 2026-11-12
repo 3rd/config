@@ -166,6 +166,35 @@ for _, language in ipairs({ "syslang", "markdown" }) do
   assert(image_ranges[1].conceal == " " and image_ranges[1].last_column == 2, language .. " image has no gap")
 end
 
+local outline_lines = {}
+
+for level = 1, 6 do
+  outline_lines[level] = string.rep(" ", (level - 1) * 2) .. string.rep("*", level) .. " label"
+end
+
+vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, outline_lines)
+local outline_root = vim.treesitter.get_parser(bufnr, "syslang"):parse(true)[1]:root()
+local outline_query = vim.treesitter.query.get("syslang", "highlights")
+local gaps_by_outline_level = {}
+
+for id, node, metadata in outline_query:iter_captures(outline_root, bufnr, 0, 6) do
+  local capture_metadata = metadata[id] or {}
+  local conceal = capture_metadata.conceal or metadata.conceal
+  if conceal == " " then
+    local range = vim.treesitter.get_range(node, bufnr, capture_metadata)
+    gaps_by_outline_level[range[1] + 1] = { range[2], range[4], range[5] }
+    assert(tonumber(metadata.priority) > 100, "outline spacing must override the marker's default conceal priority")
+  end
+end
+
+for level = 1, 6 do
+  local gap_column = (level - 1) * 2 + level
+  assert(
+    vim.deep_equal(gaps_by_outline_level[level], { gap_column, level - 1, gap_column + 1 }),
+    "Syslang outline level " .. level .. " must preserve the space before its label"
+  )
+end
+
 render_markdown({ "# Document", "", "## Heading", "" })
 vim.cmd.vsplit()
 vim.api.nvim_win_set_width(0, 20)
@@ -235,4 +264,4 @@ assert(
 )
 vim.api.nvim_win_close(other_window, true)
 
-print("ok: shared prose styles, Markdown titles, metadata, code blocks, and image spacing")
+print("ok: shared prose styles, Markdown titles, metadata, code blocks, and image and outline spacing")
